@@ -217,14 +217,14 @@ private class AppleHealthExportService {
                 return
             }
             
-            healthStore.deleteObjects(of: self.insulinType, predicate: HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier,
+            healthStore.deleteObjects(of: self.glucoseType, predicate: HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier,
                                                                                                    allowedValues: [glucose.id.uuidString])) { success, numberDeleted, error in
                 if !success {
                     DirectLog.info("Guard: Deleting glucose data in apple health store failed, error: \(error?.localizedDescription)")
                     return
                 }
-                
-                DirectLog.info("Deleted \(numberDeleted) glucose delivery records from HealthKit")
+
+                DirectLog.info("Deleted \(numberDeleted) glucose records from HealthKit")
             }
         }
     }

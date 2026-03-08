@@ -49,7 +49,7 @@ class Store<State, Action>: ObservableObject {
         // Dispatch all middleware functions
         for mw in middlewares {
             guard let middleware = mw(state, action, lastState) else {
-                break
+                continue
             }
 
             var cancellable: AnyCancellable!

@@ -102,10 +102,14 @@ struct FileLogger {
         case streamerInitError
     }
 
-    /// The directory where all logs are stored
+    /// The directory where all logs are stored (excluded from backups)
     let logFileBaseURL: URL = {
         let fileManager = FileManager.default
-        return fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Logs")
+        var url = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Logs")
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
+        return url
     }()
 
     /// Path to a common log file for all log types combined

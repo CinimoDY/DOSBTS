@@ -65,7 +65,7 @@ extension UserDefaults {
 
         let newSerial = UUID().uuidString
 
-        set(newSerial, forKey: Keys.alarmHigh.rawValue)
+        set(newSerial, forKey: Keys.appSerial.rawValue)
 
         return newSerial
     }

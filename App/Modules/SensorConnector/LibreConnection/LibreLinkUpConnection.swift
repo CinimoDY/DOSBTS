@@ -308,7 +308,7 @@ class LibreLinkUpConnection: SensorBluetoothConnection, IsSensor {
         let (data, response) = try await URLSession.shared.data(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
 
-        DirectLog.info("LibreLinkUp tou, response: \(String(data: data, encoding: String.Encoding.utf8))")
+        DirectLog.info("LibreLinkUp tou, statusCode: \(statusCode)")
 
         if statusCode == 200 {
             return try decode(LibreLinkResponse<LibreLinkResponseLogin>.self, data: data)
@@ -363,7 +363,7 @@ class LibreLinkUpConnection: SensorBluetoothConnection, IsSensor {
         let (data, response) = try await URLSession.shared.data(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
 
-        DirectLog.info("LibreLinkUp login, response: \(String(data: data, encoding: String.Encoding.utf8))")
+        DirectLog.info("LibreLinkUp login, statusCode: \(statusCode)")
 
         if statusCode == 200 {
             return try decode(LibreLinkResponse<LibreLinkResponseLogin>.self, data: data)
@@ -396,7 +396,7 @@ class LibreLinkUpConnection: SensorBluetoothConnection, IsSensor {
         let (data, response) = try await URLSession.shared.data(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
 
-        DirectLog.info("LibreLinkUp connect, response: \(String(data: data, encoding: String.Encoding.utf8))")
+        DirectLog.info("LibreLinkUp connect, statusCode: \(statusCode)")
 
         if statusCode == 200 {
             return try decode(LibreLinkResponse<[LibreLinkResponseConnect]>.self, data: data)
@@ -433,7 +433,7 @@ class LibreLinkUpConnection: SensorBluetoothConnection, IsSensor {
         let (data, response) = try await URLSession.shared.data(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
 
-        DirectLog.info("LibreLinkUp fetch, response: \(String(data: data, encoding: String.Encoding.utf8))")
+        DirectLog.info("LibreLinkUp fetch, statusCode: \(statusCode)")
 
         if statusCode == 200 {
             return try decode(LibreLinkResponse<LibreLinkResponseFetch>.self, data: data)
