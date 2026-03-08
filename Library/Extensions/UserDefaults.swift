@@ -14,6 +14,7 @@ private enum Keys: String {
     case alarmVolume = "libre-direct.settings.alarm-volume"
     case appleHealthExport = "libre-direct.settings.apple-health-export"
     case appleHealthImport = "libre-direct.settings.apple-health-import"
+    case healthImportExcludedSources = "libre-direct.settings.health-import-excluded-sources"
     case bellmanAlarm = "libre-direct.settings.bellman-alarm"
     case calendarExport = "libre-direct.settings.calendar-export"
     case chartShowLines = "libre-direct.settings.chart-show-lines"
@@ -133,6 +134,15 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Keys.appleHealthImport.rawValue)
+        }
+    }
+
+    var healthImportExcludedSources: [String] {
+        get {
+            return stringArray(forKey: Keys.healthImportExcludedSources.rawValue) ?? []
+        }
+        set {
+            set(newValue, forKey: Keys.healthImportExcludedSources.rawValue)
         }
     }
 

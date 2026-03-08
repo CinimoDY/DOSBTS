@@ -40,7 +40,8 @@ private func appleHealthImportMiddleware(service: LazyService<AppleHealthImportS
         case .setAppleHealthImport(enabled: let enabled):
             guard enabled else { break }
 
-            // Trigger initial sync when import is first enabled
+            // Enable background delivery and trigger initial sync
+            service.value.enableBackgroundDeliveryIfNeeded()
             let publisher = PassthroughSubject<DirectAction, DirectError>()
             service.value.syncAll(state: state, publisher: publisher)
             return publisher.eraseToAnyPublisher()
@@ -55,6 +56,7 @@ private func appleHealthImportMiddleware(service: LazyService<AppleHealthImportS
             }
 
             // Foreground refresh — primary sync mechanism
+            service.value.enableBackgroundDeliveryIfNeeded()
             let publisher = PassthroughSubject<DirectAction, DirectError>()
             service.value.syncAll(state: state, publisher: publisher)
             return publisher.eraseToAnyPublisher()
@@ -98,6 +100,7 @@ private class AppleHealthImportService {
 
     private let healthStore = HKHealthStore()
     private var isSyncing = false
+    private var backgroundDeliveryEnabled = false
 
     private var readPermissions: Set<HKObjectType> {
         Set([
@@ -120,6 +123,27 @@ private class AppleHealthImportService {
         }
     }
 
+    func enableBackgroundDeliveryIfNeeded() {
+        guard !backgroundDeliveryEnabled else { return }
+        backgroundDeliveryEnabled = true
+
+        let types: [(HKSampleType, HKUpdateFrequency)] = [
+            (HKQuantityType(.dietaryCarbohydrates), .immediate),
+            (HKObjectType.workoutType(), .immediate),
+            (HKQuantityType(.heartRate), .hourly),
+        ]
+
+        for (type, frequency) in types {
+            healthStore.enableBackgroundDelivery(for: type, frequency: frequency) { success, error in
+                if let error = error {
+                    DirectLog.error("HealthKit background delivery error for \(type): \(error.localizedDescription)")
+                } else if success {
+                    DirectLog.info("HealthKit background delivery enabled for \(type)")
+                }
+            }
+        }
+    }
+
     // MARK: - Sync All
 
     func syncAll(state: DirectState, publisher: PassthroughSubject<DirectAction, DirectError>) {
@@ -134,6 +158,7 @@ private class AppleHealthImportService {
         let existingExercises = state.exerciseEntryValues
         let ownBundleID = Bundle.main.bundleIdentifier ?? ""
         let date = state.selectedDate ?? Date()
+        let excludedSources = Set(state.healthImportExcludedSources)
 
         Task {
             defer {
@@ -144,7 +169,7 @@ private class AppleHealthImportService {
             if #available(iOS 15.4, *) {
                 // Nutrition sync
                 do {
-                    let meals = try await fetchNutritionSamples(dateRange: dateRange, existingMeals: existingMeals, ownBundleID: ownBundleID)
+                    let meals = try await fetchNutritionSamples(dateRange: dateRange, existingMeals: existingMeals, ownBundleID: ownBundleID, excludedSources: excludedSources)
                     if !meals.isEmpty {
                         publisher.send(.addMealEntry(mealEntryValues: meals))
                     }
@@ -154,7 +179,7 @@ private class AppleHealthImportService {
 
                 // Exercise sync
                 do {
-                    let exercises = try await fetchExerciseSamples(dateRange: dateRange, existingExercises: existingExercises, ownBundleID: ownBundleID)
+                    let exercises = try await fetchExerciseSamples(dateRange: dateRange, existingExercises: existingExercises, ownBundleID: ownBundleID, excludedSources: excludedSources)
                     if !exercises.isEmpty {
                         publisher.send(.addExerciseEntry(exerciseEntryValues: exercises))
                     }
@@ -193,7 +218,7 @@ private class AppleHealthImportService {
     // MARK: - Private: Nutrition Fetch
 
     @available(iOS 15.4, *)
-    private func fetchNutritionSamples(dateRange: DateInterval, existingMeals: [MealEntry], ownBundleID: String) async throws -> [MealEntry] {
+    private func fetchNutritionSamples(dateRange: DateInterval, existingMeals: [MealEntry], ownBundleID: String, excludedSources: Set<String> = []) async throws -> [MealEntry] {
         let carbType = HKQuantityType(.dietaryCarbohydrates)
         let predicate = HKQuery.predicateForSamples(withStart: dateRange.start, end: dateRange.end)
 
@@ -203,9 +228,10 @@ private class AppleHealthImportService {
         )
         let samples = try await descriptor.result(for: healthStore)
 
-        // Filter out our own exports (bundle ID dedup)
+        // Filter out our own exports and excluded sources
         let externalSamples = samples.filter { sample in
             sample.sourceRevision.source.bundleIdentifier != ownBundleID
+                && !excludedSources.contains(sample.sourceRevision.source.name)
         }
 
         // Build set of existing sync IDs for dedup
@@ -245,7 +271,7 @@ private class AppleHealthImportService {
     // MARK: - Private: Exercise Fetch
 
     @available(iOS 15.4, *)
-    private func fetchExerciseSamples(dateRange: DateInterval, existingExercises: [ExerciseEntry], ownBundleID: String) async throws -> [ExerciseEntry] {
+    private func fetchExerciseSamples(dateRange: DateInterval, existingExercises: [ExerciseEntry], ownBundleID: String, excludedSources: Set<String> = []) async throws -> [ExerciseEntry] {
         let predicate = HKQuery.predicateForSamples(withStart: dateRange.start, end: dateRange.end)
 
         let descriptor = HKSampleQueryDescriptor(
@@ -254,7 +280,10 @@ private class AppleHealthImportService {
         )
         let workouts = try await descriptor.result(for: healthStore)
 
-        let externalWorkouts = workouts.filter { $0.sourceRevision.source.bundleIdentifier != ownBundleID }
+        let externalWorkouts = workouts.filter {
+            $0.sourceRevision.source.bundleIdentifier != ownBundleID
+                && !excludedSources.contains($0.sourceRevision.source.name)
+        }
 
         let existingStarts = Set(existingExercises.map { $0.startTime })
 
@@ -313,6 +342,24 @@ private class AppleHealthImportService {
                     }
                 }
                 continuation.resume(returning: hourlyRates)
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Source Discovery
+
+    func availableSources() async -> [String] {
+        let carbType = HKQuantityType(.dietaryCarbohydrates)
+        let ownBundleID = Bundle.main.bundleIdentifier ?? ""
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSourceQuery(sampleType: carbType, samplePredicate: nil) { _, sources, _ in
+                let names = (sources ?? [])
+                    .filter { $0.bundleIdentifier != ownBundleID }
+                    .map { $0.name }
+                    .sorted()
+                continuation.resume(returning: names)
             }
             healthStore.execute(query)
         }

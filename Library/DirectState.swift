@@ -43,6 +43,7 @@ protocol DirectState {
     var isConnectionPaired: Bool { get set }
     var exerciseEntryValues: [ExerciseEntry] { get set }
     var heartRateSeries: [(Date, Double)] { get set }
+    var healthImportExcludedSources: [String] { get set }
     var insulinDeliveryValues: [InsulinDelivery] { get set }
     var mealEntryValues: [MealEntry] { get set }
     var latestBloodGlucose: BloodGlucose? { get set }

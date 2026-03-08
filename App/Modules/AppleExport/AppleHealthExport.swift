@@ -90,6 +90,17 @@ private func appleHealthExportMiddleware(service: LazyService<AppleHealthExportS
             
             service.value.deleteInsulinDelivery(insulinDelivery: insulinDelivery)
             
+        case .addMealEntry(mealEntryValues: let mealEntryValues):
+            guard state.appleHealthExport else {
+                break
+            }
+
+            guard service.value.healthStoreAvailable else {
+                break
+            }
+
+            service.value.addMealCarbs(meals: mealEntryValues)
+
         case .addSensorGlucose(glucoseValues: let glucoseValues):
             guard state.appleHealthExport else {
                 DirectLog.info("Guard: state.appleHealth is false")
@@ -147,8 +158,12 @@ private class AppleHealthExportService {
         HKObjectType.quantityType(forIdentifier: .insulinDelivery)!
     }
     
+    var carbType: HKQuantityType {
+        HKObjectType.quantityType(forIdentifier: .dietaryCarbohydrates)!
+    }
+
     var requiredPermissions: Set<HKSampleType> {
-        Set([glucoseType, insulinType])
+        Set([glucoseType, insulinType, carbType])
     }
     
     var healthStoreAvailable: Bool {
@@ -206,6 +221,44 @@ private class AppleHealthExportService {
         }
     }
     
+    func addMealCarbs(meals: [MealEntry]) {
+        guard let healthStore = healthStore else {
+            return
+        }
+
+        let mealsWithCarbs = meals.filter { $0.carbsGrams != nil }
+        guard !mealsWithCarbs.isEmpty else { return }
+
+        healthStore.requestAuthorization(toShare: requiredPermissions, read: nil) { granted, error in
+            guard granted else {
+                DirectLog.info("Guard: HKHealthStore.requestAuthorization failed, error: \(error?.localizedDescription)")
+                return
+            }
+
+            let samples = mealsWithCarbs.map { meal in
+                HKQuantitySample(
+                    type: self.carbType,
+                    quantity: HKQuantity(unit: .gram(), doubleValue: meal.carbsGrams!),
+                    start: meal.timestamp,
+                    end: meal.timestamp,
+                    metadata: [
+                        HKMetadataKeyExternalUUID: meal.id.uuidString,
+                        HKMetadataKeySyncIdentifier: meal.id.uuidString,
+                        HKMetadataKeySyncVersion: 1,
+                        HKMetadataKeyFoodType: meal.mealDescription,
+                        HKMetadataKeyWasUserEntered: true
+                    ]
+                )
+            }
+
+            healthStore.save(samples) { success, error in
+                if !success {
+                    DirectLog.info("Guard: Writing carb data to apple health store failed, error: \(error?.localizedDescription)")
+                }
+            }
+        }
+    }
+
     func deleteGlucose(glucose: any Glucose) {
         guard let healthStore = healthStore else {
             return

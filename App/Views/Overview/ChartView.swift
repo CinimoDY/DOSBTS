@@ -378,7 +378,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: sensorGlucoseValues")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
                 updateSensorSeries()
             }
 
@@ -386,7 +386,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: sensorGlucoseValues")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
                 updateSensorSeries()
             }
 
@@ -394,7 +394,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: bloodGlucoseValues")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
                 updateBloodSeries()
             }
 
@@ -402,7 +402,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: insulinDeliveryValues")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
                 updateInsulinSeries()
             }
 
@@ -410,7 +410,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: mealEntryValues")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
                 updateMealSeries()
             }
 
@@ -418,7 +418,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: exerciseEntryValues")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
                 updateExerciseSeries()
             }
 
@@ -426,7 +426,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: chartZoomLevel")
 
-                updateSeriesMetadata()
+                debounceSeriesMetadata()
             }
 
         }.onChange(of: store.state.showSmoothedGlucose) { _ in
@@ -441,9 +441,7 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: orientation")
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) {
-                    updateSeriesMetadata()
-                }
+                debounceSeriesMetadata()
             }
 
         }.onAppear {
@@ -531,6 +529,15 @@ struct ChartView: View {
     @State private var selectedBloodPoint: GlucoseDatapoint? = nil
 
     private let calculationQueue = DispatchQueue(label: "libre-direct.chart-calculation", qos: .utility)
+
+    @State private var metadataDebounceTask: DispatchWorkItem? = nil
+
+    private func debounceSeriesMetadata() {
+        metadataDebounceTask?.cancel()
+        let task = DispatchWorkItem { updateSeriesMetadata() }
+        metadataDebounceTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100), execute: task)
+    }
 
     private var screenHeight: CGFloat {
         UIScreen.screenHeight

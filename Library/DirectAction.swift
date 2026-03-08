@@ -70,6 +70,7 @@ enum DirectAction {
     case setBloodGlucoseValues(glucoseValues: [BloodGlucose])
     case setExerciseEntryValues(exerciseEntryValues: [ExerciseEntry])
     case setHeartRateSeries(heartRateSeries: [(Date, Double)])
+    case setHealthImportExcludedSources(excludedSources: [String])
     case setMealEntryValues(mealEntryValues: [MealEntry])
     case setInsulinDeliveryValues(insulinDeliveryValues: [InsulinDelivery])
     case setMinSelectedDate(minSelectedDate: Date)

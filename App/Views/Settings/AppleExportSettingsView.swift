@@ -4,6 +4,7 @@
 //
 
 import EventKit
+import HealthKit
 import SwiftUI
 
 // MARK: - CalendarExportSettingsView
@@ -39,6 +40,13 @@ struct AppleExportSettingsView: View {
         Section(
             content: {
                 Toggle("Import from Apple Health", isOn: appleHealthImport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+
+                if store.state.appleHealthImport {
+                    NavigationLink("Source apps") {
+                        HealthImportSourcesView()
+                            .environmentObject(store)
+                    }
+                }
             },
             header: {
                 Label("Apple import settings", systemImage: "square.and.arrow.down")

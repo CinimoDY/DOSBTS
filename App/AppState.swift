@@ -48,6 +48,7 @@ struct AppState: DirectState {
         self.appleCalendarExport = UserDefaults.standard.appleCalendarExport
         self.appleHealthExport = UserDefaults.standard.appleHealthExport
         self.appleHealthImport = UserDefaults.standard.appleHealthImport
+        self.healthImportExcludedSources = UserDefaults.standard.healthImportExcludedSources
         self.bellmanAlarm = UserDefaults.standard.bellmanAlarm
         self.chartShowLines = UserDefaults.standard.chartShowLines
         self.chartZoomLevel = UserDefaults.standard.chartZoomLevel
@@ -92,6 +93,7 @@ struct AppState: DirectState {
     var bloodGlucoseValues: [BloodGlucose] = []
     var exerciseEntryValues: [ExerciseEntry] = []
     var heartRateSeries: [(Date, Double)] = []
+    var healthImportExcludedSources: [String] { didSet { UserDefaults.standard.healthImportExcludedSources = healthImportExcludedSources } }
     var insulinDeliveryValues: [InsulinDelivery] = []
     var mealEntryValues: [MealEntry] = []
     var connectionError: String?

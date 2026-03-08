@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		101B53852A3BC0210088B4BD /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 101B53842A3BC0210088B4BD /* GRDB */; };
 		107FA9CB2975C6780002A9F4 /* AdditionalSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107FA9CA2975C6780002A9F4 /* AdditionalSettingsView.swift */; };
+		DA01000228000002000B0001 /* HealthImportSourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000228000001000B0001 /* HealthImportSourcesView.swift */; };
 		107FA9CD2975C6F90002A9F4 /* Float.swift in Sources */ = {isa = PBXBuildFile; fileRef = 107FA9CC2975C6F90002A9F4 /* Float.swift */; };
 		10B3B0CE2972D65F00B70CE4 /* Alarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B3B0CD2972D65F00B70CE4 /* Alarm.swift */; };
 		10B3B0CF2972D65F00B70CE4 /* Alarm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B3B0CD2972D65F00B70CE4 /* Alarm.swift */; };
@@ -322,6 +323,7 @@
 		E2645D832763F4EF0058BFC7 /* SensorReadingError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorReadingError.swift; sourceTree = "<group>"; };
 		E2646F3A275FD2EC00ADE451 /* AppleCalendarExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleCalendarExport.swift; sourceTree = "<group>"; };
 		E2646F3C275FD3E800ADE451 /* AppleExportSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleExportSettingsView.swift; sourceTree = "<group>"; };
+		DA01000228000001000B0001 /* HealthImportSourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthImportSourcesView.swift; sourceTree = "<group>"; };
 		E265EADB277A309300AC307B /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		E265EADC277A309300AC307B /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		E26677D828799E76008E8B68 /* BloodGlucose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodGlucose.swift; sourceTree = "<group>"; };
@@ -722,6 +724,7 @@
 				E2646F3C275FD3E800ADE451 /* AppleExportSettingsView.swift */,
 				E25762D4279D519200A2E249 /* BellmanSettingsView.swift */,
 				E24B532026B863C00091417F /* GlucoseSettingsView.swift */,
+				DA01000228000001000B0001 /* HealthImportSourcesView.swift */,
 				E24B531D26B863910091417F /* NightscoutSettingsView.swift */,
 				E2DE3CA227594E5500FAC82E /* SensorConnectorSettingsView.swift */,
 				E29FD14728E0A2DC00551F2E /* SensorConnectionConfigurationView.swift */,
@@ -1214,6 +1217,7 @@
 				E2FCAC5B2707425900FE1CBF /* LibreNFC.swift in Sources */,
 				E245550D28DE4B640092C452 /* LibreLinkUpConnection.swift in Sources */,
 				E2646F3D275FD3E800ADE451 /* AppleExportSettingsView.swift in Sources */,
+				DA01000228000002000B0001 /* HealthImportSourcesView.swift in Sources */,
 				E27ED9752758A4270099149C /* BubbleConnection.swift in Sources */,
 				E2CDA01A27722FB900A1E694 /* ReadAloud.swift in Sources */,
 				E2FCAC732707438A00FE1CBF /* DirectStore.swift in Sources */,

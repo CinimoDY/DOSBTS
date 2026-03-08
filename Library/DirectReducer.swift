@@ -196,6 +196,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setHeartRateSeries(heartRateSeries: let heartRateSeries):
         state.heartRateSeries = heartRateSeries
 
+    case .setHealthImportExcludedSources(excludedSources: let excludedSources):
+        state.healthImportExcludedSources = excludedSources
+
     case .setMealEntryValues(mealEntryValues: let mealEntryValues):
         state.mealEntryValues = mealEntryValues
 
