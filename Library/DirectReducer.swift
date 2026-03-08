@@ -317,6 +317,31 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setShowInsulinInput(enabled: let enabled):
         state.showInsulinInput = enabled
 
+    case .setAIConsentFoodPhoto(enabled: let enabled):
+        state.aiConsentFoodPhoto = enabled
+
+    case .setAIConsentCorrelation(enabled: let enabled):
+        state.aiConsentCorrelation = enabled
+
+    case .setClaudeAPIKeyValid(isValid: let isValid):
+        state.claudeAPIKeyValid = isValid
+
+    case .setFoodAnalysisResult(result: let result):
+        state.foodAnalysisResult = result
+        state.foodAnalysisLoading = false
+        state.foodAnalysisError = nil
+
+    case .setFoodAnalysisError(error: let error):
+        state.foodAnalysisError = error
+        state.foodAnalysisLoading = false
+
+    case .setFoodAnalysisLoading(isLoading: let isLoading):
+        state.foodAnalysisLoading = isLoading
+        if isLoading {
+            state.foodAnalysisResult = nil
+            state.foodAnalysisError = nil
+        }
+
     default:
         break
     }

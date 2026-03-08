@@ -16,6 +16,7 @@ struct SettingsView: View {
             AlarmSettingsView()
             NightscoutSettingsView()
             AppleExportSettingsView()
+            AISettingsView()
             BellmanSettingsView()
             AdditionalSettingsView()
             AboutView()

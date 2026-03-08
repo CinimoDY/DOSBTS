@@ -38,6 +38,19 @@ struct ListsView: View {
                 }
             }
 
+            if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
+                Button(action: {
+                    showingFoodPhotoView = true
+                }) {
+                    Label("Analyze meal with AI", systemImage: "camera.viewfinder")
+                }.sheet(isPresented: $showingFoodPhotoView, onDismiss: {
+                    showingFoodPhotoView = false
+                }) {
+                    FoodPhotoAnalysisView()
+                        .environmentObject(store)
+                }
+            }
+
             Button("Add blood glucose", action: {
                 showingAddBloodGlucoseView = true
             }).sheet(isPresented: $showingAddBloodGlucoseView, onDismiss: {
@@ -75,5 +88,6 @@ struct ListsView: View {
 
     @State private var showingAddInsulinView = false
     @State private var showingAddMealView = false
+    @State private var showingFoodPhotoView = false
     @State private var showingAddBloodGlucoseView = false
 }

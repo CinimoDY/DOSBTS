@@ -221,6 +221,16 @@
 		DA0100012800000C000A000C /* AmberTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000002000A0002 /* AmberTheme.swift */; };
 		DA0100012800000D000A000D /* DOSTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000003000A0003 /* DOSTypography.swift */; };
 		DA0100012800000E000A000E /* DOSSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000004000A0004 /* DOSSpacing.swift */; };
+		CB01000200000001000C0001 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000001000C0001 /* KeychainService.swift */; };
+		CB01000200000002000C0002 /* ClaudeError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000002000C0002 /* ClaudeError.swift */; };
+		CB01000200000003000C0003 /* NutritionEstimate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000003000C0003 /* NutritionEstimate.swift */; };
+		CB01000300000003000C0003 /* NutritionEstimate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000003000C0003 /* NutritionEstimate.swift */; };
+		CB01000200000004000C0004 /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000004000C0004 /* ClaudeService.swift */; };
+		CB01000200000005000C0005 /* ClaudeMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000005000C0005 /* ClaudeMiddleware.swift */; };
+		CB01000200000006000C0006 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000006000C0006 /* CameraView.swift */; };
+		CB01000200000007000C0007 /* AIConsentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000007000C0007 /* AIConsentView.swift */; };
+		CB01000200000008000C0008 /* FoodPhotoAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000008000C0008 /* FoodPhotoAnalysisView.swift */; };
+		CB01000200000009000C0009 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB01000100000009000C0009 /* AISettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -467,6 +477,15 @@
 		DA01000128000003000A0003 /* DOSTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSTypography.swift; sourceTree = "<group>"; };
 		DA01000128000004000A0004 /* DOSSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSSpacing.swift; sourceTree = "<group>"; };
 		DA01000128000005000A0005 /* DOSButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSButtonStyle.swift; sourceTree = "<group>"; };
+		CB01000100000001000C0001 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		CB01000100000002000C0002 /* ClaudeError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeError.swift; sourceTree = "<group>"; };
+		CB01000100000003000C0003 /* NutritionEstimate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionEstimate.swift; sourceTree = "<group>"; };
+		CB01000100000004000C0004 /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
+		CB01000100000005000C0005 /* ClaudeMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeMiddleware.swift; sourceTree = "<group>"; };
+		CB01000100000006000C0006 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		CB01000100000007000C0007 /* AIConsentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConsentView.swift; sourceTree = "<group>"; };
+		CB01000100000008000C0008 /* FoodPhotoAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodPhotoAnalysisView.swift; sourceTree = "<group>"; };
+		CB01000100000009000C0009 /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -500,6 +519,9 @@
 				D56C48D98E9C0A125B68A771 /* AddMealView.swift */,
 				10DD1300296A15B900C900EA /* AddCalibrationView.swift */,
 				10DD1302296A15CA00C900EA /* AddBloodGlucoseView.swift */,
+				CB01000100000006000C0006 /* CameraView.swift */,
+				CB01000100000007000C0007 /* AIConsentView.swift */,
+				CB01000100000008000C0008 /* FoodPhotoAnalysisView.swift */,
 			);
 			path = AddViews;
 			sourceTree = "<group>";
@@ -720,6 +742,7 @@
 			isa = PBXGroup;
 			children = (
 				E216E50927654AF60056A61D /* AboutView.swift */,
+				CB01000100000009000C0009 /* AISettingsView.swift */,
 				E24B532226B863E20091417F /* AlarmSettingsView.swift */,
 				E2646F3C275FD3E800ADE451 /* AppleExportSettingsView.swift */,
 				E25762D4279D519200A2E249 /* BellmanSettingsView.swift */,
@@ -791,6 +814,7 @@
 				AA01000128000001000B0001 /* ExerciseEntry.swift */,
 				6587CE4929626070008518F4 /* InsulinDelivery.swift */,
 				F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */,
+				CB01000100000003000C0003 /* NutritionEstimate.swift */,
 				E26677DB28799E8A008E8B68 /* Glucose.swift */,
 				E2FCAC18270741BC00FE1CBF /* GlucoseUnit.swift */,
 				E2FCAC13270741BC00FE1CBF /* Sensor.swift */,
@@ -837,6 +861,7 @@
 		E2FCAC3C270741F000FE1CBF /* Modules */ = {
 			isa = PBXGroup;
 			children = (
+				CB01000100000010000C0010 /* Claude */,
 				E236683F287FEC1A001BF000 /* Debug */,
 				E294333C2878803B005C8A69 /* DataStore */,
 				E2FCAC4A2707422000FE1CBF /* AppGroupSharing */,
@@ -854,6 +879,17 @@
 				E28BA1B7286F52AC00F6273F /* WidgetCenter */,
 			);
 			path = Modules;
+			sourceTree = "<group>";
+		};
+		CB01000100000010000C0010 /* Claude */ = {
+			isa = PBXGroup;
+			children = (
+				CB01000100000001000C0001 /* KeychainService.swift */,
+				CB01000100000002000C0002 /* ClaudeError.swift */,
+				CB01000100000004000C0004 /* ClaudeService.swift */,
+				CB01000100000005000C0005 /* ClaudeMiddleware.swift */,
+			);
+			path = Claude;
 			sourceTree = "<group>";
 		};
 		E2FCAC472707420800FE1CBF /* Log */ = {
@@ -1261,6 +1297,15 @@
 				E2FCAC2F270741D200FE1CBF /* Data.swift in Sources */,
 				E2FCAC712707438A00FE1CBF /* DirectAction.swift in Sources */,
 				E2FCAC512707424800FE1CBF /* Nightscout.swift in Sources */,
+				CB01000200000001000C0001 /* KeychainService.swift in Sources */,
+				CB01000200000002000C0002 /* ClaudeError.swift in Sources */,
+				CB01000200000003000C0003 /* NutritionEstimate.swift in Sources */,
+				CB01000200000004000C0004 /* ClaudeService.swift in Sources */,
+				CB01000200000005000C0005 /* ClaudeMiddleware.swift in Sources */,
+				CB01000200000006000C0006 /* CameraView.swift in Sources */,
+				CB01000200000007000C0007 /* AIConsentView.swift in Sources */,
+				CB01000200000008000C0008 /* FoodPhotoAnalysisView.swift in Sources */,
+				CB01000200000009000C0009 /* AISettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1271,6 +1316,7 @@
 				6587CE4D29626AD5008518F4 /* InsulinDelivery.swift in Sources */,
 				AA01000328000001000B0001 /* ExerciseEntry.swift in Sources */,
 				EFCE388A6BE1BC789C79E511 /* MealEntry.swift in Sources */,
+				CB01000300000003000C0003 /* NutritionEstimate.swift in Sources */,
 				E2591C5B28740E7A0009F27C /* SensorConnectionInfo.swift in Sources */,
 				E2E8DBFF2859F47D002C84FD /* CustomCalibration.swift in Sources */,
 				E2E8DBE62859F46D002C84FD /* LocalizedString.swift in Sources */,

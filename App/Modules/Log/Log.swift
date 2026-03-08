@@ -30,6 +30,9 @@ private func logMiddleware(service: SendService) -> Middleware<DirectState, Dire
         case .setNightscoutSecret(apiSecret: _):
             break
 
+        case .validateClaudeAPIKey(apiKey: _):
+            break
+
         case .startup:
             DirectLog.deleteLogs()
 

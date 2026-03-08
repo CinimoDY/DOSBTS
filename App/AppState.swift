@@ -80,6 +80,9 @@ struct AppState: DirectState {
         self.transmitter = UserDefaults.shared.transmitter
         self.showSmoothedGlucose = UserDefaults.standard.showSmoothedGlucose
         self.showInsulinInput = UserDefaults.standard.showInsulinInput
+        self.aiConsentFoodPhoto = UserDefaults.standard.aiConsentFoodPhoto
+        self.aiConsentCorrelation = UserDefaults.standard.aiConsentCorrelation
+        self.claudeAPIKeyValid = UserDefaults.standard.claudeAPIKeyValid
     }
 
     // MARK: Internal
@@ -154,4 +157,10 @@ struct AppState: DirectState {
     var transmitter: Transmitter? { didSet { UserDefaults.shared.transmitter = transmitter } }
     var showSmoothedGlucose: Bool { didSet { UserDefaults.standard.showSmoothedGlucose = showSmoothedGlucose } }
     var showInsulinInput: Bool { didSet { UserDefaults.standard.showInsulinInput = showInsulinInput } }
+    var aiConsentFoodPhoto: Bool { didSet { UserDefaults.standard.aiConsentFoodPhoto = aiConsentFoodPhoto } }
+    var aiConsentCorrelation: Bool { didSet { UserDefaults.standard.aiConsentCorrelation = aiConsentCorrelation } }
+    var claudeAPIKeyValid: Bool { didSet { UserDefaults.standard.claudeAPIKeyValid = claudeAPIKeyValid } }
+    var foodAnalysisResult: NutritionEstimate?
+    var foodAnalysisError: String?
+    var foodAnalysisLoading = false
 }

@@ -1,0 +1,123 @@
+//
+//  AISettingsView.swift
+//  DOSBTS
+//
+
+import SwiftUI
+
+struct AISettingsView: View {
+    // MARK: Internal
+
+    @EnvironmentObject var store: DirectStore
+
+    var body: some View {
+        Section(
+            content: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Anthropic API Key")
+                    SecureField("sk-ant-...", text: $apiKeyInput)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onSubmit {
+                            validateAndSave()
+                        }
+                }
+
+                if store.state.claudeAPIKeyValid {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(AmberTheme.cgaGreen)
+                        Text("API key configured")
+                            .foregroundStyle(AmberTheme.cgaGreen)
+                    }
+                }
+
+                if isValidating {
+                    HStack {
+                        ProgressView()
+                            .tint(AmberTheme.amber)
+                        Text("Validating...")
+                            .foregroundStyle(AmberTheme.amberDark)
+                    }
+                }
+
+                if let error = validationError {
+                    Text(error)
+                        .foregroundStyle(AmberTheme.cgaRed)
+                        .font(DOSTypography.caption)
+                }
+
+                if store.state.claudeAPIKeyValid {
+                    Button("Remove API Key", role: .destructive) {
+                        store.dispatch(.deleteClaudeAPIKey)
+                        store.dispatch(.setClaudeAPIKeyValid(isValid: false))
+                        apiKeyInput = ""
+                    }
+                }
+            },
+            header: {
+                Label("AI settings", systemImage: "brain")
+            },
+            footer: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Enter your Anthropic API key to enable AI-powered food photo analysis.")
+                    Text("Estimated cost: less than $0.01 per analysis (~$0.30/month at 3 meals/day)")
+                        .foregroundStyle(AmberTheme.amberDark)
+                }
+            }
+        )
+
+        if store.state.aiConsentFoodPhoto || store.state.aiConsentCorrelation {
+            Section(
+                content: {
+                    if store.state.aiConsentFoodPhoto {
+                        HStack {
+                            Text("Food photo analysis")
+                            Spacer()
+                            Text("Allowed")
+                                .foregroundStyle(AmberTheme.cgaGreen)
+                        }
+                    }
+
+                    if store.state.aiConsentCorrelation {
+                        HStack {
+                            Text("Glucose correlation")
+                            Spacer()
+                            Text("Allowed")
+                                .foregroundStyle(AmberTheme.cgaGreen)
+                        }
+                    }
+
+                    Button("Revoke AI Access", role: .destructive) {
+                        store.dispatch(.setAIConsentFoodPhoto(enabled: false))
+                        store.dispatch(.setAIConsentCorrelation(enabled: false))
+                    }
+                },
+                header: {
+                    Label("AI consent", systemImage: "hand.raised")
+                }
+            )
+        }
+    }
+
+    // MARK: Private
+
+    @State private var apiKeyInput: String = ""
+    @State private var isValidating = false
+    @State private var validationError: String?
+
+    private func validateAndSave() {
+        let key = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else { return }
+
+        isValidating = true
+        validationError = nil
+        store.dispatch(.validateClaudeAPIKey(apiKey: key))
+
+        // The middleware handles validation and dispatches setClaudeAPIKeyValid
+        // We clear the validating state after a delay (the middleware will update the state)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            isValidating = false
+        }
+    }
+}

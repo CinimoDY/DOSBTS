@@ -41,6 +41,8 @@
 	<true/>
 	<key>NFCReaderUsageDescription</key>
 	<string>The NFC function is required to read out all connection settings before a Bluetooth connection.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>DOSBTS uses your camera to photograph meals for nutritional analysis.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>The Bluetooth function is needed to connect to the supported devices.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
