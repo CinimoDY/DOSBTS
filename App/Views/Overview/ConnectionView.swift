@@ -17,7 +17,7 @@ struct ConnectionView: View {
             Section(
                 content: {
                     Link(connectionError, destination: URL(string: DirectConfig.faqURL)!)
-                        .foregroundColor(Color.ui.red)
+                        .foregroundColor(AmberTheme.cgaRed)
 
                     HStack {
                         Text("Connection error timestamp")
@@ -35,7 +35,7 @@ struct ConnectionView: View {
                 },
                 header: {
                     Label("Connection error", systemImage: "exclamationmark.triangle")
-                        .foregroundColor(Color.ui.red)
+                        .foregroundColor(AmberTheme.cgaRed)
                 }
             )
         }
@@ -65,7 +65,9 @@ struct ConnectionView: View {
                             label: {
                                 Text("Find transmitter")
                             }
-                        ).disabled(store.state.connectionIsBusy)
+                        )
+                        .buttonStyle(DOSButtonStyle())
+                        .disabled(store.state.connectionIsBusy)
                     }
 
                     if store.state.isSensor {
@@ -83,6 +85,7 @@ struct ConnectionView: View {
                                 Text("Scan sensor")
                             }
                         )
+                        .buttonStyle(DOSButtonStyle())
                     }
 
                     if store.state.isConnectionPaired {
@@ -101,6 +104,7 @@ struct ConnectionView: View {
                                     }
                                 }
                             )
+                            .buttonStyle(DOSButtonStyle())
                         } else if store.state.isDisconnectable {
                             Button(
                                 action: {
@@ -113,7 +117,9 @@ struct ConnectionView: View {
                                         Text("Disconnect sensor")
                                     }
                                 }
-                            ).alert(isPresented: $showingDisconnectConnectionAlert) {
+                            )
+                            .buttonStyle(DOSButtonStyle(variant: .ghost))
+                            .alert(isPresented: $showingDisconnectConnectionAlert) {
                                 Alert(
                                     title: Text("Are you sure you want to disconnect the sensor?"),
                                     primaryButton: .destructive(Text("Disconnect")) {

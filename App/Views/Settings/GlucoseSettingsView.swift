@@ -28,14 +28,14 @@ struct GlucoseSettingsView: View {
                     store.dispatch(.setAlarmHigh(upperLimit: value))
                 }
 
-                Toggle("Normal glucose notification", isOn: normalGlucoseNotification).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
-                Toggle("Alarm glucose notification", isOn: alarmGlucoseNotification).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
+                Toggle("Normal glucose notification", isOn: normalGlucoseNotification).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+                Toggle("Alarm glucose notification", isOn: alarmGlucoseNotification).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
                 if #available(iOS 16.1, *) {
-                    Toggle("Glucose Live Activity", isOn: glucoseLiveActivity).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
+                    Toggle("Glucose Live Activity", isOn: glucoseLiveActivity).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                 }
                 
-                Toggle("Glucose read aloud", isOn: readGlucose).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
+                Toggle("Glucose read aloud", isOn: readGlucose).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: {
                 Label("Glucose settings", systemImage: "cross.case")

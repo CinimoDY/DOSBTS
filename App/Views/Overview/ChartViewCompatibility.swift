@@ -141,7 +141,7 @@ struct ChartViewCompatibility: View {
                                 .frame(width: 12, height: 12)
 
                             Text(zoom.title)
-                                .font(.subheadline)
+                                .font(DOSTypography.bodySmall)
                                 .foregroundColor(Config.y.textColor)
                         }
                     ).buttonStyle(.plain)
@@ -163,7 +163,7 @@ struct ChartViewCompatibility: View {
                             .frame(width: 12, height: 12)
 
                         Text("Line")
-                            .font(.subheadline)
+                            .font(DOSTypography.bodySmall)
                             .foregroundColor(Config.y.textColor)
                     }
                 ).buttonStyle(.plain)
@@ -177,33 +177,33 @@ struct ChartViewCompatibility: View {
         enum alarm {
             static let strokeStyle = StrokeStyle(lineWidth: lineWidth)
 
-            static var color: Color { Color.ui.red.opacity(opacity) }
+            static var color: Color { AmberTheme.cgaRed.opacity(opacity) }
         }
 
         enum target {
             static let strokeStyle = StrokeStyle(lineWidth: lineWidth)
 
-            static var color: Color { Color.ui.green.opacity(opacity) }
+            static var color: Color { AmberTheme.cgaGreen.opacity(opacity) }
         }
 
         enum now {
             static let strokeStyle = StrokeStyle(lineWidth: lineWidth, dash: [4, 8])
 
-            static var color: Color { Color.ui.blue.opacity(opacity) }
+            static var color: Color { AmberTheme.cgaCyan.opacity(opacity) }
         }
 
         enum dot {
             static let size: CGFloat = 3.5
 
-            static var sensorGlucoseColor: Color { Color(.sRGB, red: 0.21, green: 0.27, blue: 0.31) | Color(.sRGB, red: 0.90, green: 0.89, blue: 0.89) }
-            static var bloodGlucoseColor: Color { Color.ui.red }
+            static var sensorGlucoseColor: Color { AmberTheme.cgaCyan }
+            static var bloodGlucoseColor: Color { AmberTheme.cgaRed }
         }
 
         enum line {
             static var size = 2.5
 
-            static var sensorGlucoseColor: Color { Color(.sRGB, red: 0.21, green: 0.27, blue: 0.31) | Color(.sRGB, red: 0.90, green: 0.89, blue: 0.89) }
-            static var bloodGlucoseColor: Color { Color.ui.red }
+            static var sensorGlucoseColor: Color { AmberTheme.cgaCyan }
+            static var bloodGlucoseColor: Color { AmberTheme.cgaRed }
         }
 
         enum x {
@@ -211,8 +211,8 @@ struct ChartViewCompatibility: View {
             static let strokeStyle = StrokeStyle(lineWidth: lineWidth)
             static let stepWidth: Double = 5
 
-            static var color: Color { Color(.sRGB, red: 0.89, green: 0.90, blue: 0.92) | Color(.sRGB, red: 0.25, green: 0.25, blue: 0.25) } // .opacity(opacity)
-            static var textColor: Color { Color(.sRGB, red: 0.09, green: 0.09, blue: 0.09) | Color(.sRGB, red: 0.63, green: 0.63, blue: 0.63) }
+            static var color: Color { AmberTheme.amberMuted } // .opacity(opacity)
+            static var textColor: Color { AmberTheme.amberDark }
         }
 
         enum y {
@@ -225,8 +225,8 @@ struct ChartViewCompatibility: View {
             static let mgdLGrid: [Int] = [0, 50, 100, 150, 200, 250, 300, 350, 400]
             static let mmolLGrid: [Int] = [0, 54, 108, 162, 216, 270, 324, 378]
 
-            static var color: Color { Color(.sRGB, red: 0.89, green: 0.90, blue: 0.92) | Color(.sRGB, red: 0.25, green: 0.25, blue: 0.25) }
-            static var textColor: Color { Color(.sRGB, red: 0.09, green: 0.09, blue: 0.09) | Color(.sRGB, red: 0.63, green: 0.63, blue: 0.63) }
+            static var color: Color { AmberTheme.amberMuted }
+            static var textColor: Color { AmberTheme.amberDark }
         }
 
         static let zoomGridStep: [Int: Double] = [
@@ -250,7 +250,7 @@ struct ChartViewCompatibility: View {
         static let minGlucose = 0
         static let opacity = 0.5
 
-        static var backgroundColor: Color { Color(.sRGB, red: 0.96, green: 0.96, blue: 0.96) | Color(.sRGB, red: 0.09, green: 0.09, blue: 0.09) }
+        static var backgroundColor: Color { AmberTheme.dosBlack }
     }
 
     @StateObject private var updater = MinuteUpdaterCompatibility()
@@ -372,7 +372,7 @@ struct ChartViewCompatibility: View {
 
                 Text(text.description)
                     .foregroundColor(Config.x.textColor)
-                    .font(.system(size: Config.x.fontSize))
+                    .font(DOSTypography.caption)
                     .fontWeight(fontWeight)
                     .position(x: text.x, y: text.y)
                     .if(text.x == xGridTexts.last?.x) { $0.id(Config.endID) }
@@ -391,7 +391,7 @@ struct ChartViewCompatibility: View {
 
                 Text(text.description)
                     .foregroundColor(Config.y.textColor)
-                    .font(.system(size: Config.y.fontSize))
+                    .font(DOSTypography.caption)
                     .fontWeight(fontWeight)
                     .padding(0)
                     .frame(width: Config.y.fontWidth, alignment: .trailing)

@@ -69,15 +69,15 @@ struct StatisticsView: View {
                                 label: {
                                     Circle()
                                         .if(isSelectedChartLevel(days: level.days)) {
-                                            $0.fill(Color.ui.label)
+                                            $0.fill(AmberTheme.amberLight)
                                         } else: {
-                                            $0.stroke(Color.ui.label)
+                                            $0.stroke(AmberTheme.amberLight)
                                         }
                                         .frame(width: 12, height: 12)
 
                                     Text(verbatim: level.name)
-                                        .font(.subheadline)
-                                        .foregroundColor(Color.ui.label)
+                                        .font(DOSTypography.bodySmall)
+                                        .foregroundColor(AmberTheme.amberLight)
                                 }
                             )
                             .disabled(level.days > glucoseStatistics.maxDays)
@@ -105,8 +105,8 @@ struct StatisticsView: View {
                                 
                                 if store.state.showAnnotations {
                                     Text("Average (AVG) is an overall measure of blood sugars over a period of time, offering a single high-level view of where glucose has been.")
-                                        .font(.footnote)
-                                        .foregroundColor(Color.ui.gray)
+                                        .font(DOSTypography.caption)
+                                        .foregroundColor(AmberTheme.amberMuted)
                                 }
                             }
                         }
@@ -121,8 +121,8 @@ struct StatisticsView: View {
                                 
                                 if store.state.showAnnotations {
                                     Text("Standard Deviation (SD) is a measure of the spread in glucose readings around the average - bouncing between highs and lows results in a larger SD. The goal is the lowest SD possible, which would reflect a steady glucose level with minimal swings.")
-                                        .font(.footnote)
-                                        .foregroundColor(Color.ui.gray)
+                                        .font(DOSTypography.caption)
+                                        .foregroundColor(AmberTheme.amberMuted)
                                 }
                             }
                         }
@@ -137,8 +137,8 @@ struct StatisticsView: View {
 
                                 if store.state.showAnnotations {
                                     Text("Coefficient of variation (CV) is defined as the ratio of the standard deviation to the mean. Generally speaking, most experts like to see a CV of 33% or lower, which is considered a marker of “stable” glucose levels. But take note, very young patients with diabetes tend to have higher variability than adults.")
-                                        .font(.footnote)
-                                        .foregroundColor(Color.ui.gray)
+                                        .font(DOSTypography.caption)
+                                        .foregroundColor(AmberTheme.amberMuted)
                                 }
                             }
                         }
@@ -152,8 +152,8 @@ struct StatisticsView: View {
 
                             if store.state.showAnnotations {
                                 Text("Glucose Management Indicator (GMI) is an replacement for \"estimated HbA1c\" for patients using continuous glucose monitoring.")
-                                    .font(.footnote)
-                                    .foregroundColor(Color.ui.gray)
+                                    .font(DOSTypography.caption)
+                                    .foregroundColor(AmberTheme.amberMuted)
                             }
                         }
 
@@ -166,8 +166,8 @@ struct StatisticsView: View {
 
                             if store.state.showAnnotations {
                                 Text("Time in Range (TIR) or the percentage of time spent in the target glucose range between \(store.state.alarmLow.asGlucose(glucoseUnit: store.state.glucoseUnit)) - \(store.state.alarmHigh.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true)).")
-                                    .font(.footnote)
-                                    .foregroundColor(Color.ui.gray)
+                                    .font(DOSTypography.caption)
+                                    .foregroundColor(AmberTheme.amberMuted)
                             }
                         }
 
@@ -180,8 +180,8 @@ struct StatisticsView: View {
 
                             if store.state.showAnnotations {
                                 Text("Time below Range (TBR) or the percentage of time spent below the target glucose of \(store.state.alarmLow.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true)).")
-                                    .font(.footnote)
-                                    .foregroundColor(Color.ui.gray)
+                                    .font(DOSTypography.caption)
+                                    .foregroundColor(AmberTheme.amberMuted)
                             }
                         }
 
@@ -194,8 +194,8 @@ struct StatisticsView: View {
 
                             if store.state.showAnnotations {
                                 Text("Time above Range (TAR) or the percentage of time spent above the target glucose of \(store.state.alarmHigh.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true)).")
-                                    .font(.footnote)
-                                    .foregroundColor(Color.ui.gray)
+                                    .font(DOSTypography.caption)
+                                    .foregroundColor(AmberTheme.amberMuted)
                             }
                         }
                     }.onTapGesture(count: 2) {

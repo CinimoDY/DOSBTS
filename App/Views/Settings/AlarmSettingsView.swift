@@ -49,7 +49,7 @@ struct AlarmSettingsView: View {
                     Slider(value: alarmVolume, in: 0...1, step: 0.05)
                 }
 
-                Toggle("Ignore mute", isOn: ignoreMute).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
+                Toggle("Ignore mute", isOn: ignoreMute).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: {
                 Label("Alarm settings", systemImage: "alarm")

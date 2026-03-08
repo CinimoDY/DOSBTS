@@ -18,13 +18,14 @@ struct GlucoseView: View {
                 HStack(alignment: .lastTextBaseline, spacing: 20) {
                     if latestGlucose.type != .high {
                         Text(verbatim: latestGlucose.glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit))
-                            .font(.system(size: 96))
+                            .font(DOSTypography.glucoseHero)
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
+                            .dosGlowLarge()
                         
                         VStack(alignment: .leading) {
                             Text(verbatim: latestGlucose.trend.description)
                                 .foregroundColor(getGlucoseColor(glucose: latestGlucose))
-                                .font(.system(size: 52))
+                                .font(DOSTypography.mono(size: 52, weight: .bold))
 
                             if let minuteChange = latestGlucose.minuteChange?.asMinuteChange(glucoseUnit: store.state.glucoseUnit) {
                                 Text(verbatim: minuteChange)
@@ -34,18 +35,19 @@ struct GlucoseView: View {
                         }
                     } else {
                         Text("HIGH")
-                            .font(.system(size: 96))
+                            .font(DOSTypography.glucoseHero)
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
+                            .dosGlowLarge()
                     }
                 }
 
                 if let warning = warning {
                     Text(verbatim: warning)
+                        .font(DOSTypography.bodySmall)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.ui.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(5)
+                        .background(AmberTheme.cgaRed)
+                        .foregroundColor(AmberTheme.dosBlack)
                 } else {
                     HStack(spacing: 40) {
                         Text(latestGlucose.timestamp, style: .time)
@@ -55,8 +57,8 @@ struct GlucoseView: View {
 
             } else {
                 Text("No Data")
-                    .font(.system(size: 52))
-                    .foregroundColor(Color.ui.red)
+                    .font(DOSTypography.mono(size: 52, weight: .bold))
+                    .foregroundColor(AmberTheme.cgaRed)
 
                 Text(Date(), style: .time)
                     .opacity(0.5)
@@ -129,9 +131,9 @@ struct GlucoseView: View {
 
     private func getGlucoseColor(glucose: any Glucose) -> Color {
         if isAlarm(glucose: glucose) {
-            return Color.ui.red
+            return AmberTheme.cgaRed
         }
 
-        return Color.primary
+        return AmberTheme.amber
     }
 }

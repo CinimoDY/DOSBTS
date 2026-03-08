@@ -16,8 +16,8 @@ struct AppleExportSettingsView: View {
     var body: some View {
         Section(
             content: {
-                Toggle("Export to Apple Health", isOn: appleHealthExport).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
-                Toggle("Export to Apple Calendar", isOn: appleCalendarExport).toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
+                Toggle("Export to Apple Health", isOn: appleHealthExport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+                Toggle("Export to Apple Calendar", isOn: appleCalendarExport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
                 if store.state.appleCalendarExport {
                     Picker("Selected calendar", selection: selectedCalendar) {

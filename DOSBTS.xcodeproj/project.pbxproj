@@ -82,7 +82,7 @@
 		E2715804287ABF2E00B611D9 /* SensorGlucoseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2715803287ABF2E00B611D9 /* SensorGlucoseListView.swift */; };
 		E2715806287ABF4100B611D9 /* BloodGlucoseListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2715805287ABF4100B611D9 /* BloodGlucoseListView.swift */; };
 		E2715808287ABF4B00B611D9 /* SensorErrorListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2715807287ABF4B00B611D9 /* SensorErrorListView.swift */; };
-		E27325A7275543D600D3C41D /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27325A6275543D600D3C41D /* Color.swift */; };
+
 		E278848327B4646E00E07DDC /* Lazy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E278848227B4646E00E07DDC /* Lazy.swift */; };
 		E27BBA8027AD7DDA00A6B8EE /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E27BBA7F27AD7DDA00A6B8EE /* HealthKit.framework */; };
 		E27ED9732758A41B0099149C /* VirtualConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27ED9722758A41B0099149C /* VirtualConnection.swift */; };
@@ -149,7 +149,6 @@
 		E2E8DBEA2859F46D002C84FD /* Double.swift in Sources */ = {isa = PBXBuildFile; fileRef = E26089A32748DCB500749025 /* Double.swift */; };
 		E2E8DBEB2859F46D002C84FD /* Lazy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E278848227B4646E00E07DDC /* Lazy.swift */; };
 		E2E8DBEC2859F46D002C84FD /* Int.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FCAC2B270741D200FE1CBF /* Int.swift */; };
-		E2E8DBED2859F46D002C84FD /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27325A6275543D600D3C41D /* Color.swift */; };
 		E2E8DBEE2859F46D002C84FD /* UserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FCAC2A270741D200FE1CBF /* UserDefaults.swift */; };
 		E2E8DBEF2859F46D002C84FD /* Date.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FCAC29270741D200FE1CBF /* Date.swift */; };
 		E2E8DBF02859F46D002C84FD /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FCAC28270741D200FE1CBF /* String.swift */; };
@@ -205,6 +204,13 @@
 		E2FCAC732707438A00FE1CBF /* DirectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2FCAC6F2707438A00FE1CBF /* DirectStore.swift */; };
 		E2FCAC7D270743B100FE1CBF /* sensor.png in Resources */ = {isa = PBXBuildFile; fileRef = E2FCAC77270743B100FE1CBF /* sensor.png */; };
 		E2FCAC87270743E200FE1CBF /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E2FCAC89270743E200FE1CBF /* Localizable.strings */; };
+		DA01000128000007000A0007 /* AmberTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000002000A0002 /* AmberTheme.swift */; };
+		DA01000128000008000A0008 /* DOSTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000003000A0003 /* DOSTypography.swift */; };
+		DA01000128000009000A0009 /* DOSSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000004000A0004 /* DOSSpacing.swift */; };
+		DA0100012800000A000A000A /* DOSButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000005000A0005 /* DOSButtonStyle.swift */; };
+		DA0100012800000C000A000C /* AmberTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000002000A0002 /* AmberTheme.swift */; };
+		DA0100012800000D000A000D /* DOSTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000003000A0003 /* DOSTypography.swift */; };
+		DA0100012800000E000A000E /* DOSSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA01000128000004000A0004 /* DOSSpacing.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -311,7 +317,6 @@
 		E2715803287ABF2E00B611D9 /* SensorGlucoseListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorGlucoseListView.swift; sourceTree = "<group>"; };
 		E2715805287ABF4100B611D9 /* BloodGlucoseListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodGlucoseListView.swift; sourceTree = "<group>"; };
 		E2715807287ABF4B00B611D9 /* SensorErrorListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorErrorListView.swift; sourceTree = "<group>"; };
-		E27325A6275543D600D3C41D /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		E278848227B4646E00E07DDC /* Lazy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lazy.swift; sourceTree = "<group>"; };
 		E27BBA7F27AD7DDA00A6B8EE /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		E27BFC0226B1407E00F8FBEF /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -440,6 +445,10 @@
 		E2FCAC77270743B100FE1CBF /* sensor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sensor.png; sourceTree = "<group>"; };
 		E2FCAC88270743E200FE1CBF /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E2FCAC8A270743E500FE1CBF /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		DA01000128000002000A0002 /* AmberTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmberTheme.swift; sourceTree = "<group>"; };
+		DA01000128000003000A0003 /* DOSTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSTypography.swift; sourceTree = "<group>"; };
+		DA01000128000004000A0004 /* DOSSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSSpacing.swift; sourceTree = "<group>"; };
+		DA01000128000005000A0005 /* DOSButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSButtonStyle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -504,6 +513,7 @@
 				E20B853D266F4A9800AA4224 /* App.swift */,
 				E2FCAC3D2707420000FE1CBF /* AppState.swift */,
 				E2FCAC3C270741F000FE1CBF /* Modules */,
+				DA0100012800000F000A000F /* DesignSystem */,
 				E2FDC933266FAF1C007AA1F5 /* Views */,
 				E20B8543266F4A9900AA4224 /* Preview Content */,
 				E2BF22DF266F9CA20060866F /* App.entitlements */,
@@ -545,6 +555,7 @@
 				E2FCAC742707439300FE1CBF /* Resources */,
 				E20B8541266F4A9900AA4224 /* Assets.xcassets */,
 				E2FCAC89270743E200FE1CBF /* Localizable.strings */,
+				DA01000128000001000A0001 /* DesignSystem */,
 			);
 			path = Library;
 			sourceTree = "<group>";
@@ -784,7 +795,6 @@
 				E2FCAC2A270741D200FE1CBF /* UserDefaults.swift */,
 				E2FCAC2C270741D200FE1CBF /* View.swift */,
 				E26089A32748DCB500749025 /* Double.swift */,
-				E27325A6275543D600D3C41D /* Color.swift */,
 				E278848227B4646E00E07DDC /* Lazy.swift */,
 				E2BDE9CF290DF346004B8AB7 /* UIScreen.swift */,
 			);
@@ -907,6 +917,40 @@
 				E2CAC1DD2905DB7E00C87B17 /* LoadingView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		DA01000128000001000A0001 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				DA01000128000002000A0002 /* AmberTheme.swift */,
+				DA01000128000003000A0003 /* DOSTypography.swift */,
+				DA01000128000004000A0004 /* DOSSpacing.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		DA01000128000010000A0010 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				DA01000128000005000A0005 /* DOSButtonStyle.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		DA01000128000011000A0011 /* Modifiers */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Modifiers;
+			sourceTree = "<group>";
+		};
+		DA0100012800000F000A000F /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				DA01000128000010000A0010 /* Components */,
+				DA01000128000011000A0011 /* Modifiers */,
+			);
+			path = DesignSystem;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1154,7 +1198,10 @@
 				E2FCAC1E270741BC00FE1CBF /* SensorConnectionState.swift in Sources */,
 				E2FCAC722707438A00FE1CBF /* DirectConfig.swift in Sources */,
 				E2C19FBC273568BF00B70A73 /* FactoryCalibration.swift in Sources */,
-				E27325A7275543D600D3C41D /* Color.swift in Sources */,
+				DA01000128000007000A0007 /* AmberTheme.swift in Sources */,
+				DA01000128000008000A0008 /* DOSTypography.swift in Sources */,
+				DA01000128000009000A0009 /* DOSSpacing.swift in Sources */,
+				DA0100012800000A000A000A /* DOSButtonStyle.swift in Sources */,
 				E294333E2878805A005C8A69 /* DataStore.swift in Sources */,
 				E2591C5D28740EBB0009F27C /* BellmanConnectionState.swift in Sources */,
 				E2C19FB3273567FE00B70A73 /* SensorReading.swift in Sources */,
@@ -1225,7 +1272,9 @@
 				E2016FDC285BA82600079195 /* TransmitterWidget.swift in Sources */,
 				E2E8DBFA2859F479002C84FD /* SensorReading.swift in Sources */,
 				E2E8DBFB2859F479002C84FD /* Sensor.swift in Sources */,
-				E2E8DBED2859F46D002C84FD /* Color.swift in Sources */,
+				DA0100012800000C000A000C /* AmberTheme.swift in Sources */,
+				DA0100012800000D000A000D /* DOSTypography.swift in Sources */,
+				DA0100012800000E000A000E /* DOSSpacing.swift in Sources */,
 				E2016FD9285BA80300079195 /* SensorWidget.swift in Sources */,
 				E262DCBE287A3E8900ECAB76 /* SensorError.swift in Sources */,
 			);

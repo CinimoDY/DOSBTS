@@ -35,7 +35,7 @@ struct BloodGlucoseListView: View {
                             Text(verbatim: bloodGlucose.glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true))
                                 .monospacedDigit()
                                 .if(store.state.isAlarm(glucoseValue: bloodGlucose.glucoseValue) != .none) { text in
-                                    text.foregroundColor(Color.ui.red)
+                                    text.foregroundColor(AmberTheme.cgaRed)
                                 }
                         }
                     }.onDelete { offsets in

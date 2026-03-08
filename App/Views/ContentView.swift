@@ -60,9 +60,8 @@ struct ContentView: View {
 
                 UITabBar.appearance().scrollEdgeAppearance = appearance
                 UITabBar.appearance().standardAppearance = appearance
-                UITabBar.appearance().unselectedItemTintColor = UIColor(
-                    red: 85.0 / 255.0, green: 85.0 / 255.0, blue: 85.0 / 255.0, alpha: 1.0
-                )
+                UITabBar.appearance().unselectedItemTintColor = UIColor(AmberTheme.amberDark)
+                UITabBar.appearance().tintColor = UIColor(AmberTheme.amber)
             }
         }
     }

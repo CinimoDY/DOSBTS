@@ -91,15 +91,15 @@ struct GlucoseView: View {
                     Text(glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                         .widgetAccentable()
                         .bold()
-                        .font(.system(size: 35))
+                        .font(DOSTypography.mono(size: 35, weight: .bold))
 
                     VStack(alignment: .leading) {
                         Text(glucose.trend.description)
-                            .font(.system(size: 15))
+                            .font(DOSTypography.bodySmall)
                             .bold()
 
                         Text(glucose.timestamp.toLocalTime())
-                            .font(.system(size: 10))
+                            .font(DOSTypography.tabBar)
                     }
                 }
                 .widgetBackground(backgroundView: Color("WidgetBackground"))
@@ -108,17 +108,17 @@ struct GlucoseView: View {
                 VStack(alignment: .center) {
                     Text(glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                         .widgetAccentable()
-                        .font(.system(size: 25))
+                        .font(DOSTypography.mono(size: 25, weight: .bold))
                         .bold()
 
                     Text(glucose.timestamp.toLocalTime())
-                        .font(.system(size: 10))
+                        .font(DOSTypography.tabBar)
                 }
                 .widgetBackground(backgroundView: Color("WidgetBackground"))
 
             case .systemSmall:
                 ZStack {
-                    LinearGradient(gradient: Gradient(colors: [Color.black, .ui.gray]), startPoint: .top, endPoint: .bottom)
+                    LinearGradient(gradient: Gradient(colors: [Color.black, AmberTheme.amberMuted]), startPoint: .top, endPoint: .bottom)
 
                     VStack(spacing: 10) {
                         if let appIcon = UIImage(named: "AppIcon") {
@@ -129,36 +129,36 @@ struct GlucoseView: View {
                         HStack(alignment: .lastTextBaseline, spacing: 10) {
                             if glucose.type != .high {
                                 Text(verbatim: glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
-                                    .font(.system(size: 42))
+                                    .font(DOSTypography.mono(size: 42, weight: .regular))
 
                                 VStack(alignment: .leading) {
                                     Text(verbatim: glucose.trend.description)
-                                        .font(.system(size: 18))
+                                        .font(DOSTypography.mono(size: 18, weight: .regular))
 
                                     if let minuteChange = glucose.minuteChange?.asShortMinuteChange(glucoseUnit: glucoseUnit) {
                                         Text(verbatim: minuteChange)
-                                            .font(.footnote)
+                                            .font(DOSTypography.caption)
                                     } else {
                                         Text(verbatim: "?")
-                                            .font(.footnote)
+                                            .font(DOSTypography.caption)
                                     }
                                 }
                             } else {
                                 Text("HIGH")
-                                    .font(.system(size: 64))
-                                    .foregroundColor(Color.ui.red)
+                                    .font(DOSTypography.mono(size: 64, weight: .bold))
+                                    .foregroundColor(AmberTheme.cgaRed)
                             }
                         }
 
                         VStack {
                             Text("Updated")
                                 .textCase(.uppercase)
-                                .font(.footnote)
+                                .font(DOSTypography.caption)
                             Text(glucose.timestamp, style: .time)
                                 .monospacedDigit()
                         }
                         .opacity(0.5)
-                        .font(.footnote)
+                        .font(DOSTypography.caption)
                     }
                 }
                 .widgetBackground(backgroundView: Color("WidgetBackground"))

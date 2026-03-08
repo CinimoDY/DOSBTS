@@ -59,8 +59,8 @@ struct NumberSelectorView: View {
                     Image(systemName: "minus.square")
                 }
                 .frame(width: 40, height: 40, alignment: .leading)
-                .font(.title3)
-                .foregroundColor(Color.primary)
+                .font(DOSTypography.bodyLarge)
+                .foregroundColor(AmberTheme.amber)
                 .buttonStyle(.borderless)
 
                 Slider(value: doubleProxy, in: min ... max).onChange(of: value, perform: { value in
@@ -75,8 +75,8 @@ struct NumberSelectorView: View {
                     Image(systemName: "plus.square")
                 }
                 .frame(width: 40, height: 40, alignment: .trailing)
-                .font(.title3)
-                .foregroundColor(Color.primary)
+                .font(DOSTypography.bodyLarge)
+                .foregroundColor(AmberTheme.amber)
                 .buttonStyle(.borderless)
             }
         }

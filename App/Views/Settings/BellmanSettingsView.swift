@@ -16,7 +16,7 @@ struct BellmanSettingsView: View {
         Section(
             content: {
                 Toggle("Bellman alarm", isOn: bellmanAlarm)
-                    .toggleStyle(SwitchToggleStyle(tint: Color.ui.accent))
+                    .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
                 if store.state.bellmanAlarm {
                     HStack {

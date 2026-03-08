@@ -77,7 +77,7 @@ struct TransmitterView: View {
                 in: 0 ... 100,
                 label: {
                     Text(transmitter.name)
-                        .font(.system(size: 10))
+                        .font(DOSTypography.tabBar)
                 }
             ).gaugeStyle(.accessoryCircularCapacity)
             .widgetBackground(backgroundView: Color("WidgetBackground"))

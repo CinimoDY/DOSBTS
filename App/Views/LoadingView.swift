@@ -7,6 +7,7 @@ import SwiftUI
 
 struct LoadingView<Content>: View where Content: View {
     @Binding var isShowing: Bool
+    @State private var isActive = false
     var content: () -> Content
 
     var body: some View {
@@ -18,22 +19,47 @@ struct LoadingView<Content>: View where Content: View {
                     .blur(radius: self.isShowing ? 2 : 0)
 
                 VStack {
-                    ProgressView()
-                        .scaleEffect(2)
-                        .opacity(self.isShowing ? 1 : 0)
+                    Text("LOADING...")
+                        .font(DOSTypography.body)
+                        .foregroundColor(AmberTheme.amber)
+                        .opacity(isActive ? 1 : 0)
+                        .blur(radius: isActive ? 0 : 4)
+                        .brightness(isActive ? 0 : -0.7)
                         .padding(.top, 48)
-                        .tint(Color(uiColor: UIColor.systemBackground))
-                    
-                    Text("Loading...")
-                        .padding(.top, 48)
+
+                    BlinkingCursor()
+                        .padding(.top, 24)
                         .padding(.bottom, 32)
-                        .foregroundColor(Color(uiColor: UIColor.systemBackground))
                 }
                 .frame(width: geometry.size.width / 2)
-                .background(Color(uiColor: UIColor.label))
-                .cornerRadius(10)
-                .opacity(self.isShowing ? 0.75 : 0)
+                .background(AmberTheme.dosBlack)
+                .overlay(Rectangle().stroke(AmberTheme.amberMuted.opacity(0.3), lineWidth: 1))
+                .opacity(self.isShowing ? 0.9 : 0)
+                .onAppear {
+                    withAnimation(.easeOut(duration: 0.6)) {
+                        isActive = true
+                    }
+                }
+                .onDisappear {
+                    isActive = false
+                }
             }
         }
+    }
+}
+
+private struct BlinkingCursor: View {
+    @State private var visible = true
+
+    var body: some View {
+        Text("_")
+            .font(DOSTypography.body)
+            .foregroundColor(AmberTheme.amber)
+            .opacity(visible ? 1 : 0)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.5).repeatForever()) {
+                    visible.toggle()
+                }
+            }
     }
 }

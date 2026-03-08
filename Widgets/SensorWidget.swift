@@ -103,7 +103,7 @@ struct SensorView: View {
                 in: 0 ... Double(sensor.remainingWarmupTime == nil ? sensor.lifetime : sensor.warmupTime),
                 label: {
                     Text(sensor.remainingWarmupTime == nil ? sensor.family.localizedDescription : "Warmup")
-                        .font(.system(size: 10))
+                        .font(DOSTypography.tabBar)
                 }
             )
             .gaugeStyle(.accessoryCircularCapacity)

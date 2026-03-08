@@ -28,7 +28,7 @@ struct GlucoseActivityWidget: Widget {
                         Text(latestGlucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                             .font(.body)
                             .fontWeight(.bold)
-                            .strikethrough(connectionState != .connected, color: Color.ui.red)
+                            .strikethrough(connectionState != .connected, color: AmberTheme.cgaRed)
 
                         Text(glucoseUnit.shortLocalizedDescription)
                             .font(.system(size: 12))
@@ -56,7 +56,7 @@ struct GlucoseActivityWidget: Widget {
                 {
                     Text(latestGlucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                         .font(.body)
-                        .strikethrough(connectionState != .connected, color: Color.ui.red)
+                        .strikethrough(connectionState != .connected, color: AmberTheme.cgaRed)
                 }
             }
         }
@@ -94,10 +94,10 @@ extension GlucoseStatusContext {
 
     func getGlucoseColor(glucose: any Glucose) -> Color {
         if isAlarm(glucose: glucose) {
-            return Color.ui.red
+            return AmberTheme.cgaRed
         }
 
-        return Color.primary
+        return AmberTheme.amber
     }
 }
 
@@ -113,12 +113,12 @@ struct DynamicIslandCenterView: View, GlucoseStatusContext {
                 HStack(alignment: .lastTextBaseline, spacing: 20) {
                     if latestGlucose.type != .high {
                         Text(verbatim: latestGlucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
-                            .font(.system(size: 64))
+                            .font(DOSTypography.mono(size: 64, weight: .bold))
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
 
                         VStack(alignment: .leading) {
                             Text(verbatim: latestGlucose.trend.description)
-                                .font(.system(size: 34))
+                                .font(DOSTypography.mono(size: 34, weight: .regular))
 
                             if let minuteChange = latestGlucose.minuteChange?.asMinuteChange(glucoseUnit: glucoseUnit) {
                                 Text(verbatim: minuteChange)
@@ -128,17 +128,18 @@ struct DynamicIslandCenterView: View, GlucoseStatusContext {
                         }
                     } else {
                         Text("HIGH")
-                            .font(.system(size: 64))
+                            .font(DOSTypography.mono(size: 64, weight: .bold))
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
                     }
                 }
 
                 if let warning = warning {
                     Text(verbatim: warning)
+                        .font(DOSTypography.caption)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.ui.red)
-                        .foregroundColor(.white)
+                        .background(AmberTheme.cgaRed)
+                        .foregroundColor(AmberTheme.amberLight)
                 } else {
                     HStack(spacing: 40) {
                         Text(latestGlucose.timestamp, style: .time)
@@ -148,10 +149,11 @@ struct DynamicIslandCenterView: View, GlucoseStatusContext {
 
             } else {
                 Text("No Data")
-                    .font(.system(size: 34))
-                    .foregroundColor(Color.ui.red)
+                    .font(DOSTypography.mono(size: 34, weight: .bold))
+                    .foregroundColor(AmberTheme.cgaRed)
 
                 Text(Date(), style: .time)
+                    .font(DOSTypography.caption)
                     .opacity(0.5)
             }
         }.padding(.bottom)
@@ -181,26 +183,26 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                         }
                         .bold()
                         .foregroundColor(getGlucoseColor(glucose: latestGlucose))
-                        .font(.system(size: 40))
-                        
+                        .font(DOSTypography.mono(size: 40, weight: .bold))
+
                         Text(verbatim: latestGlucose.trend.description)
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
-                            .font(.system(size: 32))
+                            .font(DOSTypography.mono(size: 32, weight: .regular))
                     }
                     
                     if let warning = warning {
                         HStack {
                             Image(systemName: "exclamationmark.triangle")
-                                .foregroundColor(Color.ui.red)
+                                .foregroundColor(AmberTheme.cgaRed)
                             
                             Text(verbatim: warning)
                                 .bold()
                         }
-                        .font(.footnote)
+                        .font(DOSTypography.caption)
                     } else {
                         HStack {
                             Text(verbatim: glucoseUnit.localizedDescription)
-                            
+
                             Group {
                                 if let minuteChange = latestGlucose.minuteChange?.asMinuteChange(glucoseUnit: glucoseUnit) {
                                     Text(verbatim: minuteChange)
@@ -210,7 +212,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                             }
                         }
                         .opacity(0.5)
-                        .font(.footnote)
+                        .font(DOSTypography.caption)
                     }
                 }
                 
@@ -238,19 +240,19 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                             .monospacedDigit()
                     }
                 }
-                .font(.footnote)
+                .font(DOSTypography.caption)
                 .frame(maxWidth: 175)
 
             } else {
                 VStack(spacing: 10) {
                     Text("No Data")
                         .bold()
-                        .font(.system(size: 35))
-                        .foregroundColor(Color.ui.red)
+                        .font(DOSTypography.mono(size: 35, weight: .bold))
+                        .foregroundColor(AmberTheme.cgaRed)
 
                     Text(Date(), style: .time)
                         .opacity(0.5)
-                        .font(.footnote)
+                        .font(DOSTypography.caption)
                 }
 
                 Spacer()

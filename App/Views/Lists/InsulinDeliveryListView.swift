@@ -45,7 +45,7 @@ struct InsulinDeliveryListView: View {
 
                                 Text(verbatim: insulinDeliveryValue.type.localizedDescription)
                                     .opacity(0.5)
-                                    .font(.footnote)
+                                    .font(DOSTypography.caption)
                             }
                         }
                     }.onDelete { offsets in
