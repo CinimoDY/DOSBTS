@@ -20,6 +20,10 @@
 		EFCE388A6BE1BC789C79E511 /* MealEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */; };
 		BD098B7D516906B95F92737F /* MealEntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47988FB1F9466EE8DB163743 /* MealEntryListView.swift */; };
 		0A18373573D9BFB02935C90B /* MealStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E048F059A0A6C176A6315 /* MealStore.swift */; };
+		AA01000228000001000B0001 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01000128000001000B0001 /* ExerciseEntry.swift */; };
+		AA01000328000001000B0001 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01000128000001000B0001 /* ExerciseEntry.swift */; };
+		AA01000228000002000B0002 /* ExerciseStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01000128000002000B0002 /* ExerciseStore.swift */; };
+		AA01000228000003000B0003 /* AppleHealthImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01000128000003000B0003 /* AppleHealthImport.swift */; };
 		6587CE4629621507008518F4 /* AddInsulinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6587CE4529621507008518F4 /* AddInsulinView.swift */; };
 		6587CE4829625E94008518F4 /* InsulinDeliveryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6587CE4729625E94008518F4 /* InsulinDeliveryListView.swift */; };
 		6587CE4A29626070008518F4 /* InsulinDelivery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6587CE4929626070008518F4 /* InsulinDelivery.swift */; };
@@ -268,6 +272,9 @@
 		F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntry.swift; sourceTree = "<group>"; };
 		47988FB1F9466EE8DB163743 /* MealEntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntryListView.swift; sourceTree = "<group>"; };
 		291E048F059A0A6C176A6315 /* MealStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealStore.swift; sourceTree = "<group>"; };
+		AA01000128000001000B0001 /* ExerciseEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseEntry.swift; sourceTree = "<group>"; };
+		AA01000128000002000B0002 /* ExerciseStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseStore.swift; sourceTree = "<group>"; };
+		AA01000128000003000B0003 /* AppleHealthImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleHealthImport.swift; sourceTree = "<group>"; };
 		6587CE4529621507008518F4 /* AddInsulinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddInsulinView.swift; sourceTree = "<group>"; };
 		6587CE4729625E94008518F4 /* InsulinDeliveryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinDeliveryListView.swift; sourceTree = "<group>"; };
 		6587CE4929626070008518F4 /* InsulinDelivery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinDelivery.swift; sourceTree = "<group>"; };
@@ -550,6 +557,14 @@
 			path = AppleExport;
 			sourceTree = "<group>";
 		};
+		AA01000128000004000B0004 /* AppleImport */ = {
+			isa = PBXGroup;
+			children = (
+				AA01000128000003000B0003 /* AppleHealthImport.swift */,
+			);
+			path = AppleImport;
+			sourceTree = "<group>";
+		};
 		E2218B87284F9E7300DB5A55 /* Library */ = {
 			isa = PBXGroup;
 			children = (
@@ -682,6 +697,7 @@
 				E2B5FDA728789ED200D35D87 /* SensorGlucoseStore.swift */,
 				E2B5FDAA28789EDF00D35D87 /* BloodGlucoseStore.swift */,
 				6587CE4B2962651B008518F4 /* InsulinDeliveryStore.swift */,
+				AA01000128000002000B0002 /* ExerciseStore.swift */,
 				291E048F059A0A6C176A6315 /* MealStore.swift */,
 				E262DCBF287A432B00ECAB76 /* SensorErrorStore.swift */,
 				E23698E3288198B400FCF69F /* Migration.swift */,
@@ -769,6 +785,7 @@
 				10B3B0CD2972D65F00B70CE4 /* Alarm.swift */,
 				E2591C5C28740EBB0009F27C /* BellmanConnectionState.swift */,
 				E26677D828799E76008E8B68 /* BloodGlucose.swift */,
+				AA01000128000001000B0001 /* ExerciseEntry.swift */,
 				6587CE4929626070008518F4 /* InsulinDelivery.swift */,
 				F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */,
 				E26677DB28799E8A008E8B68 /* Glucose.swift */,
@@ -821,6 +838,7 @@
 				E294333C2878803B005C8A69 /* DataStore */,
 				E2FCAC4A2707422000FE1CBF /* AppGroupSharing */,
 				E21B2FD227AD9CD000E996DA /* AppleExport */,
+				AA01000128000004000B0004 /* AppleImport */,
 				E2C8F5FC278CD62200519ABD /* BellmanAlarm */,
 				E2FCAC482707420D00FE1CBF /* ConnectionNotification */,
 				E2FCAC492707421600FE1CBF /* ExpiringNotification */,
@@ -1134,6 +1152,7 @@
 				E2E353F928DC6E4100824732 /* LibreConnection.swift in Sources */,
 				E24B532526B864020091417F /* ToggleView.swift in Sources */,
 				E201769127AAB96000E6A756 /* AppleHealthExport.swift in Sources */,
+				AA01000228000003000B0003 /* AppleHealthImport.swift in Sources */,
 				E2FCAC632707427500FE1CBF /* ExpiringNotification.swift in Sources */,
 				E2FCAC34270741D200FE1CBF /* View.swift in Sources */,
 				E27ED97F2758ADF40099149C /* SensorConnection.swift in Sources */,
@@ -1166,6 +1185,7 @@
 				E2FCAC1F270741BC00FE1CBF /* SensorRegion.swift in Sources */,
 				E2591C62287412740009F27C /* ScreenLock.swift in Sources */,
 				6587CE4A29626070008518F4 /* InsulinDelivery.swift in Sources */,
+				AA01000228000001000B0001 /* ExerciseEntry.swift in Sources */,
 				12028E4ACD3A51BE09BB9CFA /* MealEntry.swift in Sources */,
 				E26D19C8288143550028962C /* ChartViewCompatibility.swift in Sources */,
 				E2CAC1DA2905BDA900C87B17 /* StoreExport.swift in Sources */,
@@ -1186,6 +1206,7 @@
 				E2B5FDAB28789EDF00D35D87 /* BloodGlucoseStore.swift in Sources */,
 				E2FCAC21270741BC00FE1CBF /* SensorFamily.swift in Sources */,
 				6587CE4C2962651B008518F4 /* InsulinDeliveryStore.swift in Sources */,
+				AA01000228000002000B0002 /* ExerciseStore.swift in Sources */,
 				0A18373573D9BFB02935C90B /* MealStore.swift in Sources */,
 				E2FCAC3B270741E600FE1CBF /* DirectLog.swift in Sources */,
 				E2D34BC4274D6BB500151895 /* OverviewView.swift in Sources */,
@@ -1244,6 +1265,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6587CE4D29626AD5008518F4 /* InsulinDelivery.swift in Sources */,
+				AA01000328000001000B0001 /* ExerciseEntry.swift in Sources */,
 				EFCE388A6BE1BC789C79E511 /* MealEntry.swift in Sources */,
 				E2591C5B28740E7A0009F27C /* SensorConnectionInfo.swift in Sources */,
 				E2E8DBFF2859F47D002C84FD /* CustomCalibration.swift in Sources */,

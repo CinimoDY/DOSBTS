@@ -124,6 +124,27 @@ extension InsulinDelivery: FetchableRecord, PersistableRecord {
     }
 }
 
+// MARK: - ExerciseEntry + FetchableRecord, PersistableRecord
+
+extension ExerciseEntry: FetchableRecord, PersistableRecord {
+    static let databaseUUIDEncodingStrategy = DatabaseUUIDEncodingStrategy.uppercaseString
+
+    static var Table: String {
+        "ExerciseEntry"
+    }
+
+    enum Columns: String, ColumnExpression {
+        case id
+        case startTime
+        case endTime
+        case activityType
+        case durationMinutes
+        case activeCalories
+        case source
+        case timegroup
+    }
+}
+
 // MARK: - MealEntry + FetchableRecord, PersistableRecord
 
 extension MealEntry: FetchableRecord, PersistableRecord {

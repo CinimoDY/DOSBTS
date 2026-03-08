@@ -276,6 +276,29 @@ struct ChartView: View {
                 .foregroundStyle(AmberTheme.cgaGreen)
             }
 
+            ForEach(exerciseSeries) { exercise in
+                RectangleMark(
+                    xStart: .value("Start", exercise.startTime),
+                    xEnd: .value("End", exercise.endTime),
+                    yStart: .value("Bottom", chartMinimum),
+                    yEnd: .value("Top", chartMinimum * 0.95)
+                )
+                .foregroundStyle(AmberTheme.cgaCyan.opacity(0.3))
+            }
+
+            ForEach(store.state.heartRateSeries.indices, id: \.self) { index in
+                let point = store.state.heartRateSeries[index]
+                let normalizedHR = ((point.1 - 40) / (200 - 40)) * (chartMinimum - alarmHigh) + alarmHigh
+                LineMark(
+                    x: .value("Time", point.0),
+                    y: .value("HR", normalizedHR),
+                    series: .value("Series", "HeartRate")
+                )
+                .interpolationMethod(.monotone)
+                .foregroundStyle(AmberTheme.cgaMagenta.opacity(0.4))
+                .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+            }
+
             if showUnsmoothedValues, store.state.showSmoothedGlucose {
                 if !rawSensorGlucoseSeries.isEmpty {
                     ForEach(rawSensorGlucoseSeries) { value in
@@ -391,6 +414,14 @@ struct ChartView: View {
                 updateMealSeries()
             }
 
+        }.onChange(of: store.state.exerciseEntryValues) { _ in
+            if shouldRefresh {
+                DirectLog.info("onChange: exerciseEntryValues")
+
+                updateSeriesMetadata()
+                updateExerciseSeries()
+            }
+
         }.onChange(of: store.state.chartZoomLevel) { _ in
             if shouldRefresh {
                 DirectLog.info("onChange: chartZoomLevel")
@@ -423,6 +454,7 @@ struct ChartView: View {
             updateBloodSeries()
             updateInsulinSeries()
             updateMealSeries()
+            updateExerciseSeries()
 
         }.chartOverlay { overlayProxy in
             GeometryReader { geometryProxy in
@@ -488,6 +520,7 @@ struct ChartView: View {
     @State private var bloodGlucoseSeries: [GlucoseDatapoint] = []
     @State private var insulinSeries: [InsulinDatapoint] = []
     @State private var mealSeries: [MealDatapoint] = []
+    @State private var exerciseSeries: [ExerciseDatapoint] = []
 
     @State private var smoothSensorPointInfos: [Date: GlucoseDatapoint] = [:]
     @State private var rawSensorPointInfos: [Date: GlucoseDatapoint] = [:]
@@ -718,6 +751,11 @@ struct ChartView: View {
         self.mealSeries = store.state.mealEntryValues.map { $0.toDatapoint() }
     }
 
+    private func updateExerciseSeries() {
+        DirectLog.info("updateExerciseSeries()")
+        self.exerciseSeries = store.state.exerciseEntryValues.map { $0.toDatapoint() }
+    }
+
     private func populateValues(glucoseValues: [InsulinDelivery]) -> [InsulinDatapoint] {
         glucoseValues.map { value in
             value.toDatapoint(minDate: startMarker ?? Date(), maxDate: endMarker ?? Date())
@@ -806,6 +844,24 @@ private extension MealEntry {
             time: timestamp,
             label: mealDescription,
             carbs: carbsGrams
+        )
+    }
+}
+
+private struct ExerciseDatapoint: Identifiable {
+    let id: String
+    let startTime: Date
+    let endTime: Date
+    let activityType: String
+}
+
+private extension ExerciseEntry {
+    func toDatapoint() -> ExerciseDatapoint {
+        return ExerciseDatapoint(
+            id: id.uuidString,
+            startTime: startTime,
+            endTime: endTime,
+            activityType: activityType
         )
     }
 }

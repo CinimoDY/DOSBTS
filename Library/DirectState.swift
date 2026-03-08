@@ -20,6 +20,7 @@ protocol DirectState {
     var alarmVolume: Float { get set }
     var appleCalendarExport: Bool { get set }
     var appleHealthExport: Bool { get set }
+    var appleHealthImport: Bool { get set }
     var bellmanAlarm: Bool { get set }
     var bellmanConnectionState: BellmanConnectionState { get set }
     var bloodGlucoseValues: [BloodGlucose] { get set }
@@ -40,6 +41,8 @@ protocol DirectState {
     var highGlucoseAlarmSound: NotificationSound { get set }
     var ignoreMute: Bool { get set }
     var isConnectionPaired: Bool { get set }
+    var exerciseEntryValues: [ExerciseEntry] { get set }
+    var heartRateSeries: [(Date, Double)] { get set }
     var insulinDeliveryValues: [InsulinDelivery] { get set }
     var mealEntryValues: [MealEntry] { get set }
     var latestBloodGlucose: BloodGlucose? { get set }

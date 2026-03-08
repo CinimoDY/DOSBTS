@@ -39,6 +39,9 @@ public enum AmberTheme {
     /// --color-cga-bright-red: #ff5555
     public static let cgaRed = Color(red: 1.0, green: 85.0 / 255.0, blue: 85.0 / 255.0)
 
+    /// --color-cga-bright-magenta: #ff55ff
+    public static let cgaMagenta = Color(red: 1.0, green: 85.0 / 255.0, blue: 1.0)
+
     /// --color-cga-white: #aaaaaa
     public static let cgaWhite = Color(red: 170.0 / 255.0, green: 170.0 / 255.0, blue: 170.0 / 255.0)
 

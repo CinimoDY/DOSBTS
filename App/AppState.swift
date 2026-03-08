@@ -47,6 +47,7 @@ struct AppState: DirectState {
         self.alarmVolume = UserDefaults.standard.alarmVolume
         self.appleCalendarExport = UserDefaults.standard.appleCalendarExport
         self.appleHealthExport = UserDefaults.standard.appleHealthExport
+        self.appleHealthImport = UserDefaults.standard.appleHealthImport
         self.bellmanAlarm = UserDefaults.standard.bellmanAlarm
         self.chartShowLines = UserDefaults.standard.chartShowLines
         self.chartZoomLevel = UserDefaults.standard.chartZoomLevel
@@ -89,6 +90,8 @@ struct AppState: DirectState {
     var bellmanConnectionState: BellmanConnectionState = .disconnected
     var bloodGlucoseHistory: [BloodGlucose] = []
     var bloodGlucoseValues: [BloodGlucose] = []
+    var exerciseEntryValues: [ExerciseEntry] = []
+    var heartRateSeries: [(Date, Double)] = []
     var insulinDeliveryValues: [InsulinDelivery] = []
     var mealEntryValues: [MealEntry] = []
     var connectionError: String?
@@ -117,6 +120,7 @@ struct AppState: DirectState {
     var alarmVolume: Float { didSet { UserDefaults.standard.alarmVolume = alarmVolume } }
     var appleCalendarExport: Bool { didSet { UserDefaults.standard.appleCalendarExport = appleCalendarExport } }
     var appleHealthExport: Bool { didSet { UserDefaults.standard.appleHealthExport = appleHealthExport } }
+    var appleHealthImport: Bool { didSet { UserDefaults.standard.appleHealthImport = appleHealthImport } }
     var bellmanAlarm: Bool { didSet { UserDefaults.standard.bellmanAlarm = bellmanAlarm } }
     var chartShowLines: Bool { didSet { UserDefaults.standard.chartShowLines = chartShowLines } }
     var chartZoomLevel: Int { didSet { UserDefaults.standard.chartZoomLevel = chartZoomLevel } }

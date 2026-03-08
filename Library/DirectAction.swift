@@ -21,7 +21,9 @@ enum DirectAction {
     case clearSensorGlucoseValues
     case connectConnection
     case deleteBloodGlucose(glucose: BloodGlucose)
+    case addExerciseEntry(exerciseEntryValues: [ExerciseEntry])
     case addMealEntry(mealEntryValues: [MealEntry])
+    case deleteExerciseEntry(exerciseEntry: ExerciseEntry)
     case deleteInsulinDelivery(insulinDelivery: InsulinDelivery)
     case deleteMealEntry(mealEntry: MealEntry)
     case deleteCalibration(calibration: CustomCalibration)
@@ -33,6 +35,7 @@ enum DirectAction {
     case exportToGlooko
     case exportToTidepool
     case loadBloodGlucoseValues
+    case loadExerciseEntryValues
     case loadMealEntryValues
     case loadInsulinDeliveryValues
     case loadSensorErrorValues
@@ -42,6 +45,7 @@ enum DirectAction {
     case registerConnectionInfo(infos: [SensorConnectionInfo])
     case requestAppleCalendarAccess(enabled: Bool)
     case requestAppleHealthAccess(enabled: Bool)
+    case requestAppleHealthImportAccess(enabled: Bool)
     case resetSensor
     case resetError
     case selectCalendarTarget(id: String?)
@@ -59,10 +63,13 @@ enum DirectAction {
     case setAlarmSnoozeUntil(untilDate: Date?, autosnooze: Bool = false)
     case setAppleCalendarExport(enabled: Bool)
     case setAppleHealthExport(enabled: Bool)
+    case setAppleHealthImport(enabled: Bool)
     case setAppState(appState: ScenePhase)
     case setBellmanConnectionState(connectionState: BellmanConnectionState)
     case setBellmanNotification(enabled: Bool)
     case setBloodGlucoseValues(glucoseValues: [BloodGlucose])
+    case setExerciseEntryValues(exerciseEntryValues: [ExerciseEntry])
+    case setHeartRateSeries(heartRateSeries: [(Date, Double)])
     case setMealEntryValues(mealEntryValues: [MealEntry])
     case setInsulinDeliveryValues(insulinDeliveryValues: [InsulinDelivery])
     case setMinSelectedDate(minSelectedDate: Date)

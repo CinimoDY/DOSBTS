@@ -126,6 +126,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         
     case .setAppleHealthExport(enabled: let enabled):
         state.appleHealthExport = enabled
+
+    case .setAppleHealthImport(enabled: let enabled):
+        state.appleHealthImport = enabled
         
     case .setAppState(appState: let appState):
         state.appState = appState
@@ -186,6 +189,12 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         
     case .setInsulinDeliveryValues(insulinDeliveryValues: let insulinDeliveryValues):
         state.insulinDeliveryValues = insulinDeliveryValues
+
+    case .setExerciseEntryValues(exerciseEntryValues: let exerciseEntryValues):
+        state.exerciseEntryValues = exerciseEntryValues
+
+    case .setHeartRateSeries(heartRateSeries: let heartRateSeries):
+        state.heartRateSeries = heartRateSeries
 
     case .setMealEntryValues(mealEntryValues: let mealEntryValues):
         state.mealEntryValues = mealEntryValues

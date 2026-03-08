@@ -35,6 +35,18 @@ struct AppleExportSettingsView: View {
                 Label("Apple export settings", systemImage: "square.and.arrow.up")
             }
         )
+
+        Section(
+            content: {
+                Toggle("Import from Apple Health", isOn: appleHealthImport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+            },
+            header: {
+                Label("Apple import settings", systemImage: "square.and.arrow.down")
+            },
+            footer: {
+                Text("Import nutrition, exercise, and heart rate data from other apps via Apple Health.")
+            }
+        )
     }
 
     // MARK: Private
@@ -54,6 +66,13 @@ struct AppleExportSettingsView: View {
         Binding(
             get: { store.state.appleCalendarExport },
             set: { store.dispatch(.requestAppleCalendarAccess(enabled: $0)) }
+        )
+    }
+
+    private var appleHealthImport: Binding<Bool> {
+        Binding(
+            get: { store.state.appleHealthImport },
+            set: { store.dispatch(.requestAppleHealthImportAccess(enabled: $0)) }
         )
     }
 
