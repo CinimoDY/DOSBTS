@@ -35,6 +35,11 @@ App programmed in Swift/SwiftUI for using Libre Sensor blood glucose sensors. I 
 - Simple evaluation of glucose values
 - Loop (Workspace, dev branch) support, [Loop CGM Manager](https://github.com/creepymonster/GlucoseDirectClient)
 - Insulin input and display
+- Food logging with carb tracking
+- Apple Health import (nutrition, exercise, heart rate)
+- Apple Health carb export for manual meals
+- Exercise and heart rate chart overlays
+- Source app filtering for Health imports
 
 ## Available languages
 - Bulgarian
