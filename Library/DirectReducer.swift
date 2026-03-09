@@ -320,9 +320,6 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setAIConsentFoodPhoto(enabled: let enabled):
         state.aiConsentFoodPhoto = enabled
 
-    case .setAIConsentCorrelation(enabled: let enabled):
-        state.aiConsentCorrelation = enabled
-
     case .setClaudeAPIKeyValid(isValid: let isValid):
         state.claudeAPIKeyValid = isValid
 

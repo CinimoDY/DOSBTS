@@ -4,7 +4,6 @@
 //
 
 import Foundation
-import Network
 import UIKit
 
 // MARK: - ClaudeService
@@ -17,7 +16,6 @@ struct ClaudeService {
 
     func analyzeFood(imageData: Data) async throws -> NutritionEstimate {
         let apiKey = try getAPIKey()
-        try checkConnectivity()
 
         var request = URLRequest(url: baseURL)
         request.httpMethod = "POST"
@@ -74,7 +72,7 @@ struct ClaudeService {
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (_, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw ClaudeError.invalidResponse
@@ -88,14 +86,18 @@ struct ClaudeService {
         case 429:
             return // Rate limited means key is valid
         default:
-            let body = String(data: data, encoding: .utf8) ?? ""
-            throw ClaudeError.apiError(statusCode: httpResponse.statusCode, message: body)
+            throw ClaudeError.apiError(statusCode: httpResponse.statusCode)
         }
     }
 
     // MARK: Private
 
-    private let baseURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    private var baseURL: URL {
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
+            preconditionFailure("Invalid Anthropic API URL")
+        }
+        return url
+    }
 
     private let nutritionSchema: [String: Any] = [
         "type": "object",
@@ -131,16 +133,6 @@ struct ClaudeService {
             throw ClaudeError.invalidAPIKey
         }
         return apiKey
-    }
-
-    private func checkConnectivity() throws {
-        let monitor = NWPathMonitor()
-        let path = monitor.currentPath
-        monitor.cancel()
-
-        if path.status == .unsatisfied {
-            throw ClaudeError.networkUnavailable
-        }
     }
 
     private func detectMediaType(data: Data) -> String {
@@ -179,8 +171,7 @@ struct ClaudeService {
             throw ClaudeError.overloaded
 
         default:
-            let body = String(data: data, encoding: .utf8) ?? ""
-            throw ClaudeError.apiError(statusCode: httpResponse.statusCode, message: body)
+            throw ClaudeError.apiError(statusCode: httpResponse.statusCode)
         }
     }
 }
@@ -213,10 +204,12 @@ extension UIImage {
     func preparedForVisionAPI(maxDimension: CGFloat = 1024) -> Data? {
         let scale = min(maxDimension / size.width, maxDimension / size.height, 1.0)
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
-        UIGraphicsBeginImageContextWithOptions(newSize, true, 1.0)
-        draw(in: CGRect(origin: .zero, size: newSize))
-        let resized = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return resized?.jpegData(compressionQuality: 0.7)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1.0
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+        return renderer.jpegData(withCompressionQuality: 0.7) { context in
+            draw(in: CGRect(origin: .zero, size: newSize))
+        }
     }
 }

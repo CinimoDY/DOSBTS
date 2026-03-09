@@ -32,15 +32,6 @@ struct AISettingsView: View {
                     }
                 }
 
-                if isValidating {
-                    HStack {
-                        ProgressView()
-                            .tint(AmberTheme.amber)
-                        Text("Validating...")
-                            .foregroundStyle(AmberTheme.amberDark)
-                    }
-                }
-
                 if let error = validationError {
                     Text(error)
                         .foregroundStyle(AmberTheme.cgaRed)
@@ -67,30 +58,18 @@ struct AISettingsView: View {
             }
         )
 
-        if store.state.aiConsentFoodPhoto || store.state.aiConsentCorrelation {
+        if store.state.aiConsentFoodPhoto {
             Section(
                 content: {
-                    if store.state.aiConsentFoodPhoto {
-                        HStack {
-                            Text("Food photo analysis")
-                            Spacer()
-                            Text("Allowed")
-                                .foregroundStyle(AmberTheme.cgaGreen)
-                        }
-                    }
-
-                    if store.state.aiConsentCorrelation {
-                        HStack {
-                            Text("Glucose correlation")
-                            Spacer()
-                            Text("Allowed")
-                                .foregroundStyle(AmberTheme.cgaGreen)
-                        }
+                    HStack {
+                        Text("Food photo analysis")
+                        Spacer()
+                        Text("Allowed")
+                            .foregroundStyle(AmberTheme.cgaGreen)
                     }
 
                     Button("Revoke AI Access", role: .destructive) {
                         store.dispatch(.setAIConsentFoodPhoto(enabled: false))
-                        store.dispatch(.setAIConsentCorrelation(enabled: false))
                     }
                 },
                 header: {
@@ -103,21 +82,21 @@ struct AISettingsView: View {
     // MARK: Private
 
     @State private var apiKeyInput: String = ""
-    @State private var isValidating = false
     @State private var validationError: String?
 
     private func validateAndSave() {
         let key = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else { return }
 
-        isValidating = true
-        validationError = nil
-        store.dispatch(.validateClaudeAPIKey(apiKey: key))
-
-        // The middleware handles validation and dispatches setClaudeAPIKeyValid
-        // We clear the validating state after a delay (the middleware will update the state)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            isValidating = false
+        guard key.hasPrefix("sk-ant-"), key.count > 20 else {
+            validationError = "Invalid key format. Keys start with sk-ant-"
+            return
         }
+
+        validationError = nil
+
+        // Save to Keychain first, then dispatch validation (no key in action)
+        try? KeychainService.save(key: ClaudeService.keychainKey, value: key)
+        store.dispatch(.validateClaudeAPIKey)
     }
 }

@@ -292,13 +292,20 @@ struct FoodPhotoAnalysisView: View {
     }
 
     private func analyzeImage(_ image: UIImage) {
-        guard let imageData = image.preparedForVisionAPI() else {
-            store.dispatch(.setFoodAnalysisError(error: LocalizedString("Failed to prepare image.")))
-            return
-        }
-
         store.dispatch(.setFoodAnalysisLoading(isLoading: true))
-        store.dispatch(.analyzeFood(imageData: imageData))
+
+        Task.detached {
+            guard let imageData = image.preparedForVisionAPI() else {
+                await MainActor.run {
+                    store.dispatch(.setFoodAnalysisError(error: LocalizedString("Failed to prepare image.")))
+                }
+                return
+            }
+
+            await MainActor.run {
+                store.dispatch(.analyzeFood(imageData: imageData))
+            }
+        }
     }
 
     private func saveAnalysis() {

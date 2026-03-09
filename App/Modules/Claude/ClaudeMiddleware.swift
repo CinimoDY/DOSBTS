@@ -16,8 +16,7 @@ private func claudeMiddleware(service: LazyService<ClaudeService>) -> Middleware
     return { state, action, _ in
         switch action {
         case .analyzeFood(let imageData):
-            guard state.aiConsentFoodPhoto else {
-                DirectLog.info("AI consent not granted for food photo analysis")
+            guard state.aiConsentFoodPhoto, !state.foodAnalysisLoading else {
                 return Empty().eraseToAnyPublisher()
             }
 
@@ -33,26 +32,30 @@ private func claudeMiddleware(service: LazyService<ClaudeService>) -> Middleware
             }
             .eraseToAnyPublisher()
 
-        case .validateClaudeAPIKey(let apiKey):
+        case .validateClaudeAPIKey:
             return Future<DirectAction, DirectError> { promise in
                 Task {
+                    guard let apiKey = KeychainService.read(key: ClaudeService.keychainKey),
+                          !apiKey.isEmpty
+                    else {
+                        promise(.success(.setClaudeAPIKeyValid(isValid: false)))
+                        return
+                    }
+
                     do {
                         try await service.value.validateAPIKey(apiKey)
-                        // Key is valid — save to Keychain
-                        try? KeychainService.save(key: ClaudeService.keychainKey, value: apiKey)
                         promise(.success(.setClaudeAPIKeyValid(isValid: true)))
-                    } catch let error as ClaudeError {
-                        switch error {
-                        case .invalidAPIKey:
-                            promise(.success(.setClaudeAPIKeyValid(isValid: false)))
-                        default:
-                            // Network error — save key anyway, validate on first use
-                            try? KeychainService.save(key: ClaudeService.keychainKey, value: apiKey)
-                            promise(.success(.setClaudeAPIKeyValid(isValid: true)))
-                        }
                     } catch {
-                        try? KeychainService.save(key: ClaudeService.keychainKey, value: apiKey)
-                        promise(.success(.setClaudeAPIKeyValid(isValid: true)))
+                        if case ClaudeError.invalidAPIKey = error {
+                            KeychainService.delete(key: ClaudeService.keychainKey)
+                            promise(.success(.setClaudeAPIKeyValid(isValid: false)))
+                        } else if case ClaudeError.networkUnavailable = error {
+                            // Network unavailable — key might be valid, keep it
+                            promise(.success(.setClaudeAPIKeyValid(isValid: true)))
+                        } else {
+                            // Server error — don't assume key is valid
+                            promise(.success(.setClaudeAPIKeyValid(isValid: false)))
+                        }
                     }
                 }
             }

@@ -34,7 +34,7 @@ struct NutritionEstimate: Codable {
 // MARK: - NutritionItem
 
 struct NutritionItem: Codable, Identifiable {
-    var id: String { name }
+    let id = UUID()
     var name: String
     var carbsG: Double
     var proteinG: Double?
@@ -53,4 +53,3 @@ struct NutritionItem: Codable, Identifiable {
         case servingSize = "serving_size"
     }
 }
-
