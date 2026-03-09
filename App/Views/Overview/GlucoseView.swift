@@ -20,8 +20,8 @@ struct GlucoseView: View {
                         Text(verbatim: latestGlucose.glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit))
                             .font(DOSTypography.glucoseHero)
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
-                            .dosGlowLarge()
-                        
+                            .dosGlowLarge(color: getGlucoseColor(glucose: latestGlucose))
+
                         VStack(alignment: .leading) {
                             Text(verbatim: latestGlucose.trend.description)
                                 .foregroundColor(getGlucoseColor(glucose: latestGlucose))
@@ -37,7 +37,7 @@ struct GlucoseView: View {
                         Text("HIGH")
                             .font(DOSTypography.glucoseHero)
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
-                            .dosGlowLarge()
+                            .dosGlowLarge(color: getGlucoseColor(glucose: latestGlucose))
                     }
                 }
 

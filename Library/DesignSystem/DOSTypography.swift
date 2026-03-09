@@ -59,10 +59,10 @@ public enum DOSTypography {
 extension View {
 
     /// Large phosphor glow for hero glucose, headers
-    public func dosGlowLarge() -> some View {
+    public func dosGlowLarge(color: Color = AmberTheme.amber) -> some View {
         self
-            .shadow(color: AmberTheme.amber.opacity(0.8), radius: 1, x: 0, y: 0)
-            .shadow(color: AmberTheme.amber.opacity(0.4), radius: 6, x: 0, y: 0)
-            .shadow(color: AmberTheme.amber.opacity(0.15), radius: 16, x: 0, y: 0)
+            .shadow(color: color.opacity(0.8), radius: 1, x: 0, y: 0)
+            .shadow(color: color.opacity(0.4), radius: 6, x: 0, y: 0)
+            .shadow(color: color.opacity(0.15), radius: 16, x: 0, y: 0)
     }
 }
