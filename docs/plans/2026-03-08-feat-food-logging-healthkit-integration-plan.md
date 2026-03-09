@@ -1,7 +1,7 @@
 ---
 title: "Food Logging, HealthKit Import & AI-Powered Health Analysis"
 type: feat
-status: active
+status: completed
 date: 2026-03-08
 linear_issues:
   - DMNC-389  # Food Logging MVP
@@ -85,7 +85,7 @@ Three-phase approach, each independently shippable:
 
 ### KeychainService (Required for Phase 3)
 
-- [ ] Create `KeychainService` utility for secure credential storage
+- [x] Create `KeychainService` utility for secure credential storage
 
 ```swift
 // Minimal KeychainService — use kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
@@ -132,7 +132,7 @@ enum KeychainService {
 > **Access control choice:** `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` — accessible in background (needed for HealthKit background delivery), excluded from backups, device-only. Better than `WhenUnlockedThisDeviceOnly` which blocks background access.
 
 - [x] Fix `deleteGlucose` bug in `AppleHealthExport.swift:220` (uses `self.insulinType` instead of `self.glucoseType`)
-- [ ] Ensure CSV export escapes `mealDescription` to prevent formula injection
+- [x] Ensure CSV export escapes `mealDescription` to prevent formula injection
 
 ---
 

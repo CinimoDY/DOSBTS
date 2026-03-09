@@ -308,7 +308,22 @@ private extension DataStore {
 
 private extension FileHandle {
     func writeRow(items: [String]) {
-        let line = items.joined(separator: ",")
+        let line = items.map { escapeCSVField($0) }.joined(separator: ",")
         write("\(line)\n".data(using: .utf8)!)
     }
+}
+
+private func escapeCSVField(_ field: String) -> String {
+    // Strip leading formula trigger characters to prevent CSV injection
+    var sanitized = field
+    while let first = sanitized.first, "=+@-\t\r".contains(first) {
+        sanitized = String(sanitized.dropFirst())
+    }
+
+    // Quote fields containing commas, quotes, or newlines
+    if sanitized.contains(",") || sanitized.contains("\"") || sanitized.contains("\n") {
+        return "\"\(sanitized.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
+    return sanitized
 }
