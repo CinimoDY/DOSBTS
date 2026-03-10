@@ -7,9 +7,16 @@
 	<key>teamID</key>
 	<string>FXFM9ZCV5C</string>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.cinimody.eatthisidie</key>
+		<string>41572000-401e-4005-bb2c-5bac0b6c73a5</string>
+		<key>com.cinimody.eatthisidie.Widgets</key>
+		<string>3a801662-5a1c-448e-a2b1-c470d3c81bc2</string>
+	</dict>
 	<key>destination</key>
 	<string>upload</string>
 </dict>

@@ -125,6 +125,22 @@ Rules:
 - 8px grid spacing
 - Fast, snappy animations (linear, short duration)
 
+## Adding New State Properties
+
+New state must be added in 4 files:
+1. `Library/DirectState.swift` — protocol declaration
+2. `App/AppState.swift` — property with `didSet` + init from UserDefaults
+3. `Library/Extensions/UserDefaults.swift` — `Keys` enum case + computed property
+4. `Library/DirectReducer.swift` — reducer case
+
+Don't forget `Library/DirectAction.swift` if a new action is needed.
+
+## Adding New Files to Xcode Project
+
+No SPM/xcodeproj tooling — new `.swift` files must be added to `DOSBTS.xcodeproj/project.pbxproj` manually in 4 sections:
+- PBXBuildFile, PBXFileReference, PBXGroup (parent folder's children), PBXSourcesBuildPhase
+- Use unique hex IDs following existing patterns
+
 ## Development Rules
 
 Key constraints from `docs/development-rules.md`:
