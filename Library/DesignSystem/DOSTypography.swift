@@ -66,3 +66,67 @@ extension View {
             .shadow(color: color.opacity(0.15), radius: 16, x: 0, y: 0)
     }
 }
+
+// MARK: - CRT Animation Modifiers
+
+extension View {
+
+    /// CRT phosphor power-on effect: warm-up from dark blur to full brightness
+    public func dosPowerOn(isActive: Binding<Bool>, duration: Double = 0.6) -> some View {
+        modifier(DOSPowerOnModifier(isActive: isActive, duration: duration))
+    }
+
+    /// CRT power-off effect: shrink to horizontal line, then fade
+    public func dosPowerOff(isActive: Binding<Bool>, duration: Double = 0.3) -> some View {
+        modifier(DOSPowerOffModifier(isActive: isActive, duration: duration))
+    }
+}
+
+private struct DOSPowerOnModifier: ViewModifier {
+    @Binding var isActive: Bool
+    let duration: Double
+    @State private var animating = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(animating ? 1 : 0)
+            .blur(radius: animating ? 0 : 4)
+            .brightness(animating ? 0 : -0.7)
+            .onAppear {
+                guard isActive else { return }
+                withAnimation(.easeOut(duration: duration)) {
+                    animating = true
+                }
+            }
+            .onChange(of: isActive) { active in
+                if active {
+                    animating = false
+                    withAnimation(.easeOut(duration: duration)) {
+                        animating = true
+                    }
+                }
+            }
+    }
+}
+
+private struct DOSPowerOffModifier: ViewModifier {
+    @Binding var isActive: Bool
+    let duration: Double
+    @State private var animating = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(y: animating ? 0.002 : 1)
+            .opacity(animating ? 0 : 1)
+            .brightness(animating ? 1 : 0)
+            .onChange(of: isActive) { active in
+                if active {
+                    withAnimation(.easeIn(duration: duration)) {
+                        animating = true
+                    }
+                } else {
+                    animating = false
+                }
+            }
+    }
+}

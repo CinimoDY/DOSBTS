@@ -22,9 +22,7 @@ struct LoadingView<Content>: View where Content: View {
                     Text("LOADING...")
                         .font(DOSTypography.body)
                         .foregroundColor(AmberTheme.amber)
-                        .opacity(isActive ? 1 : 0)
-                        .blur(radius: isActive ? 0 : 4)
-                        .brightness(isActive ? 0 : -0.7)
+                        .dosPowerOn(isActive: $isActive)
                         .padding(.top, 48)
 
                     BlinkingCursor()
@@ -36,9 +34,7 @@ struct LoadingView<Content>: View where Content: View {
                 .overlay(Rectangle().stroke(AmberTheme.amberMuted.opacity(0.3), lineWidth: 1))
                 .opacity(self.isShowing ? 0.9 : 0)
                 .onAppear {
-                    withAnimation(.easeOut(duration: 0.6)) {
-                        isActive = true
-                    }
+                    isActive = true
                 }
                 .onDisappear {
                     isActive = false

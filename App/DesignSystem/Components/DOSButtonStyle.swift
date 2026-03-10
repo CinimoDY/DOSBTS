@@ -19,13 +19,16 @@ struct DOSButtonStyle: ButtonStyle {
     var variant: Variant = .primary
 
     func makeBody(configuration: Configuration) -> some View {
+        let borderColor = isEnabled ? AmberTheme.amber : AmberTheme.amberMuted
+
         configuration.label
             .font(DOSTypography.button)
             .foregroundColor(foregroundColor(configuration))
             .padding(.horizontal, DOSSpacing.md)
             .padding(.vertical, DOSSpacing.xs)
             .background(backgroundColor(configuration))
-            .overlay(Rectangle().stroke(isEnabled ? AmberTheme.amber : AmberTheme.amberMuted, lineWidth: 1))
+            .overlay(Rectangle().stroke(borderColor, lineWidth: 1))
+            .shadow(color: isEnabled ? borderColor.opacity(0.4) : .clear, radius: 4, x: 0, y: 0)
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.9), value: configuration.isPressed)
     }

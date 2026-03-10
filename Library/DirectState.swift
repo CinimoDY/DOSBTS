@@ -74,6 +74,7 @@ protocol DirectState {
     var transmitter: Transmitter? { get set }
     var showSmoothedGlucose: Bool { get set }
     var showInsulinInput: Bool { get set }
+    var showScanlines: Bool { get set }
     var aiConsentFoodPhoto: Bool { get set }
     var claudeAPIKeyValid: Bool { get set }
     var foodAnalysisResult: NutritionEstimate? { get set }

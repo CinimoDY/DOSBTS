@@ -20,6 +20,8 @@ struct AdditionalSettingsView: View {
                 if DirectConfig.showInsulinInput {
                     Toggle("Show insulin input", isOn: showInsulinInput).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                 }
+
+                Toggle("CRT scanline overlay", isOn: showScanlines).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: {
                 Label("Additional settings", systemImage: "gearshape")
@@ -38,6 +40,13 @@ struct AdditionalSettingsView: View {
         Binding(
             get: { store.state.showInsulinInput },
             set: { store.dispatch(.setShowInsulinInput(enabled: $0)) }
+        )
+    }
+
+    private var showScanlines: Binding<Bool> {
+        Binding(
+            get: { store.state.showScanlines },
+            set: { store.dispatch(.setShowScanlines(enabled: $0)) }
         )
     }
 }

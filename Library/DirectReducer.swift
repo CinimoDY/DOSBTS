@@ -317,6 +317,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setShowInsulinInput(enabled: let enabled):
         state.showInsulinInput = enabled
 
+    case .setShowScanlines(enabled: let enabled):
+        state.showScanlines = enabled
+
     case .setAIConsentFoodPhoto(enabled: let enabled):
         state.aiConsentFoodPhoto = enabled
 

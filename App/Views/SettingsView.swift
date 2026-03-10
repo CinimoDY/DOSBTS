@@ -18,6 +18,7 @@ struct SettingsView: View {
             AppleExportSettingsView()
             AISettingsView()
             BellmanSettingsView()
+            CalibrationSettingsView()
             AdditionalSettingsView()
             AboutView()
         }.listStyle(.grouped)
