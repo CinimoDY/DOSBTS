@@ -37,10 +37,11 @@ View dispatches Action -> Store.dispatch() -> Reducer mutates State
 **State persistence:** `AppState` (`App/AppState.swift`) implements `DirectState` and persists most properties to `UserDefaults`.
 
 **Architecture gotchas:**
+- **Reducer runs BEFORE middlewares** — `Store.dispatch()` calls `reducer(&state, action)` first, then passes the *new* state to middlewares. Don't guard on state that the reducer just changed for the same action flow.
 - **Traditional Xcode project** (NOT `fileSystemSynchronized`) — new files require manual `pbxproj` entries
 - **Two middleware arrays** in `App.swift` (device + simulator) — both must be updated when adding middleware
 - **Deployment target is iOS 15.0** — watch for iOS 16+/17+ only APIs (e.g. `PhotosPicker` needs `@available` guard + fallback)
-- **Deploy to TestFlight:** `./deploy.sh` (uses ASC API key)
+- **Deploy to TestFlight:** `./deploy.sh` (uses ASC API key). `ExportOptions.plist` uses automatic signing. Bump `CURRENT_PROJECT_VERSION` in pbxproj before each deploy.
 
 ## Project Structure
 
@@ -121,8 +122,8 @@ Source: eiDotter design system. Shared tokens in `Library/DesignSystem/` (`Amber
 
 Key colors:
 - **Primary amber:** `#ffb000` (P3 phosphor 602nm)
-- **Dim amber:** `#9a5700` (secondary text)
-- **Bright amber:** `#fdca9f` (highlights)
+- **Dim amber:** `#9a5700` (secondary text) → `AmberTheme.amberDark`
+- **Bright amber:** `#fdca9f` (highlights) → `AmberTheme.amberLight` (NOT amberBright)
 - **Background:** `#000000` (pure black)
 - **Success/Low:** `#55ff55` (CGA green)
 - **Error/High:** `#ff5555` (CGA red)
@@ -134,6 +135,7 @@ Rules:
 - Sharp corners preferred (DOS aesthetic)
 - Dark theme only (`.preferredColorScheme(.dark)`)
 - 8px grid spacing
+- SF Symbols have inconsistent intrinsic sizes — use `.frame(height:)` on icons when pixel-perfect alignment matters
 - Fast, snappy animations (linear, short duration)
 
 ## Adding New State Properties
@@ -151,6 +153,20 @@ Don't forget `Library/DirectAction.swift` if a new action is needed.
 No SPM/xcodeproj tooling — new `.swift` files must be added to `DOSBTS.xcodeproj/project.pbxproj` manually in 4 sections:
 - PBXBuildFile, PBXFileReference, PBXGroup (parent folder's children), PBXSourcesBuildPhase
 - Use unique hex IDs following existing patterns
+
+## Adding GRDB Table Columns
+
+Use `DatabaseMigrator` in the store's `create...Table()` method (see `SensorGlucoseStore.swift` for pattern):
+```swift
+var migrator = DatabaseMigrator()
+migrator.registerMigration("description") { db in
+    try db.alter(table: MyModel.Table) { t in
+        t.add(column: MyModel.Columns.newColumn.name, .double)
+    }
+}
+try migrator.migrate(dbQueue)
+```
+Also add the column to the `Columns` enum in `DataStore.swift`.
 
 ## Development Rules
 
