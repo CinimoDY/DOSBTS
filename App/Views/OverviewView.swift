@@ -39,35 +39,29 @@ struct OverviewView: View {
     private func QuickActionsSection() -> some View {
         Section {
             HStack(spacing: DOSSpacing.sm) {
-                // Log Food group: label + two sub-buttons
-                VStack(spacing: DOSSpacing.xxs) {
-                    Text("LOG FOOD")
-                        .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
-
-                    HStack(spacing: DOSSpacing.xs) {
-                        QuickActionButton(
-                            title: "MANUAL",
-                            icon: "fork.knife",
-                            action: { showingAddMealView = true }
-                        )
-                        .sheet(isPresented: $showingAddMealView) {
-                            AddMealView { time, description, carbs in
-                                let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
-                                store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
-                            }
+                // Meal group: MANUAL + PHOTO as one combined button
+                HStack(spacing: 1) {
+                    QuickActionButton(
+                        title: "MANUAL",
+                        icon: "fork.knife",
+                        action: { showingAddMealView = true }
+                    )
+                    .sheet(isPresented: $showingAddMealView) {
+                        AddMealView { time, description, carbs in
+                            let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
+                            store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
                         }
+                    }
 
-                        if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
-                            QuickActionButton(
-                                title: "PHOTO",
-                                icon: "camera.viewfinder",
-                                action: { showingFoodPhotoView = true }
-                            )
-                            .sheet(isPresented: $showingFoodPhotoView) {
-                                FoodPhotoAnalysisView()
-                                    .environmentObject(store)
-                            }
+                    if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
+                        QuickActionButton(
+                            title: "PHOTO",
+                            icon: "camera.viewfinder",
+                            action: { showingFoodPhotoView = true }
+                        )
+                        .sheet(isPresented: $showingFoodPhotoView) {
+                            FoodPhotoAnalysisView()
+                                .environmentObject(store)
                         }
                     }
                 }
@@ -87,6 +81,7 @@ struct OverviewView: View {
                     }
                 }
             }
+            .padding(.horizontal, DOSSpacing.xs)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: DOSSpacing.xs, leading: 0, bottom: DOSSpacing.xs, trailing: 0))
 
