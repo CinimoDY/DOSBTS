@@ -125,5 +125,6 @@ private struct QuickActionButton: View {
             .padding(.vertical, DOSSpacing.sm)
         }
         .buttonStyle(DOSButtonStyle(variant: .ghost))
+        .frame(maxWidth: .infinity)
     }
 }
