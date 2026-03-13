@@ -1,0 +1,85 @@
+{
+  "project": "DOSBTS",
+  "session": "dosbts-food-analysis-improvements",
+  "title": "Food Analysis Bug Fix, Nutrition Breakdown & HealthKit Export",
+  "started": "2026-03-13T18:00:00+01:00",
+  "completed": "2026-03-13T20:15:00+01:00",
+  "context": {
+    "app": "DOSBTS (formerly GlucoseDirect)",
+    "description": "Continuous glucose monitoring (CGM) app for iOS with DOS amber CGA aesthetic",
+    "bundleId": "com.cinimody.eatthisidie",
+    "architecture": "Redux-like Store/Action/Reducer/Middleware in SwiftUI",
+    "designSystem": "eiDotter CGA Amber (AmberTheme, DOSTypography)"
+  },
+  "commits": [
+    {
+      "hash": "12d8de2b",
+      "date": "2026-03-13T18:30:00+01:00",
+      "message": "feat(claude): fix food analysis, full nutrition breakdown, HealthKit export"
+    },
+    {
+      "hash": "ad2afcdd",
+      "date": "2026-03-13T19:20:00+01:00",
+      "message": "feat(ui): group meal buttons under LOG FOOD label, move insulin right"
+    },
+    {
+      "hash": "6f4543e7",
+      "date": "2026-03-13T19:30:00+01:00",
+      "message": "fix: middleware race condition, automatic signing, bump build 15"
+    },
+    {
+      "hash": "1e9c3380",
+      "date": "2026-03-13T19:45:00+01:00",
+      "message": "feat(ui): combine MANUAL/PHOTO buttons, align with INSULIN"
+    },
+    {
+      "hash": "922ca697",
+      "date": "2026-03-13T20:00:00+01:00",
+      "message": "fix(ui): equal width for MANUAL and PHOTO buttons"
+    },
+    {
+      "hash": "44d50961",
+      "date": "2026-03-13T20:10:00+01:00",
+      "message": "fix(ui): fixed icon height for consistent button sizing"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "Food Analysis Bug Fixed",
+      "date": "2026-03-13T18:30:00+01:00",
+      "description": "Middleware race condition fixed — foodAnalysisLoading guard was blocking the API call from ever firing"
+    },
+    {
+      "title": "Full Nutrition Breakdown Shipped",
+      "date": "2026-03-13T18:30:00+01:00",
+      "description": "MealEntry expanded with protein/fat/calories/fiber; results view shows full macro breakdown per item with editable fields"
+    },
+    {
+      "title": "HealthKit Nutrition Export",
+      "date": "2026-03-13T18:30:00+01:00",
+      "description": "All nutrition data (carbs, protein, fat, calories, fiber) written to Apple Health as separate HKQuantitySamples"
+    },
+    {
+      "title": "Quick Actions UI Redesign",
+      "date": "2026-03-13T20:10:00+01:00",
+      "description": "MANUAL and PHOTO buttons combined as a pair, INSULIN on the right, consistent sizing"
+    }
+  ],
+  "stats": {
+    "filesChanged": 11,
+    "insertions": 312,
+    "deletions": 84,
+    "newFiles": [],
+    "testFlightBuilds": [14, 15, 16, 17, 18]
+  },
+  "tags": [
+    "bug-fix",
+    "nutrition",
+    "healthkit",
+    "ui-redesign",
+    "food-analysis",
+    "ios",
+    "swiftui",
+    "testflight"
+  ]
+}
