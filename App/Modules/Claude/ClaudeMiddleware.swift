@@ -23,7 +23,7 @@ private func claudeMiddleware(service: LazyService<ClaudeService>) -> Middleware
             return Future<DirectAction, DirectError> { promise in
                 Task {
                     do {
-                        let result = try await service.value.analyzeFood(imageData: imageData)
+                        let result = try await service.value.analyzeFood(imageData: imageData, thumbWidthMM: state.thumbCalibrationMM)
                         promise(.success(.setFoodAnalysisResult(result: result)))
                     } catch {
                         promise(.success(.setFoodAnalysisError(error: error.localizedDescription)))

@@ -80,6 +80,7 @@ protocol DirectState {
     var foodAnalysisResult: NutritionEstimate? { get set }
     var foodAnalysisError: String? { get set }
     var foodAnalysisLoading: Bool { get set }
+    var thumbCalibrationMM: Double? { get set }
 }
 
 extension DirectState {

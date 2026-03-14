@@ -71,24 +71,49 @@ struct ConnectionView: View {
                     }
 
                     if store.state.isSensor {
-                        Button(
-                            action: {
-                                withAnimation {
-                                    if store.state.isDisconnectable {
-                                        store.dispatch(.disconnectConnection)
+                        HStack(spacing: DOSSpacing.sm) {
+                            Button(
+                                action: {
+                                    withAnimation {
+                                        if store.state.isDisconnectable {
+                                            store.dispatch(.disconnectConnection)
+                                        }
+
+                                        store.dispatch(.pairConnection)
                                     }
-
-                                    store.dispatch(.pairConnection)
+                                },
+                                label: {
+                                    Text("Scan sensor")
+                                        .frame(maxWidth: .infinity)
                                 }
-                            },
-                            label: {
-                                Text("Scan sensor")
-                            }
-                        )
-                        .buttonStyle(DOSButtonStyle())
-                    }
+                            )
+                            .buttonStyle(DOSButtonStyle())
 
-                    if store.state.isConnectionPaired {
+                            if store.state.isConnectionPaired, store.state.isDisconnectable {
+                                Button(
+                                    action: {
+                                        showingDisconnectConnectionAlert = true
+                                    },
+                                    label: {
+                                        Text("Disconnect")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                )
+                                .buttonStyle(DOSButtonStyle(variant: .ghost))
+                                .alert(isPresented: $showingDisconnectConnectionAlert) {
+                                    Alert(
+                                        title: Text("Are you sure you want to disconnect the sensor?"),
+                                        primaryButton: .destructive(Text("Disconnect")) {
+                                            withAnimation {
+                                                store.dispatch(.disconnectConnection)
+                                            }
+                                        },
+                                        secondaryButton: .cancel()
+                                    )
+                                }
+                            }
+                        }
+                    } else if store.state.isConnectionPaired {
                         if store.state.isConnectable {
                             Button(
                                 action: {
@@ -111,17 +136,13 @@ struct ConnectionView: View {
                                     showingDisconnectConnectionAlert = true
                                 },
                                 label: {
-                                    if store.state.isTransmitter {
-                                        Text("Disconnect transmitter")
-                                    } else {
-                                        Text("Disconnect sensor")
-                                    }
+                                    Text("Disconnect")
                                 }
                             )
                             .buttonStyle(DOSButtonStyle(variant: .ghost))
                             .alert(isPresented: $showingDisconnectConnectionAlert) {
                                 Alert(
-                                    title: Text("Are you sure you want to disconnect the sensor?"),
+                                    title: Text("Are you sure you want to disconnect?"),
                                     primaryButton: .destructive(Text("Disconnect")) {
                                         withAnimation {
                                             store.dispatch(.disconnectConnection)

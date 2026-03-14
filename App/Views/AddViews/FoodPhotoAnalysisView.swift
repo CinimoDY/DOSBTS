@@ -172,6 +172,10 @@ struct FoodPhotoAnalysisView: View {
             footer: {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Take a photo of your meal to estimate nutritional content using Claude AI.")
+                    if store.state.thumbCalibrationMM != nil {
+                        Text("Hold your thumb next to the food for better portion accuracy.")
+                            .foregroundStyle(AmberTheme.cgaGreen)
+                    }
                     if store.state.claudeAPIKeyValid {
                         Text("Estimated cost: less than $0.01 per analysis")
                             .foregroundStyle(AmberTheme.amberDark)

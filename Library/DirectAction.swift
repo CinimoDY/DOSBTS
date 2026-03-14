@@ -116,6 +116,7 @@ enum DirectAction {
     case setFoodAnalysisResult(result: NutritionEstimate?)
     case setFoodAnalysisError(error: String)
     case setFoodAnalysisLoading(isLoading: Bool)
+    case setThumbCalibration(widthMM: Double?)
     case validateClaudeAPIKey
 
     case debugAlarm

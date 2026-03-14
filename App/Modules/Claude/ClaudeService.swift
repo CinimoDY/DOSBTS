@@ -14,7 +14,7 @@ struct ClaudeService {
     static let keychainKey = "anthropic-api-key"
     static let model = "claude-haiku-4-5-20251001"
 
-    func analyzeFood(imageData: Data) async throws -> NutritionEstimate {
+    func analyzeFood(imageData: Data, thumbWidthMM: Double? = nil) async throws -> NutritionEstimate {
         let apiKey = try getAPIKey()
 
         var request = URLRequest(url: baseURL)
@@ -37,7 +37,7 @@ struct ClaudeService {
                         "media_type": mediaType,
                         "data": base64Image,
                     ]],
-                    ["type": "text", "text": "Analyze this meal photo. Identify each food item and estimate nutritional content. Be specific about portion sizes."],
+                    ["type": "text", "text": buildPrompt(thumbWidthMM: thumbWidthMM)],
                 ]],
             ],
             "output_config": [
@@ -125,6 +125,14 @@ struct ClaudeService {
         "required": ["description", "items", "total_carbs_g", "confidence"],
         "additionalProperties": false,
     ]
+
+    private func buildPrompt(thumbWidthMM: Double?) -> String {
+        var prompt = "Analyze this meal photo. Identify each food item and estimate nutritional content. Be specific about portion sizes."
+        if let mm = thumbWidthMM {
+            prompt += " The user's thumb (width: \(Int(mm))mm at the widest joint) may be visible in the photo next to the food as a size reference. If you can see a thumb, use its known width to estimate portion sizes more accurately. The thumb should be at the same depth as the food for reliable scale."
+        }
+        return prompt
+    }
 
     private func getAPIKey() throws -> String {
         guard let apiKey = KeychainService.read(key: ClaudeService.keychainKey),

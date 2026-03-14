@@ -60,6 +60,7 @@ private enum Keys: String {
     case showScanlines = "libre-direct.settings.show-scanlines"
     case aiConsentFoodPhoto = "libre-direct.settings.ai-consent-food-photo"
     case claudeAPIKeyValid = "libre-direct.settings.claude-api-key-valid"
+    case thumbCalibrationMM = "libre-direct.settings.thumb-calibration-mm"
 }
 
 extension UserDefaults {
@@ -719,6 +720,20 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Keys.claudeAPIKeyValid.rawValue)
+        }
+    }
+
+    var thumbCalibrationMM: Double? {
+        get {
+            let val = double(forKey: Keys.thumbCalibrationMM.rawValue)
+            return val > 0 ? val : nil
+        }
+        set {
+            if let newValue = newValue {
+                set(newValue, forKey: Keys.thumbCalibrationMM.rawValue)
+            } else {
+                removeObject(forKey: Keys.thumbCalibrationMM.rawValue)
+            }
         }
     }
 }

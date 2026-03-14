@@ -58,6 +58,45 @@ struct AISettingsView: View {
             }
         )
 
+        if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
+            Section(
+                content: {
+                    HStack {
+                        Text("Thumb width")
+                        Spacer()
+                        TextField("--", value: $thumbWidthInput, format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 60)
+                        Text("mm")
+                            .font(DOSTypography.caption)
+                            .foregroundStyle(AmberTheme.amberDark)
+                    }
+
+                    if store.state.thumbCalibrationMM != nil {
+                        Button("Clear calibration", role: .destructive) {
+                            thumbWidthInput = nil
+                            store.dispatch(.setThumbCalibration(widthMM: nil))
+                        }
+                    }
+                },
+                header: {
+                    Label("Portion size calibration", systemImage: "hand.raised.fingers.spread")
+                },
+                footer: {
+                    Text("Measure the widest part of your thumb at the joint just below the nail. When taking food photos, hold your thumb next to the food for more accurate portion estimates.")
+                }
+            )
+            .onAppear {
+                thumbWidthInput = store.state.thumbCalibrationMM
+            }
+            .onChange(of: thumbWidthInput) { newValue in
+                if let mm = newValue, mm > 0, mm < 50 {
+                    store.dispatch(.setThumbCalibration(widthMM: mm))
+                }
+            }
+        }
+
         if store.state.aiConsentFoodPhoto {
             Section(
                 content: {
@@ -83,6 +122,7 @@ struct AISettingsView: View {
 
     @State private var apiKeyInput: String = ""
     @State private var validationError: String?
+    @State private var thumbWidthInput: Double?
 
     private func validateAndSave() {
         let key = apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines)

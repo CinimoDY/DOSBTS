@@ -342,6 +342,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
             state.foodAnalysisError = nil
         }
 
+    case .setThumbCalibration(widthMM: let widthMM):
+        state.thumbCalibrationMM = widthMM
+
     default:
         break
     }
