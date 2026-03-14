@@ -31,6 +31,7 @@ struct FoodPhotoAnalysisView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
+                        store.dispatch(.setFoodAnalysisResult(result: nil))
                         store.dispatch(.setFoodAnalysisLoading(isLoading: false))
                         dismiss()
                     }
@@ -430,6 +431,7 @@ struct FoodPhotoAnalysisView: View {
         )
 
         store.dispatch(.addMealEntry(mealEntryValues: [meal]))
+        store.dispatch(.setFoodAnalysisResult(result: nil))
         dismiss()
     }
 }

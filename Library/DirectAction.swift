@@ -113,7 +113,7 @@ enum DirectAction {
     case deleteClaudeAPIKey
     case setAIConsentFoodPhoto(enabled: Bool)
     case setClaudeAPIKeyValid(isValid: Bool)
-    case setFoodAnalysisResult(result: NutritionEstimate)
+    case setFoodAnalysisResult(result: NutritionEstimate?)
     case setFoodAnalysisError(error: String)
     case setFoodAnalysisLoading(isLoading: Bool)
     case validateClaudeAPIKey
