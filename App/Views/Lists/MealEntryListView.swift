@@ -59,6 +59,27 @@ struct MealEntryListView: View {
                                 .foregroundStyle(AmberTheme.amberDark)
                             }
                         }
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                logAgain(mealEntry)
+                            } label: {
+                                Label("Log Again", systemImage: "arrow.counterclockwise")
+                            }
+                            .tint(AmberTheme.cgaGreen)
+                        }
+                        .contextMenu {
+                            Button {
+                                logAgain(mealEntry)
+                            } label: {
+                                Label("Log Again", systemImage: "arrow.counterclockwise")
+                            }
+
+                            Button {
+                                addToFavorites(mealEntry)
+                            } label: {
+                                Label("Add to Favorites", systemImage: "star")
+                            }
+                        }
                     }.onDelete { offsets in
                         DirectLog.info("onDelete: \(offsets)")
 
@@ -91,5 +112,30 @@ struct MealEntryListView: View {
 
     private func getTeaser(_ count: Int) -> String {
         return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
+    }
+
+    private func logAgain(_ mealEntry: MealEntry) {
+        let newEntry = MealEntry(
+            timestamp: Date(),
+            mealDescription: mealEntry.mealDescription,
+            carbsGrams: mealEntry.carbsGrams,
+            proteinGrams: mealEntry.proteinGrams,
+            fatGrams: mealEntry.fatGrams,
+            calories: mealEntry.calories,
+            fiberGrams: mealEntry.fiberGrams
+        )
+        store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
+    }
+
+    private func addToFavorites(_ mealEntry: MealEntry) {
+        let favorite = FavoriteFood(
+            mealDescription: mealEntry.mealDescription,
+            carbsGrams: mealEntry.carbsGrams,
+            proteinGrams: mealEntry.proteinGrams,
+            fatGrams: mealEntry.fatGrams,
+            calories: mealEntry.calories,
+            fiberGrams: mealEntry.fiberGrams
+        )
+        store.dispatch(.addFavoriteFoodValues(favoriteFoodValues: [favorite]))
     }
 }
