@@ -45,6 +45,8 @@ protocol DirectState {
     var heartRateSeries: [(Date, Double)] { get set }
     var healthImportExcludedSources: [String] { get set }
     var insulinDeliveryValues: [InsulinDelivery] { get set }
+    var favoriteFoodValues: [FavoriteFood] { get set }
+    var recentMealEntries: [MealEntry] { get set }
     var mealEntryValues: [MealEntry] { get set }
     var latestBloodGlucose: BloodGlucose? { get set }
     var latestInsulinDelivery: InsulinDelivery? { get set }

@@ -22,7 +22,9 @@ enum DirectAction {
     case connectConnection
     case deleteBloodGlucose(glucose: BloodGlucose)
     case addExerciseEntry(exerciseEntryValues: [ExerciseEntry])
+    case addFavoriteFoodValues(favoriteFoodValues: [FavoriteFood])
     case addMealEntry(mealEntryValues: [MealEntry])
+    case deleteFavoriteFood(favoriteFood: FavoriteFood)
     case deleteExerciseEntry(exerciseEntry: ExerciseEntry)
     case deleteInsulinDelivery(insulinDelivery: InsulinDelivery)
     case deleteMealEntry(mealEntry: MealEntry)
@@ -36,7 +38,10 @@ enum DirectAction {
     case exportToTidepool
     case loadBloodGlucoseValues
     case loadExerciseEntryValues
+    case loadFavoriteFoodValues
     case loadMealEntryValues
+    case loadRecentMealEntries
+    case logFavoriteFood(favoriteFood: FavoriteFood)
     case loadInsulinDeliveryValues
     case loadSensorErrorValues
     case loadSensorGlucoseValues
@@ -69,9 +74,11 @@ enum DirectAction {
     case setBellmanNotification(enabled: Bool)
     case setBloodGlucoseValues(glucoseValues: [BloodGlucose])
     case setExerciseEntryValues(exerciseEntryValues: [ExerciseEntry])
+    case setFavoriteFoodValues(favoriteFoodValues: [FavoriteFood])
     case setHeartRateSeries(heartRateSeries: [(Date, Double)])
     case setHealthImportExcludedSources(excludedSources: [String])
     case setMealEntryValues(mealEntryValues: [MealEntry])
+    case setRecentMealEntries(recentMealEntries: [MealEntry])
     case setInsulinDeliveryValues(insulinDeliveryValues: [InsulinDelivery])
     case setMinSelectedDate(minSelectedDate: Date)
     case setSelectedDate(selectedDate: Date?)
@@ -117,6 +124,7 @@ enum DirectAction {
     case setFoodAnalysisError(error: String)
     case setFoodAnalysisLoading(isLoading: Bool)
     case setThumbCalibration(widthMM: Double?)
+    case updateFavoriteFood(favoriteFood: FavoriteFood)
     case validateClaudeAPIKey
 
     case debugAlarm

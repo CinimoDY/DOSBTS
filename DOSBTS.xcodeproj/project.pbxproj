@@ -19,6 +19,9 @@
 		1C31A44FB629EF4C11F75A0B /* AddMealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56C48D98E9C0A125B68A771 /* AddMealView.swift */; };
 		12028E4ACD3A51BE09BB9CFA /* MealEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */; };
 		EFCE388A6BE1BC789C79E511 /* MealEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */; };
+		FF01000100000001000F0001 /* FavoriteFood.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000001000F0001 /* FavoriteFood.swift */; };
+		FF01000100000002000F0002 /* FavoriteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000002000F0002 /* FavoriteStore.swift */; };
+		FF01000100000003000F0003 /* FavoriteFood.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000001000F0001 /* FavoriteFood.swift */; };
 		BD098B7D516906B95F92737F /* MealEntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47988FB1F9466EE8DB163743 /* MealEntryListView.swift */; };
 		0A18373573D9BFB02935C90B /* MealStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E048F059A0A6C176A6315 /* MealStore.swift */; };
 		AA01000228000001000B0001 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01000128000001000B0001 /* ExerciseEntry.swift */; };
@@ -283,6 +286,8 @@
 		6587CE4429620FB0008518F4 /* DOSBTSOverride.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = DOSBTSOverride.xcconfig; sourceTree = "<group>"; };
 		D56C48D98E9C0A125B68A771 /* AddMealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddMealView.swift; sourceTree = "<group>"; };
 		F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntry.swift; sourceTree = "<group>"; };
+		FF01000200000001000F0001 /* FavoriteFood.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteFood.swift; sourceTree = "<group>"; };
+		FF01000200000002000F0002 /* FavoriteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteStore.swift; sourceTree = "<group>"; };
 		47988FB1F9466EE8DB163743 /* MealEntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntryListView.swift; sourceTree = "<group>"; };
 		291E048F059A0A6C176A6315 /* MealStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealStore.swift; sourceTree = "<group>"; };
 		AA01000128000001000B0001 /* ExerciseEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseEntry.swift; sourceTree = "<group>"; };
@@ -726,6 +731,7 @@
 				E2B5FDAA28789EDF00D35D87 /* BloodGlucoseStore.swift */,
 				6587CE4B2962651B008518F4 /* InsulinDeliveryStore.swift */,
 				AA01000128000002000B0002 /* ExerciseStore.swift */,
+				FF01000200000002000F0002 /* FavoriteStore.swift */,
 				291E048F059A0A6C176A6315 /* MealStore.swift */,
 				E262DCBF287A432B00ECAB76 /* SensorErrorStore.swift */,
 				E23698E3288198B400FCF69F /* Migration.swift */,
@@ -817,6 +823,7 @@
 				E2591C5C28740EBB0009F27C /* BellmanConnectionState.swift */,
 				E26677D828799E76008E8B68 /* BloodGlucose.swift */,
 				AA01000128000001000B0001 /* ExerciseEntry.swift */,
+				FF01000200000001000F0001 /* FavoriteFood.swift */,
 				6587CE4929626070008518F4 /* InsulinDelivery.swift */,
 				F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */,
 				CB01000100000003000C0003 /* NutritionEstimate.swift */,
@@ -1231,6 +1238,8 @@
 				E2591C62287412740009F27C /* ScreenLock.swift in Sources */,
 				6587CE4A29626070008518F4 /* InsulinDelivery.swift in Sources */,
 				AA01000228000001000B0001 /* ExerciseEntry.swift in Sources */,
+				FF01000100000001000F0001 /* FavoriteFood.swift in Sources */,
+				FF01000100000002000F0002 /* FavoriteStore.swift in Sources */,
 				12028E4ACD3A51BE09BB9CFA /* MealEntry.swift in Sources */,
 				E26D19C8288143550028962C /* ChartViewCompatibility.swift in Sources */,
 				E2CAC1DA2905BDA900C87B17 /* StoreExport.swift in Sources */,
@@ -1323,6 +1332,7 @@
 			files = (
 				6587CE4D29626AD5008518F4 /* InsulinDelivery.swift in Sources */,
 				AA01000328000001000B0001 /* ExerciseEntry.swift in Sources */,
+				FF01000100000003000F0003 /* FavoriteFood.swift in Sources */,
 				EFCE388A6BE1BC789C79E511 /* MealEntry.swift in Sources */,
 				CB01000300000003000C0003 /* NutritionEstimate.swift in Sources */,
 				E2591C5B28740E7A0009F27C /* SensorConnectionInfo.swift in Sources */,
