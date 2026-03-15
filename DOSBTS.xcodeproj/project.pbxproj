@@ -22,6 +22,7 @@
 		FF01000100000001000F0001 /* FavoriteFood.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000001000F0001 /* FavoriteFood.swift */; };
 		FF01000100000002000F0002 /* FavoriteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000002000F0002 /* FavoriteStore.swift */; };
 		FF01000100000003000F0003 /* FavoriteFood.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000001000F0001 /* FavoriteFood.swift */; };
+		FF01000100000004000F0004 /* UnifiedFoodEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF01000200000003000F0003 /* UnifiedFoodEntryView.swift */; };
 		BD098B7D516906B95F92737F /* MealEntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47988FB1F9466EE8DB163743 /* MealEntryListView.swift */; };
 		0A18373573D9BFB02935C90B /* MealStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E048F059A0A6C176A6315 /* MealStore.swift */; };
 		AA01000228000001000B0001 /* ExerciseEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA01000128000001000B0001 /* ExerciseEntry.swift */; };
@@ -288,6 +289,7 @@
 		F5B3B29325013D6A04E3E5A6 /* MealEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntry.swift; sourceTree = "<group>"; };
 		FF01000200000001000F0001 /* FavoriteFood.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteFood.swift; sourceTree = "<group>"; };
 		FF01000200000002000F0002 /* FavoriteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoriteStore.swift; sourceTree = "<group>"; };
+		FF01000200000003000F0003 /* UnifiedFoodEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedFoodEntryView.swift; sourceTree = "<group>"; };
 		47988FB1F9466EE8DB163743 /* MealEntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEntryListView.swift; sourceTree = "<group>"; };
 		291E048F059A0A6C176A6315 /* MealStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealStore.swift; sourceTree = "<group>"; };
 		AA01000128000001000B0001 /* ExerciseEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseEntry.swift; sourceTree = "<group>"; };
@@ -531,6 +533,7 @@
 				CB01000100000006000C0006 /* CameraView.swift */,
 				CB01000100000007000C0007 /* AIConsentView.swift */,
 				CB01000100000008000C0008 /* FoodPhotoAnalysisView.swift */,
+				FF01000200000003000F0003 /* UnifiedFoodEntryView.swift */,
 			);
 			path = AddViews;
 			sourceTree = "<group>";
@@ -1322,6 +1325,7 @@
 				CB01000200000006000C0006 /* CameraView.swift in Sources */,
 				CB01000200000007000C0007 /* AIConsentView.swift in Sources */,
 				CB01000200000008000C0008 /* FoodPhotoAnalysisView.swift in Sources */,
+				FF01000100000004000F0004 /* UnifiedFoodEntryView.swift in Sources */,
 				CB01000200000009000C0009 /* AISettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
