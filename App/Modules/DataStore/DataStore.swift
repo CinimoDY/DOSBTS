@@ -145,6 +145,29 @@ extension ExerciseEntry: FetchableRecord, PersistableRecord {
     }
 }
 
+// MARK: - FavoriteFood + FetchableRecord, PersistableRecord
+
+extension FavoriteFood: FetchableRecord, PersistableRecord {
+    static let databaseUUIDEncodingStrategy = DatabaseUUIDEncodingStrategy.uppercaseString
+
+    static var Table: String {
+        "FavoriteFood"
+    }
+
+    enum Columns: String, ColumnExpression {
+        case id
+        case mealDescription
+        case carbsGrams
+        case proteinGrams
+        case fatGrams
+        case calories
+        case fiberGrams
+        case sortOrder
+        case isHypoTreatment
+        case lastUsed
+    }
+}
+
 // MARK: - MealEntry + FetchableRecord, PersistableRecord
 
 extension MealEntry: FetchableRecord, PersistableRecord {

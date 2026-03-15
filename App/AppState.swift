@@ -99,6 +99,8 @@ struct AppState: DirectState {
     var heartRateSeries: [(Date, Double)] = []
     var healthImportExcludedSources: [String] { didSet { UserDefaults.standard.healthImportExcludedSources = healthImportExcludedSources } }
     var insulinDeliveryValues: [InsulinDelivery] = []
+    var favoriteFoodValues: [FavoriteFood] = []
+    var recentMealEntries: [MealEntry] = []
     var mealEntryValues: [MealEntry] = []
     var connectionError: String?
     var connectionErrorTimestamp: Date?

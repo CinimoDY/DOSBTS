@@ -15,7 +15,7 @@ struct MealEntry: CustomStringConvertible, Codable, Identifiable {
 
         self.id = UUID()
         self.timestamp = roundedTimestamp
-        self.mealDescription = mealDescription
+        self.mealDescription = mealDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         self.carbsGrams = carbsGrams
         self.proteinGrams = proteinGrams
         self.fatGrams = fatGrams
@@ -29,7 +29,7 @@ struct MealEntry: CustomStringConvertible, Codable, Identifiable {
 
         self.id = id
         self.timestamp = roundedTimestamp
-        self.mealDescription = mealDescription
+        self.mealDescription = mealDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         self.carbsGrams = carbsGrams
         self.proteinGrams = proteinGrams
         self.fatGrams = fatGrams

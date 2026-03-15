@@ -9,8 +9,7 @@ struct OverviewView: View {
     @EnvironmentObject var store: DirectStore
 
     @State private var showingAddInsulinView = false
-    @State private var showingAddMealView = false
-    @State private var showingFoodPhotoView = false
+    @State private var showingUnifiedFoodEntry = false
     @State private var showingAddBloodGlucoseView = false
 
     var body: some View {
@@ -39,31 +38,14 @@ struct OverviewView: View {
     private func QuickActionsSection() -> some View {
         Section {
             HStack(spacing: DOSSpacing.sm) {
-                // Meal group: MANUAL + PHOTO as one combined button
-                HStack(spacing: 1) {
-                    QuickActionButton(
-                        title: "MANUAL",
-                        icon: "fork.knife",
-                        action: { showingAddMealView = true }
-                    )
-                    .sheet(isPresented: $showingAddMealView) {
-                        AddMealView { time, description, carbs in
-                            let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
-                            store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
-                        }
-                    }
-
-                    if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
-                        QuickActionButton(
-                            title: "PHOTO",
-                            icon: "camera.viewfinder",
-                            action: { showingFoodPhotoView = true }
-                        )
-                        .sheet(isPresented: $showingFoodPhotoView) {
-                            FoodPhotoAnalysisView()
-                                .environmentObject(store)
-                        }
-                    }
+                QuickActionButton(
+                    title: "MEAL",
+                    icon: "fork.knife",
+                    action: { showingUnifiedFoodEntry = true }
+                )
+                .sheet(isPresented: $showingUnifiedFoodEntry) {
+                    UnifiedFoodEntryView()
+                        .environmentObject(store)
                 }
                 .frame(maxWidth: .infinity)
 
