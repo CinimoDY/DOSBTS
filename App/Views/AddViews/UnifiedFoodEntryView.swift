@@ -135,7 +135,6 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
-
     // MARK: - Recents Section
 
     @ViewBuilder

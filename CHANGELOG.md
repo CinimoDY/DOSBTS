@@ -7,7 +7,12 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Press-and-hold insta-log on QUICK favourites and recent meals: holding fills a countdown bar and logs immediately with an UNDO toast; releasing early cancels. The fill animation respects Reduce Motion, and VoiceOver users get a "Log immediately" action — DMNC-796.
+
 ### Changed
+- Tapping a QUICK favourite now opens it on the staging plate for review (portion, time, details) instead of logging instantly. Hypo-treatment favourites still log on a single tap. The "Log Now" swipe and long-press menu on recent meals are replaced by the hold gesture; "Add to Favorites" moved to a trailing swipe — DMNC-796.
+- Blood glucose entry uses the stepper field with tap-to-type (same control as insulin units), entered in your display unit (mg/dL or mmol/L) — DMNC-796.
 - Settings reorganized into a drill-down hub of six categories (Alarms & Alerts, Glucose & Display, Insulin, Sensor & Connection, Integrations, System & About). The old "Additional settings" grab-bag is dissolved — its controls moved to their natural categories — DMNC-794.
 - Dependent settings controls (Nightscout URL/secret, Apple calendar picker, Health import options, digest reminder time) now dim when their parent toggle is off instead of disappearing, so the layout stays stable and options stay discoverable — DMNC-794.
 
