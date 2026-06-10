@@ -214,14 +214,14 @@ private func createSimulatorAppStore() -> DirectStore {
         treatmentEventStoreMiddleware(),
         treatmentCycleMiddleware(),
         glucoseStatisticsMiddleware(),
-        expiringNotificationMiddelware(),
-        glucoseNotificationMiddelware(),
-        connectionNotificationMiddelware(),
+        expiringNotificationMiddleware(),
+        glucoseNotificationMiddleware(),
+        connectionNotificationMiddleware(),
         appleCalendarExportMiddleware(),
         appleHealthExportMiddleware(),
         appleHealthImportMiddleware(),
-        readAloudMiddelware(),
-        bellmanAlarmMiddelware(),
+        readAloudMiddleware(),
+        bellmanAlarmMiddleware(),
         nightscoutMiddleware(),
         appGroupSharingMiddleware(),
         screenLockMiddleware(),
@@ -232,7 +232,7 @@ private func createSimulatorAppStore() -> DirectStore {
 
     middlewares.append(widgetCenterMiddleware())
 
-    middlewares.append(sensorConnectorMiddelware([
+    middlewares.append(sensorConnectorMiddleware([
         SensorConnectionInfo(id: DirectConfig.virtualID, name: "Virtual") { VirtualLibreConnection(subject: $0) }
     ]))
 
@@ -263,14 +263,14 @@ private func createAppStore() -> DirectStore {
         treatmentEventStoreMiddleware(),
         treatmentCycleMiddleware(),
         glucoseStatisticsMiddleware(),
-        expiringNotificationMiddelware(),
-        glucoseNotificationMiddelware(),
-        connectionNotificationMiddelware(),
+        expiringNotificationMiddleware(),
+        glucoseNotificationMiddleware(),
+        connectionNotificationMiddleware(),
         appleCalendarExportMiddleware(),
         appleHealthExportMiddleware(),
         appleHealthImportMiddleware(),
-        readAloudMiddelware(),
-        bellmanAlarmMiddelware(),
+        readAloudMiddleware(),
+        bellmanAlarmMiddleware(),
         nightscoutMiddleware(),
         appGroupSharingMiddleware(),
         screenLockMiddleware(),
@@ -298,7 +298,7 @@ private func createAppStore() -> DirectStore {
         connectionInfos.append(SensorConnectionInfo(id: DirectConfig.libreLinkID, name: LocalizedString("LibreLink transmitter"), connectionCreator: { LibreLinkConnection(subject: $0) }))
     }
 
-    middlewares.append(sensorConnectorMiddelware(connectionInfos))
+    middlewares.append(sensorConnectorMiddleware(connectionInfos))
 
     if DirectConfig.isDebug {
         middlewares.append(debugMiddleware())

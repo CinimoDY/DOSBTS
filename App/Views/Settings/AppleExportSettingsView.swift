@@ -73,8 +73,10 @@ struct AppleExportSettingsView: View {
 
     // MARK: Private
 
+    private static let eventStore = EKEventStore()
+
     private var calendars: [String] {
-        EKEventStore().calendars(for: .event).map { $0.title }
+        Self.eventStore.calendars(for: .event).map { $0.title }
     }
 
     private var appleHealthExport: Binding<Bool> {

@@ -7,13 +7,13 @@ import Combine
 import Foundation
 import UserNotifications
 
-func expiringNotificationMiddelware() -> Middleware<DirectState, DirectAction> {
-    return expiringNotificationMiddelware(service: LazyService<ExpiringNotificationService>(initialization: {
+func expiringNotificationMiddleware() -> Middleware<DirectState, DirectAction> {
+    return expiringNotificationMiddleware(service: LazyService<ExpiringNotificationService>(initialization: {
         ExpiringNotificationService()
     }))
 }
 
-private func expiringNotificationMiddelware(service: LazyService<ExpiringNotificationService>) -> Middleware<DirectState, DirectAction> {
+private func expiringNotificationMiddleware(service: LazyService<ExpiringNotificationService>) -> Middleware<DirectState, DirectAction> {
     return { state, action, _ in
         switch action {
         case .setExpiringAlarmSound(sound: let sound):

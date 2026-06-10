@@ -7,15 +7,15 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-func bellmanAlarmMiddelware() -> Middleware<DirectState, DirectAction> {
+func bellmanAlarmMiddleware() -> Middleware<DirectState, DirectAction> {
     let subject = PassthroughSubject<DirectAction, DirectError>()
 
-    return bellmanAlarmMiddelware(service: LazyService<BellmanAlarmService>(initialization: {
+    return bellmanAlarmMiddleware(service: LazyService<BellmanAlarmService>(initialization: {
         BellmanAlarmService(subject: subject)
     }), subject: subject)
 }
 
-private func bellmanAlarmMiddelware(service: LazyService<BellmanAlarmService>, subject: PassthroughSubject<DirectAction, DirectError>) -> Middleware<DirectState, DirectAction> {
+private func bellmanAlarmMiddleware(service: LazyService<BellmanAlarmService>, subject: PassthroughSubject<DirectAction, DirectError>) -> Middleware<DirectState, DirectAction> {
     return { state, action, _ in
         switch action {
         case .startup:

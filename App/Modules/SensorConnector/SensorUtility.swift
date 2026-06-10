@@ -192,8 +192,11 @@ enum Libre2EUtility {
 
         let t2 = self.processCrypto(input: self.prepareVariables(uuid: uuid, i1: t11, i2: t12, i3: t13, i4: t14))
 
-        // TODO: extract if secret
-        let t31 = crc16(Data([0xc1, 0xc4, 0xc3, 0xc0, 0xd4, 0xe1, 0xe7, 0xba, UInt8(t2[0] & 0xff), UInt8((t2[0] >> 8) & 0xff)])).byteSwapped
+        // Fixed Libre 2 unlock constant from the publicly reverse-engineered
+        // streaming protocol (same bytes as upstream GlucoseDirect/xDrip+) —
+        // a protocol constant, not a user secret.
+        let unlockConstant: [UInt8] = [0xc1, 0xc4, 0xc3, 0xc0, 0xd4, 0xe1, 0xe7, 0xba]
+        let t31 = crc16(Data(unlockConstant + [UInt8(t2[0] & 0xff), UInt8((t2[0] >> 8) & 0xff)])).byteSwapped
         let t32 = crc16(Data([UInt8(t2[1] & 0xff), UInt8((t2[1] >> 8) & 0xff), UInt8(t2[2] & 0xff), UInt8((t2[2] >> 8) & 0xff), UInt8(t2[3] & 0xff), UInt8((t2[3] >> 8) & 0xff)])).byteSwapped
         let t33 = crc16(Data([ad[0], ad[1], ad[2], ad[3], ed[0], ed[1]])).byteSwapped
         let t34 = crc16(Data([ed[2], ed[3], b[0], b[1], b[2], b[3]])).byteSwapped

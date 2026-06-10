@@ -8,13 +8,13 @@ import Foundation
 import UserNotifications
 import WidgetKit
 
-func connectionNotificationMiddelware() -> Middleware<DirectState, DirectAction> {
-    return connectionNotificationMiddelware(service: LazyService<ConnectionNotificationService>(initialization: {
+func connectionNotificationMiddleware() -> Middleware<DirectState, DirectAction> {
+    return connectionNotificationMiddleware(service: LazyService<ConnectionNotificationService>(initialization: {
         ConnectionNotificationService()
     }))
 }
 
-private func connectionNotificationMiddelware(service: LazyService<ConnectionNotificationService>) -> Middleware<DirectState, DirectAction> {
+private func connectionNotificationMiddleware(service: LazyService<ConnectionNotificationService>) -> Middleware<DirectState, DirectAction> {
     return { state, action, lastState in
         switch action {
         case .startup:

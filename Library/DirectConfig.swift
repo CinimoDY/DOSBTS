@@ -39,15 +39,17 @@ enum DirectConfig {
     static var showInsulinInput = true
 
     static var appName: String = {
-        Bundle.main.localizedInfoDictionary?["CFBundleDisplayName"] as! String
+        Bundle.main.localizedInfoDictionary?["CFBundleDisplayName"] as? String
+            ?? Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String
+            ?? "DOSBTS"
     }()
 
     static var appVersion: String = {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as! String
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
     }()
 
     static var appBuild: String = {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as! String
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
     }()
 
     static var appAuthor: String? = {

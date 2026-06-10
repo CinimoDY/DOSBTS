@@ -8,13 +8,13 @@ import Foundation
 import UIKit
 import UserNotifications
 
-func glucoseNotificationMiddelware() -> Middleware<DirectState, DirectAction> {
-    return glucoseNotificationMiddelware(service: LazyService<GlucoseNotificationService>(initialization: {
+func glucoseNotificationMiddleware() -> Middleware<DirectState, DirectAction> {
+    return glucoseNotificationMiddleware(service: LazyService<GlucoseNotificationService>(initialization: {
         GlucoseNotificationService()
     }))
 }
 
-private func glucoseNotificationMiddelware(service: LazyService<GlucoseNotificationService>) -> Middleware<DirectState, DirectAction> {
+private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificationService>) -> Middleware<DirectState, DirectAction> {
     return { state, action, _ in
         switch action {
         case .setGlucoseUnit(unit: let unit):

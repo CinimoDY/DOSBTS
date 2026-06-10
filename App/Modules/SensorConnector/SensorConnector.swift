@@ -32,11 +32,11 @@ func sensorErrorMiddleware() -> Middleware<DirectState, DirectAction> {
     }
 }
 
-func sensorConnectorMiddelware(_ infos: [SensorConnectionInfo]) -> Middleware<DirectState, DirectAction> {
-    return sensorConnectorMiddelware(infos, subject: PassthroughSubject<DirectAction, DirectError>(), glucoseFilter: GlucoseFilter())
+func sensorConnectorMiddleware(_ infos: [SensorConnectionInfo]) -> Middleware<DirectState, DirectAction> {
+    return sensorConnectorMiddleware(infos, subject: PassthroughSubject<DirectAction, DirectError>(), glucoseFilter: GlucoseFilter())
 }
 
-private func sensorConnectorMiddelware(_ infos: [SensorConnectionInfo], subject: PassthroughSubject<DirectAction, DirectError>, glucoseFilter: GlucoseFilter) -> Middleware<DirectState, DirectAction> {
+private func sensorConnectorMiddleware(_ infos: [SensorConnectionInfo], subject: PassthroughSubject<DirectAction, DirectError>, glucoseFilter: GlucoseFilter) -> Middleware<DirectState, DirectAction> {
     return { state, action, _ in
         switch action {
         case .startup:

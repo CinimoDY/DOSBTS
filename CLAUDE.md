@@ -34,7 +34,7 @@ View dispatches Action -> Store.dispatch() -> Reducer mutates State
                                            -> Middlewares emit new Actions via Combine publishers
 ```
 
-**Middlewares** are defined in `App/Modules/` — each module file contains middleware functions (not classes). They return `AnyPublisher<DirectAction, DirectError>?`. There is no `Middleware` folder; look for `func ...Middleware` or `func ...Middelware` (note: typo is in the codebase) patterns.
+**Middlewares** are defined in `App/Modules/` — each module file contains middleware functions (not classes). They return `AnyPublisher<DirectAction, DirectError>?`. There is no `Middleware` folder; look for `func ...Middleware` patterns.
 
 **State persistence:** `AppState` (`App/AppState.swift`) implements `DirectState` and persists most properties to `UserDefaults`.
 

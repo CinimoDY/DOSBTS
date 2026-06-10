@@ -192,9 +192,9 @@ struct FileLogger {
         do {
             let url = allLogsFileURL
             let attr = try FileManager.default.attributesOfItem(atPath: url.path)
-            let fileSize = attr[FileAttributeKey.size] as! UInt64
-
-            return fileSize
+            if let fileSize = attr[FileAttributeKey.size] as? UInt64 {
+                return fileSize
+            }
         } catch {
             DirectLog.error("Failed to get file size: \(error)")
         }
