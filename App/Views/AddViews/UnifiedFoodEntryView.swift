@@ -13,8 +13,7 @@ struct UnifiedFoodEntryView: View {
 
     @State private var searchText = ""
     @State private var showingFavoriteManagement = false
-    @State private var toastMealEntry: MealEntry?
-    @State private var toastWorkItem: DispatchWorkItem?
+    @StateObject private var toast = LoggedMealToastController()
     @State private var relogMeal: MealEntry?
 
     private var displayedFavorites: [FavoriteFood] {
@@ -68,9 +67,15 @@ struct UnifiedFoodEntryView: View {
                 }
             }
             .overlay(alignment: .bottom) {
-                if let meal = toastMealEntry {
-                    toastView(meal: meal)
+                Group {
+                    if let meal = toast.meal {
+                        LoggedMealToast(meal: meal) {
+                            store.dispatch(.deleteMealEntry(mealEntry: meal))
+                            toast.dismiss()
+                        }
+                    }
                 }
+                .animation(.linear(duration: 0.2), value: toast.meal)
             }
             .navigationDestination(item: $relogMeal) { meal in
                 FoodPhotoAnalysisView(relogMeal: meal)
@@ -96,31 +101,30 @@ struct UnifiedFoodEntryView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DOSSpacing.xs) {
                     ForEach(filteredFavorites.prefix(8)) { favorite in
-                        Button {
-                            logFavorite(favorite)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(favorite.chipLabel)
-                                    .font(DOSTypography.caption)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-
-                                if let carbs = favorite.carbsGrams {
-                                    Text("\(Int(carbs))g")
-                                        .font(DOSTypography.caption)
-                                        .foregroundColor(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber)
-                                }
+                        if favorite.isHypoTreatment {
+                            // Hypo treatments stay 1-tap direct log with no
+                            // hold gesture (R4, KTD-7) — staging or holding
+                            // during a hypo is wrong.
+                            AmberChip(
+                                label: favorite.chipLabel,
+                                subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                                variant: .quick,
+                                tint: AmberTheme.cgaGreen
+                            ) {
+                                logFavorite(favorite)
                             }
-                            .frame(maxWidth: 120, alignment: .leading)
-                            .padding(.horizontal, DOSSpacing.sm)
-                            .padding(.vertical, DOSSpacing.xs)
-                            .background(Color.black)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 2)
-                                    .stroke(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber, lineWidth: 1)
-                            )
+                        } else {
+                            HoldToCommitProgress(
+                                onTap: { stageFavorite(favorite) },
+                                onCommit: { logFavorite(favorite) }
+                            ) {
+                                AmberChipLabel(
+                                    label: favorite.chipLabel,
+                                    subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                                    variant: .quick
+                                )
+                            }
                         }
-                        .foregroundColor(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber)
                     }
                 }
                 .padding(.vertical, DOSSpacing.xs)
@@ -151,9 +155,13 @@ struct UnifiedFoodEntryView: View {
                 }
             } else {
                 ForEach(filteredRecents) { meal in
-                    Button {
-                        openOnStagingPlate(meal)
-                    } label: {
+                    // Tap stages, hold insta-logs. The old "Log Now" swipe and
+                    // context menu are gone — a long-press context menu can't
+                    // coexist with the hold recognizer (DMNC-796 KTD-3).
+                    HoldToCommitProgress(
+                        onTap: { openOnStagingPlate(meal) },
+                        onCommit: { logRecent(meal) }
+                    ) {
                         HStack {
                             Text("> ")
                                 .font(DOSTypography.bodySmall)
@@ -173,25 +181,13 @@ struct UnifiedFoodEntryView: View {
                             }
                         }
                     }
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            logRecent(meal)
-                        } label: {
-                            Label("Log Now", systemImage: "bolt.fill")
-                        }
-                        .tint(AmberTheme.cgaGreen)
-                    }
-                    .contextMenu {
-                        Button {
-                            logRecent(meal)
-                        } label: {
-                            Label("Log Now", systemImage: "bolt.fill")
-                        }
+                    .swipeActions(edge: .trailing) {
                         Button {
                             addToFavorites(meal)
                         } label: {
                             Label("Add to Favorites", systemImage: "star")
                         }
+                        .tint(AmberTheme.amber)
                     }
                 }
             }
@@ -293,36 +289,6 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
-    // MARK: - Toast
-
-    @ViewBuilder
-    private func toastView(meal: MealEntry) -> some View {
-        HStack {
-            Text("Logged: \(meal.mealDescription)")
-                .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
-                .lineLimit(1)
-
-            Spacer()
-
-            Button("UNDO") {
-                store.dispatch(.deleteMealEntry(mealEntry: meal))
-                dismissToast()
-            }
-            .font(DOSTypography.caption)
-            .foregroundColor(AmberTheme.cgaGreen)
-        }
-        .padding(DOSSpacing.sm)
-        .background(Color.black.opacity(0.95))
-        .overlay(
-            RoundedRectangle(cornerRadius: 2)
-                .stroke(AmberTheme.amberDark, lineWidth: 1)
-        )
-        .padding(.horizontal, DOSSpacing.md)
-        .padding(.bottom, DOSSpacing.md)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-    }
-
     // MARK: - Filtering (local, no Redux dispatch)
 
     private var filteredFavorites: [FavoriteFood] {
@@ -346,13 +312,20 @@ struct UnifiedFoodEntryView: View {
         let mealEntry = favorite.toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
-        showToast(for: mealEntry)
+        toast.show(mealEntry)
+    }
+
+    private func stageFavorite(_ favorite: FavoriteFood) {
+        // lastUsed bumps at tap time even if the plate is discarded — it is
+        // a sort heuristic, not medical data (DMNC-796 KTD-4).
+        store.dispatch(.logFavoriteFood(favoriteFood: favorite))
+        relogMeal = favorite.toMealEntry()
     }
 
     private func logRecent(_ meal: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: meal).toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
-        showToast(for: newEntry)
+        toast.show(newEntry)
     }
 
     private func openOnStagingPlate(_ meal: MealEntry) {
@@ -361,24 +334,6 @@ struct UnifiedFoodEntryView: View {
 
     private func addToFavorites(_ meal: MealEntry) {
         store.dispatch(.addFavoriteFoodValues(favoriteFoodValues: [FavoriteFood.from(mealEntry: meal)]))
-    }
-
-    private func showToast(for meal: MealEntry) {
-        withAnimation(.linear(duration: 0.2)) {
-            toastMealEntry = meal
-        }
-        toastWorkItem?.cancel()
-        let workItem = DispatchWorkItem { dismissToast() }
-        toastWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
-    }
-
-    private func dismissToast() {
-        toastWorkItem?.cancel()
-        toastWorkItem = nil
-        withAnimation(.linear(duration: 0.2)) {
-            toastMealEntry = nil
-        }
     }
 }
 
@@ -394,7 +349,7 @@ struct FavoriteManagementView: View {
         NavigationView {
             List {
                 if store.state.favoriteFoodValues.isEmpty {
-                    Text("No favorites yet. Long-press a meal to add it.")
+                    Text("No favorites yet. Swipe left on a recent meal to add it.")
                         .font(DOSTypography.bodySmall)
                         .foregroundColor(AmberTheme.amberDark)
                 } else {

@@ -134,6 +134,26 @@ struct MealEntryRelogTests {
         #expect(estimate.items[0].name == "Oats")
     }
 
+    // MARK: - Favourite staging path (DMNC-796 U3)
+
+    @Test("favourite toMealEntry hydrates as single aggregate item carrying name and carbs")
+    func favouriteStagingHydration() {
+        // Covers F1: favourites never carry analysisSessionId, so staging
+        // always takes the aggregate fallback with the favourite's values.
+        let favorite = FavoriteFood(
+            mealDescription: "Oat milk latte",
+            carbsGrams: 14,
+            sortOrder: 0
+        )
+        let meal = favorite.toMealEntry()
+        #expect(meal.analysisSessionId == nil)
+
+        let estimate = meal.toNutritionEstimate(personalFoods: [])
+        #expect(estimate.items.count == 1)
+        #expect(estimate.items[0].name == "Oat milk latte")
+        #expect(estimate.items[0].carbsG == 14)
+    }
+
     // MARK: - Hashable
 
     @Test("MealEntry hashes by id")
