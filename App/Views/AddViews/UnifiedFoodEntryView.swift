@@ -102,20 +102,25 @@ struct UnifiedFoodEntryView: View {
                             // Hypo treatments stay 1-tap direct log with no
                             // hold gesture (R4, KTD-7) — staging or holding
                             // during a hypo is wrong.
-                            Button {
+                            AmberChip(
+                                label: favorite.chipLabel,
+                                subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                                variant: .quick,
+                                tint: AmberTheme.cgaGreen
+                            ) {
                                 logFavorite(favorite)
-                            } label: {
-                                favoriteChipLabel(favorite)
                             }
-                            .foregroundColor(AmberTheme.cgaGreen)
                         } else {
                             HoldToCommitProgress(
                                 onTap: { stageFavorite(favorite) },
                                 onCommit: { logFavorite(favorite) }
                             ) {
-                                favoriteChipLabel(favorite)
+                                AmberChipLabel(
+                                    label: favorite.chipLabel,
+                                    subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                                    variant: .quick
+                                )
                             }
-                            .foregroundColor(AmberTheme.amber)
                         }
                     }
                 }
@@ -130,29 +135,6 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
-    @ViewBuilder
-    private func favoriteChipLabel(_ favorite: FavoriteFood) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(favorite.chipLabel)
-                .font(DOSTypography.caption)
-                .lineLimit(1)
-                .truncationMode(.tail)
-
-            if let carbs = favorite.carbsGrams {
-                Text("\(Int(carbs))g")
-                    .font(DOSTypography.caption)
-                    .foregroundColor(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber)
-            }
-        }
-        .frame(maxWidth: 120, alignment: .leading)
-        .padding(.horizontal, DOSSpacing.sm)
-        .padding(.vertical, DOSSpacing.xs)
-        .background(Color.black)
-        .overlay(
-            RoundedRectangle(cornerRadius: 2)
-                .stroke(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber, lineWidth: 1)
-        )
-    }
 
     // MARK: - Recents Section
 
