@@ -93,3 +93,6 @@ GlucoseDirectOverride.xcconfig
 # Local Claude-Code config (account-specific)
 .claude.local.md
 .claude/*.local.*
+
+# Compound Engineering local (machine-specific) config
+.compound-engineering/*.local.yaml

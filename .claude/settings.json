@@ -9,6 +9,15 @@
             "command": "echo \"$CLAUDE_FILE_PATH\" | grep -qE '\\.(entitlements|mobileprovision|p12|provisionprofile)$' && echo 'BLOCK: Protected signing/entitlements file — do not modify' && exit 1 || exit 0"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/doke/extracode/DOSBTS/.claude/hooks/check-version-bump.sh"
+          }
+        ]
       }
     ]
   }
