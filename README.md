@@ -71,14 +71,14 @@ A TestFlight link will be posted here when it's stable enough for external teste
 
 ```bash
 # Build app
-xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp -sdk iphonesimulator -configuration Debug build
+xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -configuration Debug build
 
 # Build widget
-xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSWidget -sdk iphonesimulator -configuration Debug build
+xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSWidget -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -configuration Debug build
 
-# Tests (138 passing as of build 61)
-xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp -sdk iphonesimulator \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
+# Tests (262 passing as of build 96)
+xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' test
 ```
 
 The Xcode project uses `fileSystemSynchronized` groups — new `.swift` files under `App/`, `Library/`, or `Widgets/` are auto-picked up. See `CLAUDE.md` for the full architecture notes.
