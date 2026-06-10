@@ -98,38 +98,25 @@ struct UnifiedFoodEntryView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: DOSSpacing.xs) {
                     ForEach(filteredFavorites.prefix(8)) { favorite in
-                        Button {
-                            // Hypo treatments stay 1-tap direct log (R4) —
-                            // staging during a hypo is wrong. Everything else
-                            // reviews on the staging plate first.
-                            if favorite.isHypoTreatment {
+                        if favorite.isHypoTreatment {
+                            // Hypo treatments stay 1-tap direct log with no
+                            // hold gesture (R4, KTD-7) — staging or holding
+                            // during a hypo is wrong.
+                            Button {
                                 logFavorite(favorite)
-                            } else {
-                                stageFavorite(favorite)
+                            } label: {
+                                favoriteChipLabel(favorite)
                             }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(favorite.chipLabel)
-                                    .font(DOSTypography.caption)
-                                    .lineLimit(1)
-                                    .truncationMode(.tail)
-
-                                if let carbs = favorite.carbsGrams {
-                                    Text("\(Int(carbs))g")
-                                        .font(DOSTypography.caption)
-                                        .foregroundColor(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber)
-                                }
+                            .foregroundColor(AmberTheme.cgaGreen)
+                        } else {
+                            HoldToCommitProgress(
+                                onTap: { stageFavorite(favorite) },
+                                onCommit: { logFavorite(favorite) }
+                            ) {
+                                favoriteChipLabel(favorite)
                             }
-                            .frame(maxWidth: 120, alignment: .leading)
-                            .padding(.horizontal, DOSSpacing.sm)
-                            .padding(.vertical, DOSSpacing.xs)
-                            .background(Color.black)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 2)
-                                    .stroke(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber, lineWidth: 1)
-                            )
+                            .foregroundColor(AmberTheme.amber)
                         }
-                        .foregroundColor(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber)
                     }
                 }
                 .padding(.vertical, DOSSpacing.xs)
@@ -141,6 +128,30 @@ struct UnifiedFoodEntryView: View {
                 .font(DOSTypography.caption)
                 .foregroundColor(AmberTheme.amberDark)
         }
+    }
+
+    @ViewBuilder
+    private func favoriteChipLabel(_ favorite: FavoriteFood) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(favorite.chipLabel)
+                .font(DOSTypography.caption)
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            if let carbs = favorite.carbsGrams {
+                Text("\(Int(carbs))g")
+                    .font(DOSTypography.caption)
+                    .foregroundColor(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber)
+            }
+        }
+        .frame(maxWidth: 120, alignment: .leading)
+        .padding(.horizontal, DOSSpacing.sm)
+        .padding(.vertical, DOSSpacing.xs)
+        .background(Color.black)
+        .overlay(
+            RoundedRectangle(cornerRadius: 2)
+                .stroke(favorite.isHypoTreatment ? AmberTheme.cgaGreen : AmberTheme.amber, lineWidth: 1)
+        )
     }
 
     // MARK: - Recents Section
@@ -160,9 +171,13 @@ struct UnifiedFoodEntryView: View {
                 }
             } else {
                 ForEach(filteredRecents) { meal in
-                    Button {
-                        openOnStagingPlate(meal)
-                    } label: {
+                    // Tap stages, hold insta-logs. The old "Log Now" swipe and
+                    // context menu are gone — a long-press context menu can't
+                    // coexist with the hold recognizer (DMNC-796 KTD-3).
+                    HoldToCommitProgress(
+                        onTap: { openOnStagingPlate(meal) },
+                        onCommit: { logRecent(meal) }
+                    ) {
                         HStack {
                             Text("> ")
                                 .font(DOSTypography.bodySmall)
@@ -182,25 +197,13 @@ struct UnifiedFoodEntryView: View {
                             }
                         }
                     }
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            logRecent(meal)
-                        } label: {
-                            Label("Log Now", systemImage: "bolt.fill")
-                        }
-                        .tint(AmberTheme.cgaGreen)
-                    }
-                    .contextMenu {
-                        Button {
-                            logRecent(meal)
-                        } label: {
-                            Label("Log Now", systemImage: "bolt.fill")
-                        }
+                    .swipeActions(edge: .trailing) {
                         Button {
                             addToFavorites(meal)
                         } label: {
                             Label("Add to Favorites", systemImage: "star")
                         }
+                        .tint(AmberTheme.amber)
                     }
                 }
             }
