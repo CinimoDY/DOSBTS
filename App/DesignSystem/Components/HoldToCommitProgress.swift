@@ -4,9 +4,15 @@
 //
 //  Press-and-hold commit control (DMNC-796). Tap fires `onTap` (typically a
 //  staging route); holding past `holdDuration` fills a countdown overlay and
-//  fires `onCommit` exactly once. Releasing early — or a scroll drag that
-//  steals the gesture — cancels with no commit. The fill is the confirmation:
-//  no hidden affordance, no accidental commit.
+//  fires `onCommit` exactly once. Releasing early — or starting a scroll —
+//  cancels with no commit. The fill is the confirmation: no hidden
+//  affordance, no accidental commit.
+//
+//  Implementation note: this is a Button with a press-tracking style, NOT a
+//  LongPressGesture. A long-press recognizer starves the enclosing
+//  ScrollView/List pan gesture and makes the row unscrollable; Buttons
+//  cooperate with scroll-view touch handling natively (drag cancels the
+//  press), which is exactly the cancel-on-scroll semantic we want.
 //
 
 import SwiftUI
@@ -22,50 +28,57 @@ struct HoldToCommitProgress<Content: View>: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @GestureState private var isPressing = false
     @State private var fillProgress: Double = 0
     @State private var committedAt: Date?
-    // One-shot per-gesture flag: a finger-down past the threshold commits via
-    // the long press, but the subsequent touch-up can still register as a tap.
-    // The flag (cleared when a new press begins) suppresses it regardless of
-    // how long the user kept holding; the committedAt wall-clock window is a
-    // fallback so a missed tap event can never permanently swallow real taps.
+    // One-shot per-press flag: the commit fires at the threshold while the
+    // finger is still down, and the subsequent touch-up triggers the Button
+    // action. The flag (cleared when a new press begins) suppresses it; the
+    // committedAt wall-clock window is a fallback so a missed press event
+    // can never permanently swallow real taps.
     @State private var didCommitDuringPress = false
-    // Reduce Motion: discrete steps driven by a cancellable task instead of an
-    // animated fill (async/await per repo rules; cancellation covers dismissal).
+    // Fires commit when the press survives the full hold duration.
+    @State private var commitTask: Task<Void, Never>?
+    // Reduce Motion: discrete steps instead of an animated fill.
     @State private var stepTask: Task<Void, Never>?
 
     var body: some View {
-        content()
-            .overlay(fillOverlay)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: handleTap)
-            .simultaneousGesture(
-                LongPressGesture(minimumDuration: Self.holdDuration)
-                    .updating($isPressing) { current, state, _ in state = current }
-                    .onEnded { _ in commit() }
-            )
-            .onChange(of: isPressing) { _, pressing in
-                if pressing {
-                    didCommitDuringPress = false
-                    beginFill()
-                } else {
-                    cancelFill()
-                }
-            }
-            .onDisappear {
-                stepTask?.cancel()
-                stepTask = nil
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { onTap() }
-            .accessibilityAction(named: "Log immediately") {
-                // Same suppression window guards rapid double activation of
-                // the custom action from minting duplicate entries.
-                guard !Self.shouldSuppressTap(now: Date(), committedAt: committedAt) else { return }
+        Button(action: handleTap) {
+            content()
+                .overlay(fillOverlay)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(PressTrackingButtonStyle(onPressingChanged: handlePressingChanged))
+        .onDisappear {
+            commitTask?.cancel()
+            commitTask = nil
+            stepTask?.cancel()
+            stepTask = nil
+        }
+        .accessibilityAction(named: "Log immediately") {
+            // Suppression window guards rapid double activation of the
+            // custom action from minting duplicate entries.
+            guard !Self.shouldSuppressTap(now: Date(), committedAt: committedAt) else { return }
+            commit()
+        }
+    }
+
+    // MARK: - Press lifecycle
+
+    private func handlePressingChanged(_ pressing: Bool) {
+        if pressing {
+            didCommitDuringPress = false
+            beginFill()
+            commitTask?.cancel()
+            commitTask = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(Self.holdDuration))
+                guard !Task.isCancelled else { return }
                 commit()
             }
+        } else {
+            commitTask?.cancel()
+            commitTask = nil
+            cancelFill()
+        }
     }
 
     private func handleTap() {
@@ -90,7 +103,7 @@ struct HoldToCommitProgress<Content: View>: View {
     }
 
     /// Taps landing within a short window after a hold-commit are the
-    /// touch-up of that same gesture, not a new intent.
+    /// touch-up of that same press, not a new intent.
     static func shouldSuppressTap(now: Date, committedAt: Date?, window: TimeInterval = 1.0) -> Bool {
         guard let committedAt else { return false }
         return now.timeIntervalSince(committedAt) < window
@@ -110,8 +123,8 @@ struct HoldToCommitProgress<Content: View>: View {
 
     private func beginFill() {
         if reduceMotion {
-            // Non-animated stepped progress; the commit threshold is still
-            // owned by the gesture, so timing is identical (R7).
+            // Non-animated stepped progress; the commit threshold is owned by
+            // commitTask, so timing is identical (R7).
             let stepInterval = Self.holdDuration / 4
             stepTask?.cancel()
             stepTask = Task { @MainActor in
@@ -142,6 +155,21 @@ struct HoldToCommitProgress<Content: View>: View {
         DirectNotifications.shared.hapticFeedback(.medium)
         onCommit()
         cancelFill()
+    }
+}
+
+// MARK: - PressTrackingButtonStyle
+
+/// Reports press state changes; renders the label unstyled (the hold fill is
+/// the press feedback, so the default opacity flash is intentionally absent).
+private struct PressTrackingButtonStyle: ButtonStyle {
+    let onPressingChanged: (Bool) -> Void
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, pressed in
+                onPressingChanged(pressed)
+            }
     }
 }
 
