@@ -13,8 +13,7 @@ struct UnifiedFoodEntryView: View {
 
     @State private var searchText = ""
     @State private var showingFavoriteManagement = false
-    @State private var toastMealEntry: MealEntry?
-    @State private var toastWorkItem: DispatchWorkItem?
+    @StateObject private var toast = LoggedMealToastController()
     @State private var relogMeal: MealEntry?
 
     private var displayedFavorites: [FavoriteFood] {
@@ -68,8 +67,11 @@ struct UnifiedFoodEntryView: View {
                 }
             }
             .overlay(alignment: .bottom) {
-                if let meal = toastMealEntry {
-                    toastView(meal: meal)
+                if let meal = toast.meal {
+                    LoggedMealToast(meal: meal) {
+                        store.dispatch(.deleteMealEntry(mealEntry: meal))
+                        toast.dismiss()
+                    }
                 }
             }
             .navigationDestination(item: $relogMeal) { meal in
@@ -293,36 +295,6 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
-    // MARK: - Toast
-
-    @ViewBuilder
-    private func toastView(meal: MealEntry) -> some View {
-        HStack {
-            Text("Logged: \(meal.mealDescription)")
-                .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
-                .lineLimit(1)
-
-            Spacer()
-
-            Button("UNDO") {
-                store.dispatch(.deleteMealEntry(mealEntry: meal))
-                dismissToast()
-            }
-            .font(DOSTypography.caption)
-            .foregroundColor(AmberTheme.cgaGreen)
-        }
-        .padding(DOSSpacing.sm)
-        .background(Color.black.opacity(0.95))
-        .overlay(
-            RoundedRectangle(cornerRadius: 2)
-                .stroke(AmberTheme.amberDark, lineWidth: 1)
-        )
-        .padding(.horizontal, DOSSpacing.md)
-        .padding(.bottom, DOSSpacing.md)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-    }
-
     // MARK: - Filtering (local, no Redux dispatch)
 
     private var filteredFavorites: [FavoriteFood] {
@@ -346,13 +318,13 @@ struct UnifiedFoodEntryView: View {
         let mealEntry = favorite.toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
-        showToast(for: mealEntry)
+        toast.show(mealEntry)
     }
 
     private func logRecent(_ meal: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: meal).toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
-        showToast(for: newEntry)
+        toast.show(newEntry)
     }
 
     private func openOnStagingPlate(_ meal: MealEntry) {
@@ -361,24 +333,6 @@ struct UnifiedFoodEntryView: View {
 
     private func addToFavorites(_ meal: MealEntry) {
         store.dispatch(.addFavoriteFoodValues(favoriteFoodValues: [FavoriteFood.from(mealEntry: meal)]))
-    }
-
-    private func showToast(for meal: MealEntry) {
-        withAnimation(.linear(duration: 0.2)) {
-            toastMealEntry = meal
-        }
-        toastWorkItem?.cancel()
-        let workItem = DispatchWorkItem { dismissToast() }
-        toastWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: workItem)
-    }
-
-    private func dismissToast() {
-        toastWorkItem?.cancel()
-        toastWorkItem = nil
-        withAnimation(.linear(duration: 0.2)) {
-            toastMealEntry = nil
-        }
     }
 }
 
