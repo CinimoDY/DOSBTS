@@ -37,7 +37,7 @@ struct NumberSelectorView: View {
         Binding<Double>(get: {
             Double(value)
         }, set: {
-            value = Int($0)
+            value = Swift.min(Int(max), Swift.max(Int(min), Int($0)))
         })
     }
 
@@ -54,7 +54,7 @@ struct NumberSelectorView: View {
 
             HStack {
                 Button {
-                    value = value - 1
+                    value = Swift.max(Int(min), value - step)
                 } label: {
                     Image(systemName: "minus.square")
                 }
@@ -63,14 +63,14 @@ struct NumberSelectorView: View {
                 .foregroundColor(AmberTheme.amber)
                 .buttonStyle(.borderless)
 
-                Slider(value: doubleProxy, in: min ... max).onChange(of: value) { _, newValue in
+                Slider(value: doubleProxy, in: min ... max, step: Double(step)).onChange(of: value) { _, newValue in
                     if let completionHandler = completionHandler {
                         completionHandler(newValue)
                     }
                 }
 
                 Button {
-                    value = value + 1
+                    value = Swift.min(Int(max), value + step)
                 } label: {
                     Image(systemName: "plus.square")
                 }

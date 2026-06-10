@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Alarm limit +/− buttons now step by 5 mg/dL and respect the low/high bounds, matching the slider. Previously the buttons moved by 1 regardless of the configured step and could push a threshold past its safety bound — DMNC-794.
+
 ## [Build 96] — 2026-05-14
 
 ### Added
