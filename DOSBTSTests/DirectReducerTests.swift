@@ -198,7 +198,7 @@ struct TreatmentPromptTests {
 
 // MARK: - IOB State Tests
 
-@Suite("IOB State")
+@Suite("IOB State", .serialized)
 struct IOBStateTests {
 
     @Test("setBolusInsulinPreset updates preset")
@@ -241,6 +241,16 @@ struct IOBStateTests {
 
     @Test("default state has rapidActing preset and 360 basalDIAMinutes")
     func defaultState() {
+        // Sibling tests persist these via AppState.didSet, and simulator
+        // UserDefaults survive across runs — clear so init sees a fresh install.
+        for key in [
+            "libre-direct.settings.bolus-insulin-preset",
+            "libre-direct.settings.basal-dia-minutes",
+            "libre-direct.settings.show-split-iob",
+        ] {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
         let state: DirectState = makeState()
         #expect(state.bolusInsulinPreset == .rapidActing)
         #expect(state.basalDIAMinutes == 360)
