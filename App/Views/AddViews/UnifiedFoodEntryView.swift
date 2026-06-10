@@ -99,7 +99,14 @@ struct UnifiedFoodEntryView: View {
                 HStack(spacing: DOSSpacing.xs) {
                     ForEach(filteredFavorites.prefix(8)) { favorite in
                         Button {
-                            logFavorite(favorite)
+                            // Hypo treatments stay 1-tap direct log (R4) —
+                            // staging during a hypo is wrong. Everything else
+                            // reviews on the staging plate first.
+                            if favorite.isHypoTreatment {
+                                logFavorite(favorite)
+                            } else {
+                                stageFavorite(favorite)
+                            }
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(favorite.chipLabel)
@@ -319,6 +326,13 @@ struct UnifiedFoodEntryView: View {
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
         toast.show(mealEntry)
+    }
+
+    private func stageFavorite(_ favorite: FavoriteFood) {
+        // lastUsed bumps at tap time even if the plate is discarded — it is
+        // a sort heuristic, not medical data (DMNC-796 KTD-4).
+        store.dispatch(.logFavoriteFood(favoriteFood: favorite))
+        relogMeal = favorite.toMealEntry()
     }
 
     private func logRecent(_ meal: MealEntry) {
