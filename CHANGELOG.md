@@ -7,16 +7,19 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 97] — 2026-06-10
+
 ### Added
-- Press-and-hold insta-log on QUICK favourites and recent meals: holding fills a countdown bar and logs immediately with an UNDO toast; releasing early cancels. The fill animation respects Reduce Motion, and VoiceOver users get a "Log immediately" action — DMNC-796.
+- Press-and-hold insta-log on QUICK favourites and recent meals: holding fills a countdown bar and logs immediately with an UNDO toast; releasing early cancels. The fill animation respects Reduce Motion, and VoiceOver users get a "Log immediately" action — DMNC-796, PR #50.
 
 ### Changed
-- Tapping a QUICK favourite now opens it on the staging plate for review (portion, time, details) instead of logging instantly. Hypo-treatment favourites still log on a single tap. The "Log Now" swipe and long-press menu on recent meals are replaced by the hold gesture; "Add to Favorites" moved to a trailing swipe — DMNC-796.
-- Blood glucose entry uses the stepper field with tap-to-type (same control as insulin units), entered in your display unit (mg/dL or mmol/L) — DMNC-796.
+- Tapping a QUICK favourite now opens it on the staging plate for review (portion, time, details) instead of logging instantly. Hypo-treatment favourites still log on a single tap. The "Log Now" swipe and long-press menu on recent meals are replaced by the hold gesture; "Add to Favorites" moved to a trailing swipe — DMNC-796, PR #50.
+- Blood glucose entry uses the stepper field with tap-to-type (same control as insulin units), entered in your display unit (mg/dL or mmol/L) — DMNC-796, PR #50.
 - Settings reorganized into a drill-down hub of six categories (Alarms & Alerts, Glucose & Display, Insulin, Sensor & Connection, Integrations, System & About). The old "Additional settings" grab-bag is dissolved — its controls moved to their natural categories — DMNC-794.
 - Dependent settings controls (Nightscout URL/secret, Apple calendar picker, Health import options, digest reminder time) now dim when their parent toggle is off instead of disappearing, so the layout stays stable and options stay discoverable — DMNC-794.
 
 ### Fixed
+- Typing a glucose or insulin value and immediately tapping Add now stores the typed value — the stepper field previously committed typed text only when the field lost focus, so Add could store the previous value — PR #50.
 - Alarm limit +/− buttons now step by 5 mg/dL and respect the low/high bounds, matching the slider. Previously the buttons moved by 1 regardless of the configured step and could push a threshold past its safety bound — DMNC-794.
 
 ## [Build 96] — 2026-05-14
