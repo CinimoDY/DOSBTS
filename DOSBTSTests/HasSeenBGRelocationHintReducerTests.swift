@@ -12,7 +12,7 @@ struct HasSeenBGRelocationHintReducerTests {
 
     @Test("setHasSeenBGRelocationHint(seen: true) flips the flag on")
     func reducer_setsHasSeenHint() {
-        var state: DirectState = AppState()
+        var state: DirectState = AppState(defaults: makeTestDefaults())
         state.hasSeenBGRelocationHint = false
 
         directReducer(state: &state, action: .setHasSeenBGRelocationHint(seen: true))
@@ -22,7 +22,7 @@ struct HasSeenBGRelocationHintReducerTests {
 
     @Test("setHasSeenBGRelocationHint(seen: false) flips the flag off")
     func reducer_canClearHasSeenHint() {
-        var state: DirectState = AppState()
+        var state: DirectState = AppState(defaults: makeTestDefaults())
         state.hasSeenBGRelocationHint = true
 
         directReducer(state: &state, action: .setHasSeenBGRelocationHint(seen: false))

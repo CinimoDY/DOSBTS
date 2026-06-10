@@ -10,7 +10,7 @@ import Testing
 // MARK: - Helpers
 
 private func makeState() -> AppState {
-    AppState()
+    AppState(defaults: makeTestDefaults())
 }
 
 private func reduce(_ state: inout DirectState, _ action: DirectAction) {

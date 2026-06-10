@@ -17,7 +17,11 @@ import UserNotifications
 struct AppState: DirectState {
     // MARK: Lifecycle
 
-    init() {
+    /// - Parameter defaults: backing store for persisted settings. The app
+    ///   always uses `.standard`; tests inject a fresh suite per test so
+    ///   parallel suites can't pollute each other's keys.
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         #if targetEnvironment(simulator)
             let defaultConnectionID = DirectConfig.virtualID
         #else
@@ -31,14 +35,14 @@ struct AppState: DirectState {
         #endif
 
         if UserDefaults.shared.glucoseUnit == nil {
-            UserDefaults.shared.glucoseUnit = UserDefaults.standard.glucoseUnit ?? .mgdL
+            UserDefaults.shared.glucoseUnit = defaults.glucoseUnit ?? .mgdL
         }
 
-        if let sensor = UserDefaults.standard.sensor, UserDefaults.shared.sensor == nil {
+        if let sensor = defaults.sensor, UserDefaults.shared.sensor == nil {
             UserDefaults.shared.sensor = sensor
         }
 
-        if let transmitter = UserDefaults.standard.transmitter, UserDefaults.shared.transmitter == nil {
+        if let transmitter = defaults.transmitter, UserDefaults.shared.transmitter == nil {
             UserDefaults.shared.transmitter = transmitter
         }
 
@@ -47,104 +51,107 @@ struct AppState: DirectState {
         // sufficient because dual-write keeps the legacy `alarmHigh` key present forever
         // after the first day-side edit, so adding `&& alarmHigh != nil` would always be
         // true and break re-run protection.
-        if !UserDefaults.standard.hasMigratedAlarmProfiles {
+        if !defaults.hasMigratedAlarmProfiles {
             // If a legacy install exists, copy its values into both profiles. Otherwise the
             // UserDefaults computed accessors will return their built-in defaults (180/80/0.2)
             // when we read below.
-            let legacyHigh = UserDefaults.standard.hasLegacyAlarmHigh ? UserDefaults.standard.alarmHigh : nil
-            let legacyLow = UserDefaults.standard.hasLegacyAlarmLow ? UserDefaults.standard.alarmLow : nil
-            let legacyVolume = UserDefaults.standard.hasLegacyAlarmVolume ? UserDefaults.standard.alarmVolume : nil
+            let legacyHigh = defaults.hasLegacyAlarmHigh ? defaults.alarmHigh : nil
+            let legacyLow = defaults.hasLegacyAlarmLow ? defaults.alarmLow : nil
+            let legacyVolume = defaults.hasLegacyAlarmVolume ? defaults.alarmVolume : nil
 
-            UserDefaults.standard.dayAlarmHigh = legacyHigh ?? 180
-            UserDefaults.standard.nightAlarmHigh = legacyHigh ?? 180
-            UserDefaults.standard.dayAlarmLow = legacyLow ?? 80
-            UserDefaults.standard.nightAlarmLow = legacyLow ?? 80
+            defaults.dayAlarmHigh = legacyHigh ?? 180
+            defaults.nightAlarmHigh = legacyHigh ?? 180
+            defaults.dayAlarmLow = legacyLow ?? 80
+            defaults.nightAlarmLow = legacyLow ?? 80
             // Match the legacy implicit default (0.2) so users who never customised
             // volume don't experience a 2.5x volume jump after upgrade. Plan promised
             // "observable behavior unchanged"; the migration must preserve that.
-            UserDefaults.standard.dayAlarmVolume = legacyVolume ?? 0.2
-            UserDefaults.standard.nightAlarmVolume = legacyVolume ?? 0.2
-            UserDefaults.standard.nightStartHour = 22
-            UserDefaults.standard.nightStartMinute = 0
-            UserDefaults.standard.nightEndHour = 7
-            UserDefaults.standard.nightEndMinute = 0
+            defaults.dayAlarmVolume = legacyVolume ?? 0.2
+            defaults.nightAlarmVolume = legacyVolume ?? 0.2
+            defaults.nightStartHour = 22
+            defaults.nightStartMinute = 0
+            defaults.nightEndHour = 7
+            defaults.nightEndMinute = 0
         }
 
-        self.dayAlarmHigh = UserDefaults.standard.dayAlarmHigh
-        self.dayAlarmLow = UserDefaults.standard.dayAlarmLow
-        self.dayAlarmVolume = UserDefaults.standard.dayAlarmVolume
-        self.nightAlarmHigh = UserDefaults.standard.nightAlarmHigh
-        self.nightAlarmLow = UserDefaults.standard.nightAlarmLow
-        self.nightAlarmVolume = UserDefaults.standard.nightAlarmVolume
-        self.nightStartHour = UserDefaults.standard.nightStartHour
-        self.nightStartMinute = UserDefaults.standard.nightStartMinute
-        self.nightEndHour = UserDefaults.standard.nightEndHour
-        self.nightEndMinute = UserDefaults.standard.nightEndMinute
-        self.appleCalendarExport = UserDefaults.standard.appleCalendarExport
-        self.appleHealthExport = UserDefaults.standard.appleHealthExport
-        self.appleHealthImport = UserDefaults.standard.appleHealthImport
-        self.healthImportExcludedSources = UserDefaults.standard.healthImportExcludedSources
-        self.bellmanAlarm = UserDefaults.standard.bellmanAlarm
-        self.chartShowLines = UserDefaults.standard.chartShowLines
-        self.chartZoomLevel = UserDefaults.standard.chartZoomLevel
-        self.connectionAlarmSound = UserDefaults.standard.connectionAlarmSound
-        self.connectionPeripheralUUID = UserDefaults.standard.connectionPeripheralUUID
-        self.customCalibration = UserDefaults.standard.customCalibration
-        self.expiringAlarmSound = UserDefaults.standard.expiringAlarmSound
-        self.normalGlucoseNotification = UserDefaults.standard.normalGlucoseNotification
-        self.alarmGlucoseNotification = UserDefaults.standard.alarmGlucoseNotification
-        self.glucoseLiveActivity = UserDefaults.standard.glucoseLiveActivity
-        self.ignoreMute = UserDefaults.standard.ignoreMute
+        self.dayAlarmHigh = defaults.dayAlarmHigh
+        self.dayAlarmLow = defaults.dayAlarmLow
+        self.dayAlarmVolume = defaults.dayAlarmVolume
+        self.nightAlarmHigh = defaults.nightAlarmHigh
+        self.nightAlarmLow = defaults.nightAlarmLow
+        self.nightAlarmVolume = defaults.nightAlarmVolume
+        self.nightStartHour = defaults.nightStartHour
+        self.nightStartMinute = defaults.nightStartMinute
+        self.nightEndHour = defaults.nightEndHour
+        self.nightEndMinute = defaults.nightEndMinute
+        self.appleCalendarExport = defaults.appleCalendarExport
+        self.appleHealthExport = defaults.appleHealthExport
+        self.appleHealthImport = defaults.appleHealthImport
+        self.healthImportExcludedSources = defaults.healthImportExcludedSources
+        self.bellmanAlarm = defaults.bellmanAlarm
+        self.chartShowLines = defaults.chartShowLines
+        self.chartZoomLevel = defaults.chartZoomLevel
+        self.connectionAlarmSound = defaults.connectionAlarmSound
+        self.connectionPeripheralUUID = defaults.connectionPeripheralUUID
+        self.customCalibration = defaults.customCalibration
+        self.expiringAlarmSound = defaults.expiringAlarmSound
+        self.normalGlucoseNotification = defaults.normalGlucoseNotification
+        self.alarmGlucoseNotification = defaults.alarmGlucoseNotification
+        self.glucoseLiveActivity = defaults.glucoseLiveActivity
+        self.ignoreMute = defaults.ignoreMute
         self.glucoseUnit = UserDefaults.shared.glucoseUnit ?? .mgdL
-        self.highGlucoseAlarmSound = UserDefaults.standard.highGlucoseAlarmSound
-        self.isConnectionPaired = UserDefaults.standard.isConnectionPaired
+        self.highGlucoseAlarmSound = defaults.highGlucoseAlarmSound
+        self.isConnectionPaired = defaults.isConnectionPaired
         self.latestBloodGlucose = UserDefaults.shared.latestBloodGlucose
         self.latestSensorGlucose = UserDefaults.shared.latestSensorGlucose
         self.latestSensorError = UserDefaults.shared.latestSensorError
         self.latestInsulinDelivery = UserDefaults.shared.latestInsulinDelivery
-        self.lowGlucoseAlarmSound = UserDefaults.standard.lowGlucoseAlarmSound
-        self.nightscoutApiSecret = UserDefaults.standard.nightscoutApiSecret
-        self.nightscoutUpload = UserDefaults.standard.nightscoutUpload
-        self.nightscoutURL = UserDefaults.standard.nightscoutURL
-        self.readGlucose = UserDefaults.standard.readGlucose
-        self.selectedCalendarTarget = UserDefaults.standard.selectedCalendarTarget
-        self.selectedConnectionID = UserDefaults.standard.selectedConnectionID ?? defaultConnectionID
+        self.lowGlucoseAlarmSound = defaults.lowGlucoseAlarmSound
+        self.nightscoutApiSecret = defaults.nightscoutApiSecret
+        self.nightscoutUpload = defaults.nightscoutUpload
+        self.nightscoutURL = defaults.nightscoutURL
+        self.readGlucose = defaults.readGlucose
+        self.selectedCalendarTarget = defaults.selectedCalendarTarget
+        self.selectedConnectionID = defaults.selectedConnectionID ?? defaultConnectionID
         self.sensor = UserDefaults.shared.sensor
-        self.sensorInterval = UserDefaults.standard.sensorInterval
-        self.showAnnotations = UserDefaults.standard.showAnnotations
+        self.sensorInterval = defaults.sensorInterval
+        self.showAnnotations = defaults.showAnnotations
         self.transmitter = UserDefaults.shared.transmitter
-        self.showSmoothedGlucose = UserDefaults.standard.showSmoothedGlucose
-        self.showInsulinInput = UserDefaults.standard.showInsulinInput
-        self.showScanlines = UserDefaults.standard.showScanlines
-        self.aiConsentFoodPhoto = UserDefaults.standard.aiConsentFoodPhoto
-        self.hasSeenBGRelocationHint = UserDefaults.standard.hasSeenBGRelocationHint
-        self.appOpenCount = UserDefaults.standard.appOpenCount
-        self.appOpenCountFirstRecordedAt = UserDefaults.standard.appOpenCountFirstRecordedAt
-        self.aiConsentDailyDigest = UserDefaults.standard.aiConsentDailyDigest
-        self.dailyDigestReminderHour = UserDefaults.standard.dailyDigestReminderHour
-        self.dailyDigestReminderMinute = UserDefaults.standard.dailyDigestReminderMinute
-        self.claudeAPIKeyValid = UserDefaults.standard.claudeAPIKeyValid
-        self.thumbCalibrationMM = UserDefaults.standard.thumbCalibrationMM
+        self.showSmoothedGlucose = defaults.showSmoothedGlucose
+        self.showInsulinInput = defaults.showInsulinInput
+        self.showScanlines = defaults.showScanlines
+        self.aiConsentFoodPhoto = defaults.aiConsentFoodPhoto
+        self.hasSeenBGRelocationHint = defaults.hasSeenBGRelocationHint
+        self.appOpenCount = defaults.appOpenCount
+        self.appOpenCountFirstRecordedAt = defaults.appOpenCountFirstRecordedAt
+        self.aiConsentDailyDigest = defaults.aiConsentDailyDigest
+        self.dailyDigestReminderHour = defaults.dailyDigestReminderHour
+        self.dailyDigestReminderMinute = defaults.dailyDigestReminderMinute
+        self.claudeAPIKeyValid = defaults.claudeAPIKeyValid
+        self.thumbCalibrationMM = defaults.thumbCalibrationMM
         // Persist defaults on first launch so UUIDs are stable
-        if UserDefaults.standard.data(forKey: "libre-direct.settings.serving-presets") == nil {
-            UserDefaults.standard.servingPresets = ServingPreset.defaults
+        if defaults.data(forKey: "libre-direct.settings.serving-presets") == nil {
+            defaults.servingPresets = ServingPreset.defaults
         }
-        self.servingPresets = UserDefaults.standard.servingPresets
-        self.treatmentCycleActive = UserDefaults.standard.treatmentCycleActive
-        self.alarmFiredAt = UserDefaults.standard.alarmFiredAt
-        self.treatmentLoggedAt = UserDefaults.standard.treatmentLoggedAt
-        self.treatmentCycleCountdownExpiry = UserDefaults.standard.treatmentCycleCountdownExpiry
-        self.treatmentCycleSnoozeUntil = UserDefaults.standard.treatmentCycleSnoozeUntil
-        self.hypoTreatmentWaitMinutes = UserDefaults.standard.hypoTreatmentWaitMinutes
-        self.showPredictiveLowAlarm = UserDefaults.standard.showPredictiveLowAlarm
-        self.showHeartRateOverlay = UserDefaults.standard.showHeartRateOverlay
-        self.markerLanePosition = UserDefaults.standard.markerLanePosition
-        self.bolusInsulinPreset = UserDefaults.standard.bolusInsulinPreset
-        self.basalDIAMinutes = UserDefaults.standard.basalDIAMinutes
-        self.showSplitIOB = UserDefaults.standard.showSplitIOB
+        self.servingPresets = defaults.servingPresets
+        self.treatmentCycleActive = defaults.treatmentCycleActive
+        self.alarmFiredAt = defaults.alarmFiredAt
+        self.treatmentLoggedAt = defaults.treatmentLoggedAt
+        self.treatmentCycleCountdownExpiry = defaults.treatmentCycleCountdownExpiry
+        self.treatmentCycleSnoozeUntil = defaults.treatmentCycleSnoozeUntil
+        self.hypoTreatmentWaitMinutes = defaults.hypoTreatmentWaitMinutes
+        self.showPredictiveLowAlarm = defaults.showPredictiveLowAlarm
+        self.showHeartRateOverlay = defaults.showHeartRateOverlay
+        self.markerLanePosition = defaults.markerLanePosition
+        self.bolusInsulinPreset = defaults.bolusInsulinPreset
+        self.basalDIAMinutes = defaults.basalDIAMinutes
+        self.showSplitIOB = defaults.showSplitIOB
     }
 
     // MARK: Internal
+
+    /// Backing store all `didSet` persistence goes through (see init).
+    let defaults: UserDefaults
 
     var appIsBusy = false
     var appState: ScenePhase = .inactive
@@ -155,7 +162,7 @@ struct AppState: DirectState {
     var bloodGlucoseValues: [BloodGlucose] = []
     var exerciseEntryValues: [ExerciseEntry] = []
     var heartRateSeries: [(Date, Double)] = []
-    var healthImportExcludedSources: [String] { didSet { UserDefaults.standard.healthImportExcludedSources = healthImportExcludedSources } }
+    var healthImportExcludedSources: [String] { didSet { defaults.healthImportExcludedSources = healthImportExcludedSources } }
     var insulinDeliveryValues: [InsulinDelivery] = []
     var favoriteFoodValues: [FavoriteFood] = []
     var personalFoodValues: [PersonalFood] = []
@@ -187,102 +194,102 @@ struct AppState: DirectState {
     // recovers to the user's day configuration. Night setters do not dual-write.
     var dayAlarmHigh: Int {
         didSet {
-            UserDefaults.standard.dayAlarmHigh = dayAlarmHigh
-            UserDefaults.standard.alarmHigh = dayAlarmHigh
+            defaults.dayAlarmHigh = dayAlarmHigh
+            defaults.alarmHigh = dayAlarmHigh
         }
     }
 
     var dayAlarmLow: Int {
         didSet {
-            UserDefaults.standard.dayAlarmLow = dayAlarmLow
-            UserDefaults.standard.alarmLow = dayAlarmLow
+            defaults.dayAlarmLow = dayAlarmLow
+            defaults.alarmLow = dayAlarmLow
         }
     }
 
     var dayAlarmVolume: Float {
         didSet {
-            UserDefaults.standard.dayAlarmVolume = dayAlarmVolume
-            UserDefaults.standard.alarmVolume = dayAlarmVolume
+            defaults.dayAlarmVolume = dayAlarmVolume
+            defaults.alarmVolume = dayAlarmVolume
         }
     }
 
-    var nightAlarmHigh: Int { didSet { UserDefaults.standard.nightAlarmHigh = nightAlarmHigh } }
-    var nightAlarmLow: Int { didSet { UserDefaults.standard.nightAlarmLow = nightAlarmLow } }
-    var nightAlarmVolume: Float { didSet { UserDefaults.standard.nightAlarmVolume = nightAlarmVolume } }
-    var nightStartHour: Int { didSet { UserDefaults.standard.nightStartHour = nightStartHour } }
-    var nightStartMinute: Int { didSet { UserDefaults.standard.nightStartMinute = nightStartMinute } }
-    var nightEndHour: Int { didSet { UserDefaults.standard.nightEndHour = nightEndHour } }
-    var nightEndMinute: Int { didSet { UserDefaults.standard.nightEndMinute = nightEndMinute } }
-    var appleCalendarExport: Bool { didSet { UserDefaults.standard.appleCalendarExport = appleCalendarExport } }
-    var appleHealthExport: Bool { didSet { UserDefaults.standard.appleHealthExport = appleHealthExport } }
-    var appleHealthImport: Bool { didSet { UserDefaults.standard.appleHealthImport = appleHealthImport } }
-    var bellmanAlarm: Bool { didSet { UserDefaults.standard.bellmanAlarm = bellmanAlarm } }
-    var chartShowLines: Bool { didSet { UserDefaults.standard.chartShowLines = chartShowLines } }
-    var chartZoomLevel: Int { didSet { UserDefaults.standard.chartZoomLevel = chartZoomLevel } }
-    var connectionAlarmSound: NotificationSound { didSet { UserDefaults.standard.connectionAlarmSound = connectionAlarmSound } }
-    var connectionPeripheralUUID: String? { didSet { UserDefaults.standard.connectionPeripheralUUID = connectionPeripheralUUID } }
-    var customCalibration: [CustomCalibration] { didSet { UserDefaults.standard.customCalibration = customCalibration } }
-    var expiringAlarmSound: NotificationSound { didSet { UserDefaults.standard.expiringAlarmSound = expiringAlarmSound } }
-    var normalGlucoseNotification: Bool { didSet { UserDefaults.standard.normalGlucoseNotification = normalGlucoseNotification } }
-    var alarmGlucoseNotification: Bool { didSet { UserDefaults.standard.alarmGlucoseNotification = alarmGlucoseNotification } }
-    var glucoseLiveActivity: Bool { didSet { UserDefaults.standard.glucoseLiveActivity = glucoseLiveActivity } }
+    var nightAlarmHigh: Int { didSet { defaults.nightAlarmHigh = nightAlarmHigh } }
+    var nightAlarmLow: Int { didSet { defaults.nightAlarmLow = nightAlarmLow } }
+    var nightAlarmVolume: Float { didSet { defaults.nightAlarmVolume = nightAlarmVolume } }
+    var nightStartHour: Int { didSet { defaults.nightStartHour = nightStartHour } }
+    var nightStartMinute: Int { didSet { defaults.nightStartMinute = nightStartMinute } }
+    var nightEndHour: Int { didSet { defaults.nightEndHour = nightEndHour } }
+    var nightEndMinute: Int { didSet { defaults.nightEndMinute = nightEndMinute } }
+    var appleCalendarExport: Bool { didSet { defaults.appleCalendarExport = appleCalendarExport } }
+    var appleHealthExport: Bool { didSet { defaults.appleHealthExport = appleHealthExport } }
+    var appleHealthImport: Bool { didSet { defaults.appleHealthImport = appleHealthImport } }
+    var bellmanAlarm: Bool { didSet { defaults.bellmanAlarm = bellmanAlarm } }
+    var chartShowLines: Bool { didSet { defaults.chartShowLines = chartShowLines } }
+    var chartZoomLevel: Int { didSet { defaults.chartZoomLevel = chartZoomLevel } }
+    var connectionAlarmSound: NotificationSound { didSet { defaults.connectionAlarmSound = connectionAlarmSound } }
+    var connectionPeripheralUUID: String? { didSet { defaults.connectionPeripheralUUID = connectionPeripheralUUID } }
+    var customCalibration: [CustomCalibration] { didSet { defaults.customCalibration = customCalibration } }
+    var expiringAlarmSound: NotificationSound { didSet { defaults.expiringAlarmSound = expiringAlarmSound } }
+    var normalGlucoseNotification: Bool { didSet { defaults.normalGlucoseNotification = normalGlucoseNotification } }
+    var alarmGlucoseNotification: Bool { didSet { defaults.alarmGlucoseNotification = alarmGlucoseNotification } }
+    var glucoseLiveActivity: Bool { didSet { defaults.glucoseLiveActivity = glucoseLiveActivity } }
     var glucoseUnit: GlucoseUnit { didSet { UserDefaults.shared.glucoseUnit = glucoseUnit } }
-    var highGlucoseAlarmSound: NotificationSound { didSet { UserDefaults.standard.highGlucoseAlarmSound = highGlucoseAlarmSound } }
-    var ignoreMute: Bool { didSet { UserDefaults.standard.ignoreMute = ignoreMute } }
-    var isConnectionPaired: Bool { didSet { UserDefaults.standard.isConnectionPaired = isConnectionPaired } }
+    var highGlucoseAlarmSound: NotificationSound { didSet { defaults.highGlucoseAlarmSound = highGlucoseAlarmSound } }
+    var ignoreMute: Bool { didSet { defaults.ignoreMute = ignoreMute } }
+    var isConnectionPaired: Bool { didSet { defaults.isConnectionPaired = isConnectionPaired } }
     var latestBloodGlucose: BloodGlucose? { didSet { UserDefaults.shared.latestBloodGlucose = latestBloodGlucose } }
     var latestSensorError: SensorError? { didSet { UserDefaults.shared.latestSensorError = latestSensorError } }
     var latestSensorGlucose: SensorGlucose? { didSet { UserDefaults.shared.latestSensorGlucose = latestSensorGlucose } }
     var latestInsulinDelivery: InsulinDelivery? { didSet { UserDefaults.shared.latestInsulinDelivery = latestInsulinDelivery } }
-    var lowGlucoseAlarmSound: NotificationSound { didSet { UserDefaults.standard.lowGlucoseAlarmSound = lowGlucoseAlarmSound } }
-    var nightscoutApiSecret: String { didSet { UserDefaults.standard.nightscoutApiSecret = nightscoutApiSecret } }
-    var nightscoutUpload: Bool { didSet { UserDefaults.standard.nightscoutUpload = nightscoutUpload } }
-    var nightscoutURL: String { didSet { UserDefaults.standard.nightscoutURL = nightscoutURL } }
-    var readGlucose: Bool { didSet { UserDefaults.standard.readGlucose = readGlucose } }
-    var selectedCalendarTarget: String? { didSet { UserDefaults.standard.selectedCalendarTarget = selectedCalendarTarget } }
-    var selectedConnectionID: String? { didSet { UserDefaults.standard.selectedConnectionID = selectedConnectionID } }
+    var lowGlucoseAlarmSound: NotificationSound { didSet { defaults.lowGlucoseAlarmSound = lowGlucoseAlarmSound } }
+    var nightscoutApiSecret: String { didSet { defaults.nightscoutApiSecret = nightscoutApiSecret } }
+    var nightscoutUpload: Bool { didSet { defaults.nightscoutUpload = nightscoutUpload } }
+    var nightscoutURL: String { didSet { defaults.nightscoutURL = nightscoutURL } }
+    var readGlucose: Bool { didSet { defaults.readGlucose = readGlucose } }
+    var selectedCalendarTarget: String? { didSet { defaults.selectedCalendarTarget = selectedCalendarTarget } }
+    var selectedConnectionID: String? { didSet { defaults.selectedConnectionID = selectedConnectionID } }
     var sensor: Sensor? { didSet { UserDefaults.shared.sensor = sensor } }
-    var sensorInterval: Int { didSet { UserDefaults.standard.sensorInterval = sensorInterval } }
-    var showAnnotations: Bool { didSet { UserDefaults.standard.showAnnotations = showAnnotations } }
+    var sensorInterval: Int { didSet { defaults.sensorInterval = sensorInterval } }
+    var showAnnotations: Bool { didSet { defaults.showAnnotations = showAnnotations } }
     var transmitter: Transmitter? { didSet { UserDefaults.shared.transmitter = transmitter } }
-    var showSmoothedGlucose: Bool { didSet { UserDefaults.standard.showSmoothedGlucose = showSmoothedGlucose } }
-    var showInsulinInput: Bool { didSet { UserDefaults.standard.showInsulinInput = showInsulinInput } }
-    var showScanlines: Bool { didSet { UserDefaults.standard.showScanlines = showScanlines } }
-    var aiConsentFoodPhoto: Bool { didSet { UserDefaults.standard.aiConsentFoodPhoto = aiConsentFoodPhoto } }
-    var hasSeenBGRelocationHint: Bool { didSet { UserDefaults.standard.hasSeenBGRelocationHint = hasSeenBGRelocationHint } }
-    var appOpenCount: Int { didSet { UserDefaults.standard.appOpenCount = appOpenCount } }
-    var appOpenCountFirstRecordedAt: Date? { didSet { UserDefaults.standard.appOpenCountFirstRecordedAt = appOpenCountFirstRecordedAt } }
-    var claudeAPIKeyValid: Bool { didSet { UserDefaults.standard.claudeAPIKeyValid = claudeAPIKeyValid } }
-    var thumbCalibrationMM: Double? { didSet { UserDefaults.standard.thumbCalibrationMM = thumbCalibrationMM } }
-    var servingPresets: [ServingPreset] { didSet { UserDefaults.standard.servingPresets = servingPresets } }
+    var showSmoothedGlucose: Bool { didSet { defaults.showSmoothedGlucose = showSmoothedGlucose } }
+    var showInsulinInput: Bool { didSet { defaults.showInsulinInput = showInsulinInput } }
+    var showScanlines: Bool { didSet { defaults.showScanlines = showScanlines } }
+    var aiConsentFoodPhoto: Bool { didSet { defaults.aiConsentFoodPhoto = aiConsentFoodPhoto } }
+    var hasSeenBGRelocationHint: Bool { didSet { defaults.hasSeenBGRelocationHint = hasSeenBGRelocationHint } }
+    var appOpenCount: Int { didSet { defaults.appOpenCount = appOpenCount } }
+    var appOpenCountFirstRecordedAt: Date? { didSet { defaults.appOpenCountFirstRecordedAt = appOpenCountFirstRecordedAt } }
+    var claudeAPIKeyValid: Bool { didSet { defaults.claudeAPIKeyValid = claudeAPIKeyValid } }
+    var thumbCalibrationMM: Double? { didSet { defaults.thumbCalibrationMM = thumbCalibrationMM } }
+    var servingPresets: [ServingPreset] { didSet { defaults.servingPresets = servingPresets } }
     var foodAnalysisResult: NutritionEstimate?
     var foodAnalysisError: String?
     var foodAnalysisLoading = false
 
     // MARK: Treatment Cycle
-    var treatmentCycleActive: Bool { didSet { UserDefaults.standard.treatmentCycleActive = treatmentCycleActive } }
+    var treatmentCycleActive: Bool { didSet { defaults.treatmentCycleActive = treatmentCycleActive } }
     var showTreatmentPrompt: Bool = false
-    var alarmFiredAt: Date? { didSet { UserDefaults.standard.alarmFiredAt = alarmFiredAt } }
-    var treatmentLoggedAt: Date? { didSet { UserDefaults.standard.treatmentLoggedAt = treatmentLoggedAt } }
-    var treatmentCycleCountdownExpiry: Date? { didSet { UserDefaults.standard.treatmentCycleCountdownExpiry = treatmentCycleCountdownExpiry } }
-    var treatmentCycleSnoozeUntil: Date? { didSet { UserDefaults.standard.treatmentCycleSnoozeUntil = treatmentCycleSnoozeUntil } }
-    var hypoTreatmentWaitMinutes: Int { didSet { UserDefaults.standard.hypoTreatmentWaitMinutes = hypoTreatmentWaitMinutes } }
+    var alarmFiredAt: Date? { didSet { defaults.alarmFiredAt = alarmFiredAt } }
+    var treatmentLoggedAt: Date? { didSet { defaults.treatmentLoggedAt = treatmentLoggedAt } }
+    var treatmentCycleCountdownExpiry: Date? { didSet { defaults.treatmentCycleCountdownExpiry = treatmentCycleCountdownExpiry } }
+    var treatmentCycleSnoozeUntil: Date? { didSet { defaults.treatmentCycleSnoozeUntil = treatmentCycleSnoozeUntil } }
+    var hypoTreatmentWaitMinutes: Int { didSet { defaults.hypoTreatmentWaitMinutes = hypoTreatmentWaitMinutes } }
     var recheckDispatched: Bool = false
 
     // MARK: Predictive Low Alarm
-    var showPredictiveLowAlarm: Bool { didSet { UserDefaults.standard.showPredictiveLowAlarm = showPredictiveLowAlarm } }
+    var showPredictiveLowAlarm: Bool { didSet { defaults.showPredictiveLowAlarm = showPredictiveLowAlarm } }
     var predictiveLowAlarmFired: Bool = false
 
     // MARK: Heart Rate Overlay (DMNC-848)
-    var showHeartRateOverlay: Bool { didSet { UserDefaults.standard.showHeartRateOverlay = showHeartRateOverlay } }
+    var showHeartRateOverlay: Bool { didSet { defaults.showHeartRateOverlay = showHeartRateOverlay } }
 
     // MARK: Marker Lane Position (DMNC-848 D7)
-    var markerLanePosition: MarkerLanePosition { didSet { UserDefaults.standard.markerLanePosition = markerLanePosition } }
+    var markerLanePosition: MarkerLanePosition { didSet { defaults.markerLanePosition = markerLanePosition } }
 
     // MARK: IOB
-    var bolusInsulinPreset: InsulinPreset { didSet { UserDefaults.standard.bolusInsulinPreset = bolusInsulinPreset } }
-    var basalDIAMinutes: Int { didSet { UserDefaults.standard.basalDIAMinutes = basalDIAMinutes } }
-    var showSplitIOB: Bool { didSet { UserDefaults.standard.showSplitIOB = showSplitIOB } }
+    var bolusInsulinPreset: InsulinPreset { didSet { defaults.bolusInsulinPreset = bolusInsulinPreset } }
+    var basalDIAMinutes: Int { didSet { defaults.basalDIAMinutes = basalDIAMinutes } }
+    var showSplitIOB: Bool { didSet { defaults.showSplitIOB = showSplitIOB } }
     var iobDeliveries: [InsulinDelivery] = []
 
     // MARK: Meal Impact
@@ -293,7 +300,7 @@ struct AppState: DirectState {
     var dailyDigestLoading: Bool = false
     var dailyDigestInsightLoading: Bool = false
     var dailyDigestEvents: DailyDigestEvents?
-    var aiConsentDailyDigest: Bool { didSet { UserDefaults.standard.aiConsentDailyDigest = aiConsentDailyDigest } }
-    var dailyDigestReminderHour: Int? { didSet { UserDefaults.standard.dailyDigestReminderHour = dailyDigestReminderHour } }
-    var dailyDigestReminderMinute: Int? { didSet { UserDefaults.standard.dailyDigestReminderMinute = dailyDigestReminderMinute } }
+    var aiConsentDailyDigest: Bool { didSet { defaults.aiConsentDailyDigest = aiConsentDailyDigest } }
+    var dailyDigestReminderHour: Int? { didSet { defaults.dailyDigestReminderHour = dailyDigestReminderHour } }
+    var dailyDigestReminderMinute: Int? { didSet { defaults.dailyDigestReminderMinute = dailyDigestReminderMinute } }
 }

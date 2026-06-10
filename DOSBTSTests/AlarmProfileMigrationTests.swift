@@ -6,6 +6,10 @@
 //  into both day and night profiles, and the dual-write rollback safety
 //  behavior on day-side setters.
 //
+//  Each test injects a fresh UserDefaults suite (makeTestDefaults, defined in
+//  DirectReducerTests.swift) so tests are isolated from each other, from
+//  parallel suites, and from previous runs.
+//
 
 import Foundation
 import Testing
@@ -25,152 +29,138 @@ private let nightStartMinuteKey = "libre-direct.settings.night-start-minute"
 private let nightEndHourKey = "libre-direct.settings.night-end-hour"
 private let nightEndMinuteKey = "libre-direct.settings.night-end-minute"
 
-private let perProfileKeys = [
-    dayHighKey, dayLowKey, dayVolumeKey,
-    nightHighKey, nightLowKey, nightVolumeKey,
-    nightStartHourKey, nightStartMinuteKey, nightEndHourKey, nightEndMinuteKey
-]
-
-private let allAlarmKeys = perProfileKeys + [legacyHighKey, legacyLowKey, legacyVolumeKey]
-
-private func clearAllAlarmKeys() {
-    for key in allAlarmKeys {
-        UserDefaults.standard.removeObject(forKey: key)
-    }
-}
-
-@Suite("AlarmProfile migration", .serialized)
+@Suite("AlarmProfile migration")
 struct AlarmProfileMigrationTests {
 
     @Test("Fresh install seeds defaults for both profiles + schedule")
     func freshInstall() {
-        clearAllAlarmKeys()
+        let defaults = makeTestDefaults()
 
-        _ = AppState()
+        _ = AppState(defaults: defaults)
 
-        #expect(UserDefaults.standard.integer(forKey: dayHighKey) == 180)
-        #expect(UserDefaults.standard.integer(forKey: nightHighKey) == 180)
-        #expect(UserDefaults.standard.integer(forKey: dayLowKey) == 80)
-        #expect(UserDefaults.standard.integer(forKey: nightLowKey) == 80)
-        #expect(abs(UserDefaults.standard.float(forKey: dayVolumeKey) - 0.2) < 0.0001)
-        #expect(abs(UserDefaults.standard.float(forKey: nightVolumeKey) - 0.2) < 0.0001)
-        #expect(UserDefaults.standard.integer(forKey: nightStartHourKey) == 22)
-        #expect(UserDefaults.standard.integer(forKey: nightStartMinuteKey) == 0)
-        #expect(UserDefaults.standard.integer(forKey: nightEndHourKey) == 7)
-        #expect(UserDefaults.standard.integer(forKey: nightEndMinuteKey) == 0)
+        #expect(defaults.integer(forKey: dayHighKey) == 180)
+        #expect(defaults.integer(forKey: nightHighKey) == 180)
+        #expect(defaults.integer(forKey: dayLowKey) == 80)
+        #expect(defaults.integer(forKey: nightLowKey) == 80)
+        #expect(abs(defaults.float(forKey: dayVolumeKey) - 0.2) < 0.0001)
+        #expect(abs(defaults.float(forKey: nightVolumeKey) - 0.2) < 0.0001)
+        #expect(defaults.integer(forKey: nightStartHourKey) == 22)
+        #expect(defaults.integer(forKey: nightStartMinuteKey) == 0)
+        #expect(defaults.integer(forKey: nightEndHourKey) == 7)
+        #expect(defaults.integer(forKey: nightEndMinuteKey) == 0)
     }
 
     @Test("Legacy install copies threshold + volume into both profiles")
     func legacyCopy() {
-        clearAllAlarmKeys()
-        UserDefaults.standard.set(195, forKey: legacyHighKey)
-        UserDefaults.standard.set(75, forKey: legacyLowKey)
-        UserDefaults.standard.set(Float(0.65), forKey: legacyVolumeKey)
+        let defaults = makeTestDefaults()
+        defaults.set(195, forKey: legacyHighKey)
+        defaults.set(75, forKey: legacyLowKey)
+        defaults.set(Float(0.65), forKey: legacyVolumeKey)
 
-        _ = AppState()
+        _ = AppState(defaults: defaults)
 
-        #expect(UserDefaults.standard.integer(forKey: dayHighKey) == 195)
-        #expect(UserDefaults.standard.integer(forKey: nightHighKey) == 195)
-        #expect(UserDefaults.standard.integer(forKey: dayLowKey) == 75)
-        #expect(UserDefaults.standard.integer(forKey: nightLowKey) == 75)
-        #expect(abs(UserDefaults.standard.float(forKey: dayVolumeKey) - 0.65) < 0.0001)
-        #expect(abs(UserDefaults.standard.float(forKey: nightVolumeKey) - 0.65) < 0.0001)
+        #expect(defaults.integer(forKey: dayHighKey) == 195)
+        #expect(defaults.integer(forKey: nightHighKey) == 195)
+        #expect(defaults.integer(forKey: dayLowKey) == 75)
+        #expect(defaults.integer(forKey: nightLowKey) == 75)
+        #expect(abs(defaults.float(forKey: dayVolumeKey) - 0.65) < 0.0001)
+        #expect(abs(defaults.float(forKey: nightVolumeKey) - 0.65) < 0.0001)
         // Schedule defaults are seeded regardless of legacy state
-        #expect(UserDefaults.standard.integer(forKey: nightStartHourKey) == 22)
-        #expect(UserDefaults.standard.integer(forKey: nightEndHourKey) == 7)
+        #expect(defaults.integer(forKey: nightStartHourKey) == 22)
+        #expect(defaults.integer(forKey: nightEndHourKey) == 7)
     }
 
     @Test("Migration is idempotent — second launch preserves user-tweaked night values")
     func idempotentBasic() {
-        clearAllAlarmKeys()
+        let defaults = makeTestDefaults()
         // Simulate a completed migration with tweaked night thresholds
-        UserDefaults.standard.set(180, forKey: dayHighKey)
-        UserDefaults.standard.set(220, forKey: nightHighKey)
-        UserDefaults.standard.set(80, forKey: dayLowKey)
-        UserDefaults.standard.set(85, forKey: nightLowKey)
-        UserDefaults.standard.set(Float(0.5), forKey: dayVolumeKey)
-        UserDefaults.standard.set(Float(0.0), forKey: nightVolumeKey)
-        UserDefaults.standard.set(23, forKey: nightStartHourKey)
-        UserDefaults.standard.set(30, forKey: nightStartMinuteKey)
-        UserDefaults.standard.set(6, forKey: nightEndHourKey)
-        UserDefaults.standard.set(45, forKey: nightEndMinuteKey)
+        defaults.set(180, forKey: dayHighKey)
+        defaults.set(220, forKey: nightHighKey)
+        defaults.set(80, forKey: dayLowKey)
+        defaults.set(85, forKey: nightLowKey)
+        defaults.set(Float(0.5), forKey: dayVolumeKey)
+        defaults.set(Float(0.0), forKey: nightVolumeKey)
+        defaults.set(23, forKey: nightStartHourKey)
+        defaults.set(30, forKey: nightStartMinuteKey)
+        defaults.set(6, forKey: nightEndHourKey)
+        defaults.set(45, forKey: nightEndMinuteKey)
 
-        _ = AppState()
+        _ = AppState(defaults: defaults)
 
-        #expect(UserDefaults.standard.integer(forKey: nightHighKey) == 220)
-        #expect(UserDefaults.standard.integer(forKey: nightLowKey) == 85)
-        #expect(UserDefaults.standard.float(forKey: nightVolumeKey) == 0)
-        #expect(UserDefaults.standard.integer(forKey: nightStartHourKey) == 23)
-        #expect(UserDefaults.standard.integer(forKey: nightStartMinuteKey) == 30)
-        #expect(UserDefaults.standard.integer(forKey: nightEndHourKey) == 6)
-        #expect(UserDefaults.standard.integer(forKey: nightEndMinuteKey) == 45)
+        #expect(defaults.integer(forKey: nightHighKey) == 220)
+        #expect(defaults.integer(forKey: nightLowKey) == 85)
+        #expect(defaults.float(forKey: nightVolumeKey) == 0)
+        #expect(defaults.integer(forKey: nightStartHourKey) == 23)
+        #expect(defaults.integer(forKey: nightStartMinuteKey) == 30)
+        #expect(defaults.integer(forKey: nightEndHourKey) == 6)
+        #expect(defaults.integer(forKey: nightEndMinuteKey) == 45)
     }
 
     @Test("Migration is idempotent even after legacy key dual-write")
     func idempotentAfterDualWrite() {
-        clearAllAlarmKeys()
+        let defaults = makeTestDefaults()
         // After first migration + a day-side edit, the legacy alarmHigh key
         // is present (dual-write side effect) AND dayAlarmHigh is present.
-        UserDefaults.standard.set(170, forKey: dayHighKey)  // user edited via Day picker
-        UserDefaults.standard.set(170, forKey: legacyHighKey)  // dual-write echo
-        UserDefaults.standard.set(220, forKey: nightHighKey)  // user-customised night
-        UserDefaults.standard.set(80, forKey: dayLowKey)
-        UserDefaults.standard.set(80, forKey: nightLowKey)
-        UserDefaults.standard.set(Float(0.5), forKey: dayVolumeKey)
-        UserDefaults.standard.set(Float(0.5), forKey: nightVolumeKey)
+        defaults.set(170, forKey: dayHighKey)  // user edited via Day picker
+        defaults.set(170, forKey: legacyHighKey)  // dual-write echo
+        defaults.set(220, forKey: nightHighKey)  // user-customised night
+        defaults.set(80, forKey: dayLowKey)
+        defaults.set(80, forKey: nightLowKey)
+        defaults.set(Float(0.5), forKey: dayVolumeKey)
+        defaults.set(Float(0.5), forKey: nightVolumeKey)
 
-        _ = AppState()
+        _ = AppState(defaults: defaults)
 
         // Night high should still be the user's customised value, not overwritten
         // back to the legacy 170.
-        #expect(UserDefaults.standard.integer(forKey: nightHighKey) == 220)
-        #expect(UserDefaults.standard.integer(forKey: dayHighKey) == 170)
+        #expect(defaults.integer(forKey: nightHighKey) == 220)
+        #expect(defaults.integer(forKey: dayHighKey) == 170)
     }
 }
 
-@Suite("AlarmProfile dual-write rollback safety", .serialized)
+@Suite("AlarmProfile dual-write rollback safety")
 struct AlarmProfileDualWriteTests {
 
     @Test("setDayAlarmHigh writes both day and legacy keys")
     func dayAlarmHighDualWrites() {
-        clearAllAlarmKeys()
-        var state: DirectState = AppState()
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
         directReducer(state: &state, action: .setDayAlarmHigh(value: 175))
 
-        #expect(UserDefaults.standard.integer(forKey: dayHighKey) == 175)
-        #expect(UserDefaults.standard.integer(forKey: legacyHighKey) == 175)
+        #expect(defaults.integer(forKey: dayHighKey) == 175)
+        #expect(defaults.integer(forKey: legacyHighKey) == 175)
     }
 
     @Test("setDayAlarmLow writes both day and legacy keys")
     func dayAlarmLowDualWrites() {
-        clearAllAlarmKeys()
-        var state: DirectState = AppState()
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
         directReducer(state: &state, action: .setDayAlarmLow(value: 72))
 
-        #expect(UserDefaults.standard.integer(forKey: dayLowKey) == 72)
-        #expect(UserDefaults.standard.integer(forKey: legacyLowKey) == 72)
+        #expect(defaults.integer(forKey: dayLowKey) == 72)
+        #expect(defaults.integer(forKey: legacyLowKey) == 72)
     }
 
     @Test("setDayAlarmVolume writes both day and legacy keys")
     func dayAlarmVolumeDualWrites() {
-        clearAllAlarmKeys()
-        var state: DirectState = AppState()
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
         directReducer(state: &state, action: .setDayAlarmVolume(value: 0.65))
 
-        #expect(abs(UserDefaults.standard.float(forKey: dayVolumeKey) - 0.65) < 0.0001)
-        #expect(abs(UserDefaults.standard.float(forKey: legacyVolumeKey) - 0.65) < 0.0001)
+        #expect(abs(defaults.float(forKey: dayVolumeKey) - 0.65) < 0.0001)
+        #expect(abs(defaults.float(forKey: legacyVolumeKey) - 0.65) < 0.0001)
     }
 
     @Test("setNightAlarmHigh writes only night key (no legacy mirror)")
     func nightAlarmHighSingleWrite() {
-        clearAllAlarmKeys()
-        var state: DirectState = AppState()
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
         // After init the migration copies whatever is in legacy (or defaults) to legacy too.
         // To verify the night-side does NOT touch the legacy key, we record its value first.
-        let legacyBefore = UserDefaults.standard.integer(forKey: legacyHighKey)
+        let legacyBefore = defaults.integer(forKey: legacyHighKey)
         directReducer(state: &state, action: .setNightAlarmHigh(value: 215))
 
-        #expect(UserDefaults.standard.integer(forKey: nightHighKey) == 215)
-        #expect(UserDefaults.standard.integer(forKey: legacyHighKey) == legacyBefore)
+        #expect(defaults.integer(forKey: nightHighKey) == 215)
+        #expect(defaults.integer(forKey: legacyHighKey) == legacyBefore)
     }
 }

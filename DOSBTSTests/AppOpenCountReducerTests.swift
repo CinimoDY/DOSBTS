@@ -8,7 +8,7 @@ import Testing
 @testable import DOSBTSApp
 
 private func makeAppOpenState() -> AppState {
-    AppState()
+    AppState(defaults: makeTestDefaults())
 }
 
 private func reduceAppOpen(_ state: inout DirectState, _ action: DirectAction) {

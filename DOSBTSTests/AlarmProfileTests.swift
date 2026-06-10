@@ -163,7 +163,7 @@ struct DirectStateAlarmOverlayTests {
 
     @Test("alarmHigh resolves to dayAlarmHigh when active profile is day")
     func dayHigh() {
-        var state: DirectState = AppState()
+        var state: DirectState = AppState(defaults: makeTestDefaults())
         // Configure a window that's clearly NOT active right now (say, "night" 04:00→04:01 if not midnight)
         // Easier: use degenerate schedule which forces day always.
         state.nightStartHour = 0
@@ -178,7 +178,7 @@ struct DirectStateAlarmOverlayTests {
 
     @Test("alarmLow resolves to dayAlarmLow when active profile is day")
     func dayLow() {
-        var state: DirectState = AppState()
+        var state: DirectState = AppState(defaults: makeTestDefaults())
         state.nightStartHour = 0
         state.nightStartMinute = 0
         state.nightEndHour = 0
@@ -191,7 +191,7 @@ struct DirectStateAlarmOverlayTests {
 
     @Test("alarmVolume resolves to dayAlarmVolume when active profile is day")
     func dayVolume() {
-        var state: DirectState = AppState()
+        var state: DirectState = AppState(defaults: makeTestDefaults())
         state.nightStartHour = 0
         state.nightStartMinute = 0
         state.nightEndHour = 0
@@ -204,7 +204,7 @@ struct DirectStateAlarmOverlayTests {
 
     @Test("alarmHigh resolves to nightAlarmHigh when active profile is night")
     func nightHigh() {
-        var state: DirectState = AppState()
+        var state: DirectState = AppState(defaults: makeTestDefaults())
         // Configure schedule so that "now" is always inside night window: 00:00 → 23:59
         state.nightStartHour = 0
         state.nightStartMinute = 0

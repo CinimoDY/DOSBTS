@@ -23,7 +23,7 @@ private func degenerateWindow() -> (startH: Int, startM: Int, endH: Int, endM: I
 }
 
 private func makeStateForceDay() -> AppState {
-    var state = AppState()
+    var state = AppState(defaults: makeTestDefaults())
     let w = degenerateWindow()
     state.nightStartHour = w.startH
     state.nightStartMinute = w.startM
@@ -33,7 +33,7 @@ private func makeStateForceDay() -> AppState {
 }
 
 private func makeStateForceNight() -> AppState {
-    var state = AppState()
+    var state = AppState(defaults: makeTestDefaults())
     let w = windowEnclosingNow()
     state.nightStartHour = w.startH
     state.nightStartMinute = w.startM

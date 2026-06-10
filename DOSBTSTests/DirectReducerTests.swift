@@ -9,11 +9,24 @@ import Testing
 
 // MARK: - Reducer Test Helpers
 
-/// Creates a minimal AppState for testing. AppState.init() reads from UserDefaults,
-/// so these tests exercise the real init path. State mutations are verified by
-/// calling directReducer() directly — it's a pure function.
+/// Fresh, isolated UserDefaults suite — one per call, never shared between
+/// tests, so parallel suites can't pollute each other's keys and nothing
+/// persists across runs. Shared by all test files in this target.
+func makeTestDefaults() -> UserDefaults {
+    let name = "dosbts-tests-\(UUID().uuidString)"
+    guard let defaults = UserDefaults(suiteName: name) else {
+        fatalError("Could not create test UserDefaults suite \(name)")
+    }
+    defaults.removePersistentDomain(forName: name)
+    return defaults
+}
+
+/// Creates a minimal AppState for testing. AppState.init() reads from the
+/// injected isolated UserDefaults, so these tests exercise the real init path.
+/// State mutations are verified by calling directReducer() directly — it's a
+/// pure function.
 private func makeState() -> AppState {
-    AppState()
+    AppState(defaults: makeTestDefaults())
 }
 
 private func reduce(_ state: inout DirectState, _ action: DirectAction) {
@@ -198,7 +211,7 @@ struct TreatmentPromptTests {
 
 // MARK: - IOB State Tests
 
-@Suite("IOB State", .serialized)
+@Suite("IOB State")
 struct IOBStateTests {
 
     @Test("setBolusInsulinPreset updates preset")
@@ -241,16 +254,6 @@ struct IOBStateTests {
 
     @Test("default state has rapidActing preset and 360 basalDIAMinutes")
     func defaultState() {
-        // Sibling tests persist these via AppState.didSet, and simulator
-        // UserDefaults survive across runs — clear so init sees a fresh install.
-        for key in [
-            "libre-direct.settings.bolus-insulin-preset",
-            "libre-direct.settings.basal-dia-minutes",
-            "libre-direct.settings.show-split-iob",
-        ] {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-
         let state: DirectState = makeState()
         #expect(state.bolusInsulinPreset == .rapidActing)
         #expect(state.basalDIAMinutes == 360)

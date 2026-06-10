@@ -21,7 +21,7 @@ private func clearSharedAlarmKeys() {
 }
 
 private func makeMockState() -> AppState {
-    var state = AppState()
+    var state = AppState(defaults: makeTestDefaults())
     state.dayAlarmHigh = 175
     state.dayAlarmLow = 75
     state.nightAlarmHigh = 220
