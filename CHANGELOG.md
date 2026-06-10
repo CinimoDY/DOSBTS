@@ -7,6 +7,12 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- QUICK favourites row scrolls horizontally again — the hold-to-log mechanic blocked scrolling on amber chips; the hold control now cooperates with scrolling (a drag cancels the hold), on both the favourites row and the recents list — DMNC-796.
+
+### Added
+- "> QUICK" header is now tappable with a chevron: expands the favourites row into a wrapped grid showing all favourites (the row previously capped at 8 with no way to see the rest) — DMNC-796.
+
 ## [Build 97] — 2026-06-10
 
 ### Added

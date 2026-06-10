@@ -13,6 +13,7 @@ struct UnifiedFoodEntryView: View {
 
     @State private var searchText = ""
     @State private var showingFavoriteManagement = false
+    @State private var quickExpanded = false
     @StateObject private var toast = LoggedMealToastController()
     @State private var relogMeal: MealEntry?
 
@@ -98,43 +99,79 @@ struct UnifiedFoodEntryView: View {
     @ViewBuilder
     private var favoritesSection: some View {
         Section {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: DOSSpacing.xs) {
-                    ForEach(filteredFavorites.prefix(8)) { favorite in
-                        if favorite.isHypoTreatment {
-                            // Hypo treatments stay 1-tap direct log with no
-                            // hold gesture (R4, KTD-7) — staging or holding
-                            // during a hypo is wrong.
-                            AmberChip(
-                                label: favorite.chipLabel,
-                                subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
-                                variant: .quick,
-                                tint: AmberTheme.cgaGreen
-                            ) {
-                                logFavorite(favorite)
-                            }
-                        } else {
-                            HoldToCommitProgress(
-                                onTap: { stageFavorite(favorite) },
-                                onCommit: { logFavorite(favorite) }
-                            ) {
-                                AmberChipLabel(
-                                    label: favorite.chipLabel,
-                                    subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
-                                    variant: .quick
-                                )
-                            }
-                        }
+            if quickExpanded {
+                // All favourites in a wrapping grid — the chevron promised it.
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 96, maximum: 160), spacing: DOSSpacing.xs, alignment: .leading)],
+                    alignment: .leading,
+                    spacing: DOSSpacing.xs
+                ) {
+                    ForEach(filteredFavorites) { favorite in
+                        favoriteChip(favorite)
                     }
                 }
                 .padding(.vertical, DOSSpacing.xs)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: DOSSpacing.xs) {
+                        ForEach(filteredFavorites.prefix(8)) { favorite in
+                            favoriteChip(favorite)
+                        }
+                    }
+                    .padding(.vertical, DOSSpacing.xs)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
             }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
         } header: {
-            Text("> QUICK")
-                .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+            Button {
+                withAnimation(.linear(duration: 0.15)) {
+                    quickExpanded.toggle()
+                }
+            } label: {
+                HStack(spacing: DOSSpacing.xs) {
+                    Text("> QUICK")
+                        .font(DOSTypography.caption)
+                        .foregroundColor(AmberTheme.amberDark)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(AmberTheme.amberDark)
+                        .rotationEffect(.degrees(quickExpanded ? 90 : 0))
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(quickExpanded ? "Collapse quick favourites" : "Show all quick favourites")
+        }
+    }
+
+    @ViewBuilder
+    private func favoriteChip(_ favorite: FavoriteFood) -> some View {
+        if favorite.isHypoTreatment {
+            // Hypo treatments stay 1-tap direct log with no hold gesture
+            // (R4, KTD-7) — staging or holding during a hypo is wrong.
+            AmberChip(
+                label: favorite.chipLabel,
+                subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                variant: .quick,
+                tint: AmberTheme.cgaGreen
+            ) {
+                logFavorite(favorite)
+            }
+        } else {
+            HoldToCommitProgress(
+                onTap: { stageFavorite(favorite) },
+                onCommit: { logFavorite(favorite) }
+            ) {
+                AmberChipLabel(
+                    label: favorite.chipLabel,
+                    subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                    variant: .quick
+                )
+            }
         }
     }
 
