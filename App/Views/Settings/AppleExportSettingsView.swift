@@ -20,17 +20,18 @@ struct AppleExportSettingsView: View {
                 Toggle("Export to Apple Health", isOn: appleHealthExport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                 Toggle("Export to Apple Calendar", isOn: appleCalendarExport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
-                if store.state.appleCalendarExport {
-                    Picker("Selected calendar", selection: selectedCalendar) {
-                        if store.state.selectedCalendarTarget == nil {
-                            Text("Please select")
-                        }
+                Picker("Selected calendar", selection: selectedCalendar) {
+                    if store.state.selectedCalendarTarget == nil {
+                        Text("Please select")
+                    }
 
-                        ForEach(calendars, id: \.self) { cal in
-                            Text(cal)
-                        }
-                    }.pickerStyle(.menu)
+                    ForEach(calendars, id: \.self) { cal in
+                        Text(cal)
+                    }
                 }
+                .pickerStyle(.menu)
+                .disabled(!store.state.appleCalendarExport)
+                .opacity(store.state.appleCalendarExport ? 1 : 0.4)
             },
             header: {
                 Label("Apple export settings", systemImage: "square.and.arrow.up")
@@ -41,7 +42,7 @@ struct AppleExportSettingsView: View {
             content: {
                 Toggle("Import from Apple Health", isOn: appleHealthImport).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
-                if store.state.appleHealthImport {
+                Group {
                     NavigationLink("Source apps") {
                         HealthImportSourcesView()
                             .environmentObject(store)
@@ -58,6 +59,8 @@ struct AppleExportSettingsView: View {
                     }
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                 }
+                .disabled(!store.state.appleHealthImport)
+                .opacity(store.state.appleHealthImport ? 1 : 0.4)
             },
             header: {
                 Label("Apple import settings", systemImage: "square.and.arrow.down")

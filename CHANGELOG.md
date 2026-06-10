@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Settings reorganized into a drill-down hub of six categories (Alarms & Alerts, Glucose & Display, Insulin, Sensor & Connection, Integrations, System & About). The old "Additional settings" grab-bag is dissolved — its controls moved to their natural categories — DMNC-794.
+- Dependent settings controls (Nightscout URL/secret, Apple calendar picker, Health import options, digest reminder time) now dim when their parent toggle is off instead of disappearing, so the layout stays stable and options stay discoverable — DMNC-794.
+
 ### Fixed
 - Alarm limit +/− buttons now step by 5 mg/dL and respect the low/high bounds, matching the slider. Previously the buttons moved by 1 regardless of the configured step and could push a threshold past its safety bound — DMNC-794.
 

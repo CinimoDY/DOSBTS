@@ -18,7 +18,7 @@ struct NightscoutSettingsView: View {
                 Toggle("Nightscout upload enabled", isOn: nightscoutUpload)
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
-                if store.state.nightscoutUpload {
+                Group {
                     VStack(alignment: .leading) {
                         Text("Nightscout url")
                         TextField("https://my-nightscout.herokuapp.com", text: nightscoutURL)
@@ -33,6 +33,8 @@ struct NightscoutSettingsView: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                     }
                 }
+                .disabled(!store.state.nightscoutUpload)
+                .opacity(store.state.nightscoutUpload ? 1 : 0.4)
             },
             header: {
                 Label("Nightscout settings", systemImage: "icloud.and.arrow.up")

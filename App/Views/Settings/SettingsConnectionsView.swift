@@ -24,13 +24,13 @@ struct SettingsConnectionsView: View {
                     }
                 }
             } footer: {
-                Text("Manage where your glucose data is shared or exported. Individual toggles stay available under the main Settings list.")
+                Text("Manage where your glucose data is shared or exported.")
                     .font(DOSTypography.caption)
                     .foregroundColor(AmberTheme.amberDark)
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Connections")
+        .navigationTitle("Integrations")
         .navigationBarTitleDisplayMode(.inline)
     }
 
