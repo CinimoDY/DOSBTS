@@ -53,6 +53,16 @@ struct BloodGlucoseConversionTests {
     func boundsAccepted() {
         #expect(AddBloodGlucoseView.mgdLValue(fromDisplay: 40, glucoseUnit: .mgdL) == 40)
         #expect(AddBloodGlucoseView.mgdLValue(fromDisplay: 500, glucoseUnit: .mgdL) == 500)
+        #expect(AddBloodGlucoseView.mgdLValue(fromDisplay: 40.toMmolL(), glucoseUnit: .mmolL) == 40)
+        #expect(AddBloodGlucoseView.mgdLValue(fromDisplay: 500.toMmolL(), glucoseUnit: .mmolL) == 500)
+    }
+
+    @Test("typing the app's displayed mmol bounds is accepted and clamped")
+    func displayedMmolBoundsAccepted() {
+        // The app renders 40 mg/dL as "2.2" and 500 mg/dL as "27.8" (1-decimal
+        // formatter). A user typing those back must not be silently rejected.
+        #expect(AddBloodGlucoseView.mgdLValue(fromDisplay: 2.2, glucoseUnit: .mmolL) == 40)
+        #expect(AddBloodGlucoseView.mgdLValue(fromDisplay: 27.8, glucoseUnit: .mmolL) == 500)
     }
 
     @Test("display range converts for mmol/L users")
@@ -60,5 +70,39 @@ struct BloodGlucoseConversionTests {
         let range = AddBloodGlucoseView.displayRange(for: .mmolL)
         #expect(abs(range.lowerBound - 40.toMmolL()) < 0.0001)
         #expect(abs(range.upperBound - 500.toMmolL()) < 0.0001)
+    }
+}
+
+// MARK: - Editor text parsing (per-keystroke binding commit)
+
+@Suite("StepperField editor parsing")
+struct StepperFieldEditorTests {
+
+    @Test("parses dot and comma decimal separators")
+    func parsesSeparators() {
+        #expect(StepperField.parseEditorValue("4.5") == 4.5)
+        #expect(StepperField.parseEditorValue("4,5") == 4.5)
+        #expect(StepperField.parseEditorValue(" 12 ") == 12)
+    }
+
+    @Test("empty or unparseable text yields nil")
+    func unparseableNil() {
+        #expect(StepperField.parseEditorValue("") == nil)
+        #expect(StepperField.parseEditorValue("abc") == nil)
+        #expect(StepperField.parseEditorValue("4.5.6") == nil)
+    }
+
+    @Test("editor seed text matches the unfocused display format")
+    func editorSeedFormat() {
+        #expect(StepperField.editorText(for: 100) == "100")
+        #expect(StepperField.editorText(for: 5.5) == "5.5")
+        #expect(StepperField.editorText(for: 5.55) == "5.55")
+    }
+
+    @Test("seed text round-trips through the parser")
+    func seedRoundTrip() {
+        for v in [40.0, 5.6, 27.8, 354.0] {
+            #expect(StepperField.parseEditorValue(StepperField.editorText(for: v)) == v)
+        }
     }
 }

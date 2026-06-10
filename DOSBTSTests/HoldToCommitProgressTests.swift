@@ -50,14 +50,28 @@ struct HoldToCommitProgressTests {
         #expect(!Hold.shouldSuppressTap(now: committed.addingTimeInterval(1.5), committedAt: committed))
     }
 
+    @Test("tap at exactly the window edge passes through (strict <)")
+    func tapSuppressionAtExactBoundary() {
+        let committed = Date()
+        #expect(!Hold.shouldSuppressTap(now: committed.addingTimeInterval(1.0), committedAt: committed))
+    }
+
     @Test("tap with no prior commit passes through")
     func tapWithoutCommit() {
         #expect(!Hold.shouldSuppressTap(now: Date(), committedAt: nil))
     }
 
-    @Test("hold duration constant is sub-second per DMNC-805")
+    @Test("hold duration is pinned — Reduce Motion step cadence derives from it")
     func holdDurationConstant() {
-        #expect(Hold.holdDuration > 0)
-        #expect(Hold.holdDuration < 1.0)
+        #expect(Hold.holdDuration == 0.8)
+    }
+
+    @Test("fallback suppression window outlasts the hold threshold")
+    func suppressionWindowExceedsHold() {
+        // The wall-clock fallback only helps if it covers at least the time
+        // between commit (at holdDuration) and a plausible release.
+        let committed = Date()
+        let justAfterThresholdRelease = committed.addingTimeInterval(Hold.holdDuration * 0.9)
+        #expect(Hold.shouldSuppressTap(now: justAfterThresholdRelease, committedAt: committed))
     }
 }

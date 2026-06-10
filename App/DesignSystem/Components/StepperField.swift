@@ -14,6 +14,7 @@ struct StepperField: View {
     var helpText: String? = nil
 
     @FocusState private var isFocused: Bool
+    @State private var editorText: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -32,17 +33,31 @@ struct StepperField: View {
 
                 ZStack {
                     if isFocused || value == nil {
-                        // Allow 0 to 2 fractional digits so the user can type
-                        // whole-number entries (e.g. "20") without the field
-                        // forcing a "2.0" reformat after the first digit. The
-                        // user types the decimal separator themselves when
-                        // they need a fractional value (e.g. "2.5").
-                        TextField("", value: $value, format: .number.precision(.fractionLength(0...2)))
+                        // String-backed editor so every keystroke commits to
+                        // the binding immediately. A value:format: TextField
+                        // only commits on submit/focus-loss, and the decimal
+                        // pad has no submit — a caller reading the binding
+                        // from a toolbar button would get the stale value.
+                        TextField("", text: $editorText)
                             .multilineTextAlignment(.center)
                             .keyboardType(.decimalPad)
                             .focused($isFocused)
                             .font(.system(size: 24, weight: .semibold, design: .monospaced))
                             .foregroundStyle(AmberTheme.amber)
+                            .onChange(of: editorText) { _, newText in
+                                value = Self.parseEditorValue(newText)
+                            }
+                            .onChange(of: isFocused) { _, focused in
+                                if focused {
+                                    editorText = value.map(Self.editorText(for:)) ?? ""
+                                }
+                            }
+                            .onChange(of: value) { _, newValue in
+                                // Keep the editor in sync when +/- buttons
+                                // change the value while the field is focused.
+                                guard isFocused, Self.parseEditorValue(editorText) != newValue else { return }
+                                editorText = newValue.map(Self.editorText(for:)) ?? ""
+                            }
                     } else if let v = value {
                         HStack(alignment: .firstTextBaseline, spacing: 4) {
                             // Drop the trailing ".0" for whole numbers so the
@@ -98,5 +113,25 @@ struct StepperField: View {
     static func decrement(_ value: inout Double?, step: Double, range: ClosedRange<Double>) {
         let current = value ?? 0
         value = max(current - step, range.lowerBound)
+    }
+
+    /// Typed text → value. Accepts both "." and "," as decimal separator
+    /// (decimal pad follows locale). Empty/unparseable text = nil.
+    static func parseEditorValue(_ text: String) -> Double? {
+        let normalized = text
+            .trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: ",", with: ".")
+        guard !normalized.isEmpty else { return nil }
+        return Double(normalized)
+    }
+
+    /// Value → editor seed text, matching the unfocused display: whole
+    /// numbers without ".0", fractional values with up to 2 digits.
+    static func editorText(for value: Double) -> String {
+        if value == value.rounded() {
+            return String(Int(value))
+        }
+        let two = String(format: "%.2f", value)
+        return two.hasSuffix("0") ? String(format: "%.1f", value) : two
     }
 }

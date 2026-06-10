@@ -67,12 +67,15 @@ struct UnifiedFoodEntryView: View {
                 }
             }
             .overlay(alignment: .bottom) {
-                if let meal = toast.meal {
-                    LoggedMealToast(meal: meal) {
-                        store.dispatch(.deleteMealEntry(mealEntry: meal))
-                        toast.dismiss()
+                Group {
+                    if let meal = toast.meal {
+                        LoggedMealToast(meal: meal) {
+                            store.dispatch(.deleteMealEntry(mealEntry: meal))
+                            toast.dismiss()
+                        }
                     }
                 }
+                .animation(.linear(duration: 0.2), value: toast.meal)
             }
             .navigationDestination(item: $relogMeal) { meal in
                 FoodPhotoAnalysisView(relogMeal: meal)
@@ -346,7 +349,7 @@ struct FavoriteManagementView: View {
         NavigationView {
             List {
                 if store.state.favoriteFoodValues.isEmpty {
-                    Text("No favorites yet. Long-press a meal to add it.")
+                    Text("No favorites yet. Swipe left on a recent meal to add it.")
                         .font(DOSTypography.bodySmall)
                         .foregroundColor(AmberTheme.amberDark)
                 } else {

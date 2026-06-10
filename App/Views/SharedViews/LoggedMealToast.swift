@@ -44,8 +44,9 @@ struct LoggedMealToast: View {
 
 // MARK: - LoggedMealToastController
 
-/// Show/dismiss lifecycle for the toast: animated presentation, 3s
-/// auto-dismiss, re-show replaces content and resets the timer.
+/// Show/dismiss lifecycle for the toast: 3s auto-dismiss, re-show replaces
+/// content and resets the timer. Publishes state only — the presenting view
+/// owns the animation (`.animation(_:value:)` on the overlay).
 @MainActor
 final class LoggedMealToastController: ObservableObject {
     static let autoDismissDelay: TimeInterval = 3.0
@@ -55,9 +56,7 @@ final class LoggedMealToastController: ObservableObject {
     private var workItem: DispatchWorkItem?
 
     func show(_ meal: MealEntry) {
-        withAnimation(.linear(duration: 0.2)) {
-            self.meal = meal
-        }
+        self.meal = meal
         workItem?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.dismiss() }
         workItem = item
@@ -67,8 +66,6 @@ final class LoggedMealToastController: ObservableObject {
     func dismiss() {
         workItem?.cancel()
         workItem = nil
-        withAnimation(.linear(duration: 0.2)) {
-            meal = nil
-        }
+        meal = nil
     }
 }

@@ -143,12 +143,18 @@ public struct AmberChip: View {
 
     private var accessibilityText: String {
         // Replace ASCII-art labels with readable text
+        let base: String
         switch label {
-        case "⋯": return "Custom time"
-        case "−15m": return "15 minutes ago"
-        case "−30m": return "30 minutes ago"
-        case "−1h": return "1 hour ago"
-        default: return label
+        case "⋯": base = "Custom time"
+        case "−15m": base = "15 minutes ago"
+        case "−30m": base = "30 minutes ago"
+        case "−1h": base = "1 hour ago"
+        default: base = label
         }
+        // Quick chips carry the carbs sub-line — VoiceOver should hear it.
+        if let subtitle {
+            return "\(base), \(subtitle)"
+        }
+        return base
     }
 }

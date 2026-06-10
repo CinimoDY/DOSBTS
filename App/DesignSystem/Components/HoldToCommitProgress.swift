@@ -25,32 +25,56 @@ struct HoldToCommitProgress<Content: View>: View {
     @GestureState private var isPressing = false
     @State private var fillProgress: Double = 0
     @State private var committedAt: Date?
-    // Reduce Motion: discrete steps driven by a timer instead of an animated fill.
-    @State private var stepTimer: Timer?
+    // One-shot per-gesture flag: a finger-down past the threshold commits via
+    // the long press, but the subsequent touch-up can still register as a tap.
+    // The flag (cleared when a new press begins) suppresses it regardless of
+    // how long the user kept holding; the committedAt wall-clock window is a
+    // fallback so a missed tap event can never permanently swallow real taps.
+    @State private var didCommitDuringPress = false
+    // Reduce Motion: discrete steps driven by a cancellable task instead of an
+    // animated fill (async/await per repo rules; cancellation covers dismissal).
+    @State private var stepTask: Task<Void, Never>?
 
     var body: some View {
         content()
             .overlay(fillOverlay)
             .contentShape(Rectangle())
-            .onTapGesture {
-                // A finger-down past the threshold commits via the long press,
-                // but the subsequent touch-up can still register as a tap —
-                // suppress it so a single hold doesn't also open the staging route.
-                guard !Self.shouldSuppressTap(now: Date(), committedAt: committedAt) else { return }
-                onTap()
-            }
+            .onTapGesture(perform: handleTap)
             .simultaneousGesture(
                 LongPressGesture(minimumDuration: Self.holdDuration)
                     .updating($isPressing) { current, state, _ in state = current }
                     .onEnded { _ in commit() }
             )
             .onChange(of: isPressing) { _, pressing in
-                pressing ? beginFill() : cancelFill()
+                if pressing {
+                    didCommitDuringPress = false
+                    beginFill()
+                } else {
+                    cancelFill()
+                }
+            }
+            .onDisappear {
+                stepTask?.cancel()
+                stepTask = nil
             }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { onTap() }
-            .accessibilityAction(named: "Log immediately") { commit() }
+            .accessibilityAction(named: "Log immediately") {
+                // Same suppression window guards rapid double activation of
+                // the custom action from minting duplicate entries.
+                guard !Self.shouldSuppressTap(now: Date(), committedAt: committedAt) else { return }
+                commit()
+            }
+    }
+
+    private func handleTap() {
+        if didCommitDuringPress {
+            didCommitDuringPress = false
+            return
+        }
+        guard !Self.shouldSuppressTap(now: Date(), committedAt: committedAt) else { return }
+        onTap()
     }
 
     // MARK: - Pure helpers (unit-tested)
@@ -89,12 +113,13 @@ struct HoldToCommitProgress<Content: View>: View {
             // Non-animated stepped progress; the commit threshold is still
             // owned by the gesture, so timing is identical (R7).
             let stepInterval = Self.holdDuration / 4
-            var step = 0
-            stepTimer?.invalidate()
-            stepTimer = Timer.scheduledTimer(withTimeInterval: stepInterval, repeats: true) { timer in
-                step += 1
-                fillProgress = Self.progress(elapsed: Double(step) * stepInterval, duration: Self.holdDuration)
-                if fillProgress >= 1 { timer.invalidate() }
+            stepTask?.cancel()
+            stepTask = Task { @MainActor in
+                for step in 1...4 {
+                    try? await Task.sleep(for: .seconds(stepInterval))
+                    guard !Task.isCancelled else { return }
+                    fillProgress = Self.progress(elapsed: Double(step) * stepInterval, duration: Self.holdDuration)
+                }
             }
         } else {
             withAnimation(.linear(duration: Self.holdDuration)) {
@@ -104,8 +129,8 @@ struct HoldToCommitProgress<Content: View>: View {
     }
 
     private func cancelFill() {
-        stepTimer?.invalidate()
-        stepTimer = nil
+        stepTask?.cancel()
+        stepTask = nil
         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) {
             fillProgress = 0
         }
@@ -113,6 +138,7 @@ struct HoldToCommitProgress<Content: View>: View {
 
     private func commit() {
         committedAt = Date()
+        didCommitDuringPress = true
         DirectNotifications.shared.hapticFeedback(.medium)
         onCommit()
         cancelFill()
