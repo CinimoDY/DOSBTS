@@ -35,7 +35,7 @@ struct UnifiedFoodEntryView: View {
                         Section {
                             Text("NO HYPO TREATMENTS CONFIGURED")
                                 .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.vertical, DOSSpacing.lg)
                         }
@@ -142,10 +142,10 @@ struct UnifiedFoodEntryView: View {
                 HStack(spacing: DOSSpacing.xs) {
                     Text("> QUICK")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                         .rotationEffect(.degrees(quickExpanded ? 90 : 0))
                     Spacer()
                 }
@@ -192,11 +192,11 @@ struct UnifiedFoodEntryView: View {
                 if searchText.isEmpty {
                     Text("Log your first meal to see recents here")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 } else {
                     Text("No matches for \"\(searchText)\"")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 }
             } else {
                 ForEach(filteredRecents) { meal in
@@ -239,7 +239,7 @@ struct UnifiedFoodEntryView: View {
         } header: {
             Text("> RECENT")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
         }
     }
 
@@ -262,7 +262,7 @@ struct UnifiedFoodEntryView: View {
                     Text("MANUAL")
                         .font(DOSTypography.bodySmall)
                 }
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
             }
 
             // SCAN — always available (OFF is free, no API key needed)
@@ -277,7 +277,7 @@ struct UnifiedFoodEntryView: View {
                     Text("SCAN")
                         .font(DOSTypography.bodySmall)
                 }
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
             }
 
             if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
@@ -292,7 +292,7 @@ struct UnifiedFoodEntryView: View {
                         Text("PHOTO")
                             .font(DOSTypography.bodySmall)
                     }
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
                 }
 
                 // NL text parsing — appears when search text >= 3 chars
@@ -406,7 +406,7 @@ struct FavoriteManagementView: View {
                 if store.state.favoriteFoodValues.isEmpty {
                     Text("No favorites yet. Swipe left on a recent meal to add it.")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 } else {
                     ForEach(store.state.favoriteFoodValues) { favorite in
                         Button {
@@ -434,7 +434,7 @@ struct FavoriteManagementView: View {
                                 if let carbs = favorite.carbsGrams {
                                     Text("\(Int(carbs))g")
                                         .font(DOSTypography.caption)
-                                        .foregroundColor(AmberTheme.amberDark)
+                                        .foregroundColor(AmberTheme.amber)
                                 }
                             }
                         }

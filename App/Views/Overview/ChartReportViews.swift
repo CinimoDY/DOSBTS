@@ -35,12 +35,12 @@ struct TimeInRangeReportView: View {
                         .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
                     Text("\(stats.days) of \(stats.maxDays) days")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             } else {
                 Text("No statistics available")
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             }
         }
         .padding(.vertical, DOSSpacing.md)
@@ -94,12 +94,12 @@ struct StatisticsReportView: View {
                     Text("\(stats.days) of \(stats.maxDays) days")
                 }
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
                 .padding(.horizontal, DOSSpacing.md)
             } else {
                 Text("No statistics available")
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             }
         }
         .padding(.vertical, DOSSpacing.md)

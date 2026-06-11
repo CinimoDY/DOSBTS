@@ -26,7 +26,7 @@ struct SettingsConnectionsView: View {
             } footer: {
                 Text("Manage where your glucose data is shared or exported.")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             }
         }
         .listStyle(.grouped)
@@ -142,7 +142,7 @@ private struct ConnectionRow: View {
                 }
                 Text(connection.description)
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
                     .lineLimit(2)
             }
         }

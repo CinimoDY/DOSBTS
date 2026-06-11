@@ -51,7 +51,7 @@ private struct DigestReminderSection: View {
 
                     Text("Daily local notification that opens the Daily Digest tab.")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 .padding(.vertical, 4)
             },

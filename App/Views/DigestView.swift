@@ -134,25 +134,25 @@ struct DigestView: View {
             if store.state.dailyDigestInsightLoading {
                 Text("ANALYZING...")
                     .font(DOSTypography.body)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
                     .opacity(0.7)
             } else if let insight = digest.aiInsight, !insight.isEmpty {
                 AIInsightContent(text: insight)
             } else if !store.state.aiConsentDailyDigest {
                 Text("ENABLE AI INSIGHTS IN SETTINGS")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             } else if KeychainService.read(key: ClaudeService.keychainKey) == nil {
                 Text("ADD API KEY IN SETTINGS")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             } else {
                 Button(action: {
                     store.dispatch(.generateDailyDigestInsight(date: selectedDate, force: true))
                 }) {
                     Text("INSIGHT UNAVAILABLE — TAP TO RETRY")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 }
             }
         }
@@ -169,7 +169,7 @@ struct DigestView: View {
         VStack(alignment: .leading, spacing: DOSSpacing.xs) {
             Text("TIMELINE")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
                 .padding(.bottom, 4)
 
             if let events = store.state.dailyDigestEvents {
@@ -177,13 +177,13 @@ struct DigestView: View {
                 if timelineItems.isEmpty {
                     Text("NO EVENTS LOGGED")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 } else {
                     ForEach(timelineItems, id: \.id) { item in
                         HStack(spacing: DOSSpacing.sm) {
                             Text(item.timeString)
                                 .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                                 .frame(width: 45, alignment: .leading)
                             Text(item.label)
                                 .font(DOSTypography.caption)
@@ -194,7 +194,7 @@ struct DigestView: View {
             } else {
                 Text("LOADING...")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -207,7 +207,7 @@ struct DigestView: View {
             Spacer()
             Text("LOADING...")
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
             Spacer()
         }
         .frame(minHeight: 200)
@@ -218,7 +218,7 @@ struct DigestView: View {
             Spacer()
             Text("NO DATA FOR THIS DAY")
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
             Spacer()
         }
         .frame(minHeight: 200)

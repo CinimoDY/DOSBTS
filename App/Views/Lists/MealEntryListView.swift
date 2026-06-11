@@ -60,7 +60,7 @@ struct MealEntryListView: View {
                                     }
                                 }
                                 .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amber)
                             }
                         }
                         .swipeActions(edge: .leading) {

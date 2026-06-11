@@ -229,7 +229,7 @@ struct GlucoseView: View {
                 .foregroundColor(WidgetColors.amberDark)
             Text("NO DATA")
                 .font(WidgetFonts.caption)
-                .foregroundColor(WidgetColors.amberDark)
+                .foregroundColor(WidgetColors.amber)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground(backgroundView: WidgetColors.dosBlack)
@@ -309,7 +309,7 @@ struct GlucoseView: View {
                         if let minuteChange = glucose.minuteChange?.asShortMinuteChange(glucoseUnit: glucoseUnit) {
                             Text(verbatim: minuteChange)
                                 .font(WidgetFonts.caption)
-                                .foregroundColor(WidgetColors.amberDark)
+                                .foregroundColor(WidgetColors.amber)
                         }
                     }
                 }
@@ -377,7 +377,7 @@ struct GlucoseView: View {
                 if let tir = entry.tir {
                     HStack(spacing: 4) {
                         Text("TIR")
-                            .foregroundColor(WidgetColors.amberDark)
+                            .foregroundColor(WidgetColors.amber)
                         Text("\(Int(tir))%")
                             .foregroundColor(tir >= 70 ? WidgetColors.cgaGreen : WidgetColors.amber)
                     }
@@ -387,7 +387,7 @@ struct GlucoseView: View {
                 if let iob = entry.iob {
                     HStack(spacing: 4) {
                         Text("IOB")
-                            .foregroundColor(WidgetColors.amberDark)
+                            .foregroundColor(WidgetColors.amber)
                         Text(String(format: "%.1fU", iob))
                             .foregroundColor(WidgetColors.cgaCyan)
                     }
@@ -404,7 +404,7 @@ struct GlucoseView: View {
                                 .lineLimit(1)
                             if let carbs = entry.lastMealCarbs {
                                 Text("\(Int(carbs))g")
-                                    .foregroundColor(WidgetColors.amberDark)
+                                    .foregroundColor(WidgetColors.amber)
                             }
                         }
                     }
@@ -518,7 +518,7 @@ struct GlucoseView: View {
                     .overlay(
                         Text("NO CHART DATA")
                             .font(WidgetFonts.caption)
-                            .foregroundColor(WidgetColors.amberDark)
+                            .foregroundColor(WidgetColors.amber)
                     )
             }
 
@@ -534,7 +534,7 @@ struct GlucoseView: View {
 
                 if let sensorName = UserDefaults.shared.sharedSensor {
                     Text(sensorName)
-                        .foregroundColor(WidgetColors.amberDark)
+                        .foregroundColor(WidgetColors.amber)
                 }
             }
             .font(WidgetFonts.caption)

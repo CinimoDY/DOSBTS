@@ -9,6 +9,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ### Changed
 - Overview INSULIN/MEAL buttons are half as tall: icon now sits beside the label instead of above it, giving the chart more vertical space.
+- Small informational text (settings descriptions, empty states, timestamps, field labels, digest statuses) brightened from dim amber to full amber across the app and widgets — dim amber measured 3.7:1 on black, below the WCAG AA floor. Dimming for disabled controls, unselected tabs, and decorative strokes is unchanged (R5/AE3).
 
 ### Fixed
 - Overview no longer overflows the screen when the hypo-treatment countdown banner is active — the chart compresses to absorb the banner, so the INSULIN/MEAL buttons stay fully above the tab bar instead of being pushed behind it.

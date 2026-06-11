@@ -53,7 +53,7 @@ struct AISettingsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Enter your Anthropic API key to enable AI-powered food photo analysis.")
                     Text("Estimated cost: less than $0.01 per analysis (~$0.30/month at 3 meals/day)")
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
         )
@@ -70,7 +70,7 @@ struct AISettingsView: View {
                             .frame(width: 60)
                         Text("mm")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
 
                     if store.state.thumbCalibrationMM != nil {
@@ -121,7 +121,7 @@ struct AISettingsView: View {
                             Text("AI Daily Insights")
                             Text("Sends glucose readings, meals, insulin, and exercise data to generate daily summaries")
                                 .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amber)
                         }
                     }
                 },

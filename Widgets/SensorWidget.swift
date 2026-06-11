@@ -129,7 +129,7 @@ struct SensorView: View {
                     }
                     Text(sensor.family.localizedDescription)
                         .font(WidgetFonts.tabBar)
-                        .foregroundColor(WidgetColors.amberDark)
+                        .foregroundColor(WidgetColors.amber)
                         .lineLimit(1)
                 }
             }

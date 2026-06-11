@@ -110,7 +110,7 @@ struct AddInsulinView: View {
         Text(text)
             .font(.system(size: 10, weight: .medium, design: .monospaced))
             .tracking(0.6)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amber)
     }
 
     private var typeRow: some View {

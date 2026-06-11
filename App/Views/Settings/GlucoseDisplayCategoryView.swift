@@ -49,7 +49,7 @@ private struct DisplaySettingsSection: View {
                     Toggle("Keep screen awake", isOn: preventScreenLock).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                     Text("Prevents the device from auto-locking while monitoring. Resets automatically when the app is backgrounded.")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 .padding(.vertical, 4)
 
@@ -63,7 +63,7 @@ private struct DisplaySettingsSection: View {
                     .pickerStyle(.segmented)
                     Text("Where the meal/insulin/exercise icons sit relative to the glucose chart.")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 .padding(.vertical, 4)
             },

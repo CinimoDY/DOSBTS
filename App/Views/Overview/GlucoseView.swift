@@ -59,7 +59,7 @@ struct GlucoseView: View {
                         Text("\(staleMinutes) MIN AGO")
                     }
                     .font(DOSTypography.caption)
-                    .foregroundColor(staleMinutes >= 15 ? AmberTheme.cgaRed : AmberTheme.amberDark)
+                    .foregroundColor(staleMinutes >= 15 ? AmberTheme.cgaRed : AmberTheme.amber)
                     .padding(.top, 2)
                 }
 
@@ -202,7 +202,7 @@ struct GlucoseView: View {
             Text("IOB")
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .tracking(0.6)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
 
             if store.state.showSplitIOB && (iobResult.mealSnackIOB > 0 || iobResult.correctionBasalIOB > 0) {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {

@@ -118,7 +118,7 @@ struct TreatmentModalView: View {
         VStack(spacing: DOSSpacing.xs) {
             Text("When did you take this?")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
 
             if showTimePicker {
                 DatePicker(

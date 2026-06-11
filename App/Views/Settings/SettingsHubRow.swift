@@ -25,7 +25,7 @@ struct SettingsHubRow: View {
                     .foregroundColor(AmberTheme.amber)
                 Text(subtitle)
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
                     .lineLimit(2)
             }
         }

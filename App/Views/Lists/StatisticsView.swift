@@ -123,7 +123,7 @@ struct StatisticsView: View {
                             .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
                         Text("\(glucoseStatistics.readings) readings · \(glucoseStatistics.days) of \(glucoseStatistics.maxDays) days")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                     .frame(maxWidth: .infinity)
 

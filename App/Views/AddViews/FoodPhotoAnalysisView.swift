@@ -254,7 +254,7 @@ struct FoodPhotoAnalysisView: View {
                     }
                     if store.state.claudeAPIKeyValid {
                         Text("Estimated cost: typically less than $0.01 per analysis")
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     } else {
                         Text("Set up your API key in Settings first.")
                             .foregroundStyle(AmberTheme.cgaRed)
@@ -334,7 +334,7 @@ struct FoodPhotoAnalysisView: View {
                         Spacer()
                         Text("from \(stagedItems.count) items")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                 },
                 header: {
@@ -489,7 +489,7 @@ struct FoodPhotoAnalysisView: View {
                         } else {
                             Text("Can you be more specific? (e.g. portion size, brand, cooking method)")
                                 .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amber)
 
                             if let error = followUpError {
                                 Text(error)
@@ -518,7 +518,7 @@ struct FoodPhotoAnalysisView: View {
                 Section {
                     Text("Best estimate after clarification.")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
 
@@ -530,7 +530,7 @@ struct FoodPhotoAnalysisView: View {
                     if let notes = result.confidenceNotes {
                         Text(notes)
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                 },
                 header: {
@@ -541,7 +541,7 @@ struct FoodPhotoAnalysisView: View {
             Section {
                 Text("AI estimates are informational only. Consult your healthcare provider for medical decisions.")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amber)
             }
 
             Section {
