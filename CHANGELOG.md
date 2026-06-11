@@ -12,6 +12,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ### Fixed
 - Overview no longer overflows the screen when the hypo-treatment countdown banner is active — the chart compresses to absorb the banner, so the INSULIN/MEAL buttons stay fully above the tab bar instead of being pushed behind it.
+- ASK AI in food search now navigates and starts the analysis on the first tap (it previously took several taps and often did nothing): the row's navigation cancelled itself because starting the analysis removed the link mid-push. The keyboard now drops on tap and the search text is kept for when you navigate back — DMNC-1023 wave (R6).
+- "Log again" on a recent meal navigates again — its navigation destination was silently ignored inside the legacy navigation container.
 
 ## [Build 98] — 2026-06-10
 

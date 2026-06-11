@@ -16,6 +16,7 @@ struct UnifiedFoodEntryView: View {
     @State private var quickExpanded = false
     @StateObject private var toast = LoggedMealToastController()
     @State private var relogMeal: MealEntry?
+    @State private var askAINavigating = false
 
     private var displayedFavorites: [FavoriteFood] {
         if filterToHypoTreatments {
@@ -25,7 +26,9 @@ struct UnifiedFoodEntryView: View {
     }
 
     var body: some View {
-        NavigationView {
+        // NavigationStack, not NavigationView: navigationDestination modifiers
+        // (relog + ASK AI) are silently ignored inside NavigationView.
+        NavigationStack {
             List {
                 if filterToHypoTreatments {
                     if displayedFavorites.isEmpty {
@@ -80,6 +83,11 @@ struct UnifiedFoodEntryView: View {
             }
             .navigationDestination(item: $relogMeal) { meal in
                 FoodPhotoAnalysisView(relogMeal: meal)
+                    .environmentObject(store)
+                    .navigationBarHidden(true)
+            }
+            .navigationDestination(isPresented: $askAINavigating) {
+                FoodPhotoAnalysisView()
                     .environmentObject(store)
                     .navigationBarHidden(true)
             }
@@ -298,18 +306,24 @@ struct UnifiedFoodEntryView: View {
                                 .foregroundColor(AmberTheme.amber)
                         }
                     } else {
-                        NavigationLink {
-                            FoodPhotoAnalysisView()
-                                .environmentObject(store)
-                                .navigationBarHidden(true)
-                                .onAppear {
-                                    // Guard: only dispatch if not already loading/loaded
-                                    guard !store.state.foodAnalysisLoading,
-                                          store.state.foodAnalysisResult == nil else { return }
-                                    let query = String(searchText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
-                                    store.dispatch(.setFoodAnalysisLoading(isLoading: true))
-                                    store.dispatch(.analyzeFoodText(query: query))
-                                }
+                        // Deliberately NOT a NavigationLink: the destination's onAppear
+                        // used to flip foodAnalysisLoading, which swapped this row for the
+                        // "Analyzing..." branch and removed the link mid-push — SwiftUI then
+                        // cancelled the navigation, so the row appeared dead no matter how
+                        // often it was tapped. Dispatch first, then navigate via the
+                        // navigationDestination(isPresented:) on the List, which survives
+                        // row rebuilds.
+                        Button {
+                            // Guard: only dispatch if not already loading/loaded
+                            if !store.state.foodAnalysisLoading, store.state.foodAnalysisResult == nil {
+                                let query = String(searchText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
+                                store.dispatch(.setFoodAnalysisLoading(isLoading: true))
+                                store.dispatch(.analyzeFoodText(query: query))
+                            }
+                            // Drop the search keyboard before the push; the query text
+                            // stays in the field for when the user navigates back.
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            askAINavigating = true
                         } label: {
                             HStack {
                                 Image(systemName: "sparkles")
@@ -317,6 +331,10 @@ struct UnifiedFoodEntryView: View {
                                 Text("ASK AI: \"\(searchText.prefix(30))\"")
                                     .font(DOSTypography.bodySmall)
                                     .lineLimit(1)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(DOSTypography.caption)
+                                    .foregroundColor(AmberTheme.amberDark)
                             }
                             .foregroundColor(AmberTheme.amber)
                         }
