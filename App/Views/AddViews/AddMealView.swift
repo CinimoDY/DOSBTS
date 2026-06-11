@@ -48,7 +48,11 @@ struct AddMealView: View {
                         }
                 }, footer: {
                     Text("Log meals to see them as markers on your glucose chart.")
+                        .font(DOSTypography.caption)
+                        .foregroundStyle(AmberTheme.amber)
                 })
+                .listRowBackground(AmberTheme.dosBlack)
+                .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
 
                 if let deleteCallback = deleteCallback {
                     Section {
@@ -56,11 +60,16 @@ struct AddMealView: View {
                             deleteCallback()
                             dismiss()
                         }
+                        .foregroundStyle(AmberTheme.cgaRed)
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
+                    .listRowBackground(AmberTheme.dosBlack)
+                    .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
                 }
             }
-            .navigationTitle("Meal")
+            .scrollContentBackground(.hidden)
+            .background(AmberTheme.dosBlack.ignoresSafeArea())
+            .dosNavigationTitle("Meal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {

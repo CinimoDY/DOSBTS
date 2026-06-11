@@ -30,7 +30,7 @@ struct SettingsConnectionsView: View {
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Integrations")
+        .dosNavigationTitle("Integrations")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -47,7 +47,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { NightscoutSettingsView() }
                         .listStyle(.grouped)
-                        .navigationTitle("Nightscout")
+                        .dosNavigationTitle("Nightscout")
                         .navigationBarTitleDisplayMode(.inline)
                 )
             ),
@@ -60,7 +60,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { AppleExportSettingsView() }
                         .listStyle(.grouped)
-                        .navigationTitle("Apple Health & Calendar")
+                        .dosNavigationTitle("Apple Health & Calendar")
                         .navigationBarTitleDisplayMode(.inline)
                 )
             ),
@@ -73,7 +73,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { AISettingsView() }
                         .listStyle(.grouped)
-                        .navigationTitle("AI Features")
+                        .dosNavigationTitle("AI Features")
                         .navigationBarTitleDisplayMode(.inline)
                 )
             ),
@@ -86,7 +86,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { HealthImportSourcesView() }
                         .listStyle(.grouped)
-                        .navigationTitle("Health Import Sources")
+                        .dosNavigationTitle("Health Import Sources")
                         .navigationBarTitleDisplayMode(.inline)
                 )
             ),

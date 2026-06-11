@@ -57,7 +57,7 @@ struct TreatmentModalView: View {
             }
             .padding(.horizontal, DOSSpacing.lg)
             .background(AmberTheme.dosBlack)
-            .navigationTitle(isRecheckMode ? "RECHECK" : "LOW GLUCOSE")
+            .dosNavigationTitle(isRecheckMode ? "RECHECK" : "LOW GLUCOSE")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

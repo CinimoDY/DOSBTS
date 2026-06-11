@@ -28,20 +28,26 @@ struct FoodPhotoAnalysisView: View {
 
     private var formContent: some View {
         Form {
-            if !store.state.aiConsentFoodPhoto, relogMeal == nil {
-                consentSection
-            } else if store.state.foodAnalysisLoading {
-                loadingSection
-            } else if let result = store.state.foodAnalysisResult {
-                resultsSection(result)
-            } else if let error = store.state.foodAnalysisError {
-                errorSection(error)
-            } else if relogMeal != nil {
-                loadingSection // brief placeholder until hydrateRelogIfNeeded() runs on onAppear
-            } else {
-                photoPickerSection
+            Group {
+                if !store.state.aiConsentFoodPhoto, relogMeal == nil {
+                    consentSection
+                } else if store.state.foodAnalysisLoading {
+                    loadingSection
+                } else if let result = store.state.foodAnalysisResult {
+                    resultsSection(result)
+                } else if let error = store.state.foodAnalysisError {
+                    errorSection(error)
+                } else if relogMeal != nil {
+                    loadingSection // brief placeholder until hydrateRelogIfNeeded() runs on onAppear
+                } else {
+                    photoPickerSection
+                }
             }
+            .listRowBackground(AmberTheme.dosBlack)
+            .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
         }
+        .scrollContentBackground(.hidden)
+        .background(AmberTheme.dosBlack.ignoresSafeArea())
         .onAppear { hydrateRelogIfNeeded() }
         .navigationDestination(isPresented: Binding(
             get: { scanTargetIndex != nil },
@@ -68,7 +74,7 @@ struct FoodPhotoAnalysisView: View {
                 .onDisappear { isItemScanActive = false }
             }
         }
-        .navigationTitle("AI Meal Analysis")
+        .dosNavigationTitle("AI Meal Analysis")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {

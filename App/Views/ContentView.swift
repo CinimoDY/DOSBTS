@@ -72,6 +72,26 @@ struct ContentView: View {
                 UITabBar.appearance().standardAppearance = appearance
                 UITabBar.appearance().unselectedItemTintColor = UIColor(AmberTheme.amberDark)
                 UITabBar.appearance().tintColor = UIColor(AmberTheme.amber)
+
+                // CGA monitor feel: navigation titles render amber monospace
+                // on black instead of system white (titles are UIKit-drawn,
+                // so the SwiftUI root foregroundStyle can't reach them).
+                let navAppearance = UINavigationBarAppearance()
+                navAppearance.configureWithOpaqueBackground()
+                navAppearance.backgroundColor = .black
+                navAppearance.shadowColor = .clear
+                navAppearance.titleTextAttributes = [
+                    .foregroundColor: UIColor(AmberTheme.amberLight),
+                    .font: UIFont.monospacedSystemFont(ofSize: 16, weight: .semibold)
+                ]
+                navAppearance.largeTitleTextAttributes = [
+                    .foregroundColor: UIColor(AmberTheme.amberLight),
+                    .font: UIFont.monospacedSystemFont(ofSize: 30, weight: .bold)
+                ]
+                UINavigationBar.appearance().standardAppearance = navAppearance
+                UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
+                UINavigationBar.appearance().compactAppearance = navAppearance
+                UINavigationBar.appearance().tintColor = UIColor(AmberTheme.amber)
             }
         }
     }

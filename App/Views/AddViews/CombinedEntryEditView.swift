@@ -41,7 +41,7 @@ struct CombinedEntryEditView: View {
                     }
                 }
             }
-            .navigationTitle(navTitle)
+            .dosNavigationTitle(navTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

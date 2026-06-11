@@ -36,7 +36,7 @@ struct HealthImportSourcesView: View {
                 )
             }
         }
-        .navigationTitle("Source Apps")
+        .dosNavigationTitle("Source Apps")
         .onAppear {
             loadSources()
         }

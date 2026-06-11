@@ -36,7 +36,7 @@ struct ListsView: View {
                 }
             }
             .listStyle(.grouped)
-            .navigationTitle("Log")
+            .dosNavigationTitle("Log")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if DirectConfig.bloodGlucoseInput {

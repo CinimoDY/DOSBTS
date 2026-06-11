@@ -63,7 +63,7 @@ struct ItemBarcodeScannerView: View {
                 }
             }
         }
-        .navigationTitle("Scan Item")
+        .dosNavigationTitle("Scan Item")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {

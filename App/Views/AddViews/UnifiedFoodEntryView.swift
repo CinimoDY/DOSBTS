@@ -54,7 +54,7 @@ struct UnifiedFoodEntryView: View {
             }
             .listStyle(.grouped)
             .searchable(text: $searchText, prompt: "Search foods...")
-            .navigationTitle(filterToHypoTreatments ? "Hypo Treatment" : "Log Meal")
+            .dosNavigationTitle(filterToHypoTreatments ? "Hypo Treatment" : "Log Meal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
@@ -451,7 +451,7 @@ struct FavoriteManagementView: View {
                 }
             }
             .listStyle(.grouped)
-            .navigationTitle("Favorites")
+            .dosNavigationTitle("Favorites")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
@@ -558,7 +558,7 @@ struct EditFavoriteView: View {
                     Toggle("Hypo Treatment", isOn: $isHypoTreatment)
                 }
             }
-            .navigationTitle("Edit Favorite")
+            .dosNavigationTitle("Edit Favorite")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {

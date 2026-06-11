@@ -79,7 +79,7 @@ struct SettingsView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(AmberTheme.dosBlack)
-            .navigationTitle("Settings")
+            .dosNavigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)

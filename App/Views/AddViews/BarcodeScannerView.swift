@@ -38,7 +38,7 @@ struct BarcodeScannerView: View {
                 .environmentObject(store)
                 .navigationBarHidden(true)
         }
-        .navigationTitle("Scan Barcode")
+        .dosNavigationTitle("Scan Barcode")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
