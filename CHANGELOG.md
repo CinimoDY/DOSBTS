@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- The Daily digest AI report is now a DOS infographic instead of a wall of text: a grade-tinted headline, color-coded fact chips (the day's narrative-worthy numbers), "> " prompt tips, and an earned cheer line with a phosphor pulse — revealed as a staged CRT cascade (static under Reduce Motion). Older saved insights keep their plain-text rendering — PR #54.
+
 ### Changed
 - The glucose strip on the Log and Settings tabs now sits above the page title (matching Daily digest) — PR #54.
 - The INSULIN/MEAL bar no longer rides the Liquid Glass capsule — it's a plain sharp-edged black bar above the tab bar on every tab, so no rounded glass edges peek out on lighter content — PR #54.

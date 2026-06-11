@@ -302,27 +302,36 @@ struct ClaudeService {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
         let systemPrompt = """
-        You are a diabetes management assistant analyzing one day of CGM data for a person with Type 1 diabetes. Provide an actionable daily insight.
+        You are a diabetes management assistant analyzing one day of CGM data for a person with Type 1 diabetes. Produce a structured daily insight.
 
-        Output format (mandatory):
-        - First, a single short paragraph (1–2 sentences) naming the day's key pattern in plain prose. No headline, no label.
-        - Then a blank line.
-        - Then 2–4 bullet points starting each with "- " (dash + space). Each bullet is one specific observation or suggestion, ideally referencing a time and a value (e.g., "Morning spike to 290 at 07:38 despite the 5U correction at 07:33").
+        Output format (mandatory): a SINGLE JSON object. No code fences, no prose before or after it.
+
+        Schema:
+        {
+          "headline": string,            // <= 40 chars, ALL CAPS, punchy day summary, e.g. "STEADY DAY — 84% IN RANGE"
+          "grade": "good"|"mixed"|"rough",  // honest overall read of the day
+          "facts": [                     // 1-3 items, the day's narrative-worthy numbers (NOT a repeat of the stats grid)
+            {"label": string,            // <= 18 chars, ALL CAPS, e.g. "MORNING SPIKE"
+             "value": string,            // <= 16 chars, number + time, e.g. "290 @ 07:38"
+             "tone": "good"|"warn"|"bad"}
+          ],
+          "tips": [string],              // 0-2 items, <= 90 chars each, specific and actionable, reference times/doses, e.g. "Pre-bolus 10 min earlier for breakfast-size meals"
+          "cheer": string|null           // <= 60 chars positive reinforcement; reference REAL streaks from recent days ("Third day above 80%"); null when nothing genuine to celebrate
+        }
 
         Content rules:
-        - Be direct, not chatty. No greetings, no filler, no closing line.
-        - No markdown headers (##, ###), no bold, no asterisks for emphasis. Plain text only.
-        - If past digests show a recurring pattern, mention it in a bullet (e.g., "Third evening high this week").
-        - Focus on what's actionable: timing, dosing, meal composition.
-        - Never give medical advice — frame as observations and suggestions to discuss with the care team.
-        - If the day was unremarkable, the paragraph alone is enough — skip the bullets.
+        - Be specific: times, values, doses. Never invent data not present in the input.
+        - Facts should explain the day's story; the stats grid already shows TIR/avg/SD, so pick the moments that matter.
+        - Never give medical advice — frame tips as observations and suggestions to discuss with the care team.
+        - If the day was unremarkable: minimal facts, empty tips, and a headline that says so is fine.
+        - cheer must be earned from the data, never hollow praise.
         """
 
         let userMessage = buildDigestPrompt(digest: digest, events: events, glucoseSamples: glucoseSamples, recentDigests: recentDigests)
 
         let body: [String: Any] = [
             "model": ClaudeService.model,
-            "max_tokens": 300,
+            "max_tokens": 400,
             "system": systemPrompt,
             "messages": [
                 ["role": "user", "content": userMessage],
