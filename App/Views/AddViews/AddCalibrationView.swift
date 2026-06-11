@@ -25,9 +25,13 @@ struct AddCalibrationView: View {
                             self.value = value
                         }
                     }
+                    .listRowBackground(AmberTheme.dosBlack)
+                    .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
                 }
+                .scrollContentBackground(.hidden)
+                .background(AmberTheme.dosBlack.ignoresSafeArea())
             }
-            .navigationTitle("Calibration")
+            .dosNavigationTitle("Calibration")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
@@ -60,7 +64,7 @@ struct AddCalibrationView2: View {
                     Section {
                         HStack {
                             Text("Glucose")
-                            
+
                             TextField("", value: $glucose, format: .number)
                                 .textFieldStyle(.automatic)
                                 .keyboardType(.numbersAndPunctuation)
@@ -68,9 +72,13 @@ struct AddCalibrationView2: View {
                                 .multilineTextAlignment(.trailing)
                         }
                     }
+                    .listRowBackground(AmberTheme.dosBlack)
+                    .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
                 }
+                .scrollContentBackground(.hidden)
+                .background(AmberTheme.dosBlack.ignoresSafeArea())
             }
-            .navigationTitle("Calibration")
+            .dosNavigationTitle("Calibration")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {

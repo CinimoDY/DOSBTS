@@ -121,6 +121,45 @@ Multi-layer shadows to simulate amber CRT phosphor:
 ### Navigation
 - Tab bar: black background, amber tint, amberDark unselected
 
+### Meal Item (MealItemRow.swift)
+
+One shared component with documented per-context variants (R3). Pixel-identical
+rendering across contexts is explicitly not the goal — each variant keeps its
+context's layout, but layout rules, type scale, color roles, and affordances
+live in one place.
+
+- **`.recent`** — compact single line: `> ` prompt prefix (amberDark), name
+  (bodySmall amber, lineLimit 1 + tail truncation), trailing carbs caption.
+  Rides inside `HoldToCommitProgress`; must never attach a context menu
+  (long-press conflicts with the hold recognizer — DMNC-796 KTD-3). Callers
+  pass only `onAddToFavorite`.
+- **`.list`** — two-line detail row: timestamp (monospacedDigit) over dimmed
+  name caption; trailing carbs + macro captions (P/F/kcal). Attaches leading
+  swipe (log again), trailing swipe (delete + favorite), and a context menu
+  from whichever callbacks the caller supplies.
+- The digest timeline stays flat text (out of scope this wave).
+
+## Component Standard (self-certify checklist)
+
+Every new shared component PR certifies against this list:
+
+- [ ] **Layout**: 8px grid (`DOSSpacing`), sharp corners, no system-gray
+      grouped surfaces outside exempt chrome.
+- [ ] **Type scale**: `DOSTypography` roles only (no ad-hoc font sizes);
+      hierarchy carried by size/weight, not by dimming informational text.
+- [ ] **Color roles**: `AmberTheme` tokens only. `amber` for informational
+      text (AA on black), `amberDark` reserved for intentional dimming /
+      disabled / decorative strokes, CGA accents (green/cyan/red) keep their
+      semantic meaning. No real white.
+- [ ] **Tap targets**: every interactive element ≥44pt; VoiceOver labels
+      equivalent to the system control it replaces.
+- [ ] **Variants**: per-context variants are documented on the component
+      (doc comment) and in this file; affordances are caller-supplied
+      callbacks, never baked in.
+- [ ] **Display model**: content derivation extracted into a testable,
+      equatable model when the mapping is non-trivial (see
+      `MealItemDisplayModel`); truncation stays a rendering concern.
+
 ## Implementation Notes
 
 ### SwiftUI Color Implementation

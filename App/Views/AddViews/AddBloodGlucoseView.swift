@@ -39,9 +39,13 @@ struct AddBloodGlucoseView: View {
                             unit: glucoseUnit.localizedDescription
                         )
                     }
+                    .listRowBackground(AmberTheme.dosBlack)
+                    .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
                 }
+                .scrollContentBackground(.hidden)
+                .background(AmberTheme.dosBlack.ignoresSafeArea())
             }
-            .navigationTitle("Blood glucose")
+            .dosNavigationTitle("Blood glucose")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {

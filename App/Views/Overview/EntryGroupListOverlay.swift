@@ -118,7 +118,7 @@ struct EntryGroupListOverlay: View {
                     .foregroundStyle(AmberTheme.amber)
                 Text(sublineText(for: stub, marker: marker))
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amber)
             }
             Spacer()
             Text(valueText(for: stub, marker: marker))

@@ -20,8 +20,7 @@ struct AlarmsCategoryView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack)
-        .navigationTitle("Alarms & Alerts")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("Alarms & Alerts")
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }

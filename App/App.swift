@@ -38,6 +38,14 @@ struct DOSBTSApp: App {
             ContentView()
                 .environmentObject(self.store)
                 .preferredColorScheme(.dark)
+                // True CGA monitor feel: no real white anywhere we control.
+                // Unstyled text and symbols fall back to phosphor amber and
+                // monospace; interactive chrome tints amber. Explicit CGA
+                // accents (green/cyan/red) and system chrome (keyboard,
+                // picker internals) are unaffected.
+                .tint(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
+                .fontDesign(.monospaced)
         }
     }
 

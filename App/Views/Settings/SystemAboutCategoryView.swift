@@ -22,8 +22,7 @@ struct SystemAboutCategoryView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack)
-        .navigationTitle("System & About")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("System & About")
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
@@ -51,7 +50,7 @@ private struct DigestReminderSection: View {
 
                     Text("Daily local notification that opens the Daily Digest tab.")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 .padding(.vertical, 4)
             },

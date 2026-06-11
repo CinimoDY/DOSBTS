@@ -30,8 +30,7 @@ struct SensorDetailView: View {
             transmitterSection
         }
         .listStyle(.grouped)
-        .navigationTitle("Sensor")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("Sensor")
         .alert("Disconnect sensor?", isPresented: $showingDisconnectAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Disconnect", role: .destructive) {
@@ -59,7 +58,7 @@ struct SensorDetailView: View {
                         Text("Connection error timestamp")
                         Spacer()
                         Text(connectionErrorTimestamp)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundColor(AmberTheme.amber)
                     }
 
                     HStack {
@@ -89,7 +88,7 @@ struct SensorDetailView: View {
                         Text("Connection state")
                         Spacer()
                         Text(store.state.connectionState.localizedDescription)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundColor(AmberTheme.amber)
                     }
                 }
 
@@ -196,7 +195,7 @@ struct SensorDetailView: View {
                         Text("Sensor state")
                         Spacer()
                         Text(sensor.state.localizedDescription)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundColor(AmberTheme.amber)
                     }
 
                     if sensor.state == .notYetStarted {
@@ -213,7 +212,7 @@ struct SensorDetailView: View {
                                 Text("Sensor starting date")
                                 Spacer()
                                 Text(startTimestamp.toLocalDateTime())
-                                    .foregroundColor(AmberTheme.amberDark)
+                                    .foregroundColor(AmberTheme.amber)
                             }
                         }
 
@@ -222,7 +221,7 @@ struct SensorDetailView: View {
                                 Text("Sensor ending date")
                                 Spacer()
                                 Text(endTimestamp.toLocalDateTime())
-                                    .foregroundColor(AmberTheme.amberDark)
+                                    .foregroundColor(AmberTheme.amber)
                             }
                         }
 
@@ -232,7 +231,7 @@ struct SensorDetailView: View {
                                     Text("Sensor remaining warmup time")
                                     Spacer()
                                     Text(remainingWarmupTime.inTime)
-                                        .foregroundColor(AmberTheme.amberDark)
+                                        .foregroundColor(AmberTheme.amber)
                                 }
 
                                 ProgressView(
@@ -246,7 +245,7 @@ struct SensorDetailView: View {
                                 Text("Sensor possible lifetime")
                                 Spacer()
                                 Text(sensor.lifetime.inTime)
-                                    .foregroundColor(AmberTheme.amberDark)
+                                    .foregroundColor(AmberTheme.amber)
                             }
 
                             VStack {
@@ -254,7 +253,7 @@ struct SensorDetailView: View {
                                     Text("Sensor age")
                                     Spacer()
                                     Text(sensor.age.inTime)
-                                        .foregroundColor(AmberTheme.amberDark)
+                                        .foregroundColor(AmberTheme.amber)
                                 }
 
                                 ProgressView(
@@ -269,7 +268,7 @@ struct SensorDetailView: View {
                                     Text("Sensor remaining lifetime")
                                     Spacer()
                                     Text(sensor.remainingLifetime.inTime)
-                                        .foregroundColor(AmberTheme.amberDark)
+                                        .foregroundColor(AmberTheme.amber)
                                 }
 
                                 ProgressView(
@@ -299,14 +298,14 @@ struct SensorDetailView: View {
                         Text("Sensor type")
                         Spacer()
                         Text(sensor.type.localizedDescription)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundColor(AmberTheme.amber)
                     }
 
                     HStack {
                         Text("Sensor region")
                         Spacer()
                         Text(sensor.region.localizedDescription)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundColor(AmberTheme.amber)
                     }
 
                     if let serial = sensor.serial {
@@ -314,7 +313,7 @@ struct SensorDetailView: View {
                             Text("Sensor serial")
                             Spacer()
                             Text(serial.description)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                         }
                     }
 
@@ -323,7 +322,7 @@ struct SensorDetailView: View {
                             Text("MAC address")
                             Spacer()
                             Text(macAddress)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                         }
                     }
                 },
@@ -345,7 +344,7 @@ struct SensorDetailView: View {
                         Text("Transmitter name")
                         Spacer()
                         Text(transmitter.name)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundColor(AmberTheme.amber)
                     }
 
                     VStack {
@@ -353,7 +352,7 @@ struct SensorDetailView: View {
                             Text("Transmitter battery")
                             Spacer()
                             Text(transmitter.battery.asPercent())
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                         }
 
                         ProgressView("", value: Double(transmitter.battery), total: 100)
@@ -364,7 +363,7 @@ struct SensorDetailView: View {
                             Text("Transmitter hardware")
                             Spacer()
                             Text(hardware.description)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                         }
                     }
 
@@ -373,7 +372,7 @@ struct SensorDetailView: View {
                             Text("Transmitter firmware")
                             Spacer()
                             Text(firmware.description)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                         }
                     }
                 },

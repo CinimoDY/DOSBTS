@@ -146,7 +146,7 @@ struct DynamicIslandCenterView: View, GlucoseStatusContext {
                             if let minuteChange = latestGlucose.minuteChange?.asMinuteChange(glucoseUnit: glucoseUnit) {
                                 Text(verbatim: minuteChange)
                                     .font(WidgetFonts.caption)
-                                    .foregroundColor(WidgetColors.amberDark)
+                                    .foregroundColor(WidgetColors.amber)
                             }
                         }
                     } else {
@@ -229,7 +229,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                     } else if let minuteChange = latestGlucose.minuteChange?.asMinuteChange(glucoseUnit: glucoseUnit) {
                         Text(verbatim: minuteChange)
                             .font(WidgetFonts.caption)
-                            .foregroundColor(WidgetColors.amberDark)
+                            .foregroundColor(WidgetColors.amber)
                     }
                 }
 
@@ -268,7 +268,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                         Text(stopDate, style: .relative)
                             .font(WidgetFonts.tabBar)
                             .monospacedDigit()
-                            .foregroundColor(WidgetColors.amberDark)
+                            .foregroundColor(WidgetColors.amber)
                             .lineLimit(1)
                     }
                 }

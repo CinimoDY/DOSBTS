@@ -93,7 +93,7 @@ struct TransmitterView: View {
 
                     Text(transmitter.name)
                         .font(WidgetFonts.tabBar)
-                        .foregroundColor(WidgetColors.amberDark)
+                        .foregroundColor(WidgetColors.amber)
                         .lineLimit(1)
                 }
             }

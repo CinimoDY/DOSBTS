@@ -53,13 +53,13 @@ struct GlucoseView: View {
                     }
                 }
 
-                if let staleMinutes = staleMinutes {
+                if let staleLabel = staleness.minutesAgoLabel {
                     HStack(spacing: DOSSpacing.xs) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                        Text("\(staleMinutes) MIN AGO")
+                        Text(verbatim: staleLabel)
                     }
                     .font(DOSTypography.caption)
-                    .foregroundColor(staleMinutes >= 15 ? AmberTheme.cgaRed : AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.stalenessColor(staleness))
                     .padding(.top, 2)
                 }
 
@@ -189,11 +189,11 @@ struct GlucoseView: View {
         return nil
     }
 
-    /// Returns minutes since last reading if >5 min stale, nil otherwise
-    private var staleMinutes: Int? {
-        guard let glucose = store.state.latestSensorGlucose else { return nil }
-        let elapsed = Int(Date().timeIntervalSince(glucose.timestamp) / 60)
-        return elapsed >= 5 ? elapsed : nil
+    /// Shared with GlucoseStatusBar (KTD-4) — hero and bar never disagree
+    /// on stale salience.
+    private var staleness: GlucoseStaleness {
+        guard let glucose = store.state.latestSensorGlucose else { return .fresh }
+        return GlucoseStaleness.of(readingTimestamp: glucose.timestamp)
     }
 
     @ViewBuilder
@@ -202,7 +202,7 @@ struct GlucoseView: View {
             Text("IOB")
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .tracking(0.6)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
 
             if store.state.showSplitIOB && (iobResult.mealSnackIOB > 0 || iobResult.correctionBasalIOB > 0) {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {

@@ -26,12 +26,11 @@ struct SettingsConnectionsView: View {
             } footer: {
                 Text("Manage where your glucose data is shared or exported.")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
             }
         }
         .listStyle(.grouped)
-        .navigationTitle("Integrations")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("Integrations")
     }
 
     // MARK: - Status
@@ -47,8 +46,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { NightscoutSettingsView() }
                         .listStyle(.grouped)
-                        .navigationTitle("Nightscout")
-                        .navigationBarTitleDisplayMode(.inline)
+                        .dosNavigationTitle("Nightscout")
                 )
             ),
             Connection(
@@ -60,8 +58,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { AppleExportSettingsView() }
                         .listStyle(.grouped)
-                        .navigationTitle("Apple Health & Calendar")
-                        .navigationBarTitleDisplayMode(.inline)
+                        .dosNavigationTitle("Apple Health & Calendar")
                 )
             ),
             Connection(
@@ -73,8 +70,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { AISettingsView() }
                         .listStyle(.grouped)
-                        .navigationTitle("AI Features")
-                        .navigationBarTitleDisplayMode(.inline)
+                        .dosNavigationTitle("AI Features")
                 )
             ),
             Connection(
@@ -86,8 +82,7 @@ struct SettingsConnectionsView: View {
                 destination: AnyView(
                     List { HealthImportSourcesView() }
                         .listStyle(.grouped)
-                        .navigationTitle("Health Import Sources")
-                        .navigationBarTitleDisplayMode(.inline)
+                        .dosNavigationTitle("Health Import Sources")
                 )
             ),
         ]
@@ -142,7 +137,7 @@ private struct ConnectionRow: View {
                 }
                 Text(connection.description)
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
                     .lineLimit(2)
             }
         }

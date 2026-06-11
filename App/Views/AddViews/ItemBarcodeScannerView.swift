@@ -63,8 +63,7 @@ struct ItemBarcodeScannerView: View {
                 }
             }
         }
-        .navigationTitle("Scan Item")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("Scan Item")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") { dismiss() }
@@ -81,7 +80,7 @@ struct ItemBarcodeScannerView: View {
                 .frame(width: 280, height: 120)
             Text("Scan barcode to replace item")
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
                 .padding(.top, DOSSpacing.sm)
             Spacer()
             Spacer()
@@ -125,7 +124,7 @@ struct ItemBarcodeScannerView: View {
                 .foregroundStyle(AmberTheme.amber)
             Text("Camera unavailable in simulator")
                 .font(DOSTypography.body)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
             TextField("Enter barcode", text: $manualBarcode)
                 .font(DOSTypography.body)
                 .keyboardType(.numberPad)

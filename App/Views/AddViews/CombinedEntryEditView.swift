@@ -41,8 +41,7 @@ struct CombinedEntryEditView: View {
                     }
                 }
             }
-            .navigationTitle(navTitle)
-            .navigationBarTitleDisplayMode(.inline)
+            .dosNavigationTitle(navTitle)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { cancel() }
@@ -221,7 +220,7 @@ struct CombinedEntryEditView: View {
                     Spacer()
                     Text("\(stagedItems.count) item\(stagedItems.count == 1 ? "" : "s") · \(Int(stagedItems.reduce(0, { $0 + $1.carbsG })))g")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 TextField("Description", text: $description)
                     .font(DOSTypography.body)
@@ -265,7 +264,7 @@ struct CombinedEntryEditView: View {
                     if let u = units {
                         Text("\(insulinType.shortLabel) · \(String(format: "%.1f", u))U")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                 }
                 HStack(spacing: 4) {
@@ -304,7 +303,7 @@ struct CombinedEntryEditView: View {
             if originalInsulinDelivery != nil, insulinType == .basal {
                 HStack {
                     Image(systemName: "clock.badge.checkmark").foregroundStyle(AmberTheme.amberDark)
-                    Text("ENDS").font(DOSTypography.caption).foregroundStyle(AmberTheme.amberDark)
+                    Text("ENDS").font(DOSTypography.caption).foregroundStyle(AmberTheme.amber)
                     Spacer()
                     DatePicker("", selection: $endsTime, displayedComponents: [.date, .hourAndMinute])
                         .labelsHidden()

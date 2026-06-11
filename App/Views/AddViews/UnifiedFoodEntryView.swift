@@ -16,6 +16,7 @@ struct UnifiedFoodEntryView: View {
     @State private var quickExpanded = false
     @StateObject private var toast = LoggedMealToastController()
     @State private var relogMeal: MealEntry?
+    @State private var askAINavigating = false
 
     private var displayedFavorites: [FavoriteFood] {
         if filterToHypoTreatments {
@@ -25,14 +26,16 @@ struct UnifiedFoodEntryView: View {
     }
 
     var body: some View {
-        NavigationView {
+        // NavigationStack, not NavigationView: navigationDestination modifiers
+        // (relog + ASK AI) are silently ignored inside NavigationView.
+        NavigationStack {
             List {
                 if filterToHypoTreatments {
                     if displayedFavorites.isEmpty {
                         Section {
                             Text("NO HYPO TREATMENTS CONFIGURED")
                                 .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundColor(AmberTheme.amber)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.vertical, DOSSpacing.lg)
                         }
@@ -51,7 +54,7 @@ struct UnifiedFoodEntryView: View {
             }
             .listStyle(.grouped)
             .searchable(text: $searchText, prompt: "Search foods...")
-            .navigationTitle(filterToHypoTreatments ? "Hypo Treatment" : "Log Meal")
+            .dosNavigationTitle(filterToHypoTreatments ? "Hypo Treatment" : "Log Meal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
@@ -80,6 +83,11 @@ struct UnifiedFoodEntryView: View {
             }
             .navigationDestination(item: $relogMeal) { meal in
                 FoodPhotoAnalysisView(relogMeal: meal)
+                    .environmentObject(store)
+                    .navigationBarHidden(true)
+            }
+            .navigationDestination(isPresented: $askAINavigating) {
+                FoodPhotoAnalysisView()
                     .environmentObject(store)
                     .navigationBarHidden(true)
             }
@@ -134,10 +142,10 @@ struct UnifiedFoodEntryView: View {
                 HStack(spacing: DOSSpacing.xs) {
                     Text("> QUICK")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                         .rotationEffect(.degrees(quickExpanded ? 90 : 0))
                     Spacer()
                 }
@@ -184,39 +192,23 @@ struct UnifiedFoodEntryView: View {
                 if searchText.isEmpty {
                     Text("Log your first meal to see recents here")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 } else {
                     Text("No matches for \"\(searchText)\"")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 }
             } else {
                 ForEach(filteredRecents) { meal in
-                    // Tap stages, hold insta-logs. The old "Log Now" swipe and
-                    // context menu are gone — a long-press context menu can't
-                    // coexist with the hold recognizer (DMNC-796 KTD-3).
+                    // Tap stages, hold insta-logs. No context menu — it can't
+                    // coexist with the hold recognizer (DMNC-796 KTD-3). The
+                    // swipe affordance hangs off the hold wrapper, not inside
+                    // the row, so it reliably reaches the List row.
                     HoldToCommitProgress(
                         onTap: { openOnStagingPlate(meal) },
                         onCommit: { logRecent(meal) }
                     ) {
-                        HStack {
-                            Text("> ")
-                                .font(DOSTypography.bodySmall)
-                                .foregroundColor(AmberTheme.amberDark)
-
-                            Text(meal.mealDescription)
-                                .font(DOSTypography.bodySmall)
-                                .foregroundColor(AmberTheme.amber)
-                                .lineLimit(1)
-
-                            Spacer()
-
-                            if let carbs = meal.carbsGrams {
-                                Text("\(Int(carbs))g carbs")
-                                    .font(DOSTypography.caption)
-                                    .foregroundColor(AmberTheme.amber)
-                            }
-                        }
+                        MealItemRow(meal: meal, variant: .recent)
                     }
                     .swipeActions(edge: .trailing) {
                         Button {
@@ -231,7 +223,7 @@ struct UnifiedFoodEntryView: View {
         } header: {
             Text("> RECENT")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
         }
     }
 
@@ -254,7 +246,7 @@ struct UnifiedFoodEntryView: View {
                     Text("MANUAL")
                         .font(DOSTypography.bodySmall)
                 }
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
             }
 
             // SCAN — always available (OFF is free, no API key needed)
@@ -269,7 +261,7 @@ struct UnifiedFoodEntryView: View {
                     Text("SCAN")
                         .font(DOSTypography.bodySmall)
                 }
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
             }
 
             if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
@@ -284,7 +276,7 @@ struct UnifiedFoodEntryView: View {
                         Text("PHOTO")
                             .font(DOSTypography.bodySmall)
                     }
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundColor(AmberTheme.amber)
                 }
 
                 // NL text parsing — appears when search text >= 3 chars
@@ -298,18 +290,30 @@ struct UnifiedFoodEntryView: View {
                                 .foregroundColor(AmberTheme.amber)
                         }
                     } else {
-                        NavigationLink {
-                            FoodPhotoAnalysisView()
-                                .environmentObject(store)
-                                .navigationBarHidden(true)
-                                .onAppear {
-                                    // Guard: only dispatch if not already loading/loaded
-                                    guard !store.state.foodAnalysisLoading,
-                                          store.state.foodAnalysisResult == nil else { return }
-                                    let query = String(searchText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
-                                    store.dispatch(.setFoodAnalysisLoading(isLoading: true))
-                                    store.dispatch(.analyzeFoodText(query: query))
-                                }
+                        // Deliberately NOT a NavigationLink: the destination's onAppear
+                        // used to flip foodAnalysisLoading, which swapped this row for the
+                        // "Analyzing..." branch and removed the link mid-push — SwiftUI then
+                        // cancelled the navigation, so the row appeared dead no matter how
+                        // often it was tapped. Dispatch first, then navigate via the
+                        // navigationDestination(isPresented:) on the List, which survives
+                        // row rebuilds.
+                        Button {
+                            // Guard: only dispatch if not already loading/loaded.
+                            // Consent gate matters: without it the middleware
+                            // swallows analyzeFoodText silently and the loading
+                            // flag would stick forever — the destination shows
+                            // the consent screen instead, and a re-tap after
+                            // granting starts a real analysis.
+                            if store.state.aiConsentFoodPhoto,
+                               !store.state.foodAnalysisLoading, store.state.foodAnalysisResult == nil {
+                                let query = String(searchText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
+                                store.dispatch(.setFoodAnalysisLoading(isLoading: true))
+                                store.dispatch(.analyzeFoodText(query: query))
+                            }
+                            // Drop the search keyboard before the push; the query text
+                            // stays in the field for when the user navigates back.
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            askAINavigating = true
                         } label: {
                             HStack {
                                 Image(systemName: "sparkles")
@@ -317,6 +321,10 @@ struct UnifiedFoodEntryView: View {
                                 Text("ASK AI: \"\(searchText.prefix(30))\"")
                                     .font(DOSTypography.bodySmall)
                                     .lineLimit(1)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(DOSTypography.caption)
+                                    .foregroundColor(AmberTheme.amberDark)
                             }
                             .foregroundColor(AmberTheme.amber)
                         }
@@ -388,7 +396,7 @@ struct FavoriteManagementView: View {
                 if store.state.favoriteFoodValues.isEmpty {
                     Text("No favorites yet. Swipe left on a recent meal to add it.")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amberDark)
+                        .foregroundColor(AmberTheme.amber)
                 } else {
                     ForEach(store.state.favoriteFoodValues) { favorite in
                         Button {
@@ -416,7 +424,7 @@ struct FavoriteManagementView: View {
                                 if let carbs = favorite.carbsGrams {
                                     Text("\(Int(carbs))g")
                                         .font(DOSTypography.caption)
-                                        .foregroundColor(AmberTheme.amberDark)
+                                        .foregroundColor(AmberTheme.amber)
                                 }
                             }
                         }
@@ -433,7 +441,7 @@ struct FavoriteManagementView: View {
                 }
             }
             .listStyle(.grouped)
-            .navigationTitle("Favorites")
+            .dosNavigationTitle("Favorites")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Done") {
@@ -540,7 +548,7 @@ struct EditFavoriteView: View {
                     Toggle("Hypo Treatment", isOn: $isHypoTreatment)
                 }
             }
-            .navigationTitle("Edit Favorite")
+            .dosNavigationTitle("Edit Favorite")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {

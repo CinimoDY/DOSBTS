@@ -22,8 +22,7 @@ struct InsulinCategoryView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack)
-        .navigationTitle("Insulin")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("Insulin")
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }

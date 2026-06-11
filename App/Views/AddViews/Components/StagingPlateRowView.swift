@@ -68,7 +68,7 @@ struct StagingPlateRowView: View {
     private var expandedFields: some View {
         VStack(spacing: DOSSpacing.sm) {
             HStack {
-                Text("Name").font(DOSTypography.caption).foregroundStyle(AmberTheme.amberDark)
+                Text("Name").font(DOSTypography.caption).foregroundStyle(AmberTheme.amber)
                 TextField("Food name", text: $item.name)
                     .multilineTextAlignment(.trailing)
                     .focused($isNameFocused)
@@ -82,7 +82,7 @@ struct StagingPlateRowView: View {
             }
             if item.currentAmountG != nil {
                 HStack {
-                    Text("Amount").font(DOSTypography.caption).foregroundStyle(AmberTheme.amberDark)
+                    Text("Amount").font(DOSTypography.caption).foregroundStyle(AmberTheme.amber)
                     TextField("0", value: $item.currentAmountG, format: .number)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
@@ -91,11 +91,11 @@ struct StagingPlateRowView: View {
                             guard let new else { return }
                             StagingPlateRowLogic.applyAmountChange(item: &item, newAmount: new)
                         }
-                    Text("g").font(DOSTypography.caption).foregroundStyle(AmberTheme.amberDark)
+                    Text("g").font(DOSTypography.caption).foregroundStyle(AmberTheme.amber)
                 }
             }
             HStack {
-                Text("Carbs").font(DOSTypography.caption).foregroundStyle(AmberTheme.amberDark)
+                Text("Carbs").font(DOSTypography.caption).foregroundStyle(AmberTheme.amber)
                 TextField("0", value: $item.carbsG, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
@@ -103,11 +103,11 @@ struct StagingPlateRowView: View {
                     .onChange(of: item.carbsG) { _, new in
                         StagingPlateRowLogic.applyCarbsChange(item: &item, newCarbs: new)
                     }
-                Text("g").font(DOSTypography.caption).foregroundStyle(AmberTheme.amberDark)
+                Text("g").font(DOSTypography.caption).foregroundStyle(AmberTheme.amber)
                 if item.carbsPerG == nil && item.currentAmountG != nil {
                     Text("manual")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
         }

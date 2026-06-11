@@ -57,8 +57,7 @@ struct TreatmentModalView: View {
             }
             .padding(.horizontal, DOSSpacing.lg)
             .background(AmberTheme.dosBlack)
-            .navigationTitle(isRecheckMode ? "RECHECK" : "LOW GLUCOSE")
-            .navigationBarTitleDisplayMode(.inline)
+            .dosNavigationTitle(isRecheckMode ? "RECHECK" : "LOW GLUCOSE")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Dismiss") {
@@ -118,7 +117,7 @@ struct TreatmentModalView: View {
         VStack(spacing: DOSSpacing.xs) {
             Text("When did you take this?")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
 
             if showTimePicker {
                 DatePicker(

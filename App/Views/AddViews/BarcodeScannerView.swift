@@ -38,8 +38,7 @@ struct BarcodeScannerView: View {
                 .environmentObject(store)
                 .navigationBarHidden(true)
         }
-        .navigationTitle("Scan Barcode")
-        .navigationBarTitleDisplayMode(.inline)
+        .dosNavigationTitle("Scan Barcode")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
@@ -134,7 +133,7 @@ struct BarcodeScannerView: View {
 
             Text("Point camera at barcode")
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
                 .padding(.top, DOSSpacing.sm)
 
             Spacer()
@@ -164,7 +163,7 @@ struct BarcodeScannerView: View {
 
             Text("Camera unavailable in simulator")
                 .font(DOSTypography.body)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amber)
 
             TextField("Enter barcode", text: $manualBarcode)
                 .font(DOSTypography.body)

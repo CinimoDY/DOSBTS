@@ -16,7 +16,7 @@ struct AboutView: View {
         Section {
             Text("DOSBTS is a community-maintained reader app that displays data from Libre sensors. It is **not a medical device**. Treatment decisions must be verified with your CGM manufacturer's reader and your healthcare provider.")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundColor(AmberTheme.amber)
         } header: {
             Label("Disclaimer", systemImage: "exclamationmark.shield")
         }

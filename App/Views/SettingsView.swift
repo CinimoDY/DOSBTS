@@ -79,8 +79,12 @@ struct SettingsView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(AmberTheme.dosBlack)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            // Slim glucose strip at the top — the value sits where the
+            // Overview hero puts it, on every tab (R7b).
+            .safeAreaInset(edge: .top, spacing: 0) {
+                GlucoseTopBar()
+            }
+            .dosNavigationTitle("Settings")
             .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }

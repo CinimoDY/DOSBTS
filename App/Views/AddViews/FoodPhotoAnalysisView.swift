@@ -28,20 +28,26 @@ struct FoodPhotoAnalysisView: View {
 
     private var formContent: some View {
         Form {
-            if !store.state.aiConsentFoodPhoto, relogMeal == nil {
-                consentSection
-            } else if store.state.foodAnalysisLoading {
-                loadingSection
-            } else if let result = store.state.foodAnalysisResult {
-                resultsSection(result)
-            } else if let error = store.state.foodAnalysisError {
-                errorSection(error)
-            } else if relogMeal != nil {
-                loadingSection // brief placeholder until hydrateRelogIfNeeded() runs on onAppear
-            } else {
-                photoPickerSection
+            Group {
+                if !store.state.aiConsentFoodPhoto, relogMeal == nil {
+                    consentSection
+                } else if store.state.foodAnalysisLoading {
+                    loadingSection
+                } else if let result = store.state.foodAnalysisResult {
+                    resultsSection(result)
+                } else if let error = store.state.foodAnalysisError {
+                    errorSection(error)
+                } else if relogMeal != nil {
+                    loadingSection // brief placeholder until hydrateRelogIfNeeded() runs on onAppear
+                } else {
+                    photoPickerSection
+                }
             }
+            .listRowBackground(AmberTheme.dosBlack)
+            .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
         }
+        .scrollContentBackground(.hidden)
+        .background(AmberTheme.dosBlack.ignoresSafeArea())
         .onAppear { hydrateRelogIfNeeded() }
         .navigationDestination(isPresented: Binding(
             get: { scanTargetIndex != nil },
@@ -68,7 +74,7 @@ struct FoodPhotoAnalysisView: View {
                 .onDisappear { isItemScanActive = false }
             }
         }
-        .navigationTitle("AI Meal Analysis")
+        .dosNavigationTitle("AI Meal Analysis")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
@@ -254,7 +260,7 @@ struct FoodPhotoAnalysisView: View {
                     }
                     if store.state.claudeAPIKeyValid {
                         Text("Estimated cost: typically less than $0.01 per analysis")
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     } else {
                         Text("Set up your API key in Settings first.")
                             .foregroundStyle(AmberTheme.cgaRed)
@@ -334,7 +340,7 @@ struct FoodPhotoAnalysisView: View {
                         Spacer()
                         Text("from \(stagedItems.count) items")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                 },
                 header: {
@@ -489,7 +495,7 @@ struct FoodPhotoAnalysisView: View {
                         } else {
                             Text("Can you be more specific? (e.g. portion size, brand, cooking method)")
                                 .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amber)
 
                             if let error = followUpError {
                                 Text(error)
@@ -518,7 +524,7 @@ struct FoodPhotoAnalysisView: View {
                 Section {
                     Text("Best estimate after clarification.")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
 
@@ -530,7 +536,7 @@ struct FoodPhotoAnalysisView: View {
                     if let notes = result.confidenceNotes {
                         Text(notes)
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                 },
                 header: {
@@ -541,7 +547,7 @@ struct FoodPhotoAnalysisView: View {
             Section {
                 Text("AI estimates are informational only. Consult your healthcare provider for medical decisions.")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amber)
             }
 
             Section {

@@ -80,6 +80,7 @@ struct ChartView: View {
                         }
                     }
 
+                    GeometryReader { chartAreaGeo in
                     ZStack(alignment: .topLeading) {
                         ScrollViewReader { scrollViewProxy in
                             ScrollView(.horizontal, showsIndicators: false) {
@@ -97,7 +98,7 @@ struct ChartView: View {
                                     }
 
                                     glucoseChart
-                                        .frame(width: max(0, screenWidth, seriesWidth), height: min(screenHeight, Config.chartHeight))
+                                        .frame(width: max(0, screenWidth, seriesWidth), height: chartHeight(available: chartAreaGeo.size.height))
                                     .onChange(of: store.state.sensorGlucoseValues) {
                                         scrollToEnd(scrollViewProxy: scrollViewProxy)
 
@@ -142,6 +143,8 @@ struct ChartView: View {
                                 showHeartRate: store.state.showHeartRateOverlay
                             )
                         }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
         }
     }
@@ -579,6 +582,7 @@ struct ChartView: View {
         static let insulinSymbolSizeRange: ClosedRange<Double> = 30...160
         static let spacerWidth: CGFloat = 50
         static let chartHeight: CGFloat = 250
+        static let minChartHeight: CGFloat = 140
         static let lineStyle: StrokeStyle = .init(lineWidth: 3, lineCap: .round)
         static let smoothLineStyle: StrokeStyle = .init(lineWidth: 3.5, lineCap: .round)
         static let rawLineStyle: StrokeStyle = .init(lineWidth: 3, lineCap: .round)
@@ -639,8 +643,13 @@ struct ChartView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100), execute: task)
     }
 
-    private var screenHeight: CGFloat {
-        UIScreen.screenHeight
+    /// Chart height adapts to the space actually available so the Overview
+    /// VStack never overflows the screen (e.g. when the treatment banner
+    /// is inserted above the chart, the chart compresses instead of pushing
+    /// the quick-action buttons under the tab bar).
+    private func chartHeight(available: CGFloat) -> CGFloat {
+        let forChart = available - Config.markerLaneHeight
+        return max(Config.minChartHeight, min(Config.chartHeight, forChart))
     }
 
     private var screenWidth: CGFloat {

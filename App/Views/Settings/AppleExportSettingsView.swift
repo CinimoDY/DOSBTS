@@ -54,7 +54,7 @@ struct AppleExportSettingsView: View {
                                 .font(DOSTypography.body)
                             Text("Magenta dashed line + current bpm")
                                 .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amber)
                         }
                     }
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
