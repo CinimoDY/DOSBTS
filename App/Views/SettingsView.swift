@@ -10,7 +10,12 @@ import SwiftUI
 /// App/Views/Settings/.
 struct SettingsView: View {
     var body: some View {
-        NavigationStack {
+        // Strip sits ABOVE the page title (matching Daily digest) — see
+        // ListsView for why it wraps the NavigationStack.
+        VStack(spacing: 0) {
+            GlucoseTopBar()
+
+            NavigationStack {
             List {
                 Group {
                     NavigationLink {
@@ -79,14 +84,14 @@ struct SettingsView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(AmberTheme.dosBlack)
-            // Slim glucose strip at the top — the value sits where the
-            // Overview hero puts it, on every tab (R7b).
-            .safeAreaInset(edge: .top, spacing: 0) {
-                GlucoseTopBar()
-            }
             .dosNavigationTitle("Settings")
             .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            }
+        }
+        .background(AmberTheme.dosBlack)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GlucoseStatusBar()
         }
     }
 }

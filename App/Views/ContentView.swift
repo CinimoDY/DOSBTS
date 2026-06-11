@@ -46,15 +46,11 @@ struct ContentView: View {
                     Label("Daily digest", systemImage: "doc.text.magnifyingglass")
                 }.tag(DirectConfig.digestViewTag)
             }
-            .tabViewBottomAccessory {
-                // Log actions on every tab (R7) — the same QuickActionButtons
-                // the Overview page shows. The accessory never minimizes (no
-                // tabBarMinimizeBehavior is set), so the R7b
-                // never-collapse-during-cycle rule holds structurally.
-                GlucoseStatusBar()
-                    .environmentObject(store)
-                    .environmentObject(sheets)
-            }
+            // Log actions live in a per-tab safeAreaInset bar (KTD-3's named
+            // fallback) rather than tabViewBottomAccessory: the accessory's
+            // Liquid Glass capsule showed rounded glass edges around the DOS
+            // content on lighter tab backgrounds. The inset bar is plain
+            // black with sharp edges and never minimizes (R7b).
             .overlay {
                 if store.state.showScanlines {
                     DOSScanlineOverlay()

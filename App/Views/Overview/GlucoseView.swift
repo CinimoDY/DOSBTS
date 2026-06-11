@@ -107,6 +107,8 @@ struct GlucoseView: View {
             // Additional settings for screen lock; alarm notification "Snooze"
             // action for snoozes).
             if store.state.preventScreenLock || store.state.alarmSnoozeUntil != nil {
+                // Left-aligned (user request): the snooze/screen-lock status
+                // reads as a meta line under the hero, not a centered badge.
                 HStack {
                     if store.state.preventScreenLock {
                         Button(action: {
@@ -117,8 +119,6 @@ struct GlucoseView: View {
                             Text("Screen lock off")
                         })
                     }
-
-                    Spacer()
 
                     if let alarmSnoozeUntil = store.state.alarmSnoozeUntil {
                         Button(action: {
@@ -140,8 +140,11 @@ struct GlucoseView: View {
                             Text("Snoozed until \(alarmSnoozeUntil.toLocalTime())")
                         })
                     }
+
+                    Spacer()
                 }
                 .padding(.top, DOSSpacing.xs)
+                .padding(.horizontal, DOSSpacing.md)
                 .disabled(store.state.latestSensorGlucose == nil)
                 .buttonStyle(.plain)
             }

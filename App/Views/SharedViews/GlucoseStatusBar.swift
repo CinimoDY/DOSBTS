@@ -7,8 +7,9 @@
 //  - GlucoseTopBar: a slim strip at the top of non-Overview tabs showing
 //    the glucose value where the user is used to seeing it (hero position,
 //    hero styling, much smaller).
-//  - GlucoseStatusBar: the tabViewBottomAccessory content — the SAME
-//    MEAL/INSULIN QuickActionButtons the Overview page uses.
+//  - GlucoseStatusBar: the bottom log-action bar, mounted per tab via
+//    safeAreaInset (KTD-3's fallback container — the Liquid Glass
+//    accessory capsule showed glass edges around the DOS content).
 //
 //  Both read the same state the hero reads — `latestSensorGlucose`, the
 //  shared GlucoseStaleness tiers, `treatmentCycleActive` — one source, no
@@ -72,8 +73,9 @@ struct GlucoseStatusBarModel: Equatable {
 
 // MARK: - Bottom accessory: log actions
 
-/// The tabViewBottomAccessory content: the same QuickActionButtons the
-/// Overview page shows, so logging looks identical everywhere (R7, R8).
+/// The bottom log-action bar, identical on every tab (R7, R8). Mounted
+/// per tab via `safeAreaInset(edge: .bottom)` so it sits above the tab
+/// bar with sharp DOS edges and never minimizes (R7b).
 /// Reads only `model.mealSheet` — the richer mode/staleness fields of the
 /// shared model are rendered by GlucoseTopBar.
 struct GlucoseStatusBar: View {
@@ -90,30 +92,33 @@ struct GlucoseStatusBar: View {
     }
 
     var body: some View {
-        HStack(spacing: DOSSpacing.sm) {
-            if DirectConfig.showInsulinInput, store.state.showInsulinInput {
-                accessoryAction(title: "INSULIN", action: { sheets.present(.insulin) }) {
-                    Image(systemName: "syringe")
-                        .font(DOSTypography.body)
+        VStack(spacing: 0) {
+            Divider()
+                .background(AmberTheme.dosBorder)
+
+            HStack(spacing: DOSSpacing.sm) {
+                if DirectConfig.showInsulinInput, store.state.showInsulinInput {
+                    barAction(title: "INSULIN", action: { sheets.present(.insulin) }) {
+                        Image(systemName: "syringe")
+                            .font(DOSTypography.body)
+                    }
+                }
+
+                // model is read inside the closure so the R8 routing decision
+                // uses the treatment-cycle state at TAP time, not render time.
+                barAction(title: "MEAL", action: { sheets.present(model.mealSheet) }) {
+                    AppleIcon().frame(width: 16, height: 16)
                 }
             }
-
-            // model is read inside the closure so the R8 routing decision
-            // uses the treatment-cycle state at TAP time, not render time.
-            accessoryAction(title: "MEAL", action: { sheets.present(model.mealSheet) }) {
-                AppleIcon().frame(width: 16, height: 16)
-            }
+            .padding(.horizontal, DOSSpacing.md)
+            .padding(.vertical, DOSSpacing.xs)
+            .background(AmberTheme.dosBlack)
         }
-        .padding(.horizontal, DOSSpacing.md)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AmberTheme.dosBlack)
     }
 
-    /// Same visual as QuickActionButton (ghost box, icon beside caption,
-    /// 44pt target), but built on a .plain Button: the accessory glassifies
-    /// regular Buttons with the app tint, which washes the ghost style
-    /// amber-on-amber.
-    private func accessoryAction(
+    /// The Overview quick-action look: ghost box, icon beside caption,
+    /// 44pt target.
+    private func barAction(
         title: String,
         action: @escaping () -> Void,
         @ViewBuilder icon: @escaping () -> some View
@@ -125,13 +130,9 @@ struct GlucoseStatusBar: View {
                 Text(title)
                     .font(DOSTypography.caption)
             }
-            .foregroundColor(AmberTheme.amber)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(AmberTheme.dosBlack)
-            .overlay(Rectangle().stroke(AmberTheme.amber, lineWidth: 1))
-            .shadow(color: AmberTheme.amber.opacity(0.4), radius: 4, x: 0, y: 0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(DOSButtonStyle(variant: .ghost))
         .frame(maxWidth: .infinity)
     }
 }

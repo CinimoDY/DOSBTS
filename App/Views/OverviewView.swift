@@ -39,9 +39,9 @@ struct OverviewView: View {
             }
         }
         .background(AmberTheme.dosBlack)
-        // The INSULIN/MEAL quick actions live in the persistent bottom
-        // accessory bar (GlucoseStatusBar) — one button row, same position
-        // on every tab; the chart expands into the reclaimed space.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GlucoseStatusBar()
+        }
     }
 
 }

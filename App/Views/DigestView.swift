@@ -37,6 +37,9 @@ struct DigestView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             GlucoseTopBar()
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GlucoseStatusBar()
+        }
         .onAppear {
             if !hasAppeared {
                 hasAppeared = true

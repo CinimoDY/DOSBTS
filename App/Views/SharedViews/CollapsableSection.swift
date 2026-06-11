@@ -42,7 +42,24 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
         ) {
             Group {
                 if collapsed {
-                    teaser
+                    // The teaser row ("675 Entries") is the obvious thing to
+                    // tap — expanding shouldn't require hitting the small
+                    // chevron in the header.
+                    Button {
+                        collapsed = false
+                    } label: {
+                        HStack {
+                            teaser
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(DOSTypography.caption)
+                                .foregroundColor(AmberTheme.amberDark)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!collapsible)
+                    .accessibilityLabel("Expand section")
                 } else {
                     content()
                 }
