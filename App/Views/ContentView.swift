@@ -14,6 +14,12 @@ struct ContentView: View {
     @EnvironmentObject var store: DirectStore
     @Environment(\.scenePhase) var scenePhase
 
+    /// Single app-level presentation root (R8a): all entry/treatment sheets
+    /// present through this coordinator so the chart, quick actions, status
+    /// bar, and treatment observers can never create sibling presentation
+    /// roots (the wrong-sheet collision class).
+    @StateObject private var sheets = SheetCoordinator()
+
     var body: some View {
         // TabView must be the outermost receiver: wrapping it in
         // LoadingView's GeometryReader/ZStack swallows the
@@ -67,6 +73,27 @@ struct ContentView: View {
             }
             .overlay {
                 LoadingOverlay(isShowing: isShowing)
+            }
+            .environmentObject(sheets)
+            .sheet(item: $sheets.activeSheet, onDismiss: sheets.sheetDidDismiss) { sheet in
+                RootSheetContent(sheet: sheet)
+                    .environmentObject(store)
+                    .environmentObject(sheets)
+            }
+            .onAppear {
+                // Cold launch: the prompt flag may already be set before the
+                // onChange observers subscribe (e.g. a notification action
+                // during launch).
+                presentTreatmentSheetIfNeeded()
+            }
+            .onChange(of: store.state.showTreatmentPrompt) { _, newValue in
+                guard newValue else { return }
+                presentTreatmentSheetIfNeeded()
+            }
+            .onChange(of: store.state.recheckDispatched) { _, newValue in
+                guard newValue else { return }
+                presentTreatmentSheetIfNeeded()
+                // If recovered, the banner handles the "STABILISED" state.
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if store.state.appState != newPhase {
@@ -125,6 +152,30 @@ struct ContentView: View {
     }
 
     // MARK: Private
+
+    /// Shared by cold launch and both treatment observers. The stillLow
+    /// reducer transition sets BOTH flags at once; the decision function
+    /// resolves it to one sheet (recheck wins) and presentSafety's dedup
+    /// makes the double observer fire a no-op. Safety presents preempt
+    /// whatever sheet is up and land the user on Overview, where the
+    /// treatment banner lives (snooze-notification precedent in App.swift).
+    private func presentTreatmentSheetIfNeeded() {
+        let sheet = SheetCoordinator.treatmentPresent(
+            showTreatmentPrompt: store.state.showTreatmentPrompt,
+            alarmFiredAt: store.state.alarmFiredAt,
+            recheckDispatched: store.state.recheckDispatched,
+            treatmentCycleActive: store.state.treatmentCycleActive,
+            latestGlucoseValue: store.state.latestSensorGlucose?.glucoseValue,
+            alarmLow: store.state.alarmLow
+        )
+        guard let sheet else { return }
+
+        sheets.presentSafety(sheet)
+        store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))
+        if store.state.showTreatmentPrompt {
+            store.dispatch(.setShowTreatmentPrompt(show: false))
+        }
+    }
 
     private var isShowing: Binding<Bool> {
         Binding(

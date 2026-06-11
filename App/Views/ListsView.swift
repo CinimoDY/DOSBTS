@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ListsView: View {
     @EnvironmentObject var store: DirectStore
-    @State private var showingAddBG: Bool = false
+    @EnvironmentObject var sheets: SheetCoordinator
     @State private var showingMigrationHint: Bool = false
 
     var body: some View {
@@ -42,18 +42,15 @@ struct ListsView: View {
                 if DirectConfig.bloodGlucoseInput {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
-                            showingAddBG = true
+                            // Routes through the app's single presentation
+                            // root — a local .sheet here was a second root
+                            // (sibling-sheet collision class, R8a).
+                            sheets.present(.bloodGlucose)
                         } label: {
                             Image(systemName: "plus")
                                 .accessibilityLabel("Add blood glucose")
                         }
                     }
-                }
-            }
-            .sheet(isPresented: $showingAddBG) {
-                AddBloodGlucoseView(glucoseUnit: store.state.glucoseUnit) { time, value in
-                    let glucose = BloodGlucose(id: UUID(), timestamp: time, glucoseValue: value)
-                    store.dispatch(.addBloodGlucose(glucoseValues: [glucose]))
                 }
             }
             .alert("Blood glucose moved", isPresented: $showingMigrationHint) {

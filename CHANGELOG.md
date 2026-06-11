@@ -13,6 +13,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 - Meal rows in the food-entry recents and the Lists tab now share one component. The Lists tab gains an explicit Delete swipe action and Delete in the long-press menu (deleting previously required edit mode) — R3, R4, AE4.
 - True CGA monitor feel: no real white anywhere the app controls. All unstyled text falls back to phosphor amber + monospace, navigation titles render amber-light monospace, toolbar buttons tint amber, and the manual Meal, Blood glucose, and Calibration forms plus the AI analysis screen drop their system-gray surfaces for black/amber (R1, R1a, AE1). CGA accents (green/cyan/red) and system chrome (keyboard, picker internals, back buttons) are unchanged.
 
+### Changed (under the hood)
+- All sheets (entry, treatment, chart-marker) now present from a single app-level root, so treatment prompts can never collide with or hide behind a user-opened sheet, and they now land you on the Overview tab where the treatment banner lives — even if they fire while you're in Settings or Digest (R8a, AE2a).
+
 ### Fixed
 - Overview no longer overflows the screen when the hypo-treatment countdown banner is active — the chart compresses to absorb the banner, so the INSULIN/MEAL buttons stay fully above the tab bar instead of being pushed behind it.
 - ASK AI in food search now navigates and starts the analysis on the first tap (it previously took several taps and often did nothing): the row's navigation cancelled itself because starting the analysis removed the link mid-push. The keyboard now drops on tap and the search text is kept for when you navigate back — DMNC-1023 wave (R6).
