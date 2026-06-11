@@ -31,7 +31,6 @@ struct SensorDetailView: View {
         }
         .listStyle(.grouped)
         .dosNavigationTitle("Sensor")
-        .navigationBarTitleDisplayMode(.inline)
         .alert("Disconnect sensor?", isPresented: $showingDisconnectAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Disconnect", role: .destructive) {

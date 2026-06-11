@@ -85,7 +85,6 @@ struct SettingsView: View {
                 GlucoseTopBar()
             }
             .dosNavigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }

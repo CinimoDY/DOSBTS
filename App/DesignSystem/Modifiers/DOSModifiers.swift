@@ -25,7 +25,7 @@ private struct DOSNavigationTitle: ViewModifier {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     title
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .font(DOSTypography.mono(size: 14, weight: .semibold))
                         .tracking(0.6)
                         .foregroundStyle(AmberTheme.amberLight)
                 }

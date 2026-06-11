@@ -64,7 +64,6 @@ struct ItemBarcodeScannerView: View {
             }
         }
         .dosNavigationTitle("Scan Item")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") { dismiss() }

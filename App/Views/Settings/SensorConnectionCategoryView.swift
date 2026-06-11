@@ -29,7 +29,6 @@ struct SensorConnectionCategoryView: View {
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack)
         .dosNavigationTitle("Sensor & Connection")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }

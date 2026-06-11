@@ -39,7 +39,6 @@ struct BarcodeScannerView: View {
                 .navigationBarHidden(true)
         }
         .dosNavigationTitle("Scan Barcode")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {

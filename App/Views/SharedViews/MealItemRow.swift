@@ -116,6 +116,9 @@ struct MealItemRow: View {
         switch variant {
         case .recent:
             HStack {
+                // Deliberately dim: the prompt glyph is a decorative DOS
+                // affordance, not informational text — it stays amberDark
+                // even though section headers migrated to amber (R5 audit).
                 Text("> ")
                     .font(DOSTypography.bodySmall)
                     .foregroundColor(AmberTheme.amberDark)

@@ -96,6 +96,8 @@ struct GlucoseStatusBar: View {
                 }
             }
 
+            // model is read inside the closure so the R8 routing decision
+            // uses the treatment-cycle state at TAP time, not render time.
             accessoryAction(title: "MEAL", action: { sheets.present(model.mealSheet) }) {
                 AppleIcon().frame(width: 16, height: 16)
             }
@@ -159,18 +161,18 @@ struct GlucoseTopBar: View {
             switch model.mode {
             case .noSensor:
                 Text("NO SENSOR")
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .font(DOSTypography.mono(size: 12, weight: .semibold))
                     .foregroundStyle(AmberTheme.amber)
 
             case .awaitingReading:
                 Text("---")
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .font(DOSTypography.mono(size: 14, weight: .bold))
                     .foregroundStyle(AmberTheme.amberDark)
 
             case .reading(let valueText, let trendText, let staleness, let showsCountdown):
                 // The value never truncates (R7 content priority).
                 Text(verbatim: valueText)
-                    .font(.system(size: 15, weight: .bold, design: .monospaced))
+                    .font(DOSTypography.mono(size: 15, weight: .bold))
                     .foregroundStyle(valueColor)
                     .dosGlowLarge(color: valueColor)
                     .fixedSize()
@@ -185,7 +187,7 @@ struct GlucoseTopBar: View {
                 } else if let trendText {
                     // Trend drops first when space runs out.
                     Text(verbatim: trendText)
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .font(DOSTypography.mono(size: 13, weight: .bold))
                         .foregroundStyle(valueColor)
                         .layoutPriority(-1)
                 }
@@ -195,7 +197,7 @@ struct GlucoseTopBar: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 9))
                         Text(verbatim: staleLabel)
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .font(DOSTypography.tabBar)
                     }
                     .foregroundStyle(AmberTheme.stalenessColor(staleness))
                     .lineLimit(1)

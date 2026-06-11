@@ -31,7 +31,6 @@ struct SettingsConnectionsView: View {
         }
         .listStyle(.grouped)
         .dosNavigationTitle("Integrations")
-        .navigationBarTitleDisplayMode(.inline)
     }
 
     // MARK: - Status
@@ -48,7 +47,6 @@ struct SettingsConnectionsView: View {
                     List { NightscoutSettingsView() }
                         .listStyle(.grouped)
                         .dosNavigationTitle("Nightscout")
-                        .navigationBarTitleDisplayMode(.inline)
                 )
             ),
             Connection(
@@ -61,7 +59,6 @@ struct SettingsConnectionsView: View {
                     List { AppleExportSettingsView() }
                         .listStyle(.grouped)
                         .dosNavigationTitle("Apple Health & Calendar")
-                        .navigationBarTitleDisplayMode(.inline)
                 )
             ),
             Connection(
@@ -74,7 +71,6 @@ struct SettingsConnectionsView: View {
                     List { AISettingsView() }
                         .listStyle(.grouped)
                         .dosNavigationTitle("AI Features")
-                        .navigationBarTitleDisplayMode(.inline)
                 )
             ),
             Connection(
@@ -87,7 +83,6 @@ struct SettingsConnectionsView: View {
                     List { HealthImportSourcesView() }
                         .listStyle(.grouped)
                         .dosNavigationTitle("Health Import Sources")
-                        .navigationBarTitleDisplayMode(.inline)
                 )
             ),
         ]

@@ -42,7 +42,6 @@ struct ListsView: View {
                 GlucoseTopBar()
             }
             .dosNavigationTitle("Log")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if DirectConfig.bloodGlucoseInput {
                     ToolbarItem(placement: .navigationBarTrailing) {

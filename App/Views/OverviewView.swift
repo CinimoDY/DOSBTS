@@ -39,10 +39,9 @@ struct OverviewView: View {
             }
         }
         .background(AmberTheme.dosBlack)
-        // The INSULIN/MEAL quick actions moved to the persistent bottom
+        // The INSULIN/MEAL quick actions live in the persistent bottom
         // accessory bar (GlucoseStatusBar) — one button row, same position
-        // on every tab, no doubles. The chart expands into the reclaimed
-        // space (R9 Phase 2, taken early by user decision).
+        // on every tab; the chart expands into the reclaimed space.
     }
 
 }

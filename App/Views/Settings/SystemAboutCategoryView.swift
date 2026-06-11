@@ -23,7 +23,6 @@ struct SystemAboutCategoryView: View {
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack)
         .dosNavigationTitle("System & About")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }

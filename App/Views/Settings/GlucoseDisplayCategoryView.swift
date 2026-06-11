@@ -24,7 +24,6 @@ struct GlucoseDisplayCategoryView: View {
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack)
         .dosNavigationTitle("Glucose & Display")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
