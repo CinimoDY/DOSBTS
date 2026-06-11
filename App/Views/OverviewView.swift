@@ -263,12 +263,12 @@ struct OverviewView: View {
                 if DirectConfig.showInsulinInput, store.state.showInsulinInput {
                     QuickActionButton(title: "INSULIN", action: { activeSheet = .insulin }) {
                         Image(systemName: "syringe")
-                            .font(DOSTypography.bodyLarge)
+                            .font(DOSTypography.body)
                     }
                 }
 
                 QuickActionButton(title: "MEAL", action: { activeSheet = .meal }) {
-                    AppleIcon().frame(width: 20, height: 20)
+                    AppleIcon().frame(width: 16, height: 16)
                 }
             }
             .padding(.horizontal, DOSSpacing.md)
@@ -287,14 +287,13 @@ private struct QuickActionButton<Icon: View>: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: DOSSpacing.xs) {
+            HStack(spacing: DOSSpacing.xs) {
                 icon()
-                    .frame(height: 20)
+                    .frame(height: 16)
                 Text(title)
                     .font(DOSTypography.caption)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DOSSpacing.sm)
+            .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(DOSButtonStyle(variant: .ghost))
         .frame(maxWidth: .infinity)

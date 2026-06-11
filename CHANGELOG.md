@@ -7,6 +7,12 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Overview INSULIN/MEAL buttons are half as tall: icon now sits beside the label instead of above it, giving the chart more vertical space.
+
+### Fixed
+- Overview no longer overflows the screen when the hypo-treatment countdown banner is active — the chart compresses to absorb the banner, so the INSULIN/MEAL buttons stay fully above the tab bar instead of being pushed behind it.
+
 ## [Build 98] — 2026-06-10
 
 ### Fixed
