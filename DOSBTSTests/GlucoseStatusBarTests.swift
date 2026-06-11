@@ -156,3 +156,22 @@ struct GlucoseStalenessTests {
         #expect(GlucoseStaleness.veryStale(minutes: 20).minutesAgoLabel == "20 MIN AGO")
     }
 }
+
+// MARK: - Display-unit formatting (review follow-up)
+
+extension GlucoseStatusBarModelTests {
+    @Test("mmol/L readings render the converted one-decimal value")
+    func mmolLValueText() {
+        let glucose = makeGlucose(value: 117, minutesAgo: 1, now: now)
+        let model = GlucoseStatusBarModel.make(
+            hasSensor: true, latestGlucose: glucose, glucoseUnit: .mmolL,
+            treatmentCycleActive: false, now: now
+        )
+        guard case .reading(let value, _, _, _) = model.mode else {
+            Issue.record("expected .reading"); return
+        }
+        // 117 mg/dL -> 6.5 mmol/L (pin the converted rendering, not mg/dL)
+        #expect(value == 117.asGlucose(glucoseUnit: .mmolL))
+        #expect(value != "117")
+    }
+}

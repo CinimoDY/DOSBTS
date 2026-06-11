@@ -172,3 +172,87 @@ struct TreatmentPresentDecisionTests {
         #expect(decision == nil)
     }
 }
+
+// MARK: - Dismissal-interleaving rows (review follow-up)
+
+@Suite("SheetCoordinator dismissal interleavings")
+struct SheetCoordinatorDismissalTests {
+    @Test("sheetDidDismiss with nothing staged is a no-op")
+    func dismissWithNoPending() {
+        let c = SheetCoordinator()
+        c.present(.meal)
+        c.dismiss()
+        c.sheetDidDismiss()
+        #expect(c.activeSheet == nil)
+        #expect(c.pendingSheet == nil)
+    }
+
+    @Test("dismiss() clears the active sheet without touching pending")
+    func dismissLeavesPending() {
+        let c = SheetCoordinator()
+        c.present(.meal)
+        c.present(.insulin) // staged
+        c.dismiss()
+        #expect(c.activeSheet == nil)
+        #expect(c.pendingSheet?.id == "insulin")
+    }
+
+    @Test("dismissThenPresent overwrites an already-staged sheet — most recent intent wins")
+    func dismissThenPresentOverwritesPending() {
+        let c = SheetCoordinator()
+        c.present(.meal)
+        c.present(.insulin) // staged
+        c.dismissThenPresent(.filteredFoodEntry)
+        #expect(c.activeSheet == nil)
+        #expect(c.pendingSheet?.id == "filteredFoodEntry")
+
+        c.sheetDidDismiss()
+        #expect(c.activeSheet?.id == "filteredFoodEntry")
+        #expect(c.pendingSheet == nil)
+    }
+
+    @Test("a present that lands during the dismissal animation wins over the staged sheet")
+    func presentDuringDismissalWins() {
+        let c = SheetCoordinator()
+        c.present(.meal)
+        c.dismissThenPresent(.filteredFoodEntry) // staged, dismissal in flight
+        c.present(.bloodGlucose) // user acts before onDismiss fires
+        #expect(c.activeSheet?.id == "bloodGlucose")
+
+        // onDismiss for the original sheet fires after the new present:
+        // the newer present keeps the screen; the staged sheet stays staged.
+        c.sheetDidDismiss()
+        #expect(c.activeSheet?.id == "bloodGlucose")
+        #expect(c.pendingSheet?.id == "filteredFoodEntry")
+    }
+}
+
+// MARK: - Treatment decision: nil-glucose rows (review follow-up)
+
+extension TreatmentPresentDecisionTests {
+    @Test("recheck flags set but no glucose reading presents nothing")
+    func recheckWithoutReadingPresentsNothing() {
+        let decision = SheetCoordinator.treatmentPresent(
+            showTreatmentPrompt: false,
+            alarmFiredAt: nil,
+            recheckDispatched: true,
+            treatmentCycleActive: true,
+            latestGlucoseValue: nil,
+            alarmLow: 80
+        )
+        #expect(decision == nil)
+    }
+
+    @Test("recheck flags set, no glucose, but prompt flag set falls back to the modal")
+    func recheckWithoutReadingFallsBackToPrompt() {
+        let decision = SheetCoordinator.treatmentPresent(
+            showTreatmentPrompt: true,
+            alarmFiredAt: Date(),
+            recheckDispatched: true,
+            treatmentCycleActive: true,
+            latestGlucoseValue: nil,
+            alarmLow: 80
+        )
+        #expect(decision?.id == "treatmentModal")
+    }
+}

@@ -94,6 +94,10 @@ final class SheetCoordinator: ObservableObject {
 
     /// Wire to `.sheet(item:onDismiss:)` — promotes a staged sheet.
     func sheetDidDismiss() {
+        // A present that landed during the dismissal animation wins; the
+        // staged sheet stays staged and promotes when that one dismisses.
+        guard activeSheet == nil else { return }
+
         if let pending = pendingSheet {
             pendingSheet = nil
             activeSheet = pending

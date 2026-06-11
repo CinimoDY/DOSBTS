@@ -49,9 +49,10 @@ struct MealItemDisplayModel: Equatable {
 
 /// Documented variants:
 /// - `.recent` — compact single line (`> name … carbs`). Rides inside
-///   `HoldToCommitProgress`, so it must NOT attach a context menu (a
-///   long-press menu can't coexist with the hold recognizer — DMNC-796
-///   KTD-3). Callers pass only `onAddToFavorite` (trailing swipe).
+///   `HoldToCommitProgress`, so it attaches NO affordances of its own:
+///   a context menu can't coexist with the hold recognizer (DMNC-796
+///   KTD-3), and swipe actions must hang off the hold wrapper at the
+///   call site to reliably reach the List row. Callers own them.
 /// - `.list` — two-line detail row (timestamp + name, carbs + macros).
 ///   Attaches leading swipe (log again), trailing swipe (delete +
 ///   favorite), and a context menu from whichever callbacks are supplied.
@@ -75,40 +76,47 @@ struct MealItemRow: View {
     }
 
     var body: some View {
-        content
-            .swipeActions(edge: .leading) {
-                if let onLogAgain {
-                    Button {
-                        onLogAgain()
-                    } label: {
-                        Label("Log Again", systemImage: "arrow.counterclockwise")
+        switch variant {
+        case .recent:
+            // Bare content: the caller wraps this in HoldToCommitProgress
+            // and attaches swipe affordances on that wrapper.
+            content
+
+        case .list:
+            content
+                .swipeActions(edge: .leading) {
+                    if let onLogAgain {
+                        Button {
+                            onLogAgain()
+                        } label: {
+                            Label("Log Again", systemImage: "arrow.counterclockwise")
+                        }
+                        .tint(AmberTheme.cgaGreen)
                     }
-                    .tint(AmberTheme.cgaGreen)
                 }
-            }
-            .swipeActions(edge: .trailing) {
-                if let onDelete {
-                    Button(role: .destructive) {
-                        onDelete()
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                .swipeActions(edge: .trailing) {
+                    if let onDelete {
+                        Button(role: .destructive) {
+                            onDelete()
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    if let onAddToFavorite {
+                        Button {
+                            onAddToFavorite()
+                        } label: {
+                            Label("Add to Favorites", systemImage: "star")
+                        }
+                        .tint(AmberTheme.amber)
                     }
                 }
-                if let onAddToFavorite {
-                    Button {
-                        onAddToFavorite()
-                    } label: {
-                        Label("Add to Favorites", systemImage: "star")
-                    }
-                    .tint(AmberTheme.amber)
-                }
-            }
-            .modifier(ListContextMenu(
-                enabled: variant == .list,
-                onLogAgain: onLogAgain,
-                onAddToFavorite: onAddToFavorite,
-                onDelete: onDelete
-            ))
+                .modifier(ListContextMenu(
+                    onLogAgain: onLogAgain,
+                    onAddToFavorite: onAddToFavorite,
+                    onDelete: onDelete
+                ))
+        }
     }
 
     @ViewBuilder
@@ -180,16 +188,14 @@ struct MealItemRow: View {
 
 // MARK: - List context menu
 
-/// `.recent` must never gain a context menu (hold-recognizer conflict),
-/// so the menu is gated on the variant, not just on callback presence.
+/// `.list`-only: the menu attaches when any callback is supplied.
 private struct ListContextMenu: ViewModifier {
-    let enabled: Bool
     let onLogAgain: (() -> Void)?
     let onAddToFavorite: (() -> Void)?
     let onDelete: (() -> Void)?
 
     func body(content: Content) -> some View {
-        if enabled, onLogAgain != nil || onAddToFavorite != nil || onDelete != nil {
+        if onLogAgain != nil || onAddToFavorite != nil || onDelete != nil {
             content.contextMenu {
                 if let onLogAgain {
                     Button {

@@ -200,19 +200,23 @@ struct UnifiedFoodEntryView: View {
                 }
             } else {
                 ForEach(filteredRecents) { meal in
-                    // Tap stages, hold insta-logs. The old "Log Now" swipe and
-                    // context menu are gone — a long-press context menu can't
-                    // coexist with the hold recognizer (DMNC-796 KTD-3), which
-                    // is why the .recent variant gets only onAddToFavorite.
+                    // Tap stages, hold insta-logs. No context menu — it can't
+                    // coexist with the hold recognizer (DMNC-796 KTD-3). The
+                    // swipe affordance hangs off the hold wrapper, not inside
+                    // the row, so it reliably reaches the List row.
                     HoldToCommitProgress(
                         onTap: { openOnStagingPlate(meal) },
                         onCommit: { logRecent(meal) }
                     ) {
-                        MealItemRow(
-                            meal: meal,
-                            variant: .recent,
-                            onAddToFavorite: { addToFavorites(meal) }
-                        )
+                        MealItemRow(meal: meal, variant: .recent)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button {
+                            addToFavorites(meal)
+                        } label: {
+                            Label("Add to Favorites", systemImage: "star")
+                        }
+                        .tint(AmberTheme.amber)
                     }
                 }
             }
@@ -294,8 +298,14 @@ struct UnifiedFoodEntryView: View {
                         // navigationDestination(isPresented:) on the List, which survives
                         // row rebuilds.
                         Button {
-                            // Guard: only dispatch if not already loading/loaded
-                            if !store.state.foodAnalysisLoading, store.state.foodAnalysisResult == nil {
+                            // Guard: only dispatch if not already loading/loaded.
+                            // Consent gate matters: without it the middleware
+                            // swallows analyzeFoodText silently and the loading
+                            // flag would stick forever — the destination shows
+                            // the consent screen instead, and a re-tap after
+                            // granting starts a real analysis.
+                            if store.state.aiConsentFoodPhoto,
+                               !store.state.foodAnalysisLoading, store.state.foodAnalysisResult == nil {
                                 let query = String(searchText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
                                 store.dispatch(.setFoodAnalysisLoading(isLoading: true))
                                 store.dispatch(.analyzeFoodText(query: query))

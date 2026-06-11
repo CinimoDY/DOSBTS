@@ -74,6 +74,8 @@ struct GlucoseStatusBarModel: Equatable {
 
 /// The tabViewBottomAccessory content: the same QuickActionButtons the
 /// Overview page shows, so logging looks identical everywhere (R7, R8).
+/// Reads only `model.mealSheet` — the richer mode/staleness fields of the
+/// shared model are rendered by GlucoseTopBar.
 struct GlucoseStatusBar: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var sheets: SheetCoordinator
@@ -142,11 +144,7 @@ struct GlucoseStatusBar: View {
 struct GlucoseTopBar: View {
     @EnvironmentObject var store: DirectStore
 
-    /// Re-evaluates staleness each minute without touching the data path.
-    @State private var now = Date()
-    private let staleTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
-
-    private var model: GlucoseStatusBarModel {
+    private func model(now: Date) -> GlucoseStatusBarModel {
         GlucoseStatusBarModel.make(
             hasSensor: store.state.sensor != nil,
             latestGlucose: store.state.latestSensorGlucose,
@@ -157,6 +155,18 @@ struct GlucoseTopBar: View {
     }
 
     var body: some View {
+        // TimelineView drives the minute tick for staleness re-evaluation —
+        // unlike a stored Timer publisher, it isn't recreated (and restarted)
+        // every time the view struct re-inits on a store update, so the tick
+        // cadence survives render churn and nothing leaks across the three
+        // tabs that host this strip.
+        TimelineView(.periodic(from: .now, by: 60)) { timeline in
+            bar(model: model(now: timeline.date))
+        }
+    }
+
+    @ViewBuilder
+    private func bar(model: GlucoseStatusBarModel) -> some View {
         HStack(spacing: DOSSpacing.xs) {
             switch model.mode {
             case .noSensor:
@@ -212,8 +222,29 @@ struct GlucoseTopBar: View {
                 .fill(AmberTheme.amberDark.opacity(0.3))
                 .frame(height: 1)
         }
-        .onReceive(staleTimer) { now = $0 }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: accessibilityDescription(for: model)))
+    }
+
+    /// VoiceOver reads a sentence, not raw arrow glyphs.
+    private func accessibilityDescription(for model: GlucoseStatusBarModel) -> String {
+        switch model.mode {
+        case .noSensor:
+            return LocalizedString("No sensor paired")
+        case .awaitingReading:
+            return LocalizedString("Waiting for glucose reading")
+        case .reading(let valueText, _, let staleness, let showsCountdown):
+            var parts = ["\(LocalizedString("Glucose")) \(valueText) \(store.state.glucoseUnit.localizedDescription)"]
+            if showsCountdown {
+                parts.append(LocalizedString("treatment recheck countdown running"))
+            } else if let trend = store.state.latestSensorGlucose?.trend, trend != .unknown {
+                parts.append("\(LocalizedString("trend")) \(trend.description)")
+            }
+            if let staleLabel = staleness.minutesAgoLabel {
+                parts.append(staleLabel)
+            }
+            return parts.joined(separator: ", ")
+        }
     }
 
     /// Mirrors the hero/alarm color state (R7b "alarm firing" row): the

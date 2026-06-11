@@ -115,21 +115,15 @@ struct ContentView: View {
                 UITabBar.appearance().unselectedItemTintColor = UIColor(AmberTheme.amberDark)
                 UITabBar.appearance().tintColor = UIColor(AmberTheme.amber)
 
-                // CGA monitor feel: navigation titles render amber monospace
-                // on black instead of system white (titles are UIKit-drawn,
-                // so the SwiftUI root foregroundStyle can't reach them).
+                // CGA monitor feel for the nav-bar chrome. Title COLORS are
+                // not set here: iOS 26's SwiftUI navigation bar ignores
+                // UINavigationBar.appearance() title attributes, so visible
+                // titles are styled by dosNavigationTitle (principal toolbar
+                // item) instead.
                 let navAppearance = UINavigationBarAppearance()
                 navAppearance.configureWithOpaqueBackground()
                 navAppearance.backgroundColor = .black
                 navAppearance.shadowColor = .clear
-                navAppearance.titleTextAttributes = [
-                    .foregroundColor: UIColor(AmberTheme.amberLight),
-                    .font: UIFont.monospacedSystemFont(ofSize: 16, weight: .semibold)
-                ]
-                navAppearance.largeTitleTextAttributes = [
-                    .foregroundColor: UIColor(AmberTheme.amberLight),
-                    .font: UIFont.monospacedSystemFont(ofSize: 30, weight: .bold)
-                ]
                 UINavigationBar.appearance().standardAppearance = navAppearance
                 UINavigationBar.appearance().scrollEdgeAppearance = navAppearance
                 UINavigationBar.appearance().compactAppearance = navAppearance
