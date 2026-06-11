@@ -12,6 +12,7 @@ import SwiftUI
 struct RootSheetContent: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var sheets: SheetCoordinator
+    @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
 
     let sheet: ActiveSheet
 
@@ -26,6 +27,7 @@ struct RootSheetContent: View {
                 addCallback: { start, end, units, insulinType in
                     let insulinDelivery = InsulinDelivery(id: UUID(), starts: start, ends: end, units: units, type: insulinType)
                     store.dispatch(.addInsulinDelivery(insulinDeliveryValues: [insulinDelivery]))
+                    addedHighlighter.flash(insulinDelivery.id)
                 }
             )
             .environmentObject(store)
@@ -38,6 +40,7 @@ struct RootSheetContent: View {
             AddBloodGlucoseView(glucoseUnit: store.state.glucoseUnit) { time, value in
                 let glucose = BloodGlucose(id: UUID(), timestamp: time, glucoseValue: value)
                 store.dispatch(.addBloodGlucose(glucoseValues: [glucose]))
+                addedHighlighter.flash(glucose.id)
             }
 
         case .treatmentModal(let alarmFiredAt):

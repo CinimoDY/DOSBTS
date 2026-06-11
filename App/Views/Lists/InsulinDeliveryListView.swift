@@ -9,6 +9,7 @@ struct InsulinDeliveryListView: View {
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
 
     var body: some View {
         Group {
@@ -48,6 +49,7 @@ struct InsulinDeliveryListView: View {
                                     .font(DOSTypography.caption)
                             }
                         }
+                        .dosAddedHighlight(addedHighlighter.highlightedID == insulinDeliveryValue.id)
                     }.onDelete { offsets in
                         DirectLog.info("onDelete: \(offsets)")
 
