@@ -37,6 +37,9 @@ struct DigestView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             GlucoseTopBar()
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GlucoseStatusBar()
+        }
         .onAppear {
             if !hasAppeared {
                 hasAppeared = true
@@ -142,7 +145,14 @@ struct DigestView: View {
                     .foregroundColor(AmberTheme.amber)
                     .opacity(0.7)
             } else if let insight = digest.aiInsight, !insight.isEmpty {
-                AIInsightContent(text: insight)
+                if let structured = DigestInsight.parse(insight) {
+                    DigestInsightCard(insight: structured)
+                        // Re-run the reveal cascade when the day changes.
+                        .id(digest.date)
+                } else {
+                    // Pre-structured-format insights render as before.
+                    AIInsightContent(text: insight)
+                }
             } else if !store.state.aiConsentDailyDigest {
                 Text("ENABLE AI INSIGHTS IN SETTINGS")
                     .font(DOSTypography.caption)
@@ -260,6 +270,156 @@ struct DigestView: View {
 /// Falls back gracefully: if the response has no bullets, it renders as
 /// a single paragraph; old cached insights from previous prompt
 /// versions still display correctly.
+// MARK: - Structured insight card (DOS infographic)
+
+/// Renders the structured DigestInsight as a small DOS infographic:
+/// grade-tinted headline, fact chips, "> " prompt tips, and an earned
+/// cheer line with a phosphor pulse — revealed as a staged CRT cascade.
+private struct DigestInsightCard: View {
+    let insight: DigestInsight
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var revealedStages = 0
+    @State private var cheerPulse = false
+
+    private var gradeColor: Color {
+        switch insight.grade {
+        case .good: return AmberTheme.cgaGreen
+        case .mixed: return AmberTheme.amber
+        case .rough: return AmberTheme.cgaRed
+        }
+    }
+
+    private func toneColor(_ tone: DigestInsight.Tone) -> Color {
+        switch tone {
+        case .good: return AmberTheme.cgaGreen
+        case .warn: return AmberTheme.amber
+        case .bad: return AmberTheme.cgaRed
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DOSSpacing.sm) {
+            // Stage 0: headline with grade block glyph
+            HStack(spacing: DOSSpacing.xs) {
+                Rectangle()
+                    .fill(gradeColor)
+                    .frame(width: 6, height: 14)
+                    .accessibilityHidden(true)
+                Text(verbatim: insight.headline)
+                    .font(DOSTypography.mono(size: 15, weight: .bold))
+                    .foregroundStyle(AmberTheme.amberLight)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .stagedReveal(0, revealed: revealedStages)
+
+            // Stage 1: fact chips
+            if !insight.facts.isEmpty {
+                HStack(spacing: DOSSpacing.xs) {
+                    ForEach(insight.facts.indices, id: \.self) { idx in
+                        let fact = insight.facts[idx]
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: fact.label)
+                                .font(DOSTypography.mono(size: 9, weight: .medium))
+                                .foregroundStyle(AmberTheme.amber)
+                                .lineLimit(1)
+                            Text(verbatim: fact.value)
+                                .font(DOSTypography.mono(size: 14, weight: .bold))
+                                .foregroundStyle(toneColor(fact.tone))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .padding(.horizontal, DOSSpacing.xs)
+                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .overlay(
+                            Rectangle()
+                                .stroke(toneColor(fact.tone).opacity(0.5), lineWidth: 1)
+                        )
+                    }
+                }
+                .stagedReveal(1, revealed: revealedStages)
+            }
+
+            // Stage 2: tips as prompt lines
+            if !insight.tips.isEmpty {
+                VStack(alignment: .leading, spacing: DOSSpacing.xs) {
+                    ForEach(insight.tips.indices, id: \.self) { idx in
+                        HStack(alignment: .firstTextBaseline, spacing: DOSSpacing.xs) {
+                            Text(verbatim: ">")
+                                .font(DOSTypography.mono(size: 13, weight: .bold))
+                                .foregroundStyle(AmberTheme.cgaCyan)
+                            Text(verbatim: insight.tips[idx])
+                                .font(DOSTypography.bodySmall)
+                                .foregroundStyle(AmberTheme.amberLight)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .stagedReveal(2, revealed: revealedStages)
+            }
+
+            // Stage 3: earned cheer with phosphor pulse
+            if let cheer = insight.cheer {
+                HStack(spacing: DOSSpacing.xs) {
+                    Text(verbatim: "★")
+                        .font(DOSTypography.mono(size: 12, weight: .bold))
+                    Text(verbatim: cheer)
+                        .font(DOSTypography.caption)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(AmberTheme.cgaGreen)
+                .dosGlowLarge(color: AmberTheme.cgaGreen.opacity(cheerPulse ? 0.9 : 0.3))
+                .opacity(cheerPulse ? 1 : 0.82)
+                .stagedReveal(3, revealed: revealedStages)
+            }
+        }
+        .onAppear {
+            guard !reduceMotion else {
+                // No cascade, no pulse — everything static at full brightness.
+                revealedStages = 4
+                cheerPulse = true
+                return
+            }
+            // CRT boot cascade. Async-stepped, not a synchronous
+            // withAnimation loop: same-tick writes to one @State coalesce
+            // into a single fade instead of staggering.
+            Task { @MainActor in
+                for stage in 0...3 {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        revealedStages = stage + 1
+                    }
+                    try? await Task.sleep(for: .milliseconds(180))
+                }
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                    cheerPulse = true
+                }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: accessibilitySummary))
+    }
+
+    /// One punctuated sentence instead of a run-on of combined children.
+    private var accessibilitySummary: String {
+        var parts = [insight.headline]
+        parts.append(contentsOf: insight.facts.map { "\($0.label): \($0.value)" })
+        parts.append(contentsOf: insight.tips.map { "Tip: \($0)" })
+        if let cheer = insight.cheer { parts.append(cheer) }
+        return parts.joined(separator: ". ")
+    }
+}
+
+private extension View {
+    /// Block is invisible until its stage index is revealed.
+    func stagedReveal(_ stage: Int, revealed: Int) -> some View {
+        opacity(revealed > stage ? 1 : 0)
+    }
+}
+
+/// Legacy fallback renderer: insights saved before the structured JSON
+/// format (paragraph + "- " bullets), and any response DigestInsight.parse
+/// rejects, render as plain text via this view.
 private struct AIInsightContent: View {
     let text: String
 

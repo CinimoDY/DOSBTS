@@ -88,3 +88,100 @@ struct DailyDigestModelTests {
         #expect(digest.generatedAt != nil)
     }
 }
+
+// MARK: - Structured insight parsing
+
+@Suite("DigestInsight parsing")
+struct DigestInsightParsingTests {
+    @Test("well-formed JSON parses with all fields")
+    func wellFormed() {
+        let raw = """
+        {"headline": "STEADY DAY — 84% IN RANGE", "grade": "good",
+         "facts": [{"label": "MORNING SPIKE", "value": "290 @ 07:38", "tone": "bad"}],
+         "tips": ["Pre-bolus 10 min earlier for breakfast"],
+         "cheer": "Third day above 80%"}
+        """
+        let insight = DigestInsight.parse(raw)
+        #expect(insight?.headline == "STEADY DAY — 84% IN RANGE")
+        #expect(insight?.grade == .good)
+        #expect(insight?.facts.count == 1)
+        #expect(insight?.facts.first?.tone == .bad)
+        #expect(insight?.tips == ["Pre-bolus 10 min earlier for breakfast"])
+        #expect(insight?.cheer == "Third day above 80%")
+    }
+
+    @Test("code fences and surrounding prose are tolerated")
+    func fencedJSON() {
+        let raw = """
+        Here is the insight:
+        ```json
+        {"headline": "ROUGH NIGHT", "grade": "rough", "facts": [], "tips": [], "cheer": null}
+        ```
+        """
+        let insight = DigestInsight.parse(raw)
+        #expect(insight?.headline == "ROUGH NIGHT")
+        #expect(insight?.grade == .rough)
+        #expect(insight?.cheer == nil)
+    }
+
+    @Test("unknown grade and tone fall back to safe defaults instead of failing")
+    func unknownEnums() {
+        let raw = """
+        {"headline": "OK DAY", "grade": "excellent",
+         "facts": [{"label": "X", "value": "1", "tone": "amazing"}], "tips": []}
+        """
+        let insight = DigestInsight.parse(raw)
+        #expect(insight?.grade == .mixed)
+        #expect(insight?.facts.first?.tone == .warn)
+    }
+
+    @Test("legacy plain-text insight returns nil (falls back to text rendering)")
+    func legacyText() {
+        let raw = "A steady day overall.\n\n- Morning spike to 290 at 07:38\n- Third evening high this week"
+        #expect(DigestInsight.parse(raw) == nil)
+    }
+
+    @Test("facts and tips are capped at 3 and 2; empty strings dropped")
+    func capping() {
+        let raw = """
+        {"headline": "H", "grade": "mixed",
+         "facts": [{"label":"A","value":"1","tone":"good"},{"label":"B","value":"2","tone":"good"},
+                   {"label":"C","value":"3","tone":"good"},{"label":"D","value":"4","tone":"good"}],
+         "tips": ["one", "", "two", "three"], "cheer": "  "}
+        """
+        let insight = DigestInsight.parse(raw)
+        #expect(insight?.facts.count == 3)
+        #expect(insight?.tips == ["one", "two"])
+        #expect(insight?.cheer == nil)
+    }
+
+    @Test("missing headline fails the parse")
+    func missingHeadline() {
+        #expect(DigestInsight.parse("{\"grade\": \"good\"}") == nil)
+        #expect(DigestInsight.parse("{\"headline\": \"  \"}") == nil)
+    }
+}
+
+extension DigestInsightParsingTests {
+    @Test("non-array facts field degrades to empty facts instead of failing")
+    func factsWrongType() {
+        let raw = "{\"headline\": \"H\", \"grade\": \"good\", \"facts\": \"none\", \"tips\": []}"
+        let insight = DigestInsight.parse(raw)
+        #expect(insight != nil)
+        #expect(insight?.facts.isEmpty == true)
+    }
+
+    @Test("facts missing label/value or with blank values are dropped, valid ones kept")
+    func partialFactsDropped() {
+        let raw = """
+        {"headline": "H", "grade": "mixed",
+         "facts": [{"label":"A","value":"1","tone":"good"},
+                   {"value":"2","tone":"good"},
+                   {"label":"  ","value":"3","tone":"good"},
+                   {"label":"D","value":"4","tone":"good"}],
+         "tips": []}
+        """
+        let insight = DigestInsight.parse(raw)
+        #expect(insight?.facts.map(\.label) == ["A", "D"])
+    }
+}

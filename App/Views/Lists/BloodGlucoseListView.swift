@@ -20,6 +20,7 @@ struct BloodGlucoseListView: View {
                     Spacer()
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
+                sectionName: "Blood glucose",
                 collapsed: true,
                 collapsible: !bloodGlucoseValues.isEmpty)
             {

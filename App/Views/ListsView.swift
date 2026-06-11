@@ -13,7 +13,10 @@ struct ListsView: View {
     @State private var showingMigrationHint: Bool = false
 
     var body: some View {
-        NavigationStack {
+        // Strip above the page title + bar below — nav bars ignore outer
+        // safe-area insets, so the shell wraps the NavigationStack.
+        GlucoseFramedTab {
+            NavigationStack {
             List {
                 SensorGlucoseListView()
 
@@ -36,11 +39,6 @@ struct ListsView: View {
                 }
             }
             .listStyle(.grouped)
-            // Slim glucose strip at the top — the value sits where the
-            // Overview hero puts it, on every tab (R7b).
-            .safeAreaInset(edge: .top, spacing: 0) {
-                GlucoseTopBar()
-            }
             .dosNavigationTitle("Log")
             .toolbar {
                 if DirectConfig.bloodGlucoseInput {
@@ -68,6 +66,7 @@ struct ListsView: View {
                 if !store.state.hasSeenBGRelocationHint && DirectConfig.bloodGlucoseInput {
                     showingMigrationHint = true
                 }
+            }
             }
         }
     }

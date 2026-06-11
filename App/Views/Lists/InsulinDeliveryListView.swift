@@ -20,6 +20,7 @@ struct InsulinDeliveryListView: View {
                     Spacer()
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
+                sectionName: "Insulin",
                 collapsed: true,
                 collapsible: !insulinDeliveryValues.isEmpty)
             {

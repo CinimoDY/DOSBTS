@@ -6,9 +6,8 @@
 import SwiftUI
 
 /// Full-screen busy indicator, applied as an `.overlay` on the root
-/// TabView. (Previously a wrapper view around the TabView — that wrapper's
-/// GeometryReader/ZStack swallowed the tabViewBottomAccessory preference,
-/// so the indicator now sits on top instead of around.)
+/// TabView so it dims and blocks the whole UI without wrapping the
+/// TabView in another container.
 struct LoadingOverlay: View {
     @Binding var isShowing: Bool
     @State private var isActive = false

@@ -24,6 +24,7 @@ struct MealEntryListView: View {
                     Spacer()
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
+                sectionName: "Meals",
                 collapsed: true,
                 collapsible: !mealEntryValues.isEmpty)
             {

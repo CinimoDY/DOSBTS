@@ -20,6 +20,7 @@ struct SensorGlucoseListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
 
+                sectionName: "CGM",
                 collapsed: true,
                 collapsible: !sensorGlucoseValues.isEmpty)
             {
