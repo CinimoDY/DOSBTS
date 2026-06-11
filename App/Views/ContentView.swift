@@ -15,8 +15,12 @@ struct ContentView: View {
     @Environment(\.scenePhase) var scenePhase
 
     var body: some View {
-        LoadingView(isShowing: isShowing) {
-            TabView(selection: selectedView) {
+        // TabView must be the outermost receiver: wrapping it in
+        // LoadingView's GeometryReader/ZStack swallows the
+        // tabViewBottomAccessory preference (U6 spike finding). The
+        // appIsBusy loading indicator is now an overlay ON TOP of the
+        // TabView instead of a wrapper around it.
+        TabView(selection: selectedView) {
                 OverviewView().tabItem {
                     Label("Glucose overview", systemImage: "waveform.path.ecg")
                 }.tag(DirectConfig.overviewViewTag)
@@ -33,11 +37,36 @@ struct ContentView: View {
                     Label("Daily digest", systemImage: "doc.text.magnifyingglass")
                 }.tag(DirectConfig.digestViewTag)
             }
+            .tabViewBottomAccessory {
+                // U6 SPIKE: minimal themed prototype — does the Liquid Glass
+                // capsule carry black + amber monospace?
+                HStack(spacing: DOSSpacing.sm) {
+                    Text("117")
+                        .font(.system(size: 17, weight: .bold, design: .monospaced))
+                        .foregroundStyle(AmberTheme.amber)
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(AmberTheme.amber)
+                    Spacer()
+                    Text("MEAL")
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(AmberTheme.amber)
+                    Text("INSULIN")
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(AmberTheme.amber)
+                }
+                .padding(.horizontal, DOSSpacing.md)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(AmberTheme.dosBlack)
+            }
             .overlay {
                 if store.state.showScanlines {
                     DOSScanlineOverlay()
                         .allowsHitTesting(false)
                 }
+            }
+            .overlay {
+                LoadingOverlay(isShowing: isShowing)
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if store.state.appState != newPhase {
@@ -93,7 +122,6 @@ struct ContentView: View {
                 UINavigationBar.appearance().compactAppearance = navAppearance
                 UINavigationBar.appearance().tintColor = UIColor(AmberTheme.amber)
             }
-        }
     }
 
     // MARK: Private

@@ -5,18 +5,20 @@
 
 import SwiftUI
 
-struct LoadingView<Content>: View where Content: View {
+/// Full-screen busy indicator, applied as an `.overlay` on the root
+/// TabView. (Previously a wrapper view around the TabView — that wrapper's
+/// GeometryReader/ZStack swallowed the tabViewBottomAccessory preference,
+/// so the indicator now sits on top instead of around.)
+struct LoadingOverlay: View {
     @Binding var isShowing: Bool
     @State private var isActive = false
-    var content: () -> Content
 
     var body: some View {
-        GeometryReader { geometry in
+        if isShowing {
             ZStack(alignment: .center) {
-                self.content()
-                    .disabled(self.isShowing)
-                    .opacity(self.isShowing ? 0.5 : 1)
-                    .blur(radius: self.isShowing ? 2 : 0)
+                // Dim and block the UI beneath while busy.
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
 
                 VStack {
                     Text("LOADING...")
@@ -29,16 +31,16 @@ struct LoadingView<Content>: View where Content: View {
                         .padding(.top, 24)
                         .padding(.bottom, 32)
                 }
-                .frame(width: geometry.size.width / 2)
+                .frame(maxWidth: 200)
                 .background(AmberTheme.dosBlack)
                 .overlay(Rectangle().stroke(AmberTheme.amberMuted.opacity(0.3), lineWidth: 1))
-                .opacity(self.isShowing ? 0.9 : 0)
-                .onAppear {
-                    isActive = true
-                }
-                .onDisappear {
-                    isActive = false
-                }
+                .opacity(0.9)
+            }
+            .onAppear {
+                isActive = true
+            }
+            .onDisappear {
+                isActive = false
             }
         }
     }
