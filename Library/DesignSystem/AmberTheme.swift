@@ -102,6 +102,16 @@ public enum AmberTheme {
         return interpolateRGB(from: amberRGB, to: redRGB, t: t)
     }
 
+    /// Stale-data warning tier color — shared by the Overview hero and the
+    /// persistent status bar so the two surfaces never disagree on stale
+    /// salience (KTD-4). 5–14 min: amber warning; 15+ min: red.
+    public static func stalenessColor(_ staleness: GlucoseStaleness) -> Color {
+        switch staleness {
+        case .fresh, .stale: return amber
+        case .veryStale: return cgaRed
+        }
+    }
+
     /// Classify glucose into 7-level chart color zone for smooth transitions
     public static func glucoseLevel(forValue value: Int, low: Int, high: Int) -> String {
         if value < low { return "low" }

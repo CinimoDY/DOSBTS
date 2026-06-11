@@ -1,0 +1,227 @@
+//
+//  GlucoseStatusBar.swift
+//  DOSBTS
+//
+//  Persistent glucose + log actions on every tab (R7/R7b/R8), split across
+//  two slim surfaces per user direction:
+//  - GlucoseTopBar: a slim strip at the top of non-Overview tabs showing
+//    the glucose value where the user is used to seeing it (hero position,
+//    hero styling, much smaller).
+//  - GlucoseStatusBar: the tabViewBottomAccessory content — the SAME
+//    MEAL/INSULIN QuickActionButtons the Overview page uses.
+//
+//  Both read the same state the hero reads — `latestSensorGlucose`, the
+//  shared GlucoseStaleness tiers, `treatmentCycleActive` — one source, no
+//  copy, no separate refresh path (KTD-4).
+//
+
+import SwiftUI
+
+// MARK: - Display model (unit-tested)
+
+/// Pure mapping of store state → what the bar shows (the origin R7b state
+/// table, verbatim). The views render this; tests pin every row.
+struct GlucoseStatusBarModel: Equatable {
+    enum Mode: Equatable {
+        /// No sensor paired — "NO SENSOR", log actions still work.
+        case noSensor
+        /// Sensor paired, no reading yet — placeholder glyph + actions.
+        case awaitingReading
+        /// A reading: value (display units), optional trend arrow,
+        /// staleness tier, and whether the treatment-cycle countdown
+        /// indicator replaces the trend.
+        case reading(valueText: String, trendText: String?, staleness: GlucoseStaleness, showsCountdown: Bool)
+    }
+
+    let mode: Mode
+    /// R8: MEAL routes to the hypo-filtered sheet during a treatment cycle.
+    let mealRoutesToHypoFiltered: Bool
+
+    static func make(
+        hasSensor: Bool,
+        latestGlucose: SensorGlucose?,
+        glucoseUnit: GlucoseUnit,
+        treatmentCycleActive: Bool,
+        now: Date = Date()
+    ) -> GlucoseStatusBarModel {
+        let mode: Mode
+        if let glucose = latestGlucose {
+            mode = .reading(
+                valueText: glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit),
+                trendText: glucose.trend == .unknown ? nil : glucose.trend.description,
+                staleness: GlucoseStaleness.of(readingTimestamp: glucose.timestamp, now: now),
+                showsCountdown: treatmentCycleActive
+            )
+        } else if hasSensor {
+            mode = .awaitingReading
+        } else {
+            mode = .noSensor
+        }
+
+        return GlucoseStatusBarModel(
+            mode: mode,
+            mealRoutesToHypoFiltered: treatmentCycleActive
+        )
+    }
+
+    /// R8 routing: filtered entry during a cycle, normal sheet otherwise.
+    var mealSheet: ActiveSheet {
+        mealRoutesToHypoFiltered ? .filteredFoodEntry : .meal
+    }
+}
+
+// MARK: - Bottom accessory: log actions
+
+/// The tabViewBottomAccessory content: the same QuickActionButtons the
+/// Overview page shows, so logging looks identical everywhere (R7, R8).
+struct GlucoseStatusBar: View {
+    @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var sheets: SheetCoordinator
+
+    private var model: GlucoseStatusBarModel {
+        GlucoseStatusBarModel.make(
+            hasSensor: store.state.sensor != nil,
+            latestGlucose: store.state.latestSensorGlucose,
+            glucoseUnit: store.state.glucoseUnit,
+            treatmentCycleActive: store.state.treatmentCycleActive
+        )
+    }
+
+    var body: some View {
+        HStack(spacing: DOSSpacing.sm) {
+            if DirectConfig.showInsulinInput, store.state.showInsulinInput {
+                accessoryAction(title: "INSULIN", action: { sheets.present(.insulin) }) {
+                    Image(systemName: "syringe")
+                        .font(DOSTypography.body)
+                }
+            }
+
+            accessoryAction(title: "MEAL", action: { sheets.present(model.mealSheet) }) {
+                AppleIcon().frame(width: 16, height: 16)
+            }
+        }
+        .padding(.horizontal, DOSSpacing.md)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AmberTheme.dosBlack)
+    }
+
+    /// Same visual as QuickActionButton (ghost box, icon beside caption,
+    /// 44pt target), but built on a .plain Button: the accessory glassifies
+    /// regular Buttons with the app tint, which washes the ghost style
+    /// amber-on-amber.
+    private func accessoryAction(
+        title: String,
+        action: @escaping () -> Void,
+        @ViewBuilder icon: @escaping () -> some View
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: DOSSpacing.xs) {
+                icon()
+                    .frame(height: 16)
+                Text(title)
+                    .font(DOSTypography.caption)
+            }
+            .foregroundColor(AmberTheme.amber)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(AmberTheme.dosBlack)
+            .overlay(Rectangle().stroke(AmberTheme.amber, lineWidth: 1))
+            .shadow(color: AmberTheme.amber.opacity(0.4), radius: 4, x: 0, y: 0)
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Top bar: slim glucose strip
+
+/// Slim glucose strip pinned above the content of non-Overview tabs — the
+/// value sits at the top where the hero puts it, in hero styling (glucose
+/// gradient color, monospace, phosphor glow), just much smaller (R7b).
+struct GlucoseTopBar: View {
+    @EnvironmentObject var store: DirectStore
+
+    /// Re-evaluates staleness each minute without touching the data path.
+    @State private var now = Date()
+    private let staleTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
+
+    private var model: GlucoseStatusBarModel {
+        GlucoseStatusBarModel.make(
+            hasSensor: store.state.sensor != nil,
+            latestGlucose: store.state.latestSensorGlucose,
+            glucoseUnit: store.state.glucoseUnit,
+            treatmentCycleActive: store.state.treatmentCycleActive,
+            now: now
+        )
+    }
+
+    var body: some View {
+        HStack(spacing: DOSSpacing.xs) {
+            switch model.mode {
+            case .noSensor:
+                Text("NO SENSOR")
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(AmberTheme.amber)
+
+            case .awaitingReading:
+                Text("---")
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundStyle(AmberTheme.amberDark)
+
+            case .reading(let valueText, let trendText, let staleness, let showsCountdown):
+                // The value never truncates (R7 content priority).
+                Text(verbatim: valueText)
+                    .font(.system(size: 15, weight: .bold, design: .monospaced))
+                    .foregroundStyle(valueColor)
+                    .dosGlowLarge(color: valueColor)
+                    .fixedSize()
+
+                if showsCountdown {
+                    // R7b: countdown indicator replaces the trend during a
+                    // treatment cycle; the full countdown lives in the
+                    // Overview banner the safety flows route to.
+                    Image(systemName: "timer")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(AmberTheme.cgaGreen)
+                } else if let trendText {
+                    // Trend drops first when space runs out.
+                    Text(verbatim: trendText)
+                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .foregroundStyle(valueColor)
+                        .layoutPriority(-1)
+                }
+
+                if let staleLabel = staleness.minutesAgoLabel {
+                    HStack(spacing: 2) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 9))
+                        Text(verbatim: staleLabel)
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    }
+                    .foregroundStyle(AmberTheme.stalenessColor(staleness))
+                    .lineLimit(1)
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity)
+        .background(AmberTheme.dosBlack)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(AmberTheme.amberDark.opacity(0.3))
+                .frame(height: 1)
+        }
+        .onReceive(staleTimer) { now = $0 }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Mirrors the hero/alarm color state (R7b "alarm firing" row): the
+    /// same gradient the hero uses, red below low / above high.
+    private var valueColor: Color {
+        guard let glucose = store.state.latestSensorGlucose else { return AmberTheme.amber }
+        return AmberTheme.glucoseColor(
+            forValue: glucose.glucoseValue,
+            low: store.state.alarmLow,
+            high: store.state.alarmHigh
+        )
+    }
+}

@@ -29,6 +29,7 @@
 		TE0100010000000D000A000D /* AmberChipTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000D000A000D /* AmberChipTests.swift */; };
 		TE0100010000000D000A0011 /* MealItemRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000D000A0011 /* MealItemRowTests.swift */; };
 		TE0100010000000D000A0012 /* SheetCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000D000A0012 /* SheetCoordinatorTests.swift */; };
+		TE0100010000000D000A0013 /* GlucoseStatusBarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000D000A0013 /* GlucoseStatusBarTests.swift */; };
 		7D796C0FFEE00000000A0002 /* HoldToCommitProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D796C0FFEE00000000A0001 /* HoldToCommitProgressTests.swift */; };
 		7D796C0FFEE00000000B0002 /* LoggedMealToastControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D796C0FFEE00000000B0001 /* LoggedMealToastControllerTests.swift */; };
 		1DA4B45CFC6E42E78B81BFD8 /* EntryGroupListOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */; };
@@ -101,6 +102,7 @@
 		TE0100020000000D000A000D /* AmberChipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmberChipTests.swift; sourceTree = "<group>"; };
 		TE0100020000000D000A0011 /* MealItemRowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealItemRowTests.swift; sourceTree = "<group>"; };
 		TE0100020000000D000A0012 /* SheetCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetCoordinatorTests.swift; sourceTree = "<group>"; };
+		TE0100020000000D000A0013 /* GlucoseStatusBarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseStatusBarTests.swift; sourceTree = "<group>"; };
 		7D796C0FFEE00000000A0001 /* HoldToCommitProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToCommitProgressTests.swift; sourceTree = "<group>"; };
 		7D796C0FFEE00000000B0001 /* LoggedMealToastControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedMealToastControllerTests.swift; sourceTree = "<group>"; };
 		D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryGroupListOverlayTests.swift; sourceTree = "<group>"; };
@@ -249,6 +251,7 @@
 				TE0100020000000D000A000D /* AmberChipTests.swift */,
 				TE0100020000000D000A0011 /* MealItemRowTests.swift */,
 				TE0100020000000D000A0012 /* SheetCoordinatorTests.swift */,
+				TE0100020000000D000A0013 /* GlucoseStatusBarTests.swift */,
 				7D796C0FFEE00000000A0001 /* HoldToCommitProgressTests.swift */,
 				7D796C0FFEE00000000B0001 /* LoggedMealToastControllerTests.swift */,
 				D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */,
@@ -450,6 +453,7 @@
 				TE0100010000000D000A000D /* AmberChipTests.swift in Sources */,
 				TE0100010000000D000A0011 /* MealItemRowTests.swift in Sources */,
 				TE0100010000000D000A0012 /* SheetCoordinatorTests.swift in Sources */,
+				TE0100010000000D000A0013 /* GlucoseStatusBarTests.swift in Sources */,
 				7D796C0FFEE00000000A0002 /* HoldToCommitProgressTests.swift in Sources */,
 				7D796C0FFEE00000000B0002 /* LoggedMealToastControllerTests.swift in Sources */,
 				1DA4B45CFC6E42E78B81BFD8 /* EntryGroupListOverlayTests.swift in Sources */,

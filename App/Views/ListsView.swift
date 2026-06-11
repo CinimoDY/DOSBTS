@@ -36,6 +36,11 @@ struct ListsView: View {
                 }
             }
             .listStyle(.grouped)
+            // Slim glucose strip at the top — the value sits where the
+            // Overview hero puts it, on every tab (R7b).
+            .safeAreaInset(edge: .top, spacing: 0) {
+                GlucoseTopBar()
+            }
             .dosNavigationTitle("Log")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

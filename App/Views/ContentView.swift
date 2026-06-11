@@ -44,26 +44,13 @@ struct ContentView: View {
                 }.tag(DirectConfig.digestViewTag)
             }
             .tabViewBottomAccessory {
-                // U6 SPIKE: minimal themed prototype — does the Liquid Glass
-                // capsule carry black + amber monospace?
-                HStack(spacing: DOSSpacing.sm) {
-                    Text("117")
-                        .font(.system(size: 17, weight: .bold, design: .monospaced))
-                        .foregroundStyle(AmberTheme.amber)
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(AmberTheme.amber)
-                    Spacer()
-                    Text("MEAL")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(AmberTheme.amber)
-                    Text("INSULIN")
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(AmberTheme.amber)
-                }
-                .padding(.horizontal, DOSSpacing.md)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(AmberTheme.dosBlack)
+                // Log actions on every tab (R7) — the same QuickActionButtons
+                // the Overview page shows. The accessory never minimizes (no
+                // tabBarMinimizeBehavior is set), so the R7b
+                // never-collapse-during-cycle rule holds structurally.
+                GlucoseStatusBar()
+                    .environmentObject(store)
+                    .environmentObject(sheets)
             }
             .overlay {
                 if store.state.showScanlines {
