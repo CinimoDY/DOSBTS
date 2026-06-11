@@ -7,8 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 100] — 2026-06-11
+
 ### Added
-- Logging feedback: the just-logged entry briefly lights up with a phosphor glow in whichever list it lands on — recents in the meal sheet (which also scrolls the row into view), and the Log tab's meal, insulin, and blood glucose sections — so it's clear what just happened instead of the item silently appearing.
+- Logging feedback: the just-logged entry briefly lights up with a phosphor glow in whichever list it lands on — recents in the meal sheet (which also scrolls the row into view), and the Log tab's meal, insulin, and blood glucose sections — so it's clear what just happened instead of the item silently appearing — PR #53.
 
 ## [Build 99] — 2026-06-11
 
