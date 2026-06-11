@@ -13,13 +13,9 @@ struct ListsView: View {
     @State private var showingMigrationHint: Bool = false
 
     var body: some View {
-        // Strip sits ABOVE the page title (matching Daily digest), so it
-        // wraps the NavigationStack instead of living inside it — nav bars
-        // ignore outer safe-area insets, so a sibling VStack is the only
-        // placement that puts it on top.
-        VStack(spacing: 0) {
-            GlucoseTopBar()
-
+        // Strip above the page title + bar below — nav bars ignore outer
+        // safe-area insets, so the shell wraps the NavigationStack.
+        GlucoseFramedTab {
             NavigationStack {
             List {
                 SensorGlucoseListView()
@@ -72,10 +68,6 @@ struct ListsView: View {
                 }
             }
             }
-        }
-        .background(AmberTheme.dosBlack)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            GlucoseStatusBar()
         }
     }
 }

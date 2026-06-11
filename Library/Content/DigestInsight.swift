@@ -64,8 +64,9 @@ public struct DigestInsight: Equatable {
         let grade = (object["grade"] as? String).flatMap(Grade.init(rawValue:)) ?? .mixed
 
         let facts: [Fact] = ((object["facts"] as? [[String: Any]]) ?? []).compactMap { dict in
-            guard let label = dict["label"] as? String,
-                  let value = dict["value"] as? String else { return nil }
+            guard let label = (dict["label"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  let value = (dict["value"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !label.isEmpty, !value.isEmpty else { return nil }
             let tone = (dict["tone"] as? String).flatMap(Tone.init(rawValue:)) ?? .warn
             return Fact(label: label, value: value, tone: tone)
         }

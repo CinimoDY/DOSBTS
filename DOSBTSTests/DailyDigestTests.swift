@@ -161,3 +161,27 @@ struct DigestInsightParsingTests {
         #expect(DigestInsight.parse("{\"headline\": \"  \"}") == nil)
     }
 }
+
+extension DigestInsightParsingTests {
+    @Test("non-array facts field degrades to empty facts instead of failing")
+    func factsWrongType() {
+        let raw = "{\"headline\": \"H\", \"grade\": \"good\", \"facts\": \"none\", \"tips\": []}"
+        let insight = DigestInsight.parse(raw)
+        #expect(insight != nil)
+        #expect(insight?.facts.isEmpty == true)
+    }
+
+    @Test("facts missing label/value or with blank values are dropped, valid ones kept")
+    func partialFactsDropped() {
+        let raw = """
+        {"headline": "H", "grade": "mixed",
+         "facts": [{"label":"A","value":"1","tone":"good"},
+                   {"value":"2","tone":"good"},
+                   {"label":"  ","value":"3","tone":"good"},
+                   {"label":"D","value":"4","tone":"good"}],
+         "tips": []}
+        """
+        let insight = DigestInsight.parse(raw)
+        #expect(insight?.facts.map(\.label) == ["A", "D"])
+    }
+}

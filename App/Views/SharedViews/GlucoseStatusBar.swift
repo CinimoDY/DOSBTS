@@ -137,6 +137,27 @@ struct GlucoseStatusBar: View {
     }
 }
 
+// MARK: - Framed tab shell
+
+/// Frames a tab's content with the persistent surfaces: GlucoseTopBar
+/// above (over the page title) and GlucoseStatusBar below. Used by the
+/// NavigationStack-rooted tabs (Log, Settings); Overview and Digest mount
+/// the bars themselves around their custom layouts.
+struct GlucoseFramedTab<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            GlucoseTopBar()
+            content()
+        }
+        .background(AmberTheme.dosBlack)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            GlucoseStatusBar()
+        }
+    }
+}
+
 // MARK: - Top bar: slim glucose strip
 
 /// Slim glucose strip pinned above the content of non-Overview tabs — the

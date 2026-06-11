@@ -10,11 +10,8 @@ import SwiftUI
 /// App/Views/Settings/.
 struct SettingsView: View {
     var body: some View {
-        // Strip sits ABOVE the page title (matching Daily digest) — see
-        // ListsView for why it wraps the NavigationStack.
-        VStack(spacing: 0) {
-            GlucoseTopBar()
-
+        // Strip above the page title + bar below — see GlucoseFramedTab.
+        GlucoseFramedTab {
             NavigationStack {
             List {
                 Group {
@@ -88,10 +85,6 @@ struct SettingsView: View {
             .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             }
-        }
-        .background(AmberTheme.dosBlack)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            GlucoseStatusBar()
         }
     }
 }

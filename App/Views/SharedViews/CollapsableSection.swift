@@ -10,9 +10,10 @@ import SwiftUI
 struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Content: View, Teaser: View {
     // MARK: Lifecycle
 
-    init(teaser: Teaser, header: Parent, collapsed: Bool = false, collapsible: Bool = true, @ViewBuilder content: @escaping () -> Content) {
+    init(teaser: Teaser, header: Parent, sectionName: String = "section", collapsed: Bool = false, collapsible: Bool = true, @ViewBuilder content: @escaping () -> Content) {
         self.teaser = teaser
         self.header = header
+        self.sectionName = sectionName
         self._collapsed = State(initialValue: collapsed)
         self.collapsible = collapsible
         self.content = content
@@ -23,6 +24,9 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
     let header: Parent
     let content: () -> Content
     let teaser: Teaser
+    /// Names the section in the teaser button's VoiceOver label
+    /// ("Expand Meals") so multiple collapsed sections stay distinguishable.
+    let sectionName: String
 
     var body: some View {
         Section(
@@ -41,7 +45,7 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
             }
         ) {
             Group {
-                if collapsed {
+                if collapsed, collapsible {
                     // The teaser row ("675 Entries") is the obvious thing to
                     // tap — expanding shouldn't require hitting the small
                     // chevron in the header.
@@ -58,8 +62,11 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(!collapsible)
-                    .accessibilityLabel("Expand section")
+                    .accessibilityLabel("Expand \(sectionName)")
+                } else if collapsed {
+                    // Empty/non-collapsible sections show the bare teaser —
+                    // no dead chevron affordance.
+                    teaser
                 } else {
                     content()
                 }

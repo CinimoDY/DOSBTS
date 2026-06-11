@@ -25,10 +25,9 @@ struct ContentView: View {
     @StateObject private var addedHighlighter = AddedEntryHighlighter()
 
     var body: some View {
-        // TabView must be the outermost receiver: a wrapper view's
-        // GeometryReader/ZStack swallows the tabViewBottomAccessory
-        // preference, so the appIsBusy loading indicator is an overlay ON
-        // TOP of the TabView instead of a wrapper around it.
+        // TabView is the outermost view so the appIsBusy LoadingOverlay can
+        // sit on top via .overlay — wrapping the TabView in another
+        // container breaks that z-order.
         TabView(selection: selectedView) {
                 OverviewView().tabItem {
                     Label("Glucose overview", systemImage: "waveform.path.ecg")

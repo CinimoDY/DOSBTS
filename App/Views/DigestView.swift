@@ -305,6 +305,7 @@ private struct DigestInsightCard: View {
                 Rectangle()
                     .fill(gradeColor)
                     .frame(width: 6, height: 14)
+                    .accessibilityHidden(true)
                 Text(verbatim: insight.headline)
                     .font(DOSTypography.mono(size: 15, weight: .bold))
                     .foregroundStyle(AmberTheme.amberLight)
@@ -380,17 +381,32 @@ private struct DigestInsightCard: View {
                 cheerPulse = true
                 return
             }
-            // CRT boot cascade: each block snaps in slightly after the last.
-            for stage in 0...3 {
-                withAnimation(.easeOut(duration: 0.3).delay(Double(stage) * 0.18)) {
-                    revealedStages = stage + 1
+            // CRT boot cascade. Async-stepped, not a synchronous
+            // withAnimation loop: same-tick writes to one @State coalesce
+            // into a single fade instead of staggering.
+            Task { @MainActor in
+                for stage in 0...3 {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        revealedStages = stage + 1
+                    }
+                    try? await Task.sleep(for: .milliseconds(180))
+                }
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                    cheerPulse = true
                 }
             }
-            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true).delay(1.0)) {
-                cheerPulse = true
-            }
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: accessibilitySummary))
+    }
+
+    /// One punctuated sentence instead of a run-on of combined children.
+    private var accessibilitySummary: String {
+        var parts = [insight.headline]
+        parts.append(contentsOf: insight.facts.map { "\($0.label): \($0.value)" })
+        parts.append(contentsOf: insight.tips.map { "Tip: \($0)" })
+        if let cheer = insight.cheer { parts.append(cheer) }
+        return parts.joined(separator: ". ")
     }
 }
 
@@ -401,6 +417,9 @@ private extension View {
     }
 }
 
+/// Legacy fallback renderer: insights saved before the structured JSON
+/// format (paragraph + "- " bullets), and any response DigestInsight.parse
+/// rejects, render as plain text via this view.
 private struct AIInsightContent: View {
     let text: String
 

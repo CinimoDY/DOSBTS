@@ -19,6 +19,7 @@ struct SensorErrorListView: View {
                     Spacer()
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
+                sectionName: "Sensor errors",
                 collapsed: true,
                 collapsible: !sensorErrorValues.isEmpty)
             {

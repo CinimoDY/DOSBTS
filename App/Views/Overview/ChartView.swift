@@ -36,13 +36,16 @@ struct ChartView: View {
                         // DOS-style day pager: "<" / ">" prompt glyphs
                         // (matching the Digest date pager), kept off the
                         // screen edge.
+                        let canGoBack = (store.state.selectedDate ?? Date()).startOfDay > store.state.minSelectedDate.startOfDay
                         Button(action: {
                             setSelectedDate(addDays: -1)
                         }, label: {
                             Text(verbatim: "<")
                                 .font(DOSTypography.mono(size: 17, weight: .bold))
                                 .frame(minWidth: 32, minHeight: 32)
-                        }).opacity((store.state.selectedDate ?? Date()).startOfDay > store.state.minSelectedDate.startOfDay ? 0.7 : 0)
+                        })
+                        .opacity(canGoBack ? 0.7 : 0)
+                        .disabled(!canGoBack)
 
                         Spacer()
 
@@ -66,7 +69,9 @@ struct ChartView: View {
                             Text(verbatim: ">")
                                 .font(DOSTypography.mono(size: 17, weight: .bold))
                                 .frame(minWidth: 32, minHeight: 32)
-                        }).opacity(store.state.selectedDate == nil ? 0 : 0.7)
+                        })
+                        .opacity(store.state.selectedDate == nil ? 0 : 0.7)
+                        .disabled(store.state.selectedDate == nil)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, DOSSpacing.sm)

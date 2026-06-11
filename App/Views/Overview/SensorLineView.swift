@@ -13,9 +13,14 @@ struct SensorLineView: View {
 
     var body: some View {
         // Status (dot + "CONNECTED · 13d 21h LEFT") is centered; the action
-        // chips (CONNECT / disconnect) keep the trailing edge.
+        // chips (CONNECT / disconnect) keep the trailing edge. The label
+        // reserves the chip's width on both sides (so it stays optically
+        // centered) and truncates rather than rendering under the chip.
         ZStack {
             dotAndLabel
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .padding(.horizontal, 86)
 
             HStack {
                 Spacer()
