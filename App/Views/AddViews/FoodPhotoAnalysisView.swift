@@ -12,6 +12,7 @@ struct FoodPhotoAnalysisView: View {
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
     @Environment(\.dismiss) var dismiss
 
     /// Relog mode: hydrates staging plate from this past meal, preserves `analysisSessionId`, skips correction tracking.
@@ -741,6 +742,7 @@ struct FoodPhotoAnalysisView: View {
         // Single dispatch — middleware chains to .addMealEntry
         store.dispatch(.saveMealWithCorrections(meal: meal, corrections: corrections))
         store.dispatch(.setFoodAnalysisResult(result: nil))
+        addedHighlighter.flash(meal.id)
         dismiss()
     }
 

@@ -20,6 +20,10 @@ struct ContentView: View {
     /// roots (the wrong-sheet collision class).
     @StateObject private var sheets = SheetCoordinator()
 
+    /// Logging feedback: flashes the just-logged row in whichever list it
+    /// lands on (recents, Log tab sections).
+    @StateObject private var addedHighlighter = AddedEntryHighlighter()
+
     var body: some View {
         // TabView must be the outermost receiver: a wrapper view's
         // GeometryReader/ZStack swallows the tabViewBottomAccessory
@@ -61,10 +65,12 @@ struct ContentView: View {
                 LoadingOverlay(isShowing: isShowing)
             }
             .environmentObject(sheets)
+            .environmentObject(addedHighlighter)
             .sheet(item: $sheets.activeSheet, onDismiss: sheets.sheetDidDismiss) { sheet in
                 RootSheetContent(sheet: sheet)
                     .environmentObject(store)
                     .environmentObject(sheets)
+                    .environmentObject(addedHighlighter)
             }
             .onAppear {
                 // Cold launch: the prompt flag may already be set before the

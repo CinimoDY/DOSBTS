@@ -9,6 +9,7 @@ struct BloodGlucoseListView: View {
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
 
     var body: some View {
         Group {
@@ -38,6 +39,7 @@ struct BloodGlucoseListView: View {
                                     text.foregroundColor(AmberTheme.cgaRed)
                                 }
                         }
+                        .dosAddedHighlight(addedHighlighter.highlightedID == bloodGlucose.id)
                     }.onDelete { offsets in
                         DirectLog.info("onDelete: \(offsets)")
 

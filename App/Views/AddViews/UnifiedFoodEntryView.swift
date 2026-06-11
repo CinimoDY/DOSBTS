@@ -7,6 +7,7 @@ import SwiftUI
 
 struct UnifiedFoodEntryView: View {
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
     @Environment(\.dismiss) var dismiss
 
     var filterToHypoTreatments: Bool = false
@@ -29,6 +30,7 @@ struct UnifiedFoodEntryView: View {
         // NavigationStack, not NavigationView: navigationDestination modifiers
         // (relog + ASK AI) are silently ignored inside NavigationView.
         NavigationStack {
+            ScrollViewReader { scrollProxy in
             List {
                 if filterToHypoTreatments {
                     if displayedFavorites.isEmpty {
@@ -54,6 +56,16 @@ struct UnifiedFoodEntryView: View {
             }
             .listStyle(.grouped)
             .searchable(text: $searchText, prompt: "Search foods...")
+            // Follow the just-logged entry: once the reloaded recents contain
+            // it, bring its (still glowing) row into view so the user sees
+            // where the meal landed.
+            .onChange(of: store.state.recentMealEntries) { _, recents in
+                guard let id = addedHighlighter.highlightedID,
+                      recents.contains(where: { $0.id == id }) else { return }
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    scrollProxy.scrollTo(id, anchor: .center)
+                }
+            }
             .dosNavigationTitle(filterToHypoTreatments ? "Hypo Treatment" : "Log Meal")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -90,6 +102,7 @@ struct UnifiedFoodEntryView: View {
                 FoodPhotoAnalysisView()
                     .environmentObject(store)
                     .navigationBarHidden(true)
+            }
             }
         }
         .sheet(isPresented: $showingFavoriteManagement) {
@@ -210,6 +223,8 @@ struct UnifiedFoodEntryView: View {
                     ) {
                         MealItemRow(meal: meal, variant: .recent)
                     }
+                    .id(meal.id)
+                    .dosAddedHighlight(addedHighlighter.highlightedID == meal.id)
                     .swipeActions(edge: .trailing) {
                         Button {
                             addToFavorites(meal)
@@ -236,6 +251,7 @@ struct UnifiedFoodEntryView: View {
                 AddMealView { time, description, carbs in
                     let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
                     store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
+                    addedHighlighter.flash(mealEntry.id)
                     dismiss()
                 }
                 .navigationBarHidden(true)
@@ -358,6 +374,7 @@ struct UnifiedFoodEntryView: View {
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
         toast.show(mealEntry)
+        addedHighlighter.flash(mealEntry.id)
     }
 
     private func stageFavorite(_ favorite: FavoriteFood) {
@@ -371,6 +388,7 @@ struct UnifiedFoodEntryView: View {
         let newEntry = FavoriteFood.from(mealEntry: meal).toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
         toast.show(newEntry)
+        addedHighlighter.flash(newEntry.id)
     }
 
     private func openOnStagingPlate(_ meal: MealEntry) {

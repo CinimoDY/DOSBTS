@@ -9,6 +9,7 @@ struct MealEntryListView: View {
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
 
     var body: some View {
         Group {
@@ -37,6 +38,7 @@ struct MealEntryListView: View {
                             onAddToFavorite: { addToFavorites(mealEntry) },
                             onDelete: { delete(mealEntry) }
                         )
+                        .dosAddedHighlight(addedHighlighter.highlightedID == mealEntry.id)
                     }
                 }
             }
@@ -63,6 +65,7 @@ struct MealEntryListView: View {
     private func logAgain(_ mealEntry: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: mealEntry).toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
+        addedHighlighter.flash(newEntry.id)
     }
 
     private func delete(_ mealEntry: MealEntry) {
