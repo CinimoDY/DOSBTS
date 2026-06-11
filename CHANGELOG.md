@@ -10,6 +10,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ### Changed
 - Overview INSULIN/MEAL buttons are half as tall: icon now sits beside the label instead of above it, giving the chart more vertical space.
 - Small informational text (settings descriptions, empty states, timestamps, field labels, digest statuses) brightened from dim amber to full amber across the app and widgets — dim amber measured 3.7:1 on black, below the WCAG AA floor. Dimming for disabled controls, unselected tabs, and decorative strokes is unchanged (R5/AE3).
+- Meal rows in the food-entry recents and the Lists tab now share one component. The Lists tab gains an explicit Delete swipe action and Delete in the long-press menu (deleting previously required edit mode) — R3, R4, AE4.
 - True CGA monitor feel: no real white anywhere the app controls. All unstyled text falls back to phosphor amber + monospace, navigation titles render amber-light monospace, toolbar buttons tint amber, and the manual Meal, Blood glucose, and Calibration forms plus the AI analysis screen drop their system-gray surfaces for black/amber (R1, R1a, AE1). CGA accents (green/cyan/red) and system chrome (keyboard, picker internals, back buttons) are unchanged.
 
 ### Fixed

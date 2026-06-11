@@ -202,37 +202,17 @@ struct UnifiedFoodEntryView: View {
                 ForEach(filteredRecents) { meal in
                     // Tap stages, hold insta-logs. The old "Log Now" swipe and
                     // context menu are gone — a long-press context menu can't
-                    // coexist with the hold recognizer (DMNC-796 KTD-3).
+                    // coexist with the hold recognizer (DMNC-796 KTD-3), which
+                    // is why the .recent variant gets only onAddToFavorite.
                     HoldToCommitProgress(
                         onTap: { openOnStagingPlate(meal) },
                         onCommit: { logRecent(meal) }
                     ) {
-                        HStack {
-                            Text("> ")
-                                .font(DOSTypography.bodySmall)
-                                .foregroundColor(AmberTheme.amberDark)
-
-                            Text(meal.mealDescription)
-                                .font(DOSTypography.bodySmall)
-                                .foregroundColor(AmberTheme.amber)
-                                .lineLimit(1)
-
-                            Spacer()
-
-                            if let carbs = meal.carbsGrams {
-                                Text("\(Int(carbs))g carbs")
-                                    .font(DOSTypography.caption)
-                                    .foregroundColor(AmberTheme.amber)
-                            }
-                        }
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button {
-                            addToFavorites(meal)
-                        } label: {
-                            Label("Add to Favorites", systemImage: "star")
-                        }
-                        .tint(AmberTheme.amber)
+                        MealItemRow(
+                            meal: meal,
+                            variant: .recent,
+                            onAddToFavorite: { addToFavorites(meal) }
+                        )
                     }
                 }
             }

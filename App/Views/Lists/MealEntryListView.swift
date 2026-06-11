@@ -30,71 +30,13 @@ struct MealEntryListView: View {
                     Text(getTeaser(mealEntryValues.count))
                 } else {
                     ForEach(mealEntryValues) { mealEntry in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(verbatim: mealEntry.timestamp.toLocalDateTime())
-                                    .monospacedDigit()
-
-                                Text(verbatim: mealEntry.mealDescription)
-                                    .opacity(0.5)
-                                    .font(DOSTypography.caption)
-                            }
-
-                            Spacer()
-
-                            VStack(alignment: .trailing, spacing: 2) {
-                                if let carbs = mealEntry.carbsGrams {
-                                    Text(verbatim: "\(Int(carbs))g carbs")
-                                        .monospacedDigit()
-                                }
-
-                                HStack(spacing: DOSSpacing.xs) {
-                                    if let p = mealEntry.proteinGrams {
-                                        Text(verbatim: "\(Int(p))g P")
-                                    }
-                                    if let f = mealEntry.fatGrams {
-                                        Text(verbatim: "\(Int(f))g F")
-                                    }
-                                    if let cal = mealEntry.calories {
-                                        Text(verbatim: "\(Int(cal)) kcal")
-                                    }
-                                }
-                                .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amber)
-                            }
-                        }
-                        .swipeActions(edge: .leading) {
-                            Button {
-                                logAgain(mealEntry)
-                            } label: {
-                                Label("Log Again", systemImage: "arrow.counterclockwise")
-                            }
-                            .tint(AmberTheme.cgaGreen)
-                        }
-                        .contextMenu {
-                            Button {
-                                logAgain(mealEntry)
-                            } label: {
-                                Label("Log Again", systemImage: "arrow.counterclockwise")
-                            }
-
-                            Button {
-                                addToFavorites(mealEntry)
-                            } label: {
-                                Label("Add to Favorites", systemImage: "star")
-                            }
-                        }
-                    }.onDelete { offsets in
-                        DirectLog.info("onDelete: \(offsets)")
-
-                        let deletables = offsets.map { i in
-                            (index: i, mealEntry: mealEntryValues[i])
-                        }
-
-                        deletables.forEach { delete in
-                            mealEntryValues.remove(at: delete.index)
-                            store.dispatch(.deleteMealEntry(mealEntry: delete.mealEntry))
-                        }
+                        MealItemRow(
+                            meal: mealEntry,
+                            variant: .list,
+                            onLogAgain: { logAgain(mealEntry) },
+                            onAddToFavorite: { addToFavorites(mealEntry) },
+                            onDelete: { delete(mealEntry) }
+                        )
                     }
                 }
             }
@@ -121,6 +63,12 @@ struct MealEntryListView: View {
     private func logAgain(_ mealEntry: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: mealEntry).toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
+    }
+
+    private func delete(_ mealEntry: MealEntry) {
+        DirectLog.info("delete meal entry: \(mealEntry.id)")
+        mealEntryValues.removeAll { $0.id == mealEntry.id }
+        store.dispatch(.deleteMealEntry(mealEntry: mealEntry))
     }
 
     private func addToFavorites(_ mealEntry: MealEntry) {
