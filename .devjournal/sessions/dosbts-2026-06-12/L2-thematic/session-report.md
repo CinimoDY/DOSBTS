@@ -1,42 +1,40 @@
-# Session Report — DOSBTS
+## Session Report — DOSBTS
 
 **Date:** 2026-06-12
-**Branch:** `claude/dmnc-1039`
-**Issue:** DMNC-1039 — Hypo treatment object too quiet
+**Branch:** main
+**Duration:** Deploy session — 1 deploy commit + 1 wrap-up commit (PRs #55/#56 merged earlier today)
 
-## What Was Done
+### What Was Done
+- **Deploy:** Build 102 uploaded to TestFlight (bump 101→102, archive, upload all succeeded)
+- **Changelog:** Promoted [Unreleased] → [Build 102] — 2026-06-12; backfilled missing DMNC-1039 entry (PR #55 merged without one)
+- **Docs:** Added deploy-time changelog cross-check rule to CLAUDE.md; fixed stale README build range (2–61 → 2–102)
+- **Memory:** Saved changelog cross-check habit to auto memory
+- **DevJournal:** L2 finalized; not on publish allowlist, stays local
 
-**fix(ui):** Matched the alarm snooze/screen-lock status row font to `DOSTypography.caption` (12pt), eliminating the size mismatch with `TreatmentBannerView`.
-
-Root cause: the snooze `HStack` in `GlucoseView` had no explicit font modifier, so it defaulted to 17pt body. `TreatmentBannerView` (rendered directly below in Overview) uses 12pt caption on all its text. The size asymmetry made the secondary snooze indicator visually larger than the clinically important hypo treatment countdown.
-
-Fix: one `.font(DOSTypography.caption)` on the container `HStack`.
-
-## Commits
-
+### Commits
 | Hash | Message |
 |------|---------|
-| `0823a6f8` | fix(ui): match snooze row font to treatment banner caption size |
-| `afe9ad20` | chore: add devjournal session for DMNC-1039 |
-| `f5d3715b` | chore: finalize devjournal L2 for DMNC-1039 |
+| 948c5214 | chore: bump build to 102 for TestFlight |
+| ad0720a3 | docs: session wrap-up for Build 102 deploy |
 
-## Issues Updated
+### Issues Updated
+- DMNC-1038 — already Done (shipped in Build 102)
+- DMNC-1039 — already Done (shipped in Build 102)
 
-- **DMNC-1039** → In Review — PR #55 linked
+### Open Items
+- [ ] PR #57 (draft) — DMNC-1044, digest stat box height equalisation
+- [ ] README screenshots are from Build 61 — visually stale after the HIG/WWDC26 UI wave
 
-## Open Items
+### Next Steps
+1. Finish and merge PR #57 (DMNC-1044)
+2. Refresh README screenshots from a current build
+3. Verify Build 102 clears App Store Connect processing
 
-None.
+### Documentation Status
+- CLAUDE.md: updated (deploy cross-check rule)
+- README.md: build range fixed; screenshots flagged stale
+- Memory: updated
+- Compound: skipped — purely mechanical deploy session
 
-## Next Steps
-
-None. The fix is complete; PR awaits review.
-
-## Documentation Status
-
-- CLAUDE.md: up to date — no new patterns introduced
-- Memory: no new entries warranted
-
-## Open PRs
-
-- PR #55 — fix(ui): match snooze row font size to treatment banner (DRAFT)
+### Open PRs
+- PR #57 (draft) — fix(digest): equalise stat box heights when help subline is absent
