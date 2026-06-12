@@ -234,6 +234,7 @@ Key constraints from `docs/development-rules.md`:
 - When bumping `CURRENT_PROJECT_VERSION` for TestFlight, promote the `[Unreleased]` block to `## [Build N] — YYYY-MM-DD` and add a new empty `[Unreleased]` above it.
 - Date is the TestFlight upload date, not the commit date. Use `git log` or App Store Connect to verify if in doubt.
 - Group entries under `Added` / `Changed` / `Fixed` / `Removed` per [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Append ` — DMNC-NNN, PR #NN` when the entry has a tracking issue and/or PR; otherwise just the description.
+- **Deploy-time cross-check:** before promoting `[Unreleased]`, list PRs merged since the last `chore: bump build` commit and backfill any missing user-visible entries (PR #55/DMNC-1039 slipped through and was caught this way at Build 102).
 - **Split-cycle rule:** if a feature merges before the `CURRENT_PROJECT_VERSION` bump but ships only after the next bump, move its entry to the correct `[Build N]` at promotion time.
 - **Yanked builds:** if a TestFlight build is withdrawn, leave its `[Build N]` block in place and add a `**Yanked.**` header line with the reason. Promote the next `CURRENT_PROJECT_VERSION` bump as normal.
 

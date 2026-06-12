@@ -6,6 +6,7 @@ _Extracted from commits, prompts, and ce-compound learnings. Hand-edit freely._
 _none found_
 
 ## From prompts
+_no prompts_
 
 ## From ce-compound learnings
 - `docs/solutions/logic-errors/basal-iob-segmented-infusion-extends-tail-past-dia-20260505.md`
@@ -38,4 +39,4 @@ _none found_
 - `docs/solutions/best-practices/ios-26-uiscreen-main-migration-20260422.md`
 
 ## From session report
-_session report not yet produced (runs at /wrapup Phase 6)_
+_no decisions surfaced_
