@@ -7,6 +7,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 103] — 2026-06-13
+
 ### Fixed
 - Daily digest stat boxes now all have the same height even when some lack a subline (e.g. LOWS, HIGHS, CARBS, INSULIN vs AVG which shows "mg/dL") — DMNC-1044, PR #57
 - Chart no longer has a large blank space on the right; the end margin is now 15 minutes (matching the original padding intent) instead of 1 hour — DMNC-1045, PR #58
