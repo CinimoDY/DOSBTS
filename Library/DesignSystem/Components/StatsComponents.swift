@@ -83,12 +83,12 @@ public struct StatCard: View {
                 .foregroundStyle(valueColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            if let help {
-                Text(help)
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
-                    .lineLimit(1)
-            }
+            Text(help ?? "")
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
+                .lineLimit(1)
+                .opacity(help != nil ? 1 : 0)
+                .accessibilityHidden(help == nil)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, DOSSpacing.sm)

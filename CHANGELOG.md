@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Daily digest stat boxes now all have the same height even when some lack a subline (e.g. LOWS, HIGHS, CARBS, INSULIN vs AVG which shows "mg/dL") — DMNC-1044, PR #57
+
 ## [Build 102] — 2026-06-12
 
 ### Fixed
