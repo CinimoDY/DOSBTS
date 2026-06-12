@@ -77,20 +77,26 @@ struct ChartView: View {
                     .padding(.horizontal, DOSSpacing.sm)
 
                     HStack {
-                        Text(store.state.glucoseUnit.localizedDescription)
-                            .font(.system(size: 9, weight: .medium, design: .monospaced))
-                            .foregroundColor(AmberTheme.amberMuted)
                         Spacer()
                         if store.state.showHeartRateOverlay && !store.state.heartRateSeries.isEmpty {
                             HStack(spacing: 3) {
-                                RoundedRectangle(cornerRadius: 1)
-                                    .fill(AmberTheme.cgaMagenta.opacity(0.4))
-                                    .frame(width: 12, height: 2)
+                                Canvas { context, size in
+                                    var path = Path()
+                                    path.move(to: CGPoint(x: 0, y: size.height / 2))
+                                    path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
+                                    context.stroke(path, with: .color(AmberTheme.cgaMagenta.opacity(0.4)),
+                                                   style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                                }
+                                .frame(width: 16, height: 8)
                                 Text("HR")
                                     .font(.system(size: 9, weight: .medium, design: .monospaced))
                                     .foregroundColor(AmberTheme.cgaMagenta.opacity(0.5))
                             }
+                            .padding(.trailing, 4)
                         }
+                        Text(store.state.glucoseUnit.localizedDescription)
+                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .foregroundColor(AmberTheme.amberMuted)
                     }
 
                     GeometryReader { chartAreaGeo in
@@ -725,11 +731,7 @@ private var startMarker: Date? {
 
     private var endMarker: Date? {
         if let lastTimestamp = lastTimestamp, store.state.selectedDate == nil {
-            if let zoomLevel = zoomLevel, zoomLevel.level == 1 {
-                return Calendar.current.date(byAdding: .minute, value: 15, to: lastTimestamp)
-            }
-
-            return Calendar.current.date(byAdding: .hour, value: 1, to: lastTimestamp)
+            return Calendar.current.date(byAdding: .minute, value: 15, to: lastTimestamp)
         }
 
         return lastTimestamp

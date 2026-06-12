@@ -9,6 +9,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ### Fixed
 - Daily digest stat boxes now all have the same height even when some lack a subline (e.g. LOWS, HIGHS, CARBS, INSULIN vs AVG which shows "mg/dL") — DMNC-1044, PR #57
+- Chart no longer has a large blank space on the right; the end margin is now 15 minutes (matching the original padding intent) instead of 1 hour — DMNC-1045, PR #58
+- The mg/dL axis label now sits above the y-axis values (trailing side); the HR legend moves to its left with a dashed line indicator matching the chart's HR series style — DMNC-1045, PR #58
 
 ## [Build 102] — 2026-06-12
 
