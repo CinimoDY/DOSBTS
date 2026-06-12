@@ -150,11 +150,11 @@ struct GlucoseFramedTab<Content: View>: View {
         VStack(spacing: 0) {
             GlucoseTopBar()
             content()
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    GlucoseStatusBar()
+                }
         }
         .background(AmberTheme.dosBlack)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            GlucoseStatusBar()
-        }
     }
 }
 
