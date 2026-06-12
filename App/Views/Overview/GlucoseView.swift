@@ -143,6 +143,7 @@ struct GlucoseView: View {
 
                     Spacer()
                 }
+                .font(DOSTypography.caption)
                 .padding(.top, DOSSpacing.xs)
                 .padding(.horizontal, DOSSpacing.md)
                 .disabled(store.state.latestSensorGlucose == nil)
