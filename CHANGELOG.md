@@ -7,8 +7,11 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 102] — 2026-06-12
+
 ### Fixed
-- INSULIN/MEAL buttons now appear above the tab bar on the Log and Settings tabs (they were hidden behind the tab bar on iOS 26 when the bar was mounted via `safeAreaInset` on the outer VStack containing a `NavigationStack`) — DMNC-1038
+- INSULIN/MEAL buttons now appear above the tab bar on the Log and Settings tabs (they were hidden behind the tab bar on iOS 26 when the bar was mounted via `safeAreaInset` on the outer VStack containing a `NavigationStack`) — DMNC-1038, PR #56
+- Snooze/screen-lock status row under the hero now uses the same font size as the treatment banner — DMNC-1039, PR #55
 
 ## [Build 101] — 2026-06-11
 
