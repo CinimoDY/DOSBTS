@@ -673,8 +673,10 @@ struct ChartView: View {
 
     private var screenWidth: CGFloat {
         // Clamp to 0: pre-scene cold launch returns 0 for UIScreen.screenWidth,
-        // and 0 - 40 = -40 would cache into seriesWidth @State and stick there.
-        max(0, UIScreen.screenWidth - 40)
+        // which would cache into seriesWidth @State and stick there.
+        // Full width: the chart is full-bleed since the HIG wave; the old -40
+        // (20pt padding per side) left a 40pt dead strip right of the y-axis.
+        max(0, UIScreen.screenWidth)
     }
 
     private var yAxisSteps: Double {
