@@ -7,6 +7,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 104] — 2026-06-13
+
 ### Fixed
 - Chart y-axis values now sit flush with the right screen edge, directly under the mg/dL label — a 40pt dead strip from the old padded chart layout remained after the full-bleed redesign — DMNC-1045 follow-up
 
