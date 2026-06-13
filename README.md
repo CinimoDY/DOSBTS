@@ -102,7 +102,7 @@ Most of the sensor / connection / LibreLinkUp content in upstream's [FAQ](https:
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for the release history since forking (2026-02-28 → present, TestFlight builds 2–102).
+See [CHANGELOG.md](CHANGELOG.md) for the release history since forking (2026-02-28 → present, TestFlight builds 2 onward).
 
 ## Sound credits
 

@@ -9,6 +9,7 @@ _none found_
 _no prompts_
 
 ## From ce-compound learnings
+- `docs/solutions/workflow-issues/parallel-worktree-devjournal-changelog-collisions.md`
 - `docs/solutions/logic-errors/basal-iob-segmented-infusion-extends-tail-past-dia-20260505.md`
 - `docs/solutions/logic-errors/combine-future-async-bridge-double-resume-20260420.md`
 - `docs/solutions/logic-errors/redux-middleware-async-task-pitfalls-20260420.md`
