@@ -141,6 +141,15 @@ protocol DirectState {
     var dailyDigestReminderHour: Int? { get set }
     var dailyDigestReminderMinute: Int? { get set }
     var aiConsentDailyDigest: Bool { get set }
+
+    // MARK: Celebrations (DMNC-772)
+    var showCelebrations: Bool { get set }
+    var tightControlStreakCount: Int { get set }
+    var tightControlLastCelebratedStreakStart: Date? { get set }
+    var tightControlPendingCelebrationCount: Int { get set }
+    /// Ephemeral (not persisted): set by the middleware when a celebration should be
+    /// presented, observed by ContentView to drive the toast, then cleared.
+    var tightControlCelebration: TightControlCelebration? { get set }
 }
 
 extension DirectState {

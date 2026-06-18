@@ -161,6 +161,21 @@ enum DirectAction {
     case setShowPredictiveLowAlarm(enabled: Bool)
     case setPredictiveLowAlarmFired(fired: Bool)
 
+    // MARK: Celebrations (DMNC-772)
+    case setShowCelebrations(enabled: Bool)
+    /// A qualifying tight-control streak fired. Increments the lifetime count and stores the
+    /// dedup marker (the run's start). `deferred` also bumps the pending ×N toast count.
+    case tightControlStreakCelebrated(streakStart: Date, deferred: Bool)
+    /// Sets the dedup marker without incrementing the count — used to "consume" the current
+    /// in-progress run when Celebrations is re-enabled, so re-enabling can't insta-fire (AE9).
+    case setTightControlLastCelebratedStreakStart(start: Date?)
+    /// Clears the pending deferred-celebration count after the consolidated toast is presented.
+    case clearTightControlPendingCelebrations
+    /// Asks ContentView to present a celebration toast (ephemeral; set by the middleware).
+    case presentTightControlCelebration(celebration: TightControlCelebration)
+    /// Clears the transient celebration after the toast has been shown.
+    case clearTightControlCelebration
+
     // MARK: Heart Rate Overlay (DMNC-848)
     case setShowHeartRateOverlay(enabled: Bool)
 

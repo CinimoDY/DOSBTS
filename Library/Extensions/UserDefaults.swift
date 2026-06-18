@@ -78,6 +78,10 @@ private enum Keys: String {
     case bolusInsulinPreset = "libre-direct.settings.bolus-insulin-preset"
     case basalDIAMinutes = "libre-direct.settings.basal-dia-minutes"
     case showSplitIOB = "libre-direct.settings.show-split-iob"
+    case showCelebrations = "libre-direct.settings.show-celebrations"
+    case tightControlStreakCount = "libre-direct.settings.tight-control-streak-count"
+    case tightControlLastCelebratedStreakStart = "libre-direct.settings.tight-control-last-celebrated-streak-start"
+    case tightControlPendingCelebrationCount = "libre-direct.settings.tight-control-pending-celebration-count"
 
     // Day/Night alarm profiles
     case dayAlarmHigh = "libre-direct.settings.day-alarm-high"
@@ -981,6 +985,53 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Keys.showPredictiveLowAlarm.rawValue)
+        }
+    }
+
+    // MARK: Celebrations (DMNC-772)
+
+    var showCelebrations: Bool {
+        get {
+            if object(forKey: Keys.showCelebrations.rawValue) != nil {
+                return bool(forKey: Keys.showCelebrations.rawValue)
+            }
+
+            return true
+        }
+        set {
+            set(newValue, forKey: Keys.showCelebrations.rawValue)
+        }
+    }
+
+    var tightControlStreakCount: Int {
+        get {
+            integer(forKey: Keys.tightControlStreakCount.rawValue)
+        }
+        set {
+            set(newValue, forKey: Keys.tightControlStreakCount.rawValue)
+        }
+    }
+
+    var tightControlLastCelebratedStreakStart: Date? {
+        get {
+            let ti = double(forKey: Keys.tightControlLastCelebratedStreakStart.rawValue)
+            return ti > 0 ? Date(timeIntervalSince1970: ti) : nil
+        }
+        set {
+            if let newValue = newValue {
+                set(newValue.timeIntervalSince1970, forKey: Keys.tightControlLastCelebratedStreakStart.rawValue)
+            } else {
+                removeObject(forKey: Keys.tightControlLastCelebratedStreakStart.rawValue)
+            }
+        }
+    }
+
+    var tightControlPendingCelebrationCount: Int {
+        get {
+            integer(forKey: Keys.tightControlPendingCelebrationCount.rawValue)
+        }
+        set {
+            set(newValue, forKey: Keys.tightControlPendingCelebrationCount.rawValue)
         }
     }
 

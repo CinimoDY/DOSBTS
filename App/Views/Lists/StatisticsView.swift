@@ -52,6 +52,34 @@ struct StatisticsView: View {
     @EnvironmentObject var store: DirectStore
 
     var body: some View {
+        Group {
+            if store.state.showCelebrations {
+                tightControlSection
+            }
+
+            statisticsBody
+        }
+    }
+
+    /// Lifetime tight-control streak count (DMNC-772). Always visible when Celebrations
+    /// is on, independent of the statistics date window and the 3-day minimum that
+    /// gates the rest of this view.
+    @ViewBuilder
+    private var tightControlSection: some View {
+        Section {
+            StatCard(
+                label: "TIGHT CONTROL",
+                value: "\(store.state.tightControlStreakCount)",
+                valueColor: store.state.tightControlStreakCount > 0 ? AmberTheme.cgaGreen : AmberTheme.amberDark,
+                help: "2h streaks in range"
+            )
+        } header: {
+            Label("Tight control", systemImage: "checkmark.seal")
+        }
+    }
+
+    @ViewBuilder
+    private var statisticsBody: some View {
         if let glucoseStatistics = store.state.glucoseStatistics, glucoseStatistics.maxDays >= 3 {
             Section {
                 VStack(alignment: .leading, spacing: DOSSpacing.md) {

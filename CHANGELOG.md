@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- DOSBTS now celebrates tight control: hold 80–120 mg/dL for 2+ hours and a "TIGHT CONTROL" toast lights up with a phosphor chime and a haptic tap — the app's first bit of positive feedback instead of only alarms. A lifetime streak count sits on the STATISTICS view, the celebration stays visual-only during your night hours (no 3 a.m. beep), and a streak earned while the app was closed greets you on next open (consolidated as "×N" if you racked up more than one). Turn it off in Settings → Alarms & Alerts; honors Reduce Motion and announces to VoiceOver — DMNC-772, PR #59.
+
 ## [Build 104] — 2026-06-13
 
 ### Fixed

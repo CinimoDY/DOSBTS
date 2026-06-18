@@ -181,9 +181,12 @@ struct AlarmSettingsView: View {
 
                 Toggle("Predictive low alarm", isOn: showPredictiveLowAlarm)
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+
+                Toggle("Celebrations", isOn: celebrationsEnabled)
+                    .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: { Label("Alarm settings", systemImage: "alarm") },
-            footer: { Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold") }
+            footer: { Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold.\nCelebrations: a toast, sound, and lifetime count for tight-control streaks (2+ hours in range). Silent during night hours.") }
         )
     }
 
@@ -260,6 +263,13 @@ struct AlarmSettingsView: View {
         Binding(
             get: { store.state.showPredictiveLowAlarm },
             set: { store.dispatch(.setShowPredictiveLowAlarm(enabled: $0)) }
+        )
+    }
+
+    private var celebrationsEnabled: Binding<Bool> {
+        Binding(
+            get: { store.state.showCelebrations },
+            set: { store.dispatch(.setShowCelebrations(enabled: $0)) }
         )
     }
 
