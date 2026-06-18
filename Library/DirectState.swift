@@ -141,6 +141,12 @@ protocol DirectState {
     var dailyDigestReminderHour: Int? { get set }
     var dailyDigestReminderMinute: Int? { get set }
     var aiConsentDailyDigest: Bool { get set }
+
+    // MARK: Celebrations (DMNC-772)
+    var showCelebrations: Bool { get set }
+    var tightControlStreakCount: Int { get set }
+    var tightControlLastCelebratedStreakStart: Date? { get set }
+    var tightControlPendingCelebrationCount: Int { get set }
 }
 
 extension DirectState {

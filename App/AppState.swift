@@ -146,6 +146,10 @@ struct AppState: DirectState {
         self.bolusInsulinPreset = defaults.bolusInsulinPreset
         self.basalDIAMinutes = defaults.basalDIAMinutes
         self.showSplitIOB = defaults.showSplitIOB
+        self.showCelebrations = defaults.showCelebrations
+        self.tightControlStreakCount = defaults.tightControlStreakCount
+        self.tightControlLastCelebratedStreakStart = defaults.tightControlLastCelebratedStreakStart
+        self.tightControlPendingCelebrationCount = defaults.tightControlPendingCelebrationCount
     }
 
     // MARK: Internal
@@ -303,4 +307,10 @@ struct AppState: DirectState {
     var aiConsentDailyDigest: Bool { didSet { defaults.aiConsentDailyDigest = aiConsentDailyDigest } }
     var dailyDigestReminderHour: Int? { didSet { defaults.dailyDigestReminderHour = dailyDigestReminderHour } }
     var dailyDigestReminderMinute: Int? { didSet { defaults.dailyDigestReminderMinute = dailyDigestReminderMinute } }
+
+    // MARK: Celebrations (DMNC-772)
+    var showCelebrations: Bool { didSet { defaults.showCelebrations = showCelebrations } }
+    var tightControlStreakCount: Int { didSet { defaults.tightControlStreakCount = tightControlStreakCount } }
+    var tightControlLastCelebratedStreakStart: Date? { didSet { defaults.tightControlLastCelebratedStreakStart = tightControlLastCelebratedStreakStart } }
+    var tightControlPendingCelebrationCount: Int { didSet { defaults.tightControlPendingCelebrationCount = tightControlPendingCelebrationCount } }
 }

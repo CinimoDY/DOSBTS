@@ -450,6 +450,23 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setPredictiveLowAlarmFired(fired: let fired):
         state.predictiveLowAlarmFired = fired
 
+    // MARK: Celebrations (DMNC-772)
+    case .setShowCelebrations(enabled: let enabled):
+        state.showCelebrations = enabled
+
+    case .tightControlStreakCelebrated(streakStart: let streakStart, deferred: let deferred):
+        state.tightControlStreakCount += 1
+        state.tightControlLastCelebratedStreakStart = streakStart
+        if deferred {
+            state.tightControlPendingCelebrationCount += 1
+        }
+
+    case .setTightControlLastCelebratedStreakStart(start: let start):
+        state.tightControlLastCelebratedStreakStart = start
+
+    case .clearTightControlPendingCelebrations:
+        state.tightControlPendingCelebrationCount = 0
+
     // MARK: Heart Rate Overlay (DMNC-848)
     case .setShowHeartRateOverlay(enabled: let enabled):
         state.showHeartRateOverlay = enabled
