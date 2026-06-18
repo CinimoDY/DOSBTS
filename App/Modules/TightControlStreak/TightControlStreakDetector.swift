@@ -33,17 +33,9 @@ struct TightControlConfig {
     /// Consecutive beyond-margin readings required to re-arm.
     let rearmReadings: Int
 
-    static let `default` = TightControlConfig(
-        bandLow: 80,
-        bandHigh: 120,
-        requiredDuration: 2 * 60 * 60,
-        gapThreshold: 12 * 60,
-        hysteresisMargin: 5,
-        rearmReadings: 2
-    )
-
     /// Gap threshold = two missed readings at the sensor interval, floored at 12 min
-    /// to absorb delivery jitter (KTD5). All other thresholds are fixed.
+    /// to absorb delivery jitter (KTD5). All other thresholds are fixed — this is the
+    /// single source of those literals; `.default` derives from it.
     static func resolved(sensorIntervalMinutes: Int) -> TightControlConfig {
         let gapSeconds = max(2 * sensorIntervalMinutes * 60, 12 * 60)
         return TightControlConfig(
@@ -55,6 +47,10 @@ struct TightControlConfig {
             rearmReadings: 2
         )
     }
+
+    /// Default for tests and default parameters. A 6-min interval yields the 12-min gap
+    /// floor (`max(2×6, 12)`), matching the production minimum.
+    static let `default` = TightControlConfig.resolved(sensorIntervalMinutes: 6)
 }
 
 // MARK: - TightControlStreakDetector

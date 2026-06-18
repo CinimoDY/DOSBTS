@@ -212,4 +212,15 @@ struct TightControlMiddlewareTests {
         state.sensorGlucoseValues = []
         #expect(collect(.setShowCelebrations(enabled: true), state).isEmpty)
     }
+
+    // MARK: Browsing a past day pauses detection (review C1)
+
+    @Test("detection pauses while browsing a past day (selectedDate set)")
+    func noDetectionWhileBrowsingPastDay() {
+        var state = makeState()
+        state.selectedDate = Date().addingTimeInterval(-minutes(60 * 24)) // a day ago
+        let window = run(spanMinutes: 130, endingAt: Date())
+        #expect(collect(.addSensorGlucose(glucoseValues: window), state).isEmpty)
+        #expect(collect(.setSensorGlucoseValues(glucoseValues: window), state).isEmpty)
+    }
 }

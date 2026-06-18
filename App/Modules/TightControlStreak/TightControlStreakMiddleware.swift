@@ -87,6 +87,14 @@ func tightControlStreakMiddleware() -> Middleware<DirectState, DirectAction> {
 /// Runs the detector and routes a detected streak: immediate present when active,
 /// deferred (count + pending bump) when not.
 private func evaluateLiveStreak(window: [SensorGlucose], state: DirectState) -> AnyPublisher<DirectAction, DirectError>? {
+    // Detect only against the live window. While the user browses a past day,
+    // `state.sensorGlucoseValues` holds that day's readings (and the batch isn't the
+    // live tail), so detection pauses and resumes when they return to today — the
+    // reload of the live window re-evaluates via `.setSensorGlucoseValues`.
+    guard state.selectedDate == nil else {
+        return Empty().eraseToAnyPublisher()
+    }
+
     let now = Date()
     let config = TightControlConfig.resolved(sensorIntervalMinutes: state.sensorInterval)
     let result = TightControlStreakDetector.evaluate(
