@@ -313,4 +313,5 @@ struct AppState: DirectState {
     var tightControlStreakCount: Int { didSet { defaults.tightControlStreakCount = tightControlStreakCount } }
     var tightControlLastCelebratedStreakStart: Date? { didSet { defaults.tightControlLastCelebratedStreakStart = tightControlLastCelebratedStreakStart } }
     var tightControlPendingCelebrationCount: Int { didSet { defaults.tightControlPendingCelebrationCount = tightControlPendingCelebrationCount } }
+    var tightControlCelebration: TightControlCelebration? // ephemeral — not persisted
 }

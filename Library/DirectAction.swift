@@ -171,6 +171,10 @@ enum DirectAction {
     case setTightControlLastCelebratedStreakStart(start: Date?)
     /// Clears the pending deferred-celebration count after the consolidated toast is presented.
     case clearTightControlPendingCelebrations
+    /// Asks ContentView to present a celebration toast (ephemeral; set by the middleware).
+    case presentTightControlCelebration(celebration: TightControlCelebration)
+    /// Clears the transient celebration after the toast has been shown.
+    case clearTightControlCelebration
 
     // MARK: Heart Rate Overlay (DMNC-848)
     case setShowHeartRateOverlay(enabled: Bool)

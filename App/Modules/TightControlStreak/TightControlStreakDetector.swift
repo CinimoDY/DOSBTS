@@ -73,36 +73,20 @@ enum TightControlStreakDetector {
         let sorted = readings.sorted { $0.timestamp < $1.timestamp }
 
         // The run must currently be in band and end at the latest reading.
-        guard let last = sorted.last, isInBand(last.intGlucoseValue, config) else {
+        guard let startIndex = contiguousInBandRunStartIndex(sorted: sorted, config: config) else {
             return (false, nil)
         }
 
-        // Walk backward to find the contiguous in-band run ending at `last`,
-        // breaking on the first out-of-band reading or a gap beyond the threshold.
-        var startIndex = sorted.count - 1
-        var index = sorted.count - 1
-        while index > 0 {
-            let current = sorted[index]
-            let previous = sorted[index - 1]
-            let gap = current.timestamp.timeIntervalSince(previous.timestamp)
-            if gap < 0 || gap > config.gapThreshold { break }
-            if !isInBand(previous.intGlucoseValue, config) { break }
-            startIndex = index - 1
-            index -= 1
-        }
-
         let runStart = sorted[startIndex].timestamp
-        let runEnd = last.timestamp
+        let runEnd = sorted[sorted.count - 1].timestamp
 
         // The run must span the required continuous duration.
         guard runEnd.timeIntervalSince(runStart) >= config.requiredDuration else {
             return (false, nil)
         }
 
-        // The run must reach the present: `now` is at or after the run start (else
-        // the clock moved backward), and the latest reading is no older than the gap
-        // threshold (else this is a stale/historical window, not a live streak).
-        guard now >= runStart, now.timeIntervalSince(runEnd) <= config.gapThreshold else {
+        // The run must reach the present (see `runExtendsToNow`).
+        guard runExtendsToNow(runStart: runStart, runEnd: runEnd, now: now, config: config) else {
             return (false, nil)
         }
 
@@ -122,7 +106,54 @@ enum TightControlStreakDetector {
         return (true, runStart)
     }
 
+    /// The start of the contiguous in-band run currently ending at the latest reading
+    /// and extending to `now`, regardless of its duration — or nil if there is no live
+    /// in-band run. Used to "consume" the in-progress run when Celebrations is
+    /// re-enabled so re-enabling cannot insta-fire mid-run (AE9).
+    static func currentRunStart(
+        readings: [SensorGlucose],
+        now: Date,
+        config: TightControlConfig = .default
+    ) -> Date? {
+        let sorted = readings.sorted { $0.timestamp < $1.timestamp }
+        guard let startIndex = contiguousInBandRunStartIndex(sorted: sorted, config: config) else {
+            return nil
+        }
+        let runStart = sorted[startIndex].timestamp
+        let runEnd = sorted[sorted.count - 1].timestamp
+        guard runExtendsToNow(runStart: runStart, runEnd: runEnd, now: now, config: config) else {
+            return nil
+        }
+        return runStart
+    }
+
     // MARK: Helpers
+
+    /// Index of the start of the contiguous in-band run ending at the latest reading,
+    /// breaking on the first out-of-band reading or a gap beyond the threshold. nil if
+    /// there are no readings or the latest reading is out of band.
+    private static func contiguousInBandRunStartIndex(sorted: [SensorGlucose], config: TightControlConfig) -> Int? {
+        guard let lastIndex = sorted.indices.last, isInBand(sorted[lastIndex].intGlucoseValue, config) else {
+            return nil
+        }
+        var startIndex = lastIndex
+        var index = lastIndex
+        while index > 0 {
+            let gap = sorted[index].timestamp.timeIntervalSince(sorted[index - 1].timestamp)
+            if gap < 0 || gap > config.gapThreshold { break }
+            if !isInBand(sorted[index - 1].intGlucoseValue, config) { break }
+            startIndex = index - 1
+            index -= 1
+        }
+        return startIndex
+    }
+
+    /// The run reaches the present: `now` is at or after the run start (else the clock
+    /// moved backward) and the latest reading is no older than the gap threshold (else
+    /// this is a stale/historical window, not a live streak).
+    private static func runExtendsToNow(runStart: Date, runEnd: Date, now: Date, config: TightControlConfig) -> Bool {
+        now >= runStart && now.timeIntervalSince(runEnd) <= config.gapThreshold
+    }
 
     private static func isInBand(_ value: Int, _ config: TightControlConfig) -> Bool {
         value >= config.bandLow && value <= config.bandHigh

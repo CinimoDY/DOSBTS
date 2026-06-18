@@ -47,6 +47,7 @@
 		TE0100010000001600A00016 /* AppGroupMiddlewareDispatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001600A00016 /* AppGroupMiddlewareDispatchTests.swift */; };
 		TE0100010000001700A00017 /* TightControlReducerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001700A00017 /* TightControlReducerTests.swift */; };
 		TE0100010000001800A00018 /* TightControlStreakDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001800A00018 /* TightControlStreakDetectorTests.swift */; };
+		TE0100010000001900A00019 /* TightControlMiddlewareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -122,6 +123,7 @@
 		TE0100020000001600A00016 /* AppGroupMiddlewareDispatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupMiddlewareDispatchTests.swift; sourceTree = "<group>"; };
 		TE0100020000001700A00017 /* TightControlReducerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlReducerTests.swift; sourceTree = "<group>"; };
 		TE0100020000001800A00018 /* TightControlStreakDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlStreakDetectorTests.swift; sourceTree = "<group>"; };
+		TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlMiddlewareTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -273,6 +275,7 @@
 				TE0100020000001600A00016 /* AppGroupMiddlewareDispatchTests.swift */,
 				TE0100020000001700A00017 /* TightControlReducerTests.swift */,
 				TE0100020000001800A00018 /* TightControlStreakDetectorTests.swift */,
+				TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -477,6 +480,7 @@
 				TE0100010000001600A00016 /* AppGroupMiddlewareDispatchTests.swift in Sources */,
 				TE0100010000001700A00017 /* TightControlReducerTests.swift in Sources */,
 				TE0100010000001800A00018 /* TightControlStreakDetectorTests.swift in Sources */,
+				TE0100010000001900A00019 /* TightControlMiddlewareTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
