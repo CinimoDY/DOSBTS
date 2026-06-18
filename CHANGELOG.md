@@ -10,6 +10,24 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ### Added
 - DOSBTS now celebrates tight control: hold 80–120 mg/dL for 2+ hours and a "TIGHT CONTROL" toast lights up with a phosphor chime and a haptic tap — the app's first bit of positive feedback instead of only alarms. A lifetime streak count sits on the STATISTICS view, the celebration stays visual-only during your night hours (no 3 a.m. beep), and a streak earned while the app was closed greets you on next open (consolidated as "×N" if you racked up more than one). Turn it off in Settings → Alarms & Alerts; honors Reduce Motion and announces to VoiceOver — DMNC-772, PR #59.
 
+## [Build 104] — 2026-06-13
+
+### Fixed
+- Chart y-axis values now sit flush with the right screen edge, directly under the mg/dL label — a 40pt dead strip from the old padded chart layout remained after the full-bleed redesign — DMNC-1045 follow-up
+
+## [Build 103] — 2026-06-13
+
+### Fixed
+- Daily digest stat boxes now all have the same height even when some lack a subline (e.g. LOWS, HIGHS, CARBS, INSULIN vs AVG which shows "mg/dL") — DMNC-1044, PR #57
+- Chart no longer has a large blank space on the right; the end margin is now 15 minutes (matching the original padding intent) instead of 1 hour — DMNC-1045, PR #58
+- The mg/dL axis label now sits above the y-axis values (trailing side); the HR legend moves to its left with a dashed line indicator matching the chart's HR series style — DMNC-1045, PR #58
+
+## [Build 102] — 2026-06-12
+
+### Fixed
+- INSULIN/MEAL buttons now appear above the tab bar on the Log and Settings tabs (they were hidden behind the tab bar on iOS 26 when the bar was mounted via `safeAreaInset` on the outer VStack containing a `NavigationStack`) — DMNC-1038, PR #56
+- Snooze/screen-lock status row under the hero now uses the same font size as the treatment banner — DMNC-1039, PR #55
+
 ## [Build 101] — 2026-06-11
 
 ### Added
