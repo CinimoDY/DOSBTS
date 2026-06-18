@@ -13,6 +13,7 @@ struct ContentView: View {
 
     @EnvironmentObject var store: DirectStore
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Single app-level presentation root (R8a): all entry/treatment sheets
     /// present through this coordinator so the chart, quick actions, status
@@ -23,6 +24,11 @@ struct ContentView: View {
     /// Logging feedback: flashes the just-logged row in whichever list it
     /// lands on (recents, Log tab sections).
     @StateObject private var addedHighlighter = AddedEntryHighlighter()
+
+    /// Tight-control streak celebration toast (DMNC-772). Hoisted to ContentView
+    /// scope so it sits above all tabs, clear of the per-tab status bar — never a
+    /// row inside a tab's VStack (the safeAreaInset-overflow class).
+    @StateObject private var tightControlToast = TightControlToastController()
 
     var body: some View {
         // TabView is the outermost view so the appIsBusy LoadingOverlay can
@@ -59,6 +65,18 @@ struct ContentView: View {
             .overlay {
                 LoadingOverlay(isShowing: isShowing)
             }
+            .overlay(alignment: .bottom) {
+                if let celebration = tightControlToast.celebration {
+                    TightControlToastView(celebration: celebration) {
+                        tightControlToast.dismiss()
+                    }
+                    // Clear the tab bar + the per-tab GlucoseStatusBar (~65pt) so the
+                    // toast never collides with the persistent INSULIN/MEAL bar.
+                    .padding(.bottom, 116)
+                    .transition(TightControlToastReveal.transition(reduceMotion: reduceMotion))
+                }
+            }
+            .animation(TightControlToastReveal.animation(reduceMotion: reduceMotion), value: tightControlToast.celebration)
             .environmentObject(sheets)
             .environmentObject(addedHighlighter)
             .sheet(item: $sheets.activeSheet, onDismiss: sheets.sheetDidDismiss) { sheet in
@@ -100,6 +118,13 @@ struct ContentView: View {
             }
             .onChange(of: store.state.latestSensorGlucose) { _, _ in
                 WidgetCenter.shared.reloadAllTimelines()
+            }
+            .onChange(of: store.state.tightControlCelebration) { _, newValue in
+                guard let newValue else { return }
+                tightControlToast.show(newValue)
+                // Clear the transient trigger so an identical later celebration re-fires
+                // the observer (nil → value), and the store holds no stale celebration.
+                store.dispatch(.clearTightControlCelebration)
             }
             .onAppear {
                 DirectLog.info("onAppear()")
