@@ -50,6 +50,7 @@
 		TE0100010000001900A00019 /* TightControlMiddlewareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */; };
 		TE0100010000002000A00020 /* TightControlToastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002000A00020 /* TightControlToastTests.swift */; };
 		F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */; };
+		TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002100A00021 /* DesignTokenPinTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,6 +129,7 @@
 		TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlMiddlewareTests.swift; sourceTree = "<group>"; };
 		TE0100020000002000A00020 /* TightControlToastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlToastTests.swift; sourceTree = "<group>"; };
 		F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMarkerTypeTests.swift; sourceTree = "<group>"; };
+		TE0100020000002100A00021 /* DesignTokenPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenPinTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -282,6 +284,7 @@
 				TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */,
 				TE0100020000002000A00020 /* TightControlToastTests.swift */,
 				F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */,
+				TE0100020000002100A00021 /* DesignTokenPinTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -489,6 +492,7 @@
 				TE0100010000001900A00019 /* TightControlMiddlewareTests.swift in Sources */,
 				TE0100010000002000A00020 /* TightControlToastTests.swift in Sources */,
 				F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */,
+				TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
