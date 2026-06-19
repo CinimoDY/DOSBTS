@@ -31,6 +31,11 @@ struct SensorLineView: View {
         .padding(.vertical, DOSSpacing.xs)
         .contentShape(Rectangle())
         .onTapGesture(perform: handleRowTap)
+        .onChange(of: store.state.connectionState) { _, newState in
+            if newState == .connected {
+                DirectNotifications.shared.hapticNotification(.success)
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabelString)
         .accessibilityHint(accessibilityHintString)
@@ -76,6 +81,10 @@ struct SensorLineView: View {
                 .font(DOSTypography.caption)
                 .foregroundColor(labelColor)
                 .bold(isConnected)
+            if currentState == .transient {
+                FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight)
+                    .accessibilityHidden(true)
+            }
         }
     }
 

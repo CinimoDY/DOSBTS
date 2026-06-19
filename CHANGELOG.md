@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Pulsing amber dots ("figures") loading indicator replaces the spinner on Claude AI food analysis, daily digest, and sensor connecting surfaces — consistent DOS micro-interaction with reduce-motion support (static dots) and haptic feedback on resolution — DMNC-797
+
 ## [Build 105] — 2026-06-18
 
 ### Added

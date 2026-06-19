@@ -85,6 +85,11 @@ struct FoodPhotoAnalysisView: View {
                 }
             }
         }
+        .onChange(of: store.state.foodAnalysisLoading) { _, isLoading in
+            if !isLoading, store.state.foodAnalysisResult != nil {
+                DirectNotifications.shared.hapticNotification(.success)
+            }
+        }
         .onDisappear {
             // Don't clear state when a child NavigationLink (item barcode scan) is active
             guard !isItemScanActive else { return }
@@ -189,13 +194,12 @@ struct FoodPhotoAnalysisView: View {
     private var loadingSection: some View {
         Section {
             VStack(spacing: DOSSpacing.md) {
-                ProgressView()
-                    .tint(AmberTheme.amber)
+                FiguresLoadingView(dotSize: 10, spacing: 7)
 
                 Text(analysisPhases[analysisPhase])
                     .font(DOSTypography.body)
                     .foregroundStyle(AmberTheme.amber)
-                    .animation(.easeInOut(duration: 0.3), value: analysisPhase)
+                    .animation(AnimationTokens.easeStandard, value: analysisPhase)
 
                 dosProgressBar
             }
