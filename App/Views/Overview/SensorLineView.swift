@@ -82,7 +82,9 @@ struct SensorLineView: View {
                 .foregroundColor(labelColor)
                 .bold(isConnected)
             if currentState == .transient {
-                FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight)
+                // Warmup can sit here ~60 min — use the low-power cadence so the
+                // pulse doesn't drive a continuous full-rate render loop.
+                FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight, cadence: .lowPower)
                     .accessibilityHidden(true)
             }
         }

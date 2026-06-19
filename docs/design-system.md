@@ -221,19 +221,21 @@ Use `AnimationTokens.adapted(spring:reduceMotion:)` to degrade a spring to a sho
 ```swift
 @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-withAnimation(AnimationTokens.adapted(spring: .normal, reduceMotion: reduceMotion)) {
+withAnimation(AnimationTokens.adapted(spring: AnimationTokens.normal, reduceMotion: reduceMotion)) {
     // state change
 }
 ```
 
 ### FiguresLoadingView (`App/Views/SharedViews/FiguresLoadingView.swift`)
 
-Three pulsing amber dots in the DOS phosphor vocabulary — used on all async-wait surfaces (Claude API analysis, sensor connecting). Built with `TimelineView(.animation)` + `Canvas` for frame-rate-independent animation.
+Three pulsing amber dots in the DOS phosphor vocabulary — used on all async-wait surfaces (Claude API analysis, sensor connecting). Built with `TimelineView` + `Canvas` for frame-rate-independent animation.
 
 Under reduce motion, renders three static dots at reduced opacity instead of pulsing.
 
+`cadence` controls the redraw rate: `.smooth` (default) is display-linked for short waits; `.lowPower` redraws ~10×/s for long-lived states like sensor warmup (which can sit in `.transient` for up to ~60 min) so the pulse doesn't run a continuous full-rate render loop.
+
 ```swift
-FiguresLoadingView()                                   // default: 8pt amber dots
+FiguresLoadingView()                                   // default: 8pt amber dots, smooth
 FiguresLoadingView(dotSize: 10, spacing: 7)            // larger inline variant
-FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight)  // subtle inline
+FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight, cadence: .lowPower)  // subtle, long-lived
 ```
