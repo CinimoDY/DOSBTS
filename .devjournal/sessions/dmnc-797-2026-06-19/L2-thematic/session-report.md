@@ -31,11 +31,16 @@
 
 ### Issues Updated
 
-- DMNC-797 — implementation complete, PR opened (draft → In Review)
+- DMNC-797 — Done (PR #61 draft open)
+
+### Open PRs
+
+- [PR #61](https://github.com/CinimoDY/DOSBTS/pull/61) (draft) — feat(ux): micro-interactions foundation — AnimationTokens + FiguresLoadingView (DMNC-797)
 
 ### Documentation Status
 
 - CLAUDE.md: no change needed
 - design-system.md: updated (Motion & Animation section)
 - CHANGELOG.md: updated
+- Compound: `docs/solutions/ui-bugs/swiftui-viewbuilder-branch-height-mismatch-layout-jump.md` (new)
 - Memory: no new entries warranted
