@@ -14,6 +14,7 @@ struct FoodPhotoAnalysisView: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
     @Environment(\.dismiss) var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Relog mode: hydrates staging plate from this past meal, preserves `analysisSessionId`, skips correction tracking.
     var relogMeal: MealEntry?
@@ -199,7 +200,7 @@ struct FoodPhotoAnalysisView: View {
                 Text(analysisPhases[analysisPhase])
                     .font(DOSTypography.body)
                     .foregroundStyle(AmberTheme.amber)
-                    .animation(AnimationTokens.easeStandard, value: analysisPhase)
+                    .animation(AnimationTokens.adapted(animation: AnimationTokens.easeStandard, reduceMotion: reduceMotion), value: analysisPhase)
 
                 dosProgressBar
             }

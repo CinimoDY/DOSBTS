@@ -21,37 +21,40 @@ struct FiguresLoadingView: View {
     private let dotCount = 3
 
     var body: some View {
-        if reduceMotion {
-            staticDots
-        } else {
-            TimelineView(.animation) { timeline in
-                Canvas { context, size in
-                    let elapsed = timeline.date.timeIntervalSinceReferenceDate
-                    let totalWidth = size.width
-                    let step = totalWidth / CGFloat(dotCount)
+        Group {
+            if reduceMotion {
+                staticDots
+            } else {
+                TimelineView(.animation) { timeline in
+                    Canvas { context, size in
+                        let elapsed = timeline.date.timeIntervalSinceReferenceDate
+                        let totalWidth = size.width
+                        let step = totalWidth / CGFloat(dotCount)
 
-                    for i in 0 ..< dotCount {
-                        // Stagger each dot by 0.35 s so they wave sequentially.
-                        let phase = (elapsed - Double(i) * 0.35) * 2.2
-                        // sin oscillates −1…1; map to 0.4…1.0 opacity and 0.6…1.0 scale.
-                        let t = (sin(phase * .pi) + 1) / 2   // 0…1
-                        let scale = 0.6 + 0.4 * t
-                        let opacity = 0.35 + 0.65 * t
+                        for i in 0 ..< dotCount {
+                            // Stagger each dot by 0.35 s so they wave sequentially.
+                            let phase = (elapsed - Double(i) * 0.35) * 2.2
+                            // sin oscillates −1…1; map to 0.4…1.0 opacity and 0.6…1.0 scale.
+                            let t = (sin(phase * .pi) + 1) / 2   // 0…1
+                            let scale = 0.6 + 0.4 * t
+                            let opacity = 0.35 + 0.65 * t
 
-                        let cx = step * (CGFloat(i) + 0.5)
-                        let cy = size.height / 2
-                        let r = dotSize / 2 * scale
-                        let rect = CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2)
-                        context.opacity = opacity
-                        context.fill(Path(ellipseIn: rect), with: .color(color))
+                            let cx = step * (CGFloat(i) + 0.5)
+                            let cy = size.height / 2
+                            let r = dotSize / 2 * scale
+                            let rect = CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2)
+                            context.opacity = opacity
+                            context.fill(Path(ellipseIn: rect), with: .color(color))
+                        }
                     }
+                    .frame(
+                        width: CGFloat(dotCount) * dotSize + CGFloat(dotCount - 1) * spacing,
+                        height: dotSize * 2
+                    )
                 }
-                .frame(
-                    width: CGFloat(dotCount) * dotSize + CGFloat(dotCount - 1) * spacing,
-                    height: dotSize * 2
-                )
             }
         }
+        .accessibilityHidden(true)
     }
 
     private var staticDots: some View {
@@ -62,6 +65,7 @@ struct FiguresLoadingView: View {
                     .frame(width: dotSize, height: dotSize)
             }
         }
+        .frame(height: dotSize * 2)
     }
 }
 
