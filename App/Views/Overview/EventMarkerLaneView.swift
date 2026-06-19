@@ -89,6 +89,7 @@ struct EventMarkerLaneView: View {
             switch m.type {
             case .meal: return "Meal at \(m.time.toLocalTime())"
             case .bolus: return "Bolus at \(m.time.toLocalTime())"
+            case .correction: return "Correction bolus at \(m.time.toLocalTime())"
             case .basal: return "Basal at \(m.time.toLocalTime())"
             case .exercise: return "Exercise at \(m.time.toLocalTime())"
             }
@@ -108,8 +109,10 @@ struct EventMarkerLaneView: View {
 // MARK: - FlagView
 
 /// Small black chip with amber-dim border and a 22pt vertical pole anchored at
-/// the chip's bottom-centre. Each chip can have 1–3 stacked rows showing
-/// `<icon> <value>` per event type — insulin → meal → exercise top-to-bottom.
+/// the chip's bottom-centre. Each chip has 1–3 stacked rows in the locked order
+/// insulin → meal → exercise; all insulin sub-types share the single insulin
+/// row (see `ConsolidatedMarkerGroup.chipRows(isScored:)`) so the chip never
+/// overflows the 60pt lane.
 private struct FlagView: View {
     let group: ConsolidatedMarkerGroup
     let isScored: Bool
@@ -119,15 +122,19 @@ private struct FlagView: View {
     }
 
     private var chip: some View {
-        VStack(alignment: .leading, spacing: 1) {
+        let rows = group.chipRows(isScored: isScored)
+        return VStack(alignment: .leading, spacing: 1) {
             ForEach(rows.indices, id: \.self) { idx in
                 let row = rows[idx]
                 HStack(spacing: 4) {
-                    iconView(for: row.type)
-                        .foregroundStyle(row.color)
-                    Text(row.label)
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(row.color)
+                    iconView(for: row.leadType)
+                        .foregroundStyle(row.leadType.color)
+                    ForEach(row.segments.indices, id: \.self) { segIdx in
+                        let seg = row.segments[segIdx]
+                        Text(seg.label)
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(seg.type.color)
+                    }
                 }
             }
         }
@@ -140,59 +147,6 @@ private struct FlagView: View {
         )
     }
 
-    private struct ChipRow {
-        let type: EventMarkerType
-        let label: String
-        let color: Color
-    }
-
-    /// One row per event type present in the group, in the locked order:
-    /// insulin → meal → exercise. Multi-entry within a type collapses to a
-    /// total (e.g., `5U×2`, `45g×3`).
-    private var rows: [ChipRow] {
-        var result: [ChipRow] = []
-
-        let bolus = group.markers.filter { $0.type == .bolus }
-        if !bolus.isEmpty {
-            let total = bolus.reduce(0.0) { $0 + $1.rawValue }
-            let label = bolus.count > 1
-                ? "\(formatUnits(total))×\(bolus.count)"
-                : formatUnits(total)
-            result.append(ChipRow(type: .bolus, label: label, color: AmberTheme.amber))
-        }
-
-        let basal = group.markers.filter { $0.type == .basal }
-        if !basal.isEmpty {
-            let total = basal.reduce(0.0) { $0 + $1.rawValue }
-            // Append a "b" suffix so the user can distinguish basal from bolus
-            // even though the chip lives in the same insulin row position.
-            let label = basal.count > 1
-                ? "\(formatUnits(total))b×\(basal.count)"
-                : "\(formatUnits(total))b"
-            result.append(ChipRow(type: .basal, label: label, color: AmberTheme.amberDark))
-        }
-
-        let meals = group.markers.filter { $0.type == .meal }
-        if !meals.isEmpty {
-            let total = meals.reduce(0.0) { $0 + $1.rawValue }
-            let label = meals.count > 1
-                ? "\(Int(total))g×\(meals.count)"
-                : "\(Int(total))g"
-            result.append(ChipRow(type: .meal, label: label, color: AmberTheme.cgaGreen))
-        }
-
-        let exercise = group.markers.filter { $0.type == .exercise }
-        if !exercise.isEmpty {
-            let total = exercise.reduce(0.0) { $0 + $1.rawValue }
-            let label = exercise.count > 1
-                ? "\(Int(total))m×\(exercise.count)"
-                : "\(Int(total))m"
-            result.append(ChipRow(type: .exercise, label: label, color: AmberTheme.cgaCyan))
-        }
-
-        return result
-    }
-
     @ViewBuilder
     private func iconView(for type: EventMarkerType) -> some View {
         switch type {
@@ -200,17 +154,12 @@ private struct FlagView: View {
             AppleIcon().frame(width: 11, height: 11)
         case .bolus:
             Image(systemName: "syringe.fill").font(.system(size: 11))
+        case .correction:
+            Image(systemName: "syringe.fill").font(.system(size: 11))
         case .basal:
             Image(systemName: "syringe").font(.system(size: 11))
         case .exercise:
             Image(systemName: "figure.run").font(.system(size: 11))
         }
-    }
-
-    private func formatUnits(_ units: Double) -> String {
-        if units == units.rounded() {
-            return "\(Int(units))U"
-        }
-        return String(format: "%.1fU", units)
     }
 }
