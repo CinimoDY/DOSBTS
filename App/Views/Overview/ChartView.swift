@@ -962,7 +962,7 @@ private var startMarker: Date? {
             allMarkers.append(EventMarker(
                 id: "insulin-\(insulin.id.uuidString)",
                 time: insulin.starts,
-                type: insulin.type == .basal ? .basal : .bolus,
+                type: insulin.type.markerType,
                 label: insulin.units.asInsulin(),
                 rawValue: insulin.units,
                 sourceID: insulin.id

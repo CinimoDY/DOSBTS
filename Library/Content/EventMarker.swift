@@ -13,6 +13,7 @@ import SwiftUI
 enum EventMarkerType: Hashable {
     case meal
     case bolus
+    case correction
     case basal
     case exercise
 
@@ -20,6 +21,7 @@ enum EventMarkerType: Hashable {
         switch self {
         case .meal: return "apple.logo"
         case .bolus: return "syringe.fill"
+        case .correction: return "syringe.fill"
         case .basal: return "syringe"  // outline variant signals long-acting / steady-state
         case .exercise: return "figure.run"
         }
@@ -29,6 +31,7 @@ enum EventMarkerType: Hashable {
         switch self {
         case .meal: return AmberTheme.cgaGreen
         case .bolus: return AmberTheme.amber
+        case .correction: return AmberTheme.amberLight
         case .basal: return AmberTheme.amberDark
         case .exercise: return AmberTheme.cgaCyan
         }
@@ -79,5 +82,19 @@ struct ConsolidatedMarkerGroup: Identifiable {
 extension ConsolidatedMarkerGroup: Equatable {
     static func == (lhs: ConsolidatedMarkerGroup, rhs: ConsolidatedMarkerGroup) -> Bool {
         lhs.id == rhs.id
+    }
+}
+
+// MARK: - InsulinType → EventMarkerType
+
+extension InsulinType {
+    /// Maps an insulin delivery type to its event marker lane representation.
+    /// Extracted here so it can be unit-tested without a SwiftUI context.
+    var markerType: EventMarkerType {
+        switch self {
+        case .basal: return .basal
+        case .correctionBolus: return .correction
+        case .mealBolus, .snackBolus: return .bolus
+        }
     }
 }

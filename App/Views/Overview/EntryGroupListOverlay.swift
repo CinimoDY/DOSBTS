@@ -137,7 +137,7 @@ struct EntryGroupListOverlay: View {
         switch marker.type {
         case .meal:
             return mealEntries.first(where: { $0.id == marker.sourceID }).map { .meal($0) }
-        case .bolus, .basal:
+        case .bolus, .correction, .basal:
             return insulinDeliveries.first(where: { $0.id == marker.sourceID }).map { .insulin($0) }
         case .exercise:
             return exerciseEntries.first(where: { $0.id == marker.sourceID }).map { .exercise($0) }
@@ -157,6 +157,7 @@ struct EntryGroupListOverlay: View {
             switch marker.type {
             case .meal: return "Meal"
             case .bolus: return "Bolus"
+            case .correction: return "Correction"
             case .basal: return "Basal"
             case .exercise: return "Exercise"
             }
@@ -181,10 +182,10 @@ struct EntryGroupListOverlay: View {
             // hint based on the group's own composition so the row at least
             // tells the user it's part of a combined entry.
             switch marker.type {
-            case .bolus, .basal:
+            case .bolus, .correction, .basal:
                 return group.markers.contains { $0.type == .meal } ? "paired w/ meal" : ""
             case .meal:
-                return group.markers.contains { $0.type == .bolus } ? "paired w/ insulin" : ""
+                return group.markers.contains { $0.type == .bolus || $0.type == .correction } ? "paired w/ insulin" : ""
             case .exercise:
                 return ""
             }
@@ -202,7 +203,7 @@ struct EntryGroupListOverlay: View {
             mealImpact = mealImpacts[m.id]
             personalFood = personalFoodAvgs[m.id]
             confs = confoundersFor(m)
-            paired = group.markers.contains { $0.type == .bolus }
+            paired = group.markers.contains { $0.type == .bolus || $0.type == .correction }
         case .insulin(let i):
             mealCount = 1
             iob = iobAtTime(i.starts)
@@ -228,7 +229,7 @@ struct EntryGroupListOverlay: View {
         switch marker.type {
         case .meal:
             AppleIcon().frame(width: 20, height: 20)
-        case .bolus, .basal, .exercise:
+        case .bolus, .correction, .basal, .exercise:
             Image(systemName: marker.type.icon)
                 .font(.system(size: 20))
         }

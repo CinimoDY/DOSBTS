@@ -89,6 +89,7 @@ struct EventMarkerLaneView: View {
             switch m.type {
             case .meal: return "Meal at \(m.time.toLocalTime())"
             case .bolus: return "Bolus at \(m.time.toLocalTime())"
+            case .correction: return "Correction bolus at \(m.time.toLocalTime())"
             case .basal: return "Basal at \(m.time.toLocalTime())"
             case .exercise: return "Exercise at \(m.time.toLocalTime())"
             }
@@ -161,6 +162,16 @@ private struct FlagView: View {
             result.append(ChipRow(type: .bolus, label: label, color: AmberTheme.amber))
         }
 
+        let correction = group.markers.filter { $0.type == .correction }
+        if !correction.isEmpty {
+            let total = correction.reduce(0.0) { $0 + $1.rawValue }
+            // "c" suffix distinguishes correction from meal/snack bolus (same filled-syringe icon)
+            let label = correction.count > 1
+                ? "\(formatUnits(total))c×\(correction.count)"
+                : "\(formatUnits(total))c"
+            result.append(ChipRow(type: .correction, label: label, color: AmberTheme.amberLight))
+        }
+
         let basal = group.markers.filter { $0.type == .basal }
         if !basal.isEmpty {
             let total = basal.reduce(0.0) { $0 + $1.rawValue }
@@ -175,9 +186,11 @@ private struct FlagView: View {
         let meals = group.markers.filter { $0.type == .meal }
         if !meals.isEmpty {
             let total = meals.reduce(0.0) { $0 + $1.rawValue }
+            // "★" prefix marks meals that have a glycemic impact score
+            let prefix = isScored ? "★" : ""
             let label = meals.count > 1
-                ? "\(Int(total))g×\(meals.count)"
-                : "\(Int(total))g"
+                ? "\(prefix)\(Int(total))g×\(meals.count)"
+                : "\(prefix)\(Int(total))g"
             result.append(ChipRow(type: .meal, label: label, color: AmberTheme.cgaGreen))
         }
 
@@ -199,6 +212,8 @@ private struct FlagView: View {
         case .meal:
             AppleIcon().frame(width: 11, height: 11)
         case .bolus:
+            Image(systemName: "syringe.fill").font(.system(size: 11))
+        case .correction:
             Image(systemName: "syringe.fill").font(.system(size: 11))
         case .basal:
             Image(systemName: "syringe").font(.system(size: 11))

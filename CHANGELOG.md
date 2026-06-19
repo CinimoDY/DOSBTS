@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Event marker lane now distinguishes correction boluses from meal/snack boluses: correction shows a bright-amber "c" suffix (e.g. `3.0Uc`) so you can tell at a glance whether you injected for a meal or to correct a high — DMNC-715
+- Scored meals in the event marker lane show a `★` prefix (e.g. `★45g`) making it immediately obvious which entries have a glycemic impact score vs those still pending — DMNC-715
+
 ## [Build 105] — 2026-06-18
 
 ### Added
