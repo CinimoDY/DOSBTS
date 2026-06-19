@@ -31,6 +31,11 @@ struct SensorLineView: View {
         .padding(.vertical, DOSSpacing.xs)
         .contentShape(Rectangle())
         .onTapGesture(perform: handleRowTap)
+        .onChange(of: store.state.connectionState) { _, newState in
+            if newState == .connected {
+                DirectNotifications.shared.hapticNotification(.success)
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabelString)
         .accessibilityHint(accessibilityHintString)
@@ -76,6 +81,12 @@ struct SensorLineView: View {
                 .font(DOSTypography.caption)
                 .foregroundColor(labelColor)
                 .bold(isConnected)
+            if currentState == .transient {
+                // Warmup can sit here ~60 min — use the low-power cadence so the
+                // pulse doesn't drive a continuous full-rate render loop.
+                FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight, cadence: .lowPower)
+                    .accessibilityHidden(true)
+            }
         }
     }
 

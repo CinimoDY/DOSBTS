@@ -14,6 +14,7 @@ struct FoodPhotoAnalysisView: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
     @Environment(\.dismiss) var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Relog mode: hydrates staging plate from this past meal, preserves `analysisSessionId`, skips correction tracking.
     var relogMeal: MealEntry?
@@ -83,6 +84,11 @@ struct FoodPhotoAnalysisView: View {
                     store.dispatch(.setFoodAnalysisLoading(isLoading: false))
                     dismiss()
                 }
+            }
+        }
+        .onChange(of: store.state.foodAnalysisLoading) { _, isLoading in
+            if !isLoading, store.state.foodAnalysisResult != nil {
+                DirectNotifications.shared.hapticNotification(.success)
             }
         }
         .onDisappear {
@@ -189,13 +195,12 @@ struct FoodPhotoAnalysisView: View {
     private var loadingSection: some View {
         Section {
             VStack(spacing: DOSSpacing.md) {
-                ProgressView()
-                    .tint(AmberTheme.amber)
+                FiguresLoadingView(dotSize: 10, spacing: 7)
 
                 Text(analysisPhases[analysisPhase])
                     .font(DOSTypography.body)
                     .foregroundStyle(AmberTheme.amber)
-                    .animation(.easeInOut(duration: 0.3), value: analysisPhase)
+                    .animation(AnimationTokens.adapted(animation: AnimationTokens.easeStandard, reduceMotion: reduceMotion), value: analysisPhase)
 
                 dosProgressBar
             }

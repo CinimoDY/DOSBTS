@@ -46,6 +46,11 @@ struct DigestView: View {
                 store.dispatch(.loadDailyDigest(date: selectedDate))
             }
         }
+        .onChange(of: store.state.dailyDigestLoading) { _, isLoading in
+            if !isLoading, store.state.currentDailyDigest != nil {
+                DirectNotifications.shared.hapticFeedback(.light)
+            }
+        }
     }
 
     // MARK: - Date Navigation
@@ -218,8 +223,9 @@ struct DigestView: View {
     // MARK: - Loading / No Data States
 
     private var loadingView: some View {
-        VStack {
+        VStack(spacing: DOSSpacing.md) {
             Spacer()
+            FiguresLoadingView(dotSize: 10, spacing: 7)
             Text("LOADING...")
                 .font(DOSTypography.bodyLarge)
                 .foregroundColor(AmberTheme.amber)

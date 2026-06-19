@@ -246,3 +246,45 @@ Every frame must be implementable within these iOS/DOSBTS constraints. Flag viol
 - Appeals to users who appreciate retro computing aesthetics
 - Creates emotional connection through nostalgia
 - Suggests precision and attention to detail
+
+## Motion & Animation
+
+### AnimationTokens (`Library/DesignSystem/AnimationTokens.swift`)
+
+Standard motion tokens used across all animated surfaces.
+
+| Token | Type | Value | Use |
+|-------|------|-------|-----|
+| `normal` | Spring | response 0.4, damping 0.7 | Card reveals, sheet transitions |
+| `snappy` | Spring | response 0.25, damping 0.8 | Interactive feedback, quick state changes |
+| `durationShort` | `Double` | 0.15 s | Icon swaps, immediate feedback |
+| `durationMedium` | `Double` | 0.25 s | Standard cross-fades |
+| `durationLong` | `Double` | 0.4 s | Enter/exit transitions |
+| `easeStandard` | Ease | easeInOut 0.25 s | Phase-cycling text, cross-fades |
+| `easeExit` | Ease | easeIn 0.15 s | Exit transitions |
+
+#### Reduce-motion adaptation
+
+Use `AnimationTokens.adapted(spring:reduceMotion:)` to degrade a spring to a short linear animation when the user has requested reduced motion. Use `AnimationTokens.adapted(animation:reduceMotion:)` to suppress an animation entirely (`nil`) under reduce-motion.
+
+```swift
+@Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+withAnimation(AnimationTokens.adapted(spring: AnimationTokens.normal, reduceMotion: reduceMotion)) {
+    // state change
+}
+```
+
+### FiguresLoadingView (`App/Views/SharedViews/FiguresLoadingView.swift`)
+
+Three pulsing amber dots in the DOS phosphor vocabulary — used on all async-wait surfaces (Claude API analysis, sensor connecting). Built with `TimelineView` + `Canvas` for frame-rate-independent animation.
+
+Under reduce motion, renders three static dots at reduced opacity instead of pulsing.
+
+`cadence` controls the redraw rate: `.smooth` (default) is display-linked for short waits; `.lowPower` redraws ~10×/s for long-lived states like sensor warmup (which can sit in `.transient` for up to ~60 min) so the pulse doesn't run a continuous full-rate render loop.
+
+```swift
+FiguresLoadingView()                                   // default: 8pt amber dots, smooth
+FiguresLoadingView(dotSize: 10, spacing: 7)            // larger inline variant
+FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight, cadence: .lowPower)  // subtle, long-lived
+```
