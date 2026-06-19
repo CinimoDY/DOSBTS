@@ -18,39 +18,42 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
   - Focus states and selections
 
 #### Supporting Colors
-- **Background**: DOS black (#0A0A0A)
-- **Card Background**: Warm near-black (#1B1917)
-- **Secondary Text / Amber Dark**: #CC8C00
-- **Amber Light**: #FFD580
-- **Amber Muted**: Warm gray (#594F47)
-- **Success**: CGA Green (#00AA00)
-- **Warning/Alert**: CGA Red (#AA0000)
-- **Info**: CGA Cyan (#00AAAA)
+- **Background**: `dosBlack` #000000 (pure black)
+- **Card Background**: `cardBackground` #1B1917 (warm near-black)
+- **Dim amber**: `amberDark` #9a5700 (secondary text, dimmed states — 18pt+ only)
+- **Bright amber**: `amberLight` #fdca9f (highlights, focus states)
+- **Pressed**: `amberPressed` #cc8c00 (button pressed state)
+- **Muted**: `amberMuted` #555555 (disabled states, neutral gray)
+- **Success/In-range**: `cgaGreen` #55ff55
+- **Error/High**: `cgaRed` #ff5555
+- **Info/Cyan**: `cgaCyan` #55ffff
 
 ### Color Token Reference (AmberTheme.swift)
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `amber` | #FFB000 | Primary text, data, buttons |
-| `amberDark` | #CC8C00 | Secondary text, dimmed states |
-| `amberLight` | #FFD580 | Highlights, emphasis |
-| `amberMuted` | #594F47 | Borders, grid lines, disabled text |
-| `amberPressed` | #CC8C00 | Button pressed state |
-| `dosBlack` | #0A0A0A | Primary background |
+| `amber` | #ffb000 | Primary text, data, buttons |
+| `amberDark` | #9a5700 | Secondary text, dimmed states (18pt+ only) |
+| `amberLight` | #fdca9f | Highlights, focus states |
+| `amberPressed` | #cc8c00 | Button pressed state |
+| `amberMuted` | #555555 | Disabled states, neutral gray |
+| `dosBlack` | #000000 | Primary background |
 | `cardBackground` | #1B1917 | Card/section background |
-| `dosGray` | #594F47 | Warm-tinted gray, separators |
-| `dosBorder` | #594F47 | Borders |
-| `cgaGreen` | #00AA00 | In-range / success |
-| `cgaRed` | #AA0000 | Out-of-range / error |
-| `cgaCyan` | #00AAAA | Sensor data lines, info |
-| `cgaWhite` | #AAAAAA | Neutral text |
+| `dosBorder` | #594F47 | Borders and separators |
+| `cgaGreen` | #55ff55 | In-range / success |
+| `cgaCyan` | #55ffff | Sensor lines, info, AI insight card |
+| `cgaRed` | #ff5555 | Out-of-range / error |
+| `cgaMagenta` | #ff55ff | CGA magenta accent |
+| `cgaWhite` | #aaaaaa | Neutral/disabled text |
+| `iobBolus` | #8CBF40 | IOB meal/snack bolus chart layer |
+| `iobBasal` | #5DD0F3 | IOB basal + correction chart layer |
 
 ### Usage Guidelines
 
 #### Text Hierarchy
-- **Primary Text**: AmberTheme.amber (#FFB000)
-- **Secondary Text**: AmberTheme.amberDark (#CC8C00)
-- **Muted/Disabled**: AmberTheme.amberMuted (#594F47)
+- **Primary Text**: AmberTheme.amber (#ffb000) — informational text, AA-compliant on black
+- **Secondary/Dimmed**: AmberTheme.amberDark (#9a5700) — reserved for intentional dimming/disabled/decorative strokes; not for informational text
+- **Muted/Disabled**: AmberTheme.amberMuted (#555555) — disabled states, neutral gray
 
 #### Interactive Elements
 - **Default State**: Amber text on dark background
@@ -62,14 +65,15 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 ### Font Scale
 | Token | Size | Weight | Usage |
 |-------|------|--------|-------|
-| `glucoseHero` | 60pt | Bold mono | Hero glucose display |
-| `title` | 28pt | Bold mono | Screen titles |
-| `header` | 22pt | Bold mono | Section headers |
-| `body` | 17pt | Regular mono | Body text |
-| `bodySmall` | 15pt | Regular mono | Secondary body |
-| `button` | 15pt | Medium mono | Button labels |
-| `caption` | 13pt | Regular mono | Captions, labels |
-| `data` | 17pt | Medium mono | Data values |
+| `glucoseHero` | 60pt | Bold mono + monospacedDigit | Hero glucose display |
+| `displayMedium` | 28pt | Bold mono | Section headers |
+| `bodyLarge` | 20pt | Regular mono | Emphasized content |
+| `body` | 17pt | Regular mono | Standard body text |
+| `bodySmall` | 15pt | Regular mono | Secondary body, timestamps, metadata |
+| `button` | 17pt | Semibold mono | Interactive elements |
+| `caption` | 12pt | Regular mono | Captions, chart axes |
+| `tabBar` | 10pt | Medium mono | Navigation labels |
+| `mono(size:weight:)` | custom | — | Custom-sized monospaced font |
 
 ### Letter Spacing
 - **Body**: 0pt (default)
@@ -166,10 +170,10 @@ Every new shared component PR certifies against this list:
 ```swift
 // All colors defined in Library/DesignSystem/AmberTheme.swift
 // Shared between App and Widget targets
-AmberTheme.amber      // Primary amber #FFB000
-AmberTheme.dosBlack   // Background #0A0A0A
-AmberTheme.cgaGreen   // In-range #00AA00
-AmberTheme.cgaRed     // Out-of-range #AA0000
+AmberTheme.amber      // Primary amber #ffb000
+AmberTheme.dosBlack   // Background #000000
+AmberTheme.cgaGreen   // In-range #55ff55
+AmberTheme.cgaRed     // Out-of-range #ff5555
 ```
 
 ### File Locations
@@ -180,9 +184,54 @@ AmberTheme.cgaRed     // Out-of-range #AA0000
 - `App/DesignSystem/Modifiers/DOSModifiers.swift` — View modifiers (App only)
 
 ### iOS Compatibility
-- Deployment target: iOS 15.0
-- No `.kerning()` on View (iOS 16+ only)
-- Use `.tracking()` on Text if needed
+- Deployment target: iOS 26.0
+
+## Prototype-Driven Design Workflow
+
+**Status: provisional** — the full frame→implement→verify loop hasn't been trialed end-to-end yet. The marker is removed once a dense screen is successfully designed in the eiDotter Figma library (DMNC-802) and implemented from the frame without needing prose (U4, DMNC-791).
+
+### When to use a frame vs prose
+
+| Change type | Approach |
+|-------------|----------|
+| Dense or net-new screen (overview, chart, marker lane, modal) | Figma frame → implement |
+| Small/incremental change (button label, toggle position, colour tweak) | Prose description |
+
+When in doubt: if prose would require more than two sentences of spatial description, design a frame.
+
+### The frame→implement→verify loop
+
+1. **Design** — Open the DOSBTS app file in the eiDotter Figma library (DMNC-1119) and design the target frame. Use eiDotter tokens for colour and type; iOS 26 components for system controls.
+2. **Hand off** — Provide the Figma frame URL when starting the implementation session. Claude reads the frame live via the Figma MCP (`mcp__claude_ai_Figma__get_design_context`, `get_screenshot`).
+3. **Snapshot** — Export the frame as a PNG (optimised via the manual Pillow script — `docs/solutions/best-practices/png-screenshot-optimization-via-pillow-20260422.md`) and commit it plus a companion spec to `docs/design-frames/` in the same PR. See `docs/design-frames/README.md` for naming convention and spec format.
+4. **No-MCP fallback** — If the Figma MCP isn't available, implement from the committed snapshot + companion spec in `docs/design-frames/`. The spec must be sufficient on its own (key measurements, tokens, layout notes).
+5. **Implement** — Claude implements against the frame/snapshot as the exact design source-of-truth, not prose.
+6. **Verify** — Screenshot the running build and compare against the frame. Iterate until the implementation matches.
+
+### Token consumption: mirroring eiDotter into AmberTheme
+
+For each eiDotter token encountered during frame implementation:
+
+- **PORT** — token maps to an existing `AmberTheme` property (use it as-is)
+- **SKIP** — token is a system control colour that iOS handles automatically (skip)
+- **EVALUATE** — new token not in `AmberTheme`; add it to `AmberTheme.swift`, update `DesignTokenPinTests.swift` expected values, and document it in this file
+
+Never copy raw hex from eiDotter. Always mirror through `AmberTheme` and the drift-guard test.
+
+### Platform constraints checklist
+
+Every frame must be implementable within these iOS/DOSBTS constraints. Flag violations before starting implementation:
+
+- [ ] **Nav titles** — use `dosNavigationTitle` (principal toolbar item), never bare `.navigationTitle` — iOS 26 ignores `UINavigationBar.appearance()` title attributes
+- [ ] **Persistent bars** — bottom bars must use `safeAreaInset(edge: .bottom)`, not `tabViewBottomAccessory` (liquid glass conflicts with DOS theme)
+- [ ] **Sheets** — no nested sheets; use `NavigationLink` (push) inside a sheet-presented view
+- [ ] **No real white** — all text is amber/CGA; `.foregroundStyle(.white)` is forbidden
+- [ ] **No ad-hoc font sizes** — use `DOSTypography` members only
+- [ ] **NavigationStack** — new screens must use `NavigationStack`, not legacy `NavigationView`
+
+### Token drift-guard
+
+`DOSBTSTests/DesignTokenPinTests.swift` pins the hand-mirrored eiDotter token values. When you add or change a token in `AmberTheme.swift`, update the corresponding expected RGB value in that test. The guard catches accidental local edits; true upstream-divergence detection awaits DMNC-801's generated tokens.
 
 ## Brand Identity
 

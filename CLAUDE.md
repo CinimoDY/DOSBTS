@@ -180,6 +180,13 @@ Rules:
 - SF Symbols have inconsistent intrinsic sizes — use `.frame(height:)` on icons when pixel-perfect alignment matters
 - Fast, snappy animations (linear, short duration)
 
+**Prototype-Driven Design Workflow** (provisional — full docs in `docs/design-system.md`):
+- **Dense/new screens**: use a Figma frame as the exact design source-of-truth. Frame URL → live MCP read (`mcp__claude_ai_Figma__get_design_context`) → implement → verify by screenshot.
+- **Small/incremental changes**: prose description is fine — no frame required.
+- **No-MCP fallback**: implement from the committed PNG snapshot + companion spec in `docs/design-frames/` (see `docs/design-frames/README.md`).
+- **Token consumption flow**: PORT (existing `AmberTheme` token) → SKIP (system-handled) → EVALUATE (new: add to `AmberTheme.swift`, update `DesignTokenPinTests.swift`, document here). Never copy raw hex.
+- **Platform constraints** (check before implementing any frame): `dosNavigationTitle` for nav bar titles; `safeAreaInset(edge: .bottom)` for persistent bars; no nested `.sheet` inside a sheet; no real white; `DOSTypography` members only; `NavigationStack` not `NavigationView`.
+
 ## Adding New State Properties
 
 **For UserDefaults-backed settings** (toggles, preferences), add in 4 files:

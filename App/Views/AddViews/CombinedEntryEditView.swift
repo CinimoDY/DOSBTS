@@ -103,7 +103,7 @@ struct CombinedEntryEditView: View {
                         )
                     ]
                 }
-            case .bolus, .basal:
+            case .bolus, .correction, .basal:
                 if let i = store.state.insulinDeliveryValues.first(where: { $0.id == marker.sourceID }) {
                     originalInsulinDelivery = i
                     insulinType = i.type
