@@ -57,26 +57,6 @@ struct ConsolidatedMarkerGroup: Identifiable {
     let markers: [EventMarker]
 
     var isSingle: Bool { markers.count == 1 }
-
-    var dominantType: EventMarkerType {
-        let counts = Dictionary(grouping: markers, by: \.type).mapValues(\.count)
-        return counts.max(by: { $0.value < $1.value })?.key ?? .meal
-    }
-
-    var summaryLabel: String {
-        let totalCarbs = markers
-            .filter { $0.type == .meal }
-            .reduce(0.0) { $0 + $1.rawValue }
-        if totalCarbs > 0 {
-            return "\(Int(totalCarbs))g"
-        }
-        return "\(markers.count)"
-    }
-
-    var totalCarbs: Double? {
-        let carbs = markers.filter { $0.type == .meal }.reduce(0.0) { $0 + $1.rawValue }
-        return carbs > 0 ? carbs : nil
-    }
 }
 
 extension ConsolidatedMarkerGroup: Equatable {
