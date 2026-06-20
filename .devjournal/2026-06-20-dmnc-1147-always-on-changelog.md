@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-20
 **Branch:** claude/dmnc-1147
-**PR:** _pending_
+**PR:** https://github.com/CinimoDY/DOSBTS/pull/63
 
 ## What changed
 
