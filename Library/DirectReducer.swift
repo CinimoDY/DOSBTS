@@ -473,6 +473,13 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .clearTightControlCelebration:
         state.tightControlCelebration = nil
 
+    // MARK: What's New / changelog (DMNC-1147)
+    case .setLastSeenBuild(build: let build):
+        state.lastSeenBuild = build
+
+    case .setSettingsCategory(category: let category):
+        state.selectedSettingsCategory = category
+
     // MARK: Heart Rate Overlay (DMNC-848)
     case .setShowHeartRateOverlay(enabled: let enabled):
         state.showHeartRateOverlay = enabled

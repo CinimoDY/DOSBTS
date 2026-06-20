@@ -88,8 +88,18 @@ struct ContentView: View {
             .onAppear {
                 // Cold launch: the prompt flag may already be set before the
                 // onChange observers subscribe (e.g. a notification action
-                // during launch).
+                // during launch). What's New is checked first so its alarm
+                // predicate sees the treatment flags before
+                // presentTreatmentSheetIfNeeded clears showTreatmentPrompt (R7).
+                presentWhatsNewIfNeeded()
                 presentTreatmentSheetIfNeeded()
+            }
+            .onChange(of: store.state.appState) { _, newValue in
+                // Foreground returns where the value transitions to .active
+                // (the cold-launch-already-active case is covered by onAppear).
+                if newValue == .active {
+                    presentWhatsNewIfNeeded()
+                }
             }
             .onChange(of: store.state.showTreatmentPrompt) { _, newValue in
                 guard newValue else { return }
@@ -181,6 +191,42 @@ struct ContentView: View {
         if store.state.showTreatmentPrompt {
             store.dispatch(.setShowTreatmentPrompt(show: false))
         }
+    }
+
+    /// Auto-present "What's New" once per update (DMNC-1147). Pure decision in
+    /// WhatsNewPresenter; this wiring composes the alarm-active predicate (KTD7),
+    /// advances lastSeenBuild at present time (KTD5), and records the build
+    /// silently on a fresh install (R6).
+    private func presentWhatsNewIfNeeded() {
+        // A non-numeric build string is a no-op — never advance, never present.
+        guard let currentBuild = Int(DirectConfig.appBuild) else { return }
+
+        let lastSeen = store.state.lastSeenBuild
+
+        // Fresh install (R6): record the current build silently, present nothing.
+        if lastSeen == 0 {
+            store.dispatch(.setLastSeenBuild(build: currentBuild))
+            return
+        }
+
+        let alarmActive = store.state.treatmentCycleActive
+            || store.state.showTreatmentPrompt
+            || store.state.recheckDispatched
+
+        guard WhatsNewPresenter.shouldPresent(
+            currentBuild: currentBuild,
+            lastSeenBuild: lastSeen,
+            alarmActive: alarmActive
+        ) else { return }
+
+        let slices = WhatsNewPresenter.buildsToShow(builds: ChangelogParser.bundled(), since: lastSeen)
+
+        // Advance at present time, regardless of whether the bundle happens to
+        // carry an entry for this build — so we don't re-check every launch.
+        store.dispatch(.setLastSeenBuild(build: currentBuild))
+
+        guard !slices.capped.isEmpty else { return }
+        sheets.present(.whatsNew(builds: slices.capped, allBuilds: slices.full))
     }
 
     private var isShowing: Binding<Bool> {

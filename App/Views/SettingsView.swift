@@ -9,6 +9,8 @@ import SwiftUI
 /// sub-screen. Section views live in the category containers under
 /// App/Views/Settings/.
 struct SettingsView: View {
+    @EnvironmentObject var store: DirectStore
+
     var body: some View {
         // Strip above the page title + bar below — see GlucoseFramedTab.
         GlucoseFramedTab {
@@ -84,7 +86,34 @@ struct SettingsView: View {
             .dosNavigationTitle("Settings")
             .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            // Programmatic push for changelog deep links (DMNC-1147, KTD6).
+            // Coexists with the closure NavigationLinks above (which handle
+            // ordinary user taps); this only fires when a deep link sets the
+            // category. SwiftUI nils the binding on back-nav, clearing the
+            // transient state so a relaunch never re-pushes (KTD6).
+            .navigationDestination(item: settingsCategoryBinding) { category in
+                categoryView(for: category)
             }
+            }
+        }
+    }
+
+    private var settingsCategoryBinding: Binding<SettingsCategory?> {
+        Binding(
+            get: { store.state.selectedSettingsCategory },
+            set: { store.dispatch(.setSettingsCategory(category: $0)) }
+        )
+    }
+
+    @ViewBuilder
+    private func categoryView(for category: SettingsCategory) -> some View {
+        switch category {
+        case .alarms: AlarmsCategoryView()
+        case .glucose: GlucoseDisplayCategoryView()
+        case .insulin: InsulinCategoryView()
+        case .sensor: SensorConnectionCategoryView()
+        case .integrations: SettingsConnectionsView()
+        case .about: SystemAboutCategoryView()
         }
     }
 }

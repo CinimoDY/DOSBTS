@@ -21,6 +21,19 @@ struct AboutView: View {
             Label("Disclaimer", systemImage: "exclamationmark.shield")
         }
 
+        // Permanent What's New history (DMNC-1147, R8): full build changelog,
+        // openable anytime. Pushed into the settings NavigationStack — entries
+        // render plain here (linksActive: false, R12).
+        Section {
+            NavigationLink {
+                WhatsNewView(builds: ChangelogParser.bundled(), linksActive: false)
+            } label: {
+                Label("What's New", systemImage: "sparkles")
+            }
+        } header: {
+            Label("Changelog", systemImage: "list.bullet.rectangle")
+        }
+
         Section(
             content: {
                 HStack {

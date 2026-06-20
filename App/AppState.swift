@@ -150,6 +150,7 @@ struct AppState: DirectState {
         self.tightControlStreakCount = defaults.tightControlStreakCount
         self.tightControlLastCelebratedStreakStart = defaults.tightControlLastCelebratedStreakStart
         self.tightControlPendingCelebrationCount = defaults.tightControlPendingCelebrationCount
+        self.lastSeenBuild = defaults.lastSeenBuild
     }
 
     // MARK: Internal
@@ -314,4 +315,8 @@ struct AppState: DirectState {
     var tightControlLastCelebratedStreakStart: Date? { didSet { defaults.tightControlLastCelebratedStreakStart = tightControlLastCelebratedStreakStart } }
     var tightControlPendingCelebrationCount: Int { didSet { defaults.tightControlPendingCelebrationCount = tightControlPendingCelebrationCount } }
     var tightControlCelebration: TightControlCelebration? // ephemeral — not persisted
+
+    // MARK: What's New / changelog (DMNC-1147)
+    var lastSeenBuild: Int { didSet { defaults.lastSeenBuild = lastSeenBuild } }
+    var selectedSettingsCategory: SettingsCategory? // ephemeral nav state — not persisted
 }

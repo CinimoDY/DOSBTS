@@ -150,6 +150,17 @@ protocol DirectState {
     /// Ephemeral (not persisted): set by the middleware when a celebration should be
     /// presented, observed by ContentView to drive the toast, then cleared.
     var tightControlCelebration: TightControlCelebration? { get set }
+
+    // MARK: What's New / changelog (DMNC-1147)
+    /// Highest build whose "What's New" the user has seen. `0` is the
+    /// fresh-install sentinel (`integer(forKey:)` default) → record current,
+    /// present nothing (R6). Advanced at present time, not on dismiss (KTD5).
+    var lastSeenBuild: Int { get set }
+
+    /// Transient Settings-category push target for a deep-link tap (KTD6).
+    /// NOT persisted — must not survive relaunch, or the app would re-push the
+    /// last deep-linked category on cold launch. Cleared on back-navigation.
+    var selectedSettingsCategory: SettingsCategory? { get set }
 }
 
 extension DirectState {
