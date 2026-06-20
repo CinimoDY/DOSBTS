@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 107] — 2026-06-20
+
+_No user-visible changes — build bump only (rebuild of Build 106 contents)._
+
 ## [Build 106] — 2026-06-20
 
 ### Added
