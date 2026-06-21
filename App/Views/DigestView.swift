@@ -416,13 +416,6 @@ private struct DigestInsightCard: View {
     }
 }
 
-private extension View {
-    /// Block is invisible until its stage index is revealed.
-    func stagedReveal(_ stage: Int, revealed: Int) -> some View {
-        opacity(revealed > stage ? 1 : 0)
-    }
-}
-
 /// Legacy fallback renderer: insights saved before the structured JSON
 /// format (paragraph + "- " bullets), and any response DigestInsight.parse
 /// rejects, render as plain text via this view.

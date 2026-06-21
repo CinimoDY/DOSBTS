@@ -83,6 +83,9 @@ private enum Keys: String {
     case tightControlLastCelebratedStreakStart = "libre-direct.settings.tight-control-last-celebrated-streak-start"
     case tightControlPendingCelebrationCount = "libre-direct.settings.tight-control-pending-celebration-count"
 
+    // What's New / changelog (DMNC-1147)
+    case lastSeenBuild = "libre-direct.changelog.last-seen-build"
+
     // Day/Night alarm profiles
     case dayAlarmHigh = "libre-direct.settings.day-alarm-high"
     case dayAlarmLow = "libre-direct.settings.day-alarm-low"
@@ -1009,6 +1012,19 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Keys.tightControlStreakCount.rawValue)
+        }
+    }
+
+    // MARK: What's New / changelog (DMNC-1147)
+
+    /// Highest build whose What's New the user has seen. `integer(forKey:)`
+    /// returns `0` when unset — the fresh-install sentinel (R6, KTD4).
+    var lastSeenBuild: Int {
+        get {
+            integer(forKey: Keys.lastSeenBuild.rawValue)
+        }
+        set {
+            set(newValue, forKey: Keys.lastSeenBuild.rawValue)
         }
     }
 

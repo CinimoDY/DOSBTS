@@ -176,6 +176,13 @@ enum DirectAction {
     /// Clears the transient celebration after the toast has been shown.
     case clearTightControlCelebration
 
+    // MARK: What's New / changelog (DMNC-1147)
+    /// Records the highest build whose What's New the user has seen. Dispatched
+    /// at present time (and silently on fresh install) — never on dismiss (KTD5).
+    case setLastSeenBuild(build: Int)
+    /// Pushes (non-nil) or clears (nil) the deep-link Settings-category target.
+    case setSettingsCategory(category: SettingsCategory?)
+
     // MARK: Heart Rate Overlay (DMNC-848)
     case setShowHeartRateOverlay(enabled: Bool)
 

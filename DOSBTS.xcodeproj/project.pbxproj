@@ -49,6 +49,9 @@
 		TE0100010000001800A00018 /* TightControlStreakDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001800A00018 /* TightControlStreakDetectorTests.swift */; };
 		TE0100010000001900A00019 /* TightControlMiddlewareTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */; };
 		TE0100010000002000A00020 /* TightControlToastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002000A00020 /* TightControlToastTests.swift */; };
+		C0A6101100000001000A1147 /* ChangelogParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A6101200000001000A1147 /* ChangelogParserTests.swift */; };
+		C0A6101100000002000A1147 /* WhatsNewPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A6101200000002000A1147 /* WhatsNewPresenterTests.swift */; };
+		C0A6101100000003000A1147 /* ChangelogDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A6101200000003000A1147 /* ChangelogDestinationTests.swift */; };
 		A7970000FEE00000000A0002 /* AnimationTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7970000FEE00000000A0001 /* AnimationTokensTests.swift */; };
 		F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */; };
 		TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002100A00021 /* DesignTokenPinTests.swift */; };
@@ -129,6 +132,9 @@
 		TE0100020000001800A00018 /* TightControlStreakDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlStreakDetectorTests.swift; sourceTree = "<group>"; };
 		TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlMiddlewareTests.swift; sourceTree = "<group>"; };
 		TE0100020000002000A00020 /* TightControlToastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TightControlToastTests.swift; sourceTree = "<group>"; };
+		C0A6101200000001000A1147 /* ChangelogParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogParserTests.swift; sourceTree = "<group>"; };
+		C0A6101200000002000A1147 /* WhatsNewPresenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewPresenterTests.swift; sourceTree = "<group>"; };
+		C0A6101200000003000A1147 /* ChangelogDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogDestinationTests.swift; sourceTree = "<group>"; };
 		A7970000FEE00000000A0001 /* AnimationTokensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationTokensTests.swift; sourceTree = "<group>"; };
 		F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMarkerTypeTests.swift; sourceTree = "<group>"; };
 		TE0100020000002100A00021 /* DesignTokenPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenPinTests.swift; sourceTree = "<group>"; };
@@ -147,6 +153,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Extensions/Float.swift,
+				Resources/CHANGELOG.md,
 				Resources/achievement.aiff,
 				Resources/alarm.aiff,
 				"Resources/buzz-beep.aiff",
@@ -285,6 +292,9 @@
 				TE0100020000001800A00018 /* TightControlStreakDetectorTests.swift */,
 				TE0100020000001900A00019 /* TightControlMiddlewareTests.swift */,
 				TE0100020000002000A00020 /* TightControlToastTests.swift */,
+				C0A6101200000001000A1147 /* ChangelogParserTests.swift */,
+				C0A6101200000002000A1147 /* WhatsNewPresenterTests.swift */,
+				C0A6101200000003000A1147 /* ChangelogDestinationTests.swift */,
 				A7970000FEE00000000A0001 /* AnimationTokensTests.swift */,
 				F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */,
 				TE0100020000002100A00021 /* DesignTokenPinTests.swift */,
@@ -494,6 +504,9 @@
 				TE0100010000001800A00018 /* TightControlStreakDetectorTests.swift in Sources */,
 				TE0100010000001900A00019 /* TightControlMiddlewareTests.swift in Sources */,
 				TE0100010000002000A00020 /* TightControlToastTests.swift in Sources */,
+				C0A6101100000001000A1147 /* ChangelogParserTests.swift in Sources */,
+				C0A6101100000002000A1147 /* WhatsNewPresenterTests.swift in Sources */,
+				C0A6101100000003000A1147 /* ChangelogDestinationTests.swift in Sources */,
 				A7970000FEE00000000A0002 /* AnimationTokensTests.swift in Sources */,
 				F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */,
 				TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */,

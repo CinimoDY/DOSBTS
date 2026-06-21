@@ -115,6 +115,34 @@ struct RootSheetContent: View {
                 .environmentObject(store)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+
+        case let .whatsNew(builds, allBuilds):
+            // Own NavigationStack so the title bar + Done button render in the
+            // sheet. Linked entries dismiss-then-navigate (KTD6): no nested
+            // sheet — the destination just switches tab / pushes a Settings
+            // category. lastSeenBuild already advanced at present time (KTD5),
+            // so the dismiss path needs no special handling.
+            NavigationStack {
+                WhatsNewView(
+                    builds: builds,
+                    allBuilds: allBuilds,
+                    linksActive: true,
+                    onSelectDestination: { destination in
+                        sheets.dismiss()
+                        for action in destination.actions() {
+                            store.dispatch(action)
+                        }
+                    }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { sheets.dismiss() }
+                            .foregroundStyle(AmberTheme.amberLight)
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
     }
 

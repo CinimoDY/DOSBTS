@@ -44,3 +44,17 @@ extension View {
             .modifier(DOSNavigationTitle(title: Text(verbatim: title)))
     }
 }
+
+// MARK: - Staged reveal
+
+extension View {
+    /// A block stays invisible until its stage index is revealed by the
+    /// parent's monotonically-increasing reveal counter — the building block of
+    /// the digest insight cascade and the What's New patch-notes cards
+    /// (DMNC-1147). Step the counter with `Task`-spaced `withAnimation` writes
+    /// (not a synchronous loop) so same-tick writes don't coalesce into one
+    /// fade; jump straight to the final count under Reduce Motion.
+    func stagedReveal(_ stage: Int, revealed: Int) -> some View {
+        opacity(revealed > stage ? 1 : 0)
+    }
+}

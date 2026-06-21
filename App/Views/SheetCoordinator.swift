@@ -24,6 +24,10 @@ enum ActiveSheet: Identifiable {
     case treatmentRecheck(glucoseValue: Int)
     case entryGroupReadOverlay(ConsolidatedMarkerGroup)
     case combinedEntryEdit(ConsolidatedMarkerGroup)
+    // What's New auto-sheet (DMNC-1147). Builds are captured at decision time
+    // (before lastSeenBuild advances, KTD5); the id is constant so a second
+    // present is a no-op.
+    case whatsNew(builds: [ChangelogBuild], allBuilds: [ChangelogBuild])
 
     var id: String {
         switch self {
@@ -35,6 +39,7 @@ enum ActiveSheet: Identifiable {
         case .treatmentRecheck: return "treatmentRecheck"
         case .entryGroupReadOverlay(let g): return "entryGroupReadOverlay-\(g.id)"
         case .combinedEntryEdit(let g): return "combinedEntryEdit-\(g.id)"
+        case .whatsNew: return "whatsNew"
         }
     }
 }
