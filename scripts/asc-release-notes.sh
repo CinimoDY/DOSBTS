@@ -94,12 +94,13 @@ NOTES_BODY="$(printf '%s\n' "$BLOCK" \
 echo "==> Review the TestFlight notes for build $BUILD_NUMBER (saving closes the editor)..."
 "${EDITOR:-vi}" "$TMP_NOTES"
 
-# whatsToTest has a 4000-CHARACTER ASC limit; warn but proceed (the API would
+# whatsNew (the API field behind TestFlight's "What to Test") has a 4000-CHARACTER
+# ASC limit; warn but proceed (the API would
 # 409). Count characters with perl, not `wc -c` (bytes) — the cleaned text is
 # em-dash / bullet heavy (3 bytes each in UTF-8), so a byte count overcounts.
 NOTE_LEN="$(perl -CSD -e 'local $/; my $s = <STDIN>; print length($s // "")' < "$TMP_NOTES")"
 if [ "${NOTE_LEN:-0}" -gt 4000 ]; then
-  echo "WARNING: notes are ${NOTE_LEN} chars; ASC caps whatsToTest at 4000. Trim in the editor." >&2
+  echo "WARNING: notes are ${NOTE_LEN} chars; ASC caps 'What to Test' at 4000. Trim in the editor." >&2
 fi
 
 # --- JWT helper: mint a fresh short-lived token per call (never echoed) -----
@@ -126,7 +127,9 @@ json_get() { python3 -c "$1" 2>/dev/null || true; }
 
 # --- 4. poll until the build registers in ASC (KTD8) -----------------------
 echo "==> Waiting for build $BUILD_NUMBER to register in App Store Connect (up to ~15 min)..."
-BUILD_QUERY="filter%5Bapp%5D=$ASC_APP_ID&filter%5Bversion%5D=$BUILD_NUMBER&filter%5Bplatform%5D=IOS&sort=-uploadedDate&limit=1"
+# NB: /v1/builds does NOT support filter[platform] (ASC returns 400
+# PARAMETER_ERROR.INVALID) — filter by app + version only.
+BUILD_QUERY="filter%5Bapp%5D=$ASC_APP_ID&filter%5Bversion%5D=$BUILD_NUMBER&sort=-uploadedDate&limit=1"
 BUILD_ID=""
 for _ in $(seq 1 30); do
   RESP="$(asc_get "$API/builds?$BUILD_QUERY" 2>/dev/null || true)"
@@ -175,7 +178,7 @@ print(next((x["id"] for x in d.get("data", []) if x.get("attributes", {}).get("l
 LOC_ID="$(resolve_loc_id)"
 
 write_notes() {
-  # Build the JSON body in python (whatsToTest passed via env, never via the
+  # Build the JSON body in python (whatsNew passed via env, never via the
   # shell), and stream it to curl with --data-binary @-. Echoes the HTTP code.
   # Mint the token into a local first so a signing failure aborts the write
   # rather than sending an empty Bearer (see asc_get).
@@ -186,7 +189,7 @@ write_notes() {
 import json, os
 notes = open(os.environ["NOTES_FILE"], encoding="utf-8").read()
 print(json.dumps({"data": {"type": "betaBuildLocalizations", "id": os.environ["LOC_ID"],
-      "attributes": {"whatsToTest": notes}}}))' \
+      "attributes": {"whatsNew": notes}}}))' \
     | curl -sS -X PATCH \
         -H "Authorization: Bearer $jwt" -H "Content-Type: application/json" \
         --data-binary @- -o "$TMP_RESP" -w '%{http_code}' \
@@ -196,7 +199,7 @@ print(json.dumps({"data": {"type": "betaBuildLocalizations", "id": os.environ["L
 import json, os
 notes = open(os.environ["NOTES_FILE"], encoding="utf-8").read()
 print(json.dumps({"data": {"type": "betaBuildLocalizations",
-      "attributes": {"locale": "en-US", "whatsToTest": notes},
+      "attributes": {"locale": "en-US", "whatsNew": notes},
       "relationships": {"build": {"data": {"type": "builds", "id": os.environ["BUILD_ID"]}}}}}))' \
     | curl -sS -X POST \
         -H "Authorization: Bearer $jwt" -H "Content-Type: application/json" \
