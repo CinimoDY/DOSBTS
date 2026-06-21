@@ -11,6 +11,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 - "What's New" in the app: after an update, a one-time DOS patch-notes sheet shows what changed in the builds since you last opened the app — newest first, capped with a "SHOW ALL" for longer gaps, and color-coded Added/Changed/Fixed/Removed. It stays out of the way while a low or treatment alarm is active. Some entries are tappable and jump you straight to the feature they introduced. The full history is always available under Settings → System & About → What's New {tour:settings/about} — DMNC-1147
 - TestFlight builds now carry release notes automatically, derived from this changelog at deploy time (with a review step for per-build "what to test" directions) — so the "What to Test" field is never empty — DMNC-1147
 
+## [Build 107] — 2026-06-20
+
+_No user-visible changes — build bump only (rebuild of Build 106 contents)._
+
 ## [Build 106] — 2026-06-20
 
 ### Added
