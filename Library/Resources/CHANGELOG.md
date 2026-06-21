@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 110] — 2026-06-21
+
+_No user-visible changes — rebuild of Build 109 contents. The build counter was realigned to TestFlight after Build 109 was uploaded twice (an earlier deploy plus a re-run), which left App Store Connect one ahead of the repo._
+
 ## [Build 109] — 2026-06-21
 
 ### Added
