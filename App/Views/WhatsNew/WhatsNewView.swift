@@ -197,7 +197,7 @@ private struct BuildCard: View {
 
             if destination != nil {
                 Image(systemName: "arrow.right.circle")
-                    .font(.system(size: 13))
+                    .font(DOSTypography.mono(size: 13, weight: .regular))
                     .foregroundStyle(AmberTheme.cgaCyan)
             }
         }

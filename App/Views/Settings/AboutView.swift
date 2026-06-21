@@ -23,12 +23,17 @@ struct AboutView: View {
 
         // Permanent What's New history (DMNC-1147, R8): full build changelog,
         // openable anytime. Pushed into the settings NavigationStack — entries
-        // render plain here (linksActive: false, R12).
+        // render plain here (linksActive: false, R12). Parsed once in .task
+        // (not in the destination closure, which SwiftUI rebuilds on every
+        // store publish — DMNC-1147 review).
         Section {
             NavigationLink {
-                WhatsNewView(builds: ChangelogParser.bundled(), linksActive: false)
+                WhatsNewView(builds: changelogBuilds, linksActive: false)
             } label: {
                 Label("What's New", systemImage: "sparkles")
+            }
+            .task {
+                if changelogBuilds.isEmpty { changelogBuilds = ChangelogParser.bundled() }
             }
         } header: {
             Label("Changelog", systemImage: "list.bullet.rectangle")
@@ -164,6 +169,7 @@ struct AboutView: View {
     // MARK: Private
 
     @State private var showingDeleteLogsAlert = false
+    @State private var changelogBuilds: [ChangelogBuild] = []
 
     private static let buildDateFormatter: DateFormatter = {
         let formatter = DateFormatter()

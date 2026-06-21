@@ -16,9 +16,12 @@ struct SettingsView: View {
         GlucoseFramedTab {
             NavigationStack {
             List {
+                // Destinations route through categoryView(for:) — the single
+                // source of truth shared with the deep-link navigationDestination
+                // below, so the two paths can never drift (DMNC-1147 review).
                 Group {
                     NavigationLink {
-                        AlarmsCategoryView()
+                        categoryView(for: .alarms)
                     } label: {
                         SettingsHubRow(
                             icon: "alarm",
@@ -28,7 +31,7 @@ struct SettingsView: View {
                     }
 
                     NavigationLink {
-                        GlucoseDisplayCategoryView()
+                        categoryView(for: .glucose)
                     } label: {
                         SettingsHubRow(
                             icon: "cross.case",
@@ -38,7 +41,7 @@ struct SettingsView: View {
                     }
 
                     NavigationLink {
-                        InsulinCategoryView()
+                        categoryView(for: .insulin)
                     } label: {
                         SettingsHubRow(
                             icon: "syringe",
@@ -48,7 +51,7 @@ struct SettingsView: View {
                     }
 
                     NavigationLink {
-                        SensorConnectionCategoryView()
+                        categoryView(for: .sensor)
                     } label: {
                         SettingsHubRow(
                             icon: "sensor.tag.radiowaves.forward.fill",
@@ -58,7 +61,7 @@ struct SettingsView: View {
                     }
 
                     NavigationLink {
-                        SettingsConnectionsView()
+                        categoryView(for: .integrations)
                     } label: {
                         SettingsHubRow(
                             icon: "antenna.radiowaves.left.and.right",
@@ -68,7 +71,7 @@ struct SettingsView: View {
                     }
 
                     NavigationLink {
-                        SystemAboutCategoryView()
+                        categoryView(for: .about)
                     } label: {
                         SettingsHubRow(
                             icon: "info.circle",

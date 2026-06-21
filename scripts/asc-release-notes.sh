@@ -25,6 +25,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 JWT_TOOL="$SCRIPT_DIR/asc-jwt.py"
 API="https://api.appstoreconnect.apple.com/v1"
 
+# Accept only a build uploaded near this run, so a same-build-number re-upload
+# (deploy.sh does not auto-bump) can't match a stale resource from a prior run.
+# Captured before the slow editor/poll steps; the fresh upload is minutes old.
+RUN_START="$(date -u +%s)"
+MAX_BUILD_AGE=7200  # ~2h window: comfortably covers upload->registration + edit time
+
 if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 not found (needed for JWT signing + JSON)." >&2
   exit 1
@@ -62,16 +68,15 @@ if ! printf '%s' "$BUILD_NUMBER" | grep -qE '^[0-9]+$'; then
   exit 1
 fi
 
-# --- 2. clean → TestFlight notes (same KTD2 grammar as ChangelogParser) -----
-# Strips the {tour:} marker and trailing developer metadata (iteratively, so
-# chained '— A — B' runs are removed), uppercases group headers, and bullets
-# entries. \x{2014} is the em dash; a trailing segment that does not start with
-# a known issue token (a prose em-dash) is left intact.
-# [ \t]* (not \s*) at the tail so the iterative strip never eats the line's
-# own newline and collapses adjacent bullets together.
-NOTES_BODY="$(printf '%s\n' "$BLOCK" | perl -CSD -pe '
-  s/[ \t]*\{tour:[^}]*\}//g;
-  1 while s/[ \t]+\x{2014}[ \t]+(?:DMNC-\d+|PR\ \#\d+|R\d+|AE\d+|D\d+|[A-Z]{2,}-\d+)(?:,?[ \t]+(?:DMNC-\d+|PR\ \#\d+|R\d+|AE\d+|D\d+|[A-Z]{2,}-\d+|[a-z][a-z-]+|\([^)]*\)))*\.?[ \t]*$//;
+# --- 2. clean → TestFlight notes ------------------------------------------
+# Stage 1: strip {tour:} + trailing metadata via the shared KTD2 grammar
+# (strip-changelog-metadata.pl — the single source of truth, twinned with
+# Swift ChangelogParser and guarded by check-changelog-parity.sh).
+# Stage 2: presentation only — reformat the build header, uppercase group
+# headers, and bullet entries for the TestFlight field.
+NOTES_BODY="$(printf '%s\n' "$BLOCK" \
+  | perl "$SCRIPT_DIR/strip-changelog-metadata.pl" \
+  | perl -CSD -pe '
   s/^## \[Build ([^\]]+)\][ \t]*\x{2014}[ \t]*(\S+).*$/BUILD $1 \x{2014} $2/;
   s/^###\s+(.*)$/\U$1/;
   s/^- /\x{2022} /;
@@ -125,26 +130,49 @@ BUILD_QUERY="filter%5Bapp%5D=$ASC_APP_ID&filter%5Bversion%5D=$BUILD_NUMBER&filte
 BUILD_ID=""
 for _ in $(seq 1 30); do
   RESP="$(asc_get "$API/builds?$BUILD_QUERY" 2>/dev/null || true)"
-  BUILD_ID="$(printf '%s' "$RESP" | json_get '
-import sys, json
+  # Accept the newest matching build only if its uploadedDate is within
+  # MAX_BUILD_AGE of this run — otherwise it's a stale prior upload sharing the
+  # build number, so keep polling for the fresh one to register.
+  BUILD_ID="$(printf '%s' "$RESP" | RUN_START="$RUN_START" MAX_AGE="$MAX_BUILD_AGE" json_get '
+import sys, json, os
+from datetime import datetime
 d = json.load(sys.stdin)
-print(d["data"][0]["id"] if d.get("data") else "")')"
+data = d.get("data") or []
+if not data:
+    print(""); raise SystemExit
+b = data[0]
+bid = b.get("id", "")
+uploaded = (b.get("attributes") or {}).get("uploadedDate")
+if not uploaded:
+    print(bid); raise SystemExit  # no date -> best effort, accept
+try:
+    ts = datetime.fromisoformat(uploaded.replace("Z", "+00:00")).timestamp()
+except Exception:
+    print(bid); raise SystemExit
+age = float(os.environ["RUN_START"]) - ts
+print(bid if age <= float(os.environ["MAX_AGE"]) else "")')"
   [ -n "$BUILD_ID" ] && break
   sleep 30
 done
 
 if [ -z "$BUILD_ID" ]; then
-  echo "ERROR: build $BUILD_NUMBER did not register within the timeout. Re-run later." >&2
+  echo "ERROR: build $BUILD_NUMBER did not register (a recent upload) within the timeout. Re-run later." >&2
   exit 1
 fi
 echo "==> Found build $BUILD_NUMBER (id $BUILD_ID)."
 
 # --- 5. find an existing en-US localization, then PATCH or POST ------------
-LOC_RESP="$(asc_get "$API/builds/$BUILD_ID/betaBuildLocalizations" 2>/dev/null || true)"
-LOC_ID="$(printf '%s' "$LOC_RESP" | json_get '
+# Re-resolvable so a retry after the VALID wait upgrades POST->PATCH if the
+# first attempt (or ASC) created the localization in the meantime.
+resolve_loc_id() {
+  local resp
+  resp="$(asc_get "$API/builds/$BUILD_ID/betaBuildLocalizations" 2>/dev/null || true)"
+  printf '%s' "$resp" | json_get '
 import sys, json
 d = json.load(sys.stdin)
-print(next((x["id"] for x in d.get("data", []) if x.get("attributes", {}).get("locale") == "en-US"), ""))')"
+print(next((x["id"] for x in d.get("data", []) if x.get("attributes", {}).get("locale") == "en-US"), ""))'
+}
+LOC_ID="$(resolve_loc_id)"
 
 write_notes() {
   # Build the JSON body in python (whatsToTest passed via env, never via the
@@ -185,16 +213,42 @@ if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
   exit 0
 fi
 
-# --- unhappy path: a write rejected because the build is still PROCESSING ---
-if grep -qiE 'processing|not.*valid|state' "$TMP_RESP"; then
-  echo "==> Write rejected ($HTTP) — build may still be processing. Waiting for VALID (up to ~30 min)..."
+# Auth/permission failures never resolve by waiting (KTD8: fail fast).
+if [ "$HTTP" = "401" ] || [ "$HTTP" = "403" ]; then
+  echo "ERROR: App Store Connect rejected the request (HTTP $HTTP) — check ASC credentials/permissions. Upload intact." >&2
+  cat "$TMP_RESP" >&2
+  exit 1
+fi
+
+# --- unhappy path: only a processing-state rejection is worth the VALID wait.
+# Branch on the parsed error code/detail, NOT a grep over the whole body — auth
+# messages contain "valid"/"invalid" and false-matched the old heuristic.
+ERR_DETAIL="$(json_get '
+import sys, json
+d = json.load(sys.stdin)
+errs = d.get("errors") or []
+print(((errs[0].get("code") or "") + " " + (errs[0].get("detail") or "")) if errs else "")' < "$TMP_RESP")"
+
+if printf '%s' "$ERR_DETAIL" | grep -qiE 'processing state|not in a valid|still processing|state.*not.*valid'; then
+  echo "==> Write rejected (HTTP $HTTP) — build not yet VALID. Waiting (up to ~30 min)..."
+  REACHED_VALID=0
+  STATE=""
   for _ in $(seq 1 60); do
     STATE="$(asc_get "$API/builds/$BUILD_ID" 2>/dev/null | json_get '
 import sys, json
 print(json.load(sys.stdin).get("data", {}).get("attributes", {}).get("processingState", ""))')"
-    [ "$STATE" = "VALID" ] && break
+    if [ "$STATE" = "VALID" ]; then REACHED_VALID=1; break; fi
+    if [ "$STATE" = "INVALID" ] || [ "$STATE" = "FAILED" ]; then
+      echo "ERROR: build $BUILD_NUMBER processing state is $STATE (binary rejected by Apple). Upload intact; fix and re-deploy." >&2
+      exit 1
+    fi
     sleep 30
   done
+  if [ "$REACHED_VALID" != "1" ]; then
+    echo "ERROR: build $BUILD_NUMBER did not reach VALID within the wait (last state: ${STATE:-unknown}). Upload intact; re-run this script once processing completes." >&2
+    exit 1
+  fi
+  LOC_ID="$(resolve_loc_id)"   # re-resolve: the first attempt may have created it
   HTTP="$(write_notes)"
   if [ "$HTTP" = "200" ] || [ "$HTTP" = "201" ]; then
     echo "==> Done (after wait). TestFlight 'What to Test' set for build $BUILD_NUMBER."

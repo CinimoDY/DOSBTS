@@ -163,6 +163,25 @@ struct ChangelogParserTests {
         #expect(text.contains("2+ meals"))
     }
 
+    // MARK: Bundled resource (U2)
+
+    @Test("bundled() reads and parses the committed Library/Resources/CHANGELOG.md")
+    func bundledReturnsBuilds() {
+        // FrameworkBundle.main resolves to the app bundle (Library compiles into
+        // the app target), which ships Library/Resources/CHANGELOG.md.
+        let builds = ChangelogParser.bundled()
+        #expect(!builds.isEmpty)
+        // Newest-first, with a parseable build number.
+        #expect(builds.first?.buildNumber ?? 0 > 0)
+    }
+
+    @Test("A missing/unreadable resource degrades to [] (same path as empty input)")
+    func bundledMissingResourceIsEmpty() {
+        // bundled() returns parse(contents) and parse("") -> [], so the nil-URL /
+        // unreadable-file guard yields [] rather than crashing (R2 leniency).
+        #expect(ChangelogParser.parse("").isEmpty)
+    }
+
     // MARK: Helpers
 
     private func firstEntry(_ line: String) -> String {
