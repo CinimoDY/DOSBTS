@@ -142,14 +142,21 @@ struct ContentView: View {
                 // Ensure data loads happen even if scenePhase was already .active
                 store.dispatch(.setAppState(appState: .active))
 
-                let appearance = UITabBarAppearance()
-                appearance.configureWithOpaqueBackground()
-                appearance.backgroundColor = .black
-
-                UITabBar.appearance().scrollEdgeAppearance = appearance
+                // Tab bar appearance (DMNC-1029). NOTE: the iOS 26 SwiftUI
+                // TabView Liquid Glass bar ignores UITabBar.appearance()
+                // entirely — granular item colors, the convenience tint, AND
+                // backgroundColor all have no effect (verified empirically,
+                // DMNC-1167; see DOSTabBarAppearance + the liquid-glass gotchas
+                // doc). Unselected items stay the system secondary color; the
+                // selected tint comes from the root .tint(amber) in App.swift.
+                // The factory is installed as the correct/forward-compatible
+                // config (currently inert), and is the single source of the
+                // token→state mapping — the legacy convenience tint setters are
+                // intentionally omitted (they only duplicated the same inert
+                // mapping; there is no pre-iOS-26 surface in this app to need them).
+                let appearance = DOSTabBarAppearance.make()
                 UITabBar.appearance().standardAppearance = appearance
-                UITabBar.appearance().unselectedItemTintColor = UIColor(AmberTheme.amberDark)
-                UITabBar.appearance().tintColor = UIColor(AmberTheme.amber)
+                UITabBar.appearance().scrollEdgeAppearance = appearance
 
                 // CGA monitor feel for the nav-bar chrome. Title COLORS are
                 // not set here: iOS 26's SwiftUI navigation bar ignores
