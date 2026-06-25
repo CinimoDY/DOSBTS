@@ -24,7 +24,7 @@ struct FoodPhotoAnalysisView: View {
         if relogMeal != nil {
             formContent
         } else {
-            NavigationView { formContent }
+            NavigationStack { formContent }
         }
     }
 

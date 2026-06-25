@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+
+- Barcode scanner and other push-navigation flows inside Add/modal sheets now work correctly on iOS 26 (remaining NavigationView roots converted to NavigationStack) — DMNC-1027
+
 ## [Build 111] — 2026-06-21
 
 _No user-visible changes — build bump only (deploy tooling + planning docs since Build 110)._

@@ -17,7 +17,7 @@ struct AddCalibrationView: View {
     var addCallback: (_ value: Int) -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             HStack {
                 Form {
                     Section {
@@ -58,7 +58,7 @@ struct AddCalibrationView2: View {
     var addCallback: (_ value: Double) -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             HStack {
                 Form {
                     Section {
