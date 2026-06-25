@@ -492,7 +492,8 @@ struct FavoriteManagementView: View {
                 fiberGrams: favorite.fiberGrams,
                 sortOrder: index,
                 isHypoTreatment: favorite.isHypoTreatment,
-                lastUsed: favorite.lastUsed
+                lastUsed: favorite.lastUsed,
+                shortLabel: favorite.shortLabel
             )
         }
         store.dispatch(.reorderFavoriteFoods(favoriteFoodValues: reordered))
