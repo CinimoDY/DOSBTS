@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-25
 **Branch:** claude/dmnc-1167
-**PR:** _TBD_
+**PR:** https://github.com/CinimoDY/DOSBTS/pull/70 (draft)
 **Planning issue:** DMNC-1029 — plan at `docs/plans/2026-06-21-dmnc-1029-plan.md`
 
 ## Goal
