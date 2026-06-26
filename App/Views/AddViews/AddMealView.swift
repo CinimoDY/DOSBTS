@@ -18,7 +18,7 @@ struct AddMealView: View {
     var deleteCallback: (() -> Void)? = nil
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(content: {
                         HStack {

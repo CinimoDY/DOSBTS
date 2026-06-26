@@ -409,7 +409,7 @@ struct FavoriteManagementView: View {
     @State private var editingFavorite: FavoriteFood?
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 if store.state.favoriteFoodValues.isEmpty {
                     Text("No favorites yet. Swipe left on a recent meal to add it.")
@@ -492,7 +492,8 @@ struct FavoriteManagementView: View {
                 fiberGrams: favorite.fiberGrams,
                 sortOrder: index,
                 isHypoTreatment: favorite.isHypoTreatment,
-                lastUsed: favorite.lastUsed
+                lastUsed: favorite.lastUsed,
+                shortLabel: favorite.shortLabel
             )
         }
         store.dispatch(.reorderFavoriteFoods(favoriteFoodValues: reordered))
@@ -517,7 +518,7 @@ struct EditFavoriteView: View {
     @State private var isHypoTreatment: Bool = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section {
                     HStack {
