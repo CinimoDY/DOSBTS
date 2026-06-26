@@ -55,6 +55,7 @@
 		A7970000FEE00000000A0002 /* AnimationTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7970000FEE00000000A0001 /* AnimationTokensTests.swift */; };
 		F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */; };
 		TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002100A00021 /* DesignTokenPinTests.swift */; };
+		TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -138,6 +139,7 @@
 		A7970000FEE00000000A0001 /* AnimationTokensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationTokensTests.swift; sourceTree = "<group>"; };
 		F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMarkerTypeTests.swift; sourceTree = "<group>"; };
 		TE0100020000002100A00021 /* DesignTokenPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenPinTests.swift; sourceTree = "<group>"; };
+		TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSTabBarAppearanceTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -298,6 +300,7 @@
 				A7970000FEE00000000A0001 /* AnimationTokensTests.swift */,
 				F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */,
 				TE0100020000002100A00021 /* DesignTokenPinTests.swift */,
+				TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -510,6 +513,7 @@
 				A7970000FEE00000000A0002 /* AnimationTokensTests.swift in Sources */,
 				F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */,
 				TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */,
+				TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -660,7 +664,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 109;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_ASSET_PATHS = "\"App/Preview Content\"";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_PREVIEWS = YES;
@@ -691,7 +695,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 109;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_ASSET_PATHS = "\"App/Preview Content\"";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_PREVIEWS = YES;
@@ -724,7 +728,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_ENTITLEMENTS = Widgets/Widgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 109;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -757,7 +761,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
 				CODE_SIGN_ENTITLEMENTS = Widgets/Widgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 109;
+				CURRENT_PROJECT_VERSION = 113;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;

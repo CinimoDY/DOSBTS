@@ -19,7 +19,7 @@ struct AddBloodGlucoseView: View {
     var addCallback: (_ time: Date, _ value: Int) -> Void
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             HStack {
                 Form {
                     Section {

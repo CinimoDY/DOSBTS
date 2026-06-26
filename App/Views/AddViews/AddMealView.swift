@@ -18,11 +18,11 @@ struct AddMealView: View {
     var deleteCallback: (() -> Void)? = nil
 
     var body: some View {
-        // No inner NavigationView: this view is pushed onto the caller's
-        // NavigationStack (UnifiedFoodEntryView). A nested legacy NavigationView
-        // fails to render its bar there, dropping the Add/Cancel toolbar items.
-        // Attach title + toolbar to the Form so the parent stack hosts them —
-        // mirrors BarcodeScannerView.
+        // No inner navigation container: this view is pushed onto the caller's
+        // NavigationStack (UnifiedFoodEntryView). A nested NavigationView or
+        // NavigationStack fails to render its bar there, dropping the Add/Cancel
+        // toolbar items. Attach title + toolbar to the Form so the parent stack
+        // hosts them — mirrors BarcodeScannerView.
         Form {
             Section(content: {
                     HStack {

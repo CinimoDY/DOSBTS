@@ -9,15 +9,22 @@ import SwiftUI
 
 struct AddCalibrationView: View {
     @Environment(\.dismiss) var dismiss
-    
-    @State private var value: Int = 100
-    
+
     var glucoseSuggestion: Int
     var glucoseUnit: GlucoseUnit
     var addCallback: (_ value: Int) -> Void
+
+    @State private var value: Int
+
+    init(glucoseSuggestion: Int, glucoseUnit: GlucoseUnit, addCallback: @escaping (_ value: Int) -> Void) {
+        self.glucoseSuggestion = glucoseSuggestion
+        self.glucoseUnit = glucoseUnit
+        self.addCallback = addCallback
+        _value = State(initialValue: glucoseSuggestion)
+    }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             HStack {
                 Form {
                     Section {
@@ -58,7 +65,7 @@ struct AddCalibrationView2: View {
     var addCallback: (_ value: Double) -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             HStack {
                 Form {
                     Section {

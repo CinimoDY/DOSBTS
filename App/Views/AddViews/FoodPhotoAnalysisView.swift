@@ -24,7 +24,7 @@ struct FoodPhotoAnalysisView: View {
         if relogMeal != nil {
             formContent
         } else {
-            NavigationView { formContent }
+            NavigationStack { formContent }
         }
     }
 
@@ -52,13 +52,12 @@ struct FoodPhotoAnalysisView: View {
         .background(AmberTheme.dosBlack.ignoresSafeArea())
         .onAppear { hydrateRelogIfNeeded() }
         .navigationDestination(isPresented: Binding(
-            get: { scanTargetIndex != nil },
-            set: { active in if !active { scanTargetIndex = nil } }
+            get: { scanTargetID != nil },
+            set: { active in if !active { scanTargetID = nil } }
         )) {
-            if let idx = scanTargetIndex, idx < stagedItems.count {
-                let itemID = stagedItems[idx].id
+            // Guard by stable UUID so a concurrent deletion can't push a blank screen
+            if let itemID = scanTargetID, stagedItems.contains(where: { $0.id == itemID }) {
                 ItemBarcodeScannerView { scannedEstimate in
-                    isItemScanActive = false
                     if let currentIdx = stagedItems.firstIndex(where: { $0.id == itemID }),
                        let scannedItem = scannedEstimate.items.first {
                         let amount = parseBaseServingG(scannedItem.servingSize)
@@ -72,8 +71,6 @@ struct FoodPhotoAnalysisView: View {
                     }
                 }
                 .navigationBarHidden(true)
-                .onAppear { isItemScanActive = true }
-                .onDisappear { isItemScanActive = false }
             }
         }
         .dosNavigationTitle("AI Meal Analysis")
@@ -92,8 +89,9 @@ struct FoodPhotoAnalysisView: View {
             }
         }
         .onDisappear {
-            // Don't clear state when a child NavigationLink (item barcode scan) is active
-            guard !isItemScanActive else { return }
+            // scanTargetID is set synchronously on tap, before onDisappear fires during a push —
+            // unlike isItemScanActive (set in the destination's onAppear, which is too late).
+            guard scanTargetID == nil else { return }
             // Clear stale state when view is truly popped (back swipe or cancel)
             stopProgressTimer()
             store.dispatch(.setFoodAnalysisResult(result: nil))
@@ -116,8 +114,6 @@ struct FoodPhotoAnalysisView: View {
     @State private var selectedItem: Any?
     @State private var showCamera = false
     @State private var showConsentSheet = false
-    @State private var isItemScanActive = false // guards onDisappear from clearing during child push
-
     // Staging plate state
     @State private var stagedItems: [EditableFoodItem] = []
     @State private var editDescription = ""
@@ -125,8 +121,8 @@ struct FoodPhotoAnalysisView: View {
     @State private var didHydrateRelog = false
     @FocusState private var focusedItemID: UUID?
 
-    // Inline item barcode scan
-    @State private var scanTargetIndex: Int?
+    // Inline item barcode scan — UUID guards onDisappear from clearing during push
+    @State private var scanTargetID: UUID?
 
     // Portion scaling state
     @State private var portionMultiplier: Double = 1.0
@@ -356,13 +352,10 @@ struct FoodPhotoAnalysisView: View {
             .onAppear {
                 populateStagedItems(from: result)
             }
-            .onChange(of: store.state.foodAnalysisResult?.totalCarbsG) {
-                // Detect follow-up result: replace staged items if we're in a follow-up
-                if isFollowingUp, let newResult = store.state.foodAnalysisResult {
-                    replaceWithFollowUpResult(newResult)
-                }
-            }
             .onChange(of: store.state.foodAnalysisResult?.description) {
+                // Detect follow-up result: replace staged items if we're in a follow-up.
+                // Single observer on description (always unique per result) to avoid
+                // double-incrementing followUpRoundsUsed when multiple fields change at once.
                 if isFollowingUp, let newResult = store.state.foodAnalysisResult {
                     replaceWithFollowUpResult(newResult)
                 }
@@ -462,7 +455,7 @@ struct FoodPhotoAnalysisView: View {
                         StagingPlateRowView(
                             item: $item,
                             onBarcodeRescan: { _ in
-                                scanTargetIndex = stagedItems.firstIndex(where: { $0.id == itemID })
+                                scanTargetID = itemID
                             },
                             isExpanded: item.isExpanded,
                             onToggleExpand: {

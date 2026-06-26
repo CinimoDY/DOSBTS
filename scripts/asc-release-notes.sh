@@ -25,11 +25,17 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 JWT_TOOL="$SCRIPT_DIR/asc-jwt.py"
 API="https://api.appstoreconnect.apple.com/v1"
 
-# Accept only a build uploaded near this run, so a same-build-number re-upload
-# (deploy.sh does not auto-bump) can't match a stale resource from a prior run.
-# Captured before the slow editor/poll steps; the fresh upload is minutes old.
+# We identify the just-uploaded build by RECENCY, not by build number. App Store
+# Connect can assign its own build number (auto-managed numbering, or a bump when
+# the uploaded CFBundleVersion collides with an already-shipped build), so the
+# ASC number may differ from the CHANGELOG's [Build N] — matching by number then
+# silently misses. RUN_START is captured here, right after deploy.sh's upload and
+# before the editor, so our build's uploadedDate sits within a short window of it;
+# MAX_BUILD_AGE isolates our upload from any earlier deploy.
+# Caveat: two deploys inside this window, with notes run before the 2nd registers,
+# could match the 1st — re-run once the intended build is the newest.
 RUN_START="$(date -u +%s)"
-MAX_BUILD_AGE=7200  # ~2h window: comfortably covers upload->registration + edit time
+MAX_BUILD_AGE=1800  # 30 min: covers upload->registration + clock skew, excludes prior deploys
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 not found (needed for JWT signing + JSON)." >&2
@@ -94,12 +100,13 @@ NOTES_BODY="$(printf '%s\n' "$BLOCK" \
 echo "==> Review the TestFlight notes for build $BUILD_NUMBER (saving closes the editor)..."
 "${EDITOR:-vi}" "$TMP_NOTES"
 
-# whatsToTest has a 4000-CHARACTER ASC limit; warn but proceed (the API would
+# whatsNew (the API field behind TestFlight's "What to Test") has a 4000-CHARACTER
+# ASC limit; warn but proceed (the API would
 # 409). Count characters with perl, not `wc -c` (bytes) — the cleaned text is
 # em-dash / bullet heavy (3 bytes each in UTF-8), so a byte count overcounts.
 NOTE_LEN="$(perl -CSD -e 'local $/; my $s = <STDIN>; print length($s // "")' < "$TMP_NOTES")"
 if [ "${NOTE_LEN:-0}" -gt 4000 ]; then
-  echo "WARNING: notes are ${NOTE_LEN} chars; ASC caps whatsToTest at 4000. Trim in the editor." >&2
+  echo "WARNING: notes are ${NOTE_LEN} chars; ASC caps 'What to Test' at 4000. Trim in the editor." >&2
 fi
 
 # --- JWT helper: mint a fresh short-lived token per call (never echoed) -----
@@ -124,16 +131,20 @@ asc_get() {
 # Extract a JSON value with python (stdin = response body).
 json_get() { python3 -c "$1" 2>/dev/null || true; }
 
-# --- 4. poll until the build registers in ASC (KTD8) -----------------------
-echo "==> Waiting for build $BUILD_NUMBER to register in App Store Connect (up to ~15 min)..."
-BUILD_QUERY="filter%5Bapp%5D=$ASC_APP_ID&filter%5Bversion%5D=$BUILD_NUMBER&filter%5Bplatform%5D=IOS&sort=-uploadedDate&limit=1"
+# --- 4. poll until our just-uploaded build registers in ASC (KTD8) ---------
+# Newest build for the app, accepted only when uploaded within MAX_BUILD_AGE of
+# this run (see RUN_START note). NB: /v1/builds does NOT support filter[platform]
+# (ASC returns 400 PARAMETER_ERROR.INVALID) — filter by app only.
+echo "==> Waiting for our just-uploaded build to register in App Store Connect (up to ~15 min)..."
+BUILD_QUERY="filter%5Bapp%5D=$ASC_APP_ID&sort=-uploadedDate&limit=1"
 BUILD_ID=""
+BUILD_VERSION=""
 for _ in $(seq 1 30); do
   RESP="$(asc_get "$API/builds?$BUILD_QUERY" 2>/dev/null || true)"
-  # Accept the newest matching build only if its uploadedDate is within
-  # MAX_BUILD_AGE of this run — otherwise it's a stale prior upload sharing the
-  # build number, so keep polling for the fresh one to register.
-  BUILD_ID="$(printf '%s' "$RESP" | RUN_START="$RUN_START" MAX_AGE="$MAX_BUILD_AGE" json_get '
+  # Take the newest build, but only if its uploadedDate is recent enough to be
+  # this deploy's — otherwise it's a prior deploy, so keep polling for ours to
+  # register. Emits "id|version" so we can reconcile the notes header below.
+  MATCH="$(printf '%s' "$RESP" | RUN_START="$RUN_START" MAX_AGE="$MAX_BUILD_AGE" json_get '
 import sys, json, os
 from datetime import datetime
 d = json.load(sys.stdin)
@@ -142,24 +153,38 @@ if not data:
     print(""); raise SystemExit
 b = data[0]
 bid = b.get("id", "")
+ver = (b.get("attributes") or {}).get("version") or ""
+out = (bid + "|" + ver) if bid else ""
 uploaded = (b.get("attributes") or {}).get("uploadedDate")
 if not uploaded:
-    print(bid); raise SystemExit  # no date -> best effort, accept
+    print(out); raise SystemExit  # no date -> best effort, accept newest
 try:
     ts = datetime.fromisoformat(uploaded.replace("Z", "+00:00")).timestamp()
 except Exception:
-    print(bid); raise SystemExit
+    print(out); raise SystemExit
 age = float(os.environ["RUN_START"]) - ts
-print(bid if age <= float(os.environ["MAX_AGE"]) else "")')"
-  [ -n "$BUILD_ID" ] && break
+print(out if age <= float(os.environ["MAX_AGE"]) else "")')"
+  if [ -n "$MATCH" ]; then
+    BUILD_ID="${MATCH%%|*}"
+    BUILD_VERSION="${MATCH#*|}"
+    break
+  fi
   sleep 30
 done
 
 if [ -z "$BUILD_ID" ]; then
-  echo "ERROR: build $BUILD_NUMBER did not register (a recent upload) within the timeout. Re-run later." >&2
+  echo "ERROR: no recently-uploaded build registered in App Store Connect within the timeout. Re-run later." >&2
   exit 1
 fi
-echo "==> Found build $BUILD_NUMBER (id $BUILD_ID)."
+echo "==> Found build ${BUILD_VERSION:-?} (id $BUILD_ID)."
+
+# Reconcile the notes header with the ASC-assigned build number when it differs
+# from the CHANGELOG's (e.g. ASC bumped it on a collision). Rewrites only the
+# leading "BUILD <n>" token on the first line; any human edits are preserved.
+if [ -n "$BUILD_VERSION" ] && [ "$BUILD_VERSION" != "$BUILD_NUMBER" ]; then
+  echo "==> Note: ASC build number ($BUILD_VERSION) differs from CHANGELOG ($BUILD_NUMBER); using $BUILD_VERSION in the notes header." >&2
+  OLD_NUM="$BUILD_NUMBER" NEW_NUM="$BUILD_VERSION" perl -CSD -i -pe 's/^BUILD \Q$ENV{OLD_NUM}\E\b/BUILD $ENV{NEW_NUM}/ if $. == 1' "$TMP_NOTES"
+fi
 
 # --- 5. find an existing en-US localization, then PATCH or POST ------------
 # Re-resolvable so a retry after the VALID wait upgrades POST->PATCH if the
@@ -175,7 +200,7 @@ print(next((x["id"] for x in d.get("data", []) if x.get("attributes", {}).get("l
 LOC_ID="$(resolve_loc_id)"
 
 write_notes() {
-  # Build the JSON body in python (whatsToTest passed via env, never via the
+  # Build the JSON body in python (whatsNew passed via env, never via the
   # shell), and stream it to curl with --data-binary @-. Echoes the HTTP code.
   # Mint the token into a local first so a signing failure aborts the write
   # rather than sending an empty Bearer (see asc_get).
@@ -186,7 +211,7 @@ write_notes() {
 import json, os
 notes = open(os.environ["NOTES_FILE"], encoding="utf-8").read()
 print(json.dumps({"data": {"type": "betaBuildLocalizations", "id": os.environ["LOC_ID"],
-      "attributes": {"whatsToTest": notes}}}))' \
+      "attributes": {"whatsNew": notes}}}))' \
     | curl -sS -X PATCH \
         -H "Authorization: Bearer $jwt" -H "Content-Type: application/json" \
         --data-binary @- -o "$TMP_RESP" -w '%{http_code}' \
@@ -196,7 +221,7 @@ print(json.dumps({"data": {"type": "betaBuildLocalizations", "id": os.environ["L
 import json, os
 notes = open(os.environ["NOTES_FILE"], encoding="utf-8").read()
 print(json.dumps({"data": {"type": "betaBuildLocalizations",
-      "attributes": {"locale": "en-US", "whatsToTest": notes},
+      "attributes": {"locale": "en-US", "whatsNew": notes},
       "relationships": {"build": {"data": {"type": "builds", "id": os.environ["BUILD_ID"]}}}}}))' \
     | curl -sS -X POST \
         -H "Authorization: Bearer $jwt" -H "Content-Type: application/json" \

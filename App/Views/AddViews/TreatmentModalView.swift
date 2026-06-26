@@ -36,7 +36,7 @@ struct TreatmentModalView: View {
     var recheckGlucoseValue: Int = 0
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: DOSSpacing.lg) {
                 Spacer()
 
