@@ -76,7 +76,10 @@ struct AddMealView: View {
         .dosNavigationTitle("Meal")
         // Pushed onto the caller's NavigationStack: suppress the system back
         // button so the explicit Cancel is the sole leading control (Cancel | Meal | Add).
+        // interactiveDismissDisabled blocks the Log Meal sheet's swipe-down so a
+        // half-typed meal isn't silently discarded — Cancel/Add are the way out.
         .navigationBarBackButtonHidden(true)
+        .interactiveDismissDisabled()
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Add") {
