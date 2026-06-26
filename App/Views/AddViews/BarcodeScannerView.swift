@@ -39,6 +39,13 @@ struct BarcodeScannerView: View {
                 .navigationBarHidden(true)
         }
         .dosNavigationTitle("Scan Barcode")
+        // Pushed onto the food-entry NavigationStack: suppress the system back
+        // button so Cancel is the sole leading control. interactiveDismissDisabled
+        // blocks the Log Meal sheet's swipe-down dismissal while the scanner is up,
+        // so closing it returns to the food list (via Cancel/back) instead of
+        // tearing down the whole sheet.
+        .navigationBarBackButtonHidden(true)
+        .interactiveDismissDisabled()
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
@@ -64,13 +71,16 @@ struct BarcodeScannerView: View {
             Color.black.edgesIgnoringSafeArea(.all)
 
             #if targetEnvironment(simulator)
+            // simulatorFallback frames the icon in its own box, so the standalone
+            // viewfinder overlay (which only makes sense over a live camera feed)
+            // is device-only — avoids the box/icon overlap in the simulator.
             simulatorFallback
             #else
             ScannerVC_Wrapper(onScan: handleScan)
                 .edgesIgnoringSafeArea(.all)
-            #endif
 
             viewfinderOverlay
+            #endif
         }
     }
 
@@ -157,9 +167,16 @@ struct BarcodeScannerView: View {
 
     private var simulatorFallback: some View {
         VStack(spacing: DOSSpacing.md) {
-            Image(systemName: "barcode.viewfinder")
-                .font(.system(size: 64))
-                .foregroundStyle(AmberTheme.amber)
+            // Icon centered inside the framing box (mirrors the on-device viewfinder).
+            ZStack {
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(AmberTheme.amber, lineWidth: 2)
+                    .frame(width: 280, height: 120)
+
+                Image(systemName: "barcode.viewfinder")
+                    .font(.system(size: 64))
+                    .foregroundStyle(AmberTheme.amber)
+            }
 
             Text("Camera unavailable in simulator")
                 .font(DOSTypography.body)

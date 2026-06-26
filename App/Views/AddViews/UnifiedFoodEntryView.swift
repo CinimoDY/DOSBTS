@@ -248,13 +248,15 @@ struct UnifiedFoodEntryView: View {
     private var actionsSection: some View {
         Section {
             NavigationLink {
+                // No .navigationBarHidden here: AddMealView's Cancel/Add live in
+                // the toolbar, which the parent NavigationStack's bar hosts.
+                // Hiding the bar (as before) dropped those buttons entirely.
                 AddMealView { time, description, carbs in
                     let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
                     store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
                     addedHighlighter.flash(mealEntry.id)
                     dismiss()
                 }
-                .navigationBarHidden(true)
             } label: {
                 HStack {
                     Image(systemName: "keyboard")
@@ -267,9 +269,10 @@ struct UnifiedFoodEntryView: View {
 
             // SCAN — always available (OFF is free, no API key needed)
             NavigationLink {
+                // No .navigationBarHidden here: BarcodeScannerView's Cancel lives
+                // in the toolbar, which the parent NavigationStack's bar hosts.
                 BarcodeScannerView()
                     .environmentObject(store)
-                    .navigationBarHidden(true)
             } label: {
                 HStack {
                     Image(systemName: "barcode.viewfinder")
