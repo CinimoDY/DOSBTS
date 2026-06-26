@@ -56,6 +56,7 @@
 		F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */; };
 		TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002100A00021 /* DesignTokenPinTests.swift */; };
 		TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */; };
+		TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -140,6 +141,7 @@
 		F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMarkerTypeTests.swift; sourceTree = "<group>"; };
 		TE0100020000002100A00021 /* DesignTokenPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenPinTests.swift; sourceTree = "<group>"; };
 		TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSTabBarAppearanceTests.swift; sourceTree = "<group>"; };
+		TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HypoFilteredEntryTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -301,6 +303,7 @@
 				F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */,
 				TE0100020000002100A00021 /* DesignTokenPinTests.swift */,
 				TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */,
+				TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -514,6 +517,7 @@
 				F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */,
 				TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */,
 				TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */,
+				TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

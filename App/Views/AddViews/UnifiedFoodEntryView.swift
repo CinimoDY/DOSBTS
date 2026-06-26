@@ -5,6 +5,25 @@
 
 import SwiftUI
 
+/// Pure mapping of the hypo-filtered food entry sheet's structural decisions.
+/// During a treatment cycle the MEAL button routes here (R8); a user with
+/// zero hypo favourites and zero recents must still have a way to log carbs,
+/// so the escape row is always present in filtered mode (DMNC-1028). The view
+/// renders this; `HypoFilteredEntryModelTests` pins the no-dead-end guarantee.
+struct HypoFilteredEntryModel: Equatable {
+    /// "NO HYPO TREATMENTS CONFIGURED" — shown when filtering yields no chips.
+    let showsEmptyHypoMessage: Bool
+    /// "LOG OTHER FOOD" manual-entry escape row.
+    let showsEscapeRow: Bool
+
+    static func make(hypoFavoriteCount: Int, filterToHypoTreatments: Bool) -> HypoFilteredEntryModel {
+        HypoFilteredEntryModel(
+            showsEmptyHypoMessage: filterToHypoTreatments && hypoFavoriteCount == 0,
+            showsEscapeRow: filterToHypoTreatments
+        )
+    }
+}
+
 struct UnifiedFoodEntryView: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
@@ -26,14 +45,23 @@ struct UnifiedFoodEntryView: View {
         return store.state.favoriteFoodValues
     }
 
+    private var entryModel: HypoFilteredEntryModel {
+        HypoFilteredEntryModel.make(
+            hypoFavoriteCount: displayedFavorites.count,
+            filterToHypoTreatments: filterToHypoTreatments
+        )
+    }
+
     var body: some View {
+        // Resolve the structural model once per render (it filters favourites).
+        let model = entryModel
         // NavigationStack, not NavigationView: navigationDestination modifiers
         // (relog + ASK AI) are silently ignored inside NavigationView.
-        NavigationStack {
+        return NavigationStack {
             ScrollViewReader { scrollProxy in
             List {
                 if filterToHypoTreatments {
-                    if displayedFavorites.isEmpty {
+                    if model.showsEmptyHypoMessage {
                         Section {
                             Text("NO HYPO TREATMENTS CONFIGURED")
                                 .font(DOSTypography.caption)
@@ -53,6 +81,10 @@ struct UnifiedFoodEntryView: View {
                 }
 
                 recentsSection
+
+                if model.showsEscapeRow {
+                    escapeSection
+                }
             }
             .listStyle(.grouped)
             .searchable(text: $searchText, prompt: "Search foods...")
@@ -242,28 +274,55 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
+    // MARK: - Escape Section (filtered mode only)
+
+    /// DMNC-1028: guarantees a way out of the hypo-filtered sheet even with
+    /// zero hypo favourites and zero recents. Manual entry only — PHOTO/ASK AI
+    /// are deliberately kept out of the hypo flow.
+    @ViewBuilder
+    private var escapeSection: some View {
+        Section {
+            manualEntryLink(icon: "keyboard", title: "LOG OTHER FOOD")
+        } header: {
+            Text("> OTHER")
+                .font(DOSTypography.caption)
+                .foregroundColor(AmberTheme.amber)
+        }
+    }
+
+    /// Shared "type a meal + carbs" destination. Used by both the unfiltered
+    /// actions section (MANUAL) and the filtered escape row (LOG OTHER FOOD).
+    @ViewBuilder
+    private func manualEntryLink(icon: String, title: String) -> some View {
+        NavigationLink {
+            AddMealView { time, description, carbs in
+                let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
+                store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
+                addedHighlighter.flash(mealEntry.id)
+                dismiss()
+            }
+            .navigationBarHidden(true)
+        } label: {
+            HStack {
+                Image(systemName: icon)
+                    .font(DOSTypography.caption)
+                Text(title)
+                    .font(DOSTypography.bodySmall)
+            }
+            .foregroundColor(AmberTheme.amber)
+        }
+        // Keep the visible label ("MANUAL" / "LOG OTHER FOOD") as the VoiceOver
+        // label so the two rows stay distinguishable; the shared destination is
+        // described as a hint, not an overriding label (DMNC-1028 review).
+        .accessibilityHint("Log a meal by typing carbs")
+    }
+
     // MARK: - Actions Section
 
     @ViewBuilder
     private var actionsSection: some View {
         Section {
-            NavigationLink {
-                AddMealView { time, description, carbs in
-                    let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
-                    store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
-                    addedHighlighter.flash(mealEntry.id)
-                    dismiss()
-                }
-                .navigationBarHidden(true)
-            } label: {
-                HStack {
-                    Image(systemName: "keyboard")
-                        .font(DOSTypography.caption)
-                    Text("MANUAL")
-                        .font(DOSTypography.bodySmall)
-                }
-                .foregroundColor(AmberTheme.amber)
-            }
+            manualEntryLink(icon: "keyboard", title: "MANUAL")
 
             // SCAN — always available (OFF is free, no API key needed)
             NavigationLink {

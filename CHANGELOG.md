@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+
+- Hypo-filtered meal sheet now always offers a "LOG OTHER FOOD" manual-entry row, so logging carbs mid-treatment is never a dead-end even with no hypo favourites or recents — DMNC-1028, PR #NN
+
 ### Fixed
 
 - Barcode scanner and other push-navigation flows inside Add/modal sheets now work correctly on iOS 26 (remaining NavigationView roots converted to NavigationStack) — DMNC-1027
