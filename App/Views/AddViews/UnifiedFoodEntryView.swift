@@ -125,15 +125,15 @@ struct UnifiedFoodEntryView: View {
                 }
                 .animation(.linear(duration: 0.2), value: toast.meal)
             }
+            // No .navigationBarHidden: FoodPhotoAnalysisView's title + Cancel live
+            // in the toolbar, which the parent NavigationStack's bar hosts.
             .navigationDestination(item: $relogMeal) { meal in
                 FoodPhotoAnalysisView(relogMeal: meal)
                     .environmentObject(store)
-                    .navigationBarHidden(true)
             }
             .navigationDestination(isPresented: $askAINavigating) {
                 FoodPhotoAnalysisView()
                     .environmentObject(store)
-                    .navigationBarHidden(true)
             }
             }
         }
@@ -347,7 +347,6 @@ struct UnifiedFoodEntryView: View {
                 NavigationLink {
                     FoodPhotoAnalysisView()
                         .environmentObject(store)
-                        .navigationBarHidden(true)
                 } label: {
                     HStack {
                         Image(systemName: "camera.viewfinder")

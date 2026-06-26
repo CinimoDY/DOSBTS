@@ -20,12 +20,11 @@ struct FoodPhotoAnalysisView: View {
     var relogMeal: MealEntry?
 
     var body: some View {
-        // Relog path: caller owns the nav stack — don't double-wrap in NavigationView.
-        if relogMeal != nil {
-            formContent
-        } else {
-            NavigationStack { formContent }
-        }
+        // Pushed onto the caller's NavigationStack in every path (PHOTO / ASK AI /
+        // relog / scan-success). No inner navigation container — a nested
+        // NavigationStack drops the title + Cancel toolbar (see
+        // docs/solutions/ui-bugs/navigationbarhidden-drops-toolbar-on-navigationstack-push.md).
+        formContent
     }
 
     private var formContent: some View {
@@ -70,10 +69,12 @@ struct FoodPhotoAnalysisView: View {
                         stagedItems[currentIdx].carbsPerG = ratio
                     }
                 }
-                .navigationBarHidden(true)
             }
         }
         .dosNavigationTitle("AI Meal Analysis")
+        // Pushed onto the caller's NavigationStack: suppress the system back
+        // button so the explicit Cancel is the sole leading control.
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {

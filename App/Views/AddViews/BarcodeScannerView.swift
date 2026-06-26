@@ -33,10 +33,11 @@ struct BarcodeScannerView: View {
             }
         }
         // Auto-push to staging plate when the OFF lookup populates a result.
+        // No .navigationBarHidden: the staging plate's title + Cancel live in the
+        // toolbar, which the parent NavigationStack's bar hosts.
         .navigationDestination(isPresented: shouldShowStagingPlate) {
             FoodPhotoAnalysisView()
                 .environmentObject(store)
-                .navigationBarHidden(true)
         }
         .dosNavigationTitle("Scan Barcode")
         // Pushed onto the food-entry NavigationStack: suppress the system back
