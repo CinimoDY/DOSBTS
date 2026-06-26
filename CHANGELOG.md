@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Photo / AI / barcode meal screens now show their title and a **Cancel** button (the top bar was previously missing), and the in-flight "replace item" barcode scanner gets a Cancel too — completing the navigation-chrome fix across the remaining food-entry screens — DMNC-1185
+
 ## [Build 115] — 2026-06-26
 
 ### Added

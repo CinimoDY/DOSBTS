@@ -20,12 +20,11 @@ struct FoodPhotoAnalysisView: View {
     var relogMeal: MealEntry?
 
     var body: some View {
-        // Relog path: caller owns the nav stack — don't double-wrap in NavigationView.
-        if relogMeal != nil {
-            formContent
-        } else {
-            NavigationStack { formContent }
-        }
+        // Pushed onto the caller's NavigationStack in every path (PHOTO / ASK AI /
+        // relog / scan-success). No inner navigation container — a nested
+        // NavigationStack drops the title + Cancel toolbar (see
+        // docs/solutions/ui-bugs/navigationbarhidden-drops-toolbar-on-navigationstack-push.md).
+        formContent
     }
 
     private var formContent: some View {
@@ -70,10 +69,17 @@ struct FoodPhotoAnalysisView: View {
                         stagedItems[currentIdx].carbsPerG = ratio
                     }
                 }
-                .navigationBarHidden(true)
             }
         }
         .dosNavigationTitle("AI Meal Analysis")
+        // Pushed onto the caller's NavigationStack: suppress the system back
+        // button so the explicit Cancel is the sole leading control.
+        .navigationBarBackButtonHidden(true)
+        // Protect an analyzed/staged meal (result, edited portions, follow-ups)
+        // from a stray swipe-down that would tear down the whole Log Meal sheet —
+        // Cancel / Log Meal use programmatic dismiss() and are unaffected. Empty
+        // entry states (consent / photo picker) stay swipe-dismissible.
+        .interactiveDismissDisabled(store.state.foodAnalysisResult != nil || !stagedItems.isEmpty)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
