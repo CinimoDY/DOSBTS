@@ -75,6 +75,11 @@ struct FoodPhotoAnalysisView: View {
         // Pushed onto the caller's NavigationStack: suppress the system back
         // button so the explicit Cancel is the sole leading control.
         .navigationBarBackButtonHidden(true)
+        // Protect an analyzed/staged meal (result, edited portions, follow-ups)
+        // from a stray swipe-down that would tear down the whole Log Meal sheet —
+        // Cancel / Log Meal use programmatic dismiss() and are unaffected. Empty
+        // entry states (consent / photo picker) stay swipe-dismissible.
+        .interactiveDismissDisabled(store.state.foodAnalysisResult != nil || !stagedItems.isEmpty)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
