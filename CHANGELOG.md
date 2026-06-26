@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Manual meal entry: the **Add** and **Cancel** buttons (and the "Meal" title) were missing, leaving no way to confirm a typed-in meal. They're back — the screen's top bar no longer disappears when opened from Log Meal → MANUAL
+- Barcode scanner: the **Cancel** button and title were missing, and closing the scanner — or swiping down — dismissed the entire Log Meal sheet. The Cancel/title are restored, and closing the scanner now returns you to the food list so you can pick MANUAL/SCAN again
+
 ## [Build 113] — 2026-06-26
 
 ### Fixed
