@@ -39,6 +39,17 @@ struct BarcodeScannerView: View {
                 .navigationBarHidden(true)
         }
         .dosNavigationTitle("Scan Barcode")
+        // Pushed onto the food-entry NavigationStack: suppress the system back
+        // button so Cancel is the sole leading control. interactiveDismissDisabled
+        // blocks the Log Meal sheet's swipe-down dismissal while the scanner itself
+        // is up (so closing it returns to the food list via Cancel/back instead of
+        // tearing down the whole sheet). It is scoped to the scanner state
+        // (foodAnalysisResult == nil): once a scan succeeds and the staging plate
+        // (FoodPhotoAnalysisView) is pushed on top, swipe-to-dismiss is re-enabled
+        // there so the user is never trapped — the staging plate's own chrome is
+        // tracked separately in DMNC-1185.
+        .navigationBarBackButtonHidden(true)
+        .interactiveDismissDisabled(store.state.foodAnalysisResult == nil)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Cancel") {
@@ -64,13 +75,16 @@ struct BarcodeScannerView: View {
             Color.black.edgesIgnoringSafeArea(.all)
 
             #if targetEnvironment(simulator)
+            // simulatorFallback frames the icon in its own box, so the standalone
+            // viewfinder overlay (which only makes sense over a live camera feed)
+            // is device-only — avoids the box/icon overlap in the simulator.
             simulatorFallback
             #else
             ScannerVC_Wrapper(onScan: handleScan)
                 .edgesIgnoringSafeArea(.all)
-            #endif
 
             viewfinderOverlay
+            #endif
         }
     }
 
@@ -123,6 +137,9 @@ struct BarcodeScannerView: View {
 
     // MARK: - Viewfinder Overlay
 
+    // Device-only: frames the live camera feed. In the simulator the icon is
+    // framed inside simulatorFallback instead, so this isn't referenced there.
+    #if !targetEnvironment(simulator)
     private var viewfinderOverlay: some View {
         VStack {
             Spacer()
@@ -140,6 +157,7 @@ struct BarcodeScannerView: View {
             Spacer()
         }
     }
+    #endif
 
     // MARK: - Scan Handler
 
@@ -157,9 +175,16 @@ struct BarcodeScannerView: View {
 
     private var simulatorFallback: some View {
         VStack(spacing: DOSSpacing.md) {
-            Image(systemName: "barcode.viewfinder")
-                .font(.system(size: 64))
-                .foregroundStyle(AmberTheme.amber)
+            // Icon centered inside the framing box (mirrors the on-device viewfinder).
+            ZStack {
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(AmberTheme.amber, lineWidth: 2)
+                    .frame(width: 280, height: 120)
+
+                Image(systemName: "barcode.viewfinder")
+                    .font(.system(size: 64))
+                    .foregroundStyle(AmberTheme.amber)
+            }
 
             Text("Camera unavailable in simulator")
                 .font(DOSTypography.body)

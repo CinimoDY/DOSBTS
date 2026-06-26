@@ -295,13 +295,16 @@ struct UnifiedFoodEntryView: View {
     @ViewBuilder
     private func manualEntryLink(icon: String, title: String) -> some View {
         NavigationLink {
+            // No .navigationBarHidden here: AddMealView's Cancel/Add live in the
+            // toolbar hosted by the parent NavigationStack's bar (post-#72). Hiding
+            // it dropped those buttons — a dead-end mid-hypo from the escape row
+            // this feature exists to prevent (DMNC-1028).
             AddMealView { time, description, carbs in
                 let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
                 store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
                 addedHighlighter.flash(mealEntry.id)
                 dismiss()
             }
-            .navigationBarHidden(true)
         } label: {
             HStack {
                 Image(systemName: icon)
@@ -326,9 +329,10 @@ struct UnifiedFoodEntryView: View {
 
             // SCAN — always available (OFF is free, no API key needed)
             NavigationLink {
+                // No .navigationBarHidden here: BarcodeScannerView's Cancel lives
+                // in the toolbar, which the parent NavigationStack's bar hosts.
                 BarcodeScannerView()
                     .environmentObject(store)
-                    .navigationBarHidden(true)
             } label: {
                 HStack {
                     Image(systemName: "barcode.viewfinder")

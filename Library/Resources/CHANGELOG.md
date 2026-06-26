@@ -7,6 +7,18 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 114] — 2026-06-26
+
+### Fixed
+- Manual meal entry: the **Add** and **Cancel** buttons (and the "Meal" title) were missing, leaving no way to confirm a typed-in meal. They're back — the screen's top bar no longer disappears when opened from Log Meal → MANUAL
+- Barcode scanner: the **Cancel** button and title were missing, and closing the scanner — or swiping down — dismissed the entire Log Meal sheet. The Cancel/title are restored, and closing the scanner now returns you to the food list so you can pick MANUAL/SCAN again
+
+## [Build 113] — 2026-06-26
+
+### Fixed
+
+- Barcode scanner and other push-navigation flows inside Add/modal sheets now work correctly on iOS 26 (remaining NavigationView roots converted to NavigationStack) — DMNC-1027
+
 ## [Build 112] — 2026-06-26
 
 _No user-visible changes — build bump only (iOS 26 tab-bar tint investigation landed as a platform-constrained won't-fix: factory + tests + learning doc, no observable behavior change — DMNC-1167, PR #70)._

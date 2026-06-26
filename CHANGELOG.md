@@ -11,6 +11,14 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 - Hypo-filtered meal sheet now always offers a "LOG OTHER FOOD" manual-entry row, so logging carbs mid-treatment is never a dead-end even with no hypo favourites or recents — DMNC-1028, PR #71
 
+## [Build 114] — 2026-06-26
+
+### Fixed
+- Manual meal entry: the **Add** and **Cancel** buttons (and the "Meal" title) were missing, leaving no way to confirm a typed-in meal. They're back — the screen's top bar no longer disappears when opened from Log Meal → MANUAL
+- Barcode scanner: the **Cancel** button and title were missing, and closing the scanner — or swiping down — dismissed the entire Log Meal sheet. The Cancel/title are restored, and closing the scanner now returns you to the food list so you can pick MANUAL/SCAN again
+
+## [Build 113] — 2026-06-26
+
 ### Fixed
 
 - Barcode scanner and other push-navigation flows inside Add/modal sheets now work correctly on iOS 26 (remaining NavigationView roots converted to NavigationStack) — DMNC-1027
