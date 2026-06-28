@@ -115,6 +115,22 @@ extension Int {
         return String(format: LocalizedString("%1$@min"), inMinutes.description)
     }
 
+    /// Compact remaining-time for width-constrained labels (e.g. the Overview
+    /// sensor line). Drops minutes once days are present — at that scale minutes
+    /// are noise and the extra component forces the label to truncate, which can
+    /// hide the days/hours entirely. Below a day, keeps hour+minute precision.
+    var inTimeCompact: String {
+        if inDays > 0 {
+            return String(format: LocalizedString("%1$@d %2$@h"), inDays.description, inHours.description)
+        }
+
+        if inHours > 0 {
+            return String(format: LocalizedString("%1$@h %2$@min"), inHours.description, inMinutes.description)
+        }
+
+        return String(format: LocalizedString("%1$@min"), inMinutes.description)
+    }
+
     var inTimeSummary: String {
         let days = inDays
         let hours = (inDays > 0 || inHours > 0) && inMinutes > 0

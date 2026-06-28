@@ -12,15 +12,20 @@ struct SensorLineView: View {
     @State private var showingConnectDialog: Bool = false
 
     var body: some View {
-        // Status (dot + "CONNECTED · 13d 21h LEFT") is centered; the action
-        // chips (CONNECT / disconnect) keep the trailing edge. The label
-        // reserves the chip's width on both sides (so it stays optically
-        // centered) and truncates rather than rendering under the chip.
+        // Status (dot + "CONNECTED · 3d 2h LEFT") is centered; the action
+        // chips (CONNECT / disconnect) keep the trailing edge. The label uses
+        // the compact remaining-time format (days+hours, no minutes) so it fits.
+        // The chip-width reservation (which keeps the label optically centered
+        // next to a chip) is applied ONLY when a chip is actually shown —
+        // reserving it in the common chip-less connected state wasted ~172pt and
+        // forced the label to truncate, hiding the days/hours. minimumScaleFactor
+        // is a final safety net so magnitude is never dropped.
         ZStack {
             dotAndLabel
                 .lineLimit(1)
                 .truncationMode(.middle)
-                .padding(.horizontal, 86)
+                .minimumScaleFactor(0.85)
+                .padding(.horizontal, reservesChipWidth ? 86 : DOSSpacing.md)
 
             HStack {
                 Spacer()
@@ -194,16 +199,26 @@ struct SensorLineView: View {
         }
     }
 
+    /// Whether `trailingContent` renders a chip for the current state. The
+    /// centered label only needs to reserve chip width when one is present.
+    private var reservesChipWidth: Bool {
+        switch currentState {
+        case .connected: return disconnectChipRevealed
+        case .disconnected, .noSensor: return true
+        case .error, .bluetoothOff, .transient, .unknown: return false
+        }
+    }
+
     private var labelText: String {
         switch currentState {
         case .connected:
             if let sensor = store.state.sensor {
-                return "CONNECTED · \(sensor.remainingLifetime.inTime) LEFT"
+                return "CONNECTED · \(sensor.remainingLifetime.inTimeCompact) LEFT"
             }
             return "CONNECTED"
         case .transient:
             if let sensor = store.state.sensor, sensor.state == .starting, let warmup = sensor.remainingWarmupTime {
-                return "WARMUP · \(warmup.inTime) LEFT"
+                return "WARMUP · \(warmup.inTimeCompact) LEFT"
             }
             switch store.state.connectionState {
             case .connecting: return "CONNECTING…"

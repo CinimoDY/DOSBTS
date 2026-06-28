@@ -7,6 +7,9 @@
 /* (No Comment) */
 "%1$@d %2$@h %3$@min" = "%1$@d %2$@h %3$@min";
 
+/* Compact remaining-time (days + hours) for width-constrained labels */
+"%1$@d %2$@h" = "%1$@d %2$@h";
+
 /* (No Comment) */
 "%@ Entries" = "%@ Entries";
 

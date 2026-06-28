@@ -83,3 +83,29 @@ struct SensorLifecycleTests {
         #expect(sensor.endTimestamp == expected)
     }
 }
+
+// MARK: - Compact remaining-time formatting (Overview sensor line)
+
+@Suite("Remaining-time compact formatting")
+struct InTimeCompactTests {
+
+    @Test("multi-day lifetime shows days and hours, never minutes-only")
+    func multiDayKeepsDaysAndHours() {
+        // 3d 2h 18min = 3*1440 + 2*60 + 18 = 4458 minutes.
+        // Regression guard for the Overview truncation bug: this must surface
+        // the days/hours, not collapse to "18min".
+        let minutes = 3 * 1440 + 2 * 60 + 18
+        #expect(minutes.inTimeCompact == "3d 2h")
+    }
+
+    @Test("sub-day lifetime keeps hour + minute precision")
+    func subDayKeepsHoursAndMinutes() {
+        let minutes = 2 * 60 + 18
+        #expect(minutes.inTimeCompact == "2h 18min")
+    }
+
+    @Test("sub-hour lifetime shows minutes only")
+    func subHourShowsMinutes() {
+        #expect(18.inTimeCompact == "18min")
+    }
+}
