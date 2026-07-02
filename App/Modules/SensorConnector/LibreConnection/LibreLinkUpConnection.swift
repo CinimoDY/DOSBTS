@@ -10,6 +10,9 @@ import SwiftUI
 
 // MARK: - LibreLinkUpConnection
 
+// @unchecked Sendable: mutable state is serialised through managerQueue (see
+// SensorBluetoothConnection); full Sendable conformance needs a concurrency
+// refactor beyond a warnings pass.
 class LibreLinkUpConnection: SensorBluetoothConnection, IsSensor, @unchecked Sendable {
     // MARK: Lifecycle
 
