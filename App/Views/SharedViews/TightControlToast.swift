@@ -71,11 +71,7 @@ struct TightControlToastView: View {
         .multilineTextAlignment(.center)
         .padding(.vertical, DOSSpacing.md)
         .padding(.horizontal, DOSSpacing.lg)
-        .background(Color.black.opacity(0.95))
-        .overlay(
-            Rectangle()
-                .stroke(AmberTheme.cgaCyan, lineWidth: 1)
-        )
+        .dosCard(.toast, stroke: AmberTheme.cgaCyan, padding: nil)
         .shadow(color: AmberTheme.cgaCyan.opacity(0.6), radius: 8) // phosphor glow
         .padding(.horizontal, DOSSpacing.lg)
         .contentShape(Rectangle())

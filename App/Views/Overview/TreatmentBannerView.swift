@@ -64,9 +64,26 @@ struct TreatmentBannerView: View {
         return .rechecking
     }
 
+    /// State-colored toast border for the 4 banner states: green while the
+    /// hypo cycle is progressing well (countdown / recovered), amber when it
+    /// needs attention (rechecking / stale data). Mirrors the accent color of
+    /// each state's own content.
+    private func bannerBorderColor(for state: BannerState) -> Color {
+        switch state {
+        case .countdown, .recovered:
+            return AmberTheme.cgaGreen
+        case .rechecking, .staleData:
+            return AmberTheme.amber
+        }
+    }
+
     var body: some View {
-        HStack(spacing: DOSSpacing.sm) {
-            bannerContent
+        // Resolve the time-dependent state ONCE per render so the border and
+        // the content never sample Date() on opposite sides of the countdown /
+        // staleness boundary (which would briefly mismatch their colors).
+        let state = bannerState
+        return HStack(spacing: DOSSpacing.sm) {
+            bannerContent(for: state)
 
             Spacer()
 
@@ -81,6 +98,12 @@ struct TreatmentBannerView: View {
         }
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.sm)
+        .dosCard(.toast, stroke: bannerBorderColor(for: state), padding: nil)
+        // Inset the card from the screen edges — OverviewView stacks the banner
+        // in a zero-spacing VStack with no outer margin, so without this the new
+        // toast stroke would render full-bleed flush against the bezels.
+        .padding(.horizontal, DOSSpacing.md)
+        .padding(.vertical, DOSSpacing.xs)
         .onAppear {
             startTimer()
             refreshBannerIOB()
@@ -96,8 +119,8 @@ struct TreatmentBannerView: View {
     // MARK: - Banner Content
 
     @ViewBuilder
-    private var bannerContent: some View {
-        switch bannerState {
+    private func bannerContent(for state: BannerState) -> some View {
+        switch state {
         case .countdown:
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: DOSSpacing.xs) {

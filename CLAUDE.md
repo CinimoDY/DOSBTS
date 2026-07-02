@@ -160,7 +160,9 @@ Connections emit `DirectAction`s through a `PassthroughSubject`. Available conne
 
 ## Design System: DOS Amber CGA
 
-Source: eiDotter design system. Shared tokens in `Library/DesignSystem/` (`AmberTheme.swift`, `DOSTypography.swift`, `DOSSpacing.swift`). App-only components in `App/DesignSystem/` (`Components/DOSButtonStyle.swift`, `Modifiers/DOSModifiers.swift`).
+Source: eiDotter design system. Shared tokens in `Library/DesignSystem/` (`AmberTheme.swift`, `DOSTypography.swift`, `DOSSpacing.swift`). Shared surface chrome in `Library/DesignSystem/Modifiers/DOSSurfaces.swift`. App-only components in `App/DesignSystem/` (`Components/DOSButtonStyle.swift`, `Modifiers/DOSModifiers.swift`).
+
+**Surface chrome (`.dosCard` / `.dosHeader`, DMNC-1216)** — `DOSSurfaces.swift` (both targets) is the ONE place for card panels and section headers; never hand-roll `overlay(Rectangle().stroke(...)) + background`. `.dosCard(_ variant:stroke:padding:)` has four `DOSCardVariant`s — `.panel` (cardBackground/dosBorder), `.info` (clear/cgaCyan, AI framing), `.stat` (surfaceTint/borderSubtle, StatCard), `.toast` (scrimHeavy/amber, toasts + treatment banner). `stroke:` overrides the variant stroke for stateful borders; `padding: nil` defers padding to the caller. `.dosHeader(_ color:)` is the canonical section header (12pt semibold mono, 1.2 tracking, uppercase, no glow; amberDark default / amber emphasis / cgaCyan AI). Variant fill/stroke are pinned in `DesignTokenPinTests`. System `Section(header: Label(...))` headers (Settings, Statistics) are not yet migrated — tracked follow-up.
 
 Key colors:
 - **Primary amber:** `#ffb000` (P3 phosphor 602nm)

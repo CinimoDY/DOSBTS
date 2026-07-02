@@ -131,9 +131,7 @@ private struct BuildCard: View {
         }
         .padding(DOSSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(
-            Rectangle().stroke(AmberTheme.amberDark.opacity(0.6), lineWidth: 1)
-        )
+        .dosCard(.panel, padding: nil)
         .onAppear(perform: runReveal)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilitySummary))

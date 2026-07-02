@@ -30,12 +30,9 @@ struct LoggedMealToast: View {
                 .font(DOSTypography.caption)
                 .foregroundColor(AmberTheme.cgaGreen)
         }
-        .padding(DOSSpacing.sm)
-        .background(Color.black.opacity(0.95))
-        .overlay(
-            Rectangle()
-                .stroke(AmberTheme.amberDark, lineWidth: 1)
-        )
+        // Keep the original dim border (amberDark) rather than the .toast
+        // default amber — this confirmation toast is deliberately quiet.
+        .dosCard(.toast, stroke: AmberTheme.amberDark, padding: DOSSpacing.sm)
         .padding(.horizontal, DOSSpacing.md)
         .padding(.bottom, DOSSpacing.md)
         .transition(.move(edge: .bottom).combined(with: .opacity))
