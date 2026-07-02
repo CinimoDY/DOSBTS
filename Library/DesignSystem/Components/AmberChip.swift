@@ -60,8 +60,8 @@ public struct AmberChipLabel: View {
         .frame(maxWidth: 120, alignment: .leading)
         .padding(.horizontal, DOSSpacing.sm)
         .padding(.vertical, DOSSpacing.xs)
-        .foregroundStyle(isSelected ? Color.black : tint)
-        .background(isSelected ? tint : Color.black)
+        .foregroundStyle(isSelected ? AmberTheme.dosBlack : tint)
+        .background(isSelected ? tint : AmberTheme.dosBlack)
         .overlay(
             Rectangle()
                 .stroke(tint, lineWidth: 1)
@@ -78,10 +78,10 @@ public struct AmberChipLabel: View {
         .padding(.horizontal, 8)
         .frame(maxWidth: .infinity)
         .frame(minHeight: variant == .type ? 44 : 40)
-        .foregroundStyle(isSelected ? Color.black : tint)
+        .foregroundStyle(isSelected ? AmberTheme.dosBlack : tint)
         .background(
             Rectangle()
-                .fill(isSelected ? tint : Color.black)
+                .fill(isSelected ? tint : AmberTheme.dosBlack)
         )
         .overlay(
             Rectangle()

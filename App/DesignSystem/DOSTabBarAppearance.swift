@@ -34,7 +34,7 @@ enum DOSTabBarAppearance {
     static func make() -> UITabBarAppearance {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .black
+        appearance.backgroundColor = UIColor(AmberTheme.dosBlack)
 
         let item = UITabBarItemAppearance()
         item.normal.iconColor = UIColor(AmberTheme.amberDark)

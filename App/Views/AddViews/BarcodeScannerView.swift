@@ -73,7 +73,7 @@ struct BarcodeScannerView: View {
 
     private var scannerView: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
+            AmberTheme.dosBlack.edgesIgnoringSafeArea(.all)
 
             #if targetEnvironment(simulator)
             // simulatorFallback frames the icon in its own box, so the standalone
@@ -100,7 +100,7 @@ struct BarcodeScannerView: View {
                 .foregroundStyle(AmberTheme.amber)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .background(AmberTheme.dosBlack)
     }
 
     // MARK: - Error
@@ -111,7 +111,7 @@ struct BarcodeScannerView: View {
             store.dispatch(.setFoodAnalysisResult(result: nil))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .background(AmberTheme.dosBlack)
     }
 
     // MARK: - Viewfinder Overlay
@@ -213,7 +213,7 @@ class ScannerVC: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .black
+        view.backgroundColor = UIColor(AmberTheme.dosBlack)
         feedbackGenerator.prepare()
         checkPermissionAndSetup()
     }

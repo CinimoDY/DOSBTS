@@ -54,7 +54,7 @@ struct AddInsulinView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .background(Color.black.ignoresSafeArea())
+        .background(AmberTheme.dosBlack.ignoresSafeArea())
         .preferredColorScheme(.dark)
         // Auto-set ENDS to 24 hours after STARTS for basal entries — once-daily
         // injections (Tresiba/Lantus/Levemir) are the dominant case and saving
@@ -92,14 +92,14 @@ struct AddInsulinView: View {
 
             Button("Add") { save() }
                 .font(DOSTypography.mono(size: 14, weight: .semibold))
-                .foregroundStyle((units ?? 0) > 0 ? AmberTheme.amber : AmberTheme.amberDark.opacity(0.4))
+                .foregroundStyle((units ?? 0) > 0 ? AmberTheme.amber : AmberTheme.borderSubtle)
                 .disabled((units ?? 0) <= 0)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(AmberTheme.amberDark.opacity(0.3))
+                .fill(AmberTheme.borderFaint)
                 .frame(height: 1)
         }
     }

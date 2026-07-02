@@ -17,11 +17,11 @@ struct HealthImportSourcesView: View {
                 HStack {
                     FiguresLoadingView.inline
                     Text("Loading sources...")
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             } else if availableSources.isEmpty {
                 Text("No source apps found in Apple Health.")
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             } else {
                 Section(
                     content: {

@@ -241,7 +241,7 @@ struct GlucoseTopBar: View {
         .background(AmberTheme.dosBlack)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(AmberTheme.amberDark.opacity(0.3))
+                .fill(AmberTheme.borderFaint)
                 .frame(height: 1)
         }
         .accessibilityElement(children: .combine)

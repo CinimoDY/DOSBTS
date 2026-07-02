@@ -23,7 +23,7 @@ struct SensorConnectionCategoryView: View {
                 SensorConnectionConfigurationView()
             }
             .listRowBackground(AmberTheme.dosBlack)
-            .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
+            .listRowSeparatorTint(AmberTheme.borderFaint)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)

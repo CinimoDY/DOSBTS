@@ -33,7 +33,7 @@ extension View {
         }
     }
 
-    // .ifLet(optionalColor) { $0.foregroundColor($1) }
+    // .ifLet(optionalColor) { $0.foregroundStyle($1) }
     @ViewBuilder
     func ifLet<V, Transform: View>(
         _ value: V?,

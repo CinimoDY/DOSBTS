@@ -92,7 +92,7 @@ struct TreatmentBannerView: View {
             }) {
                 Image(systemName: "xmark")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberDark)
             }
             .buttonStyle(.plain)
         }
@@ -125,19 +125,19 @@ struct TreatmentBannerView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: DOSSpacing.xs) {
                     Image(systemName: "timer")
-                        .foregroundColor(AmberTheme.cgaGreen)
+                        .foregroundStyle(AmberTheme.cgaGreen)
                     Text("HYPO TREATMENT")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.cgaGreen)
+                        .foregroundStyle(AmberTheme.cgaGreen)
                     Text("— recheck in \(formattedRemaining)")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 countdownProgressBar
                 if currentIOB > 0.05 {
                     Text("IOB \(String(format: "%.1fU", currentIOB))")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
 
@@ -147,31 +147,31 @@ struct TreatmentBannerView: View {
                     FiguresLoadingView.inline
                     Text("RECHECKING...")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 if currentIOB > 0.05 {
                     Text("IOB \(String(format: "%.1fU", currentIOB))")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
 
         case .staleData:
             HStack(spacing: DOSSpacing.xs) {
                 Image(systemName: "exclamationmark.triangle")
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                 Text("NO RECENT DATA — CHECK SENSOR")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             }
 
         case .recovered(let glucose):
             HStack(spacing: DOSSpacing.xs) {
                 Image(systemName: "checkmark.circle")
-                    .foregroundColor(AmberTheme.cgaGreen)
+                    .foregroundStyle(AmberTheme.cgaGreen)
                 Text("STABILISED AT \(glucose) \(store.state.glucoseUnit.localizedDescription)")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.cgaGreen)
+                    .foregroundStyle(AmberTheme.cgaGreen)
             }
             .onAppear {
                 // Auto-dismiss after 5 seconds (cancellable if user taps X first)
@@ -203,7 +203,7 @@ struct TreatmentBannerView: View {
 
             ZStack(alignment: .leading) {
                 Rectangle()
-                    .fill(AmberTheme.amberDark.opacity(0.3))
+                    .fill(AmberTheme.borderFaint)
                     .frame(width: geo.size.width, height: 4)
 
                 Rectangle()

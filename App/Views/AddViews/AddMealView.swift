@@ -56,7 +56,7 @@ struct AddMealView: View {
                     .foregroundStyle(AmberTheme.amber)
             })
             .listRowBackground(AmberTheme.dosBlack)
-            .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
+            .listRowSeparatorTint(AmberTheme.borderFaint)
 
             if let deleteCallback = deleteCallback {
                 Section {
@@ -68,7 +68,7 @@ struct AddMealView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .listRowBackground(AmberTheme.dosBlack)
-                .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
+                .listRowSeparatorTint(AmberTheme.borderFaint)
             }
         }
         .scrollContentBackground(.hidden)

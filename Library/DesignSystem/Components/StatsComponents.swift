@@ -85,7 +85,7 @@ public struct StatCard: View {
                 .minimumScaleFactor(0.7)
             Text(help ?? "")
                 .font(DOSTypography.micro)
-                .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
+                .foregroundStyle(AmberTheme.textFaint)
                 .lineLimit(1)
                 .opacity(help != nil ? 1 : 0)
                 .accessibilityHidden(help == nil)
@@ -130,7 +130,7 @@ public struct StackedTIRBar: View {
         .clipShape(Rectangle())
         .overlay(
             Rectangle()
-                .stroke(AmberTheme.amberDark.opacity(0.4), lineWidth: 0.5)
+                .stroke(AmberTheme.borderSubtle, lineWidth: 0.5)
         )
     }
 }

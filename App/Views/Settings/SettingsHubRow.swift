@@ -15,17 +15,17 @@ struct SettingsHubRow: View {
     var body: some View {
         HStack(spacing: DOSSpacing.md) {
             Image(systemName: icon)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberDark)
                 .frame(width: 24, alignment: .center)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                 Text(subtitle)
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                     .lineLimit(2)
             }
         }

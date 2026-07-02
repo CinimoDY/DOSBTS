@@ -26,7 +26,7 @@ struct SettingsConnectionsView: View {
             } footer: {
                 Text("Manage where your glucose data is shared or exported.")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             }
         }
         .listStyle(.grouped)
@@ -121,7 +121,7 @@ private struct ConnectionRow: View {
     var body: some View {
         HStack(spacing: DOSSpacing.md) {
             Image(systemName: connection.icon)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberDark)
                 .frame(width: 24, alignment: .center)
                 .accessibilityHidden(true)
 
@@ -133,11 +133,11 @@ private struct ConnectionRow: View {
                         .accessibilityHidden(true)
                     Text(connection.name)
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
                 Text(connection.description)
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                     .lineLimit(2)
             }
         }

@@ -50,12 +50,12 @@ struct EntryGroupListOverlay: View {
                 Divider().background(AmberTheme.amberDark)
                 ForEach(chronologicalRows, id: \.id) { marker in
                     row(for: marker)
-                    Divider().background(AmberTheme.amberDark.opacity(0.4))
+                    Divider().background(AmberTheme.borderSubtle)
                 }
             }
         }
         .safeAreaInset(edge: .bottom) { okBar }
-        .background(Color.black.ignoresSafeArea())
+        .background(AmberTheme.dosBlack.ignoresSafeArea())
         .preferredColorScheme(.dark)
     }
 
@@ -97,7 +97,7 @@ struct EntryGroupListOverlay: View {
         Button(action: onDismiss) {
             Text("OK")
                 .font(DOSTypography.button)
-                .foregroundStyle(.black)
+                .foregroundStyle(AmberTheme.inkOnAmber)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(Rectangle().fill(AmberTheme.amber))
         }

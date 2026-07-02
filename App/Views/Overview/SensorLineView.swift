@@ -84,7 +84,7 @@ struct SensorLineView: View {
                 .accessibilityHidden(true)
             Text(labelText)
                 .font(DOSTypography.caption)
-                .foregroundColor(labelColor)
+                .foregroundStyle(labelColor)
                 .bold(isConnected)
             if currentState == .transient {
                 // Warmup can sit here ~60 min — use the low-power cadence so the
@@ -105,7 +105,7 @@ struct SensorLineView: View {
                 } label: {
                     Text("DISCONNECT")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                         .padding(.horizontal, DOSSpacing.sm)
                         .padding(.vertical, 3)
                         .overlay(
@@ -121,7 +121,7 @@ struct SensorLineView: View {
             } label: {
                 Text("CONNECT")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                     .padding(.horizontal, DOSSpacing.sm)
                     .padding(.vertical, 3)
                     .overlay(
@@ -132,7 +132,7 @@ struct SensorLineView: View {
         case .noSensor:
             Text("SET UP")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberDark)
                 .padding(.horizontal, DOSSpacing.sm)
                 .padding(.vertical, 3)
                 .overlay(

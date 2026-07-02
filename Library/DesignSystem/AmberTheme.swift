@@ -73,7 +73,7 @@ public enum AmberTheme {
     /// Near-opaque toast backdrop (rationalizes black 0.9–0.95)
     public static let scrimHeavy = dosBlack.opacity(0.95)
     /// Ink on solid amber fills — selected chips, primary buttons.
-    /// Same value as dosBlack; the NAME is the intent (survives the Color.black guard).
+    /// Same value as dosBlack; the NAME is the intent (survives the AmberTheme.dosBlack guard).
     public static let inkOnAmber = dosBlack
 
     // MARK: - IOB component colors (split-IOB chart layers)

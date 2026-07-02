@@ -182,12 +182,12 @@ private struct PressTrackingButtonStyle: ButtonStyle {
     ) {
         Text("milk 12g")
             .font(DOSTypography.caption)
-            .foregroundColor(AmberTheme.amber)
+            .foregroundStyle(AmberTheme.amber)
             .padding(.horizontal, DOSSpacing.sm)
             .padding(.vertical, DOSSpacing.xs)
-            .background(Color.black)
+            .background(AmberTheme.dosBlack)
             .overlay(Rectangle().stroke(AmberTheme.amber, lineWidth: 1))
     }
     .padding()
-    .background(Color.black)
+    .background(AmberTheme.dosBlack)
 }

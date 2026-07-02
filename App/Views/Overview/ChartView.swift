@@ -90,13 +90,13 @@ struct ChartView: View {
                                 .frame(width: 16, height: 8)
                                 Text("HR")
                                     .font(DOSTypography.mono(size: 9, weight: .medium))
-                                    .foregroundColor(AmberTheme.cgaMagenta.opacity(0.5))
+                                    .foregroundStyle(AmberTheme.cgaMagenta.opacity(0.5))
                             }
                             .padding(.trailing, 4)
                         }
                         Text(store.state.glucoseUnit.localizedDescription)
                             .font(DOSTypography.mono(size: 9, weight: .medium))
-                            .foregroundColor(AmberTheme.amberMuted)
+                            .foregroundStyle(AmberTheme.amberMuted)
                     }
 
                     GeometryReader { chartAreaGeo in
@@ -268,7 +268,7 @@ struct ChartView: View {
                     Text(value.value.asInsulin())
                         .foregroundStyle(AmberTheme.amberDark)
                         .padding(.horizontal, 2.5)
-                        .background(Color.black.opacity(0.5))
+                        .background(AmberTheme.dosBlack.opacity(0.5))
                         .bold()
                         .font(DOSTypography.caption)
                 }

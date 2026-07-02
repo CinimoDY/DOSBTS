@@ -148,7 +148,7 @@ struct StatisticsView: View {
                     VStack(spacing: 4) {
                         Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
                             .font(DOSTypography.mono(size: 10))
-                            .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
+                            .foregroundStyle(AmberTheme.textFaint)
                         Text("\(glucoseStatistics.readings) readings · \(glucoseStatistics.days) of \(glucoseStatistics.maxDays) days")
                             .font(DOSTypography.caption)
                             .foregroundStyle(AmberTheme.amber)
@@ -168,7 +168,7 @@ struct StatisticsView: View {
             } footer: {
                 Text("Double-tap to toggle annotations.")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark.opacity(0.6))
+                    .foregroundStyle(AmberTheme.borderStrong)
             }
 
             UsageSection(stats: glucoseStatistics)
@@ -195,7 +195,7 @@ struct StatisticsView: View {
                 }) {
                     Text(level.name)
                         .font(DOSTypography.mono(size: 11, weight: isSelectedChartLevel(days: level.days) ? .bold : .regular))
-                        .foregroundStyle(isSelectedChartLevel(days: level.days) ? Color.black : AmberTheme.amber)
+                        .foregroundStyle(isSelectedChartLevel(days: level.days) ? AmberTheme.inkOnAmber : AmberTheme.amber)
                         .padding(.horizontal, DOSSpacing.sm)
                         .padding(.vertical, DOSSpacing.xxs)
                         .background(

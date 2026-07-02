@@ -31,12 +31,12 @@ struct CombinedEntryEditView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     foodSection
-                    Divider().background(AmberTheme.amberDark.opacity(0.5))
+                    Divider().background(AmberTheme.borderSubtle)
                     insulinSection
-                    Divider().background(AmberTheme.amberDark.opacity(0.5))
+                    Divider().background(AmberTheme.borderSubtle)
                     timeSection
                     if originalMealEntry != nil || originalInsulinDelivery != nil {
-                        Divider().background(AmberTheme.amberDark.opacity(0.5))
+                        Divider().background(AmberTheme.borderSubtle)
                         deleteSection
                     }
                 }

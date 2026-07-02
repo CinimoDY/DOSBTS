@@ -129,11 +129,11 @@ struct MealItemRow: View {
                 // even though section headers migrated to amber (R5 audit).
                 Text("> ")
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberDark)
 
                 Text(model.name)
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                     .lineLimit(1)
                     .truncationMode(.tail)
 
@@ -142,7 +142,7 @@ struct MealItemRow: View {
                 if let carbsLabel = model.carbsLabel {
                     Text(carbsLabel)
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
             .frame(minHeight: 44)

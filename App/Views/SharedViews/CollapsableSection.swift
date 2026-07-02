@@ -57,7 +57,7 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
                             Spacer()
                             Image(systemName: "chevron.down")
                                 .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amberDark)
                         }
                         .contentShape(Rectangle())
                     }

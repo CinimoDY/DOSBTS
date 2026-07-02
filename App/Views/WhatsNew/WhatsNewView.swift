@@ -88,7 +88,7 @@ struct WhatsNewView: View {
             .padding(.horizontal, DOSSpacing.md)
             .padding(.vertical, DOSSpacing.md)
         }
-        .background(Color.black)
+        .background(AmberTheme.dosBlack)
         .dosNavigationTitle("What's New")
     }
 }

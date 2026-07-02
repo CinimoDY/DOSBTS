@@ -38,13 +38,13 @@ struct SensorGlucoseListView: View {
                                 Text(verbatim: glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true))
                                     .monospacedDigit()
                                     .if(store.state.isAlarm(glucoseValue: glucoseValue) != .none) { text in
-                                        text.foregroundColor(AmberTheme.cgaRed)
+                                        text.foregroundStyle(AmberTheme.cgaRed)
                                     }
                             } else {
                                 Text(verbatim: sensorGlucose.glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true))
                                     .monospacedDigit()
                                     .if(store.state.isAlarm(glucoseValue: sensorGlucose.glucoseValue) != .none) { text in
-                                        text.foregroundColor(AmberTheme.cgaRed)
+                                        text.foregroundStyle(AmberTheme.cgaRed)
                                     }
                             }
                         }

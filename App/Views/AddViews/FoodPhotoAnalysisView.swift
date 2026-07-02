@@ -45,7 +45,7 @@ struct FoodPhotoAnalysisView: View {
                 }
             }
             .listRowBackground(AmberTheme.dosBlack)
-            .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
+            .listRowSeparatorTint(AmberTheme.borderFaint)
         }
         .scrollContentBackground(.hidden)
         .background(AmberTheme.dosBlack.ignoresSafeArea())

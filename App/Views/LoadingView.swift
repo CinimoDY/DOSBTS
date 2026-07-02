@@ -16,13 +16,13 @@ struct LoadingOverlay: View {
         if isShowing {
             ZStack(alignment: .center) {
                 // Dim and block the UI beneath while busy.
-                Color.black.opacity(0.5)
+                AmberTheme.dosBlack.opacity(0.5)
                     .ignoresSafeArea()
 
                 VStack {
                     Text("LOADING...")
                         .font(DOSTypography.body)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                         .dosPowerOn(isActive: $isActive)
                         .padding(.top, 48)
 
@@ -51,7 +51,7 @@ private struct BlinkingCursor: View {
     var body: some View {
         Text("_")
             .font(DOSTypography.body)
-            .foregroundColor(AmberTheme.amber)
+            .foregroundStyle(AmberTheme.amber)
             .opacity(visible ? 1 : 0)
             .onAppear {
                 withAnimation(AnimationTokens.blink) {

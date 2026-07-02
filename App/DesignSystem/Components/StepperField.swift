@@ -90,7 +90,7 @@ struct StepperField: View {
                 }
                 .buttonStyle(.plain)
             }
-            .background(Color.black)
+            .background(AmberTheme.dosBlack)
             .overlay(
                 Rectangle()
                     .stroke(AmberTheme.amberDark, lineWidth: 1)
@@ -100,7 +100,7 @@ struct StepperField: View {
             if let helpText {
                 Text(helpText)
                     .font(DOSTypography.mono(size: 10))
-                    .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
+                    .foregroundStyle(AmberTheme.textFaint)
             }
         }
     }

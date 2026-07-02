@@ -60,12 +60,12 @@ struct TightControlToastView: View {
         VStack(spacing: DOSSpacing.xs) {
             Text(model.headline)
                 .font(DOSTypography.displayMedium)
-                .foregroundColor(AmberTheme.amberLight)
+                .foregroundStyle(AmberTheme.amberLight)
 
             if let subline = model.subline {
                 Text(subline)
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.cgaCyan)
+                    .foregroundStyle(AmberTheme.cgaCyan)
             }
         }
         .multilineTextAlignment(.center)

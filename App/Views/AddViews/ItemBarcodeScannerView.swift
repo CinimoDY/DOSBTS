@@ -27,17 +27,17 @@ struct ItemBarcodeScannerView: View {
                         .foregroundStyle(AmberTheme.amber)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black)
+                .background(AmberTheme.dosBlack)
             } else if let error = errorMessage {
                 DOSErrorState(message: error) {
                     hasScanned = false
                     errorMessage = nil
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black)
+                .background(AmberTheme.dosBlack)
             } else {
                 ZStack {
-                    Color.black.edgesIgnoringSafeArea(.all)
+                    AmberTheme.dosBlack.edgesIgnoringSafeArea(.all)
                     #if targetEnvironment(simulator)
                     simulatorFallback
                     #else

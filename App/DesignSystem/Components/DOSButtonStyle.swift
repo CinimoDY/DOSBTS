@@ -23,7 +23,7 @@ struct DOSButtonStyle: ButtonStyle {
 
         configuration.label
             .font(DOSTypography.button)
-            .foregroundColor(foregroundColor(configuration))
+            .foregroundStyle(foregroundColor(configuration))
             .padding(.horizontal, DOSSpacing.md)
             .padding(.vertical, DOSSpacing.xs)
             .background(backgroundColor(configuration))
