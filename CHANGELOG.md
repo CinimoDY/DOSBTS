@@ -7,6 +7,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 119] — 2026-07-02
+
 ### Fixed
 - Live Activity and Dynamic Island text now uses the DOS mono face (was incorrectly rendering SF Pro) — DMNC-1221
 - Lock-screen widget metadata (TIR, IOB, timestamp) now uses the amber palette instead of system secondary colour — DMNC-1221
