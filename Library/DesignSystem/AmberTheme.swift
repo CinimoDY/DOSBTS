@@ -56,6 +56,26 @@ public enum AmberTheme {
     /// Warm near-black for card backgrounds: #1B1917
     public static let cardBackground = Color(red: 27.0 / 255.0, green: 25.0 / 255.0, blue: 23.0 / 255.0)
 
+    // MARK: - Semantic tiers (pre-blended; never write .opacity() on palette tokens in views)
+
+    /// Faintest structure: grid lines, separators (was amberDark @ 0.3)
+    public static let borderFaint = amberDark.opacity(0.3)
+    /// Quiet card hairlines: stat cells, dividers (was amberDark @ 0.4–0.5)
+    public static let borderSubtle = amberDark.opacity(0.4)
+    /// Emphasized dim stroke (was amberDark @ 0.6)
+    public static let borderStrong = amberDark.opacity(0.6)
+    /// Helper text a step below amberDark (was amberDark @ 0.7)
+    public static let textFaint = amberDark.opacity(0.7)
+    /// Faint amber wash behind stat cells (was amber @ 0.04)
+    public static let surfaceTint = amber.opacity(0.04)
+    /// Modal/overlay dimming (rationalizes ad-hoc black 0.5–0.8)
+    public static let scrim = dosBlack.opacity(0.7)
+    /// Near-opaque toast backdrop (rationalizes black 0.9–0.95)
+    public static let scrimHeavy = dosBlack.opacity(0.95)
+    /// Ink on solid amber fills — selected chips, primary buttons.
+    /// Same value as dosBlack; the NAME is the intent (survives the Color.black guard).
+    public static let inkOnAmber = dosBlack
+
     // MARK: - IOB component colors (split-IOB chart layers)
 
     /// Warm green (yellow-leaning) for meal/snack bolus IOB: ~#8CBF40.

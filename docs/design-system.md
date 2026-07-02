@@ -48,6 +48,19 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 | `iobBolus` | #8CBF40 | IOB meal/snack bolus chart layer |
 | `iobBasal` | #5DD0F3 | IOB basal + correction chart layer |
 
+### Semantic Tier Tokens (pre-blended — never `.opacity()` on palette tokens in views)
+
+| Token | Base | Alpha | Usage |
+|-------|------|-------|-------|
+| `borderFaint` | amberDark | 0.3 | Grid lines, separators |
+| `borderSubtle` | amberDark | 0.4 | Quiet card hairlines, stat cell dividers |
+| `borderStrong` | amberDark | 0.6 | Emphasized dim strokes |
+| `textFaint` | amberDark | 0.7 | Helper text a step below amberDark |
+| `surfaceTint` | amber | 0.04 | Faint amber wash behind stat cells |
+| `scrim` | dosBlack | 0.7 | Modal/overlay dimming |
+| `scrimHeavy` | dosBlack | 0.95 | Near-opaque toast backdrop |
+| `inkOnAmber` | dosBlack | 1.0 | Ink on solid amber fills (selected chips, primary buttons) |
+
 ### Usage Guidelines
 
 #### Text Hierarchy
@@ -67,13 +80,17 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 |-------|------|--------|-------|
 | `glucoseHero` | 60pt | Bold mono + monospacedDigit | Hero glucose display |
 | `displayMedium` | 28pt | Bold mono | Section headers |
+| `numeral` | 24pt | Semibold mono | Stat-card values, stepper digits |
 | `bodyLarge` | 20pt | Regular mono | Emphasized content |
 | `body` | 17pt | Regular mono | Standard body text |
 | `bodySmall` | 15pt | Regular mono | Secondary body, timestamps, metadata |
 | `button` | 17pt | Semibold mono | Interactive elements |
 | `caption` | 12pt | Regular mono | Captions, chart axes |
-| `tabBar` | 10pt | Medium mono | Navigation labels |
-| `mono(size:weight:)` | custom | — | Custom-sized monospaced font |
+| `label` | 11pt | Medium mono | Chip labels, hero-stat captions, IOB sublabels |
+| `microLabel` | 10pt | Medium mono | ALL-CAPS stat/grid labels (pair with `.tracking(0.6)`) |
+| `tabBar` | 10pt | Medium mono | Navigation tab labels (tab semantics only) |
+| `micro` | 9pt | Regular mono | Smallest legible: stat help captions, axis micro-labels |
+| `mono(size:weight:)` | custom | — | Custom-sized monospaced font (13/14/18/20/22 and heroes 36–64) |
 
 ### Letter Spacing
 - **Body**: 0pt (default)
@@ -260,8 +277,10 @@ Standard motion tokens used across all animated surfaces.
 | `durationShort` | `Double` | 0.15 s | Icon swaps, immediate feedback |
 | `durationMedium` | `Double` | 0.25 s | Standard cross-fades |
 | `durationLong` | `Double` | 0.4 s | Enter/exit transitions |
+| `durationPulse` | `Double` | 1.2 s | Loading/attention pulse cadence |
 | `easeStandard` | Ease | easeInOut 0.25 s | Phase-cycling text, cross-fades |
 | `easeExit` | Ease | easeIn 0.15 s | Exit transitions |
+| `pulse` | Repeat | easeInOut 1.2 s, autoreverses | Loading/attention breathing loops |
 
 #### Reduce-motion adaptation
 

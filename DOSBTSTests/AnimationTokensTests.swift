@@ -52,4 +52,19 @@ struct AnimationTokensTests {
         let snappyDesc = "\(AnimationTokens.snappy)"
         #expect(normalDesc != snappyDesc)
     }
+
+    @Test("durationPulse is 1.2 seconds")
+    func durationPulseValue() {
+        #expect(AnimationTokens.durationPulse == 1.2)
+    }
+
+    @Test("pulse animation is longer than durationLong (attention / breathing cadence)")
+    func pulseIsSlowerThanLong() {
+        #expect(AnimationTokens.durationPulse > AnimationTokens.durationLong)
+    }
+
+    @Test("pulse animation compiles and runs without crashing")
+    func pulseSmoke() {
+        _ = AnimationTokens.pulse
+    }
 }
