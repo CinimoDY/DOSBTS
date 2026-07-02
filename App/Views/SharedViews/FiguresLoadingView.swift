@@ -91,6 +91,11 @@ struct FiguresLoadingView: View {
     }
 }
 
+extension FiguresLoadingView {
+    /// Standard inline replacement for a system ProgressView() spinner.
+    static var inline: FiguresLoadingView { FiguresLoadingView(dotSize: 8, spacing: 6) }
+}
+
 #if DEBUG
 #Preview {
     VStack(spacing: 24) {

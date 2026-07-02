@@ -41,8 +41,7 @@ struct AIConsentView: View {
                 Text("Allow Food Photo Analysis")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(AmberTheme.amber)
+            .buttonStyle(.dosPrimary)
 
             Button("Not Now") {
                 dismiss()

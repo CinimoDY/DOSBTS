@@ -144,8 +144,7 @@ struct TreatmentBannerView: View {
         case .rechecking:
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: DOSSpacing.xs) {
-                    ProgressView()
-                        .tint(AmberTheme.amber)
+                    FiguresLoadingView.inline
                     Text("RECHECKING...")
                         .font(DOSTypography.caption)
                         .foregroundColor(AmberTheme.amber)

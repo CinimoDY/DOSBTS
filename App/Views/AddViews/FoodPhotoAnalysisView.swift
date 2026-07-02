@@ -179,8 +179,7 @@ struct FoodPhotoAnalysisView: View {
                 Button("Set Up AI Analysis") {
                     showConsentSheet = true
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AmberTheme.amber)
+                .buttonStyle(.dosPrimary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -491,8 +490,7 @@ struct FoodPhotoAnalysisView: View {
                     content: {
                         if isFollowingUp {
                             HStack {
-                                ProgressView()
-                                    .tint(AmberTheme.amber)
+                                FiguresLoadingView.inline
                                 Text("Updating estimate...")
                                     .font(DOSTypography.caption)
                                     .foregroundStyle(AmberTheme.amber)
