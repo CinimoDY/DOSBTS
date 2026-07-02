@@ -12,11 +12,11 @@
 
 | Overview | Daily digest |
 |:---:|:---:|
-| <img src="Screenshots/dosbts-overview.png" alt="Overview with glucose chart, event marker lane, and IOB overlay" width="280"> | <img src="Screenshots/dosbts-digest.png" alt="Daily digest stats grid and AI insight narrative" width="280"> |
+| <img src="Screenshots/dosbts-overview.png" alt="Overview with 24h glucose chart, IOB decay curve overlay, event marker lane with meal and insulin markers, and persistent bottom bar" width="280"> | <img src="Screenshots/dosbts-digest.png" alt="Daily digest stats grid with TIR, AVG, carbs and insulin totals, plus structured AI insight card" width="280"> |
 | **Meal entry** | **Settings** |
-| <img src="Screenshots/dosbts-meal-entry.png" alt="Unified meal entry with a QUICK favourites section plus Manual, Scan, Photo, and Ask AI paths" width="280"> | <img src="Screenshots/dosbts-settings.png" alt="Glucose settings panel" width="280"> |
+| <img src="Screenshots/dosbts-meal-entry.png" alt="Unified meal entry with QUICK favourites section, Manual, Scan, Photo, and Ask AI paths, and a recent meals list" width="280"> | <img src="Screenshots/dosbts-settings.png" alt="Settings hub with six category rows" width="280"> |
 
-<sub>Build 61 on TestFlight. Overview, digest, and meal entry are on-device with real data; settings is a simulator capture.</sub>
+<sub>Build 121 simulator captures with synthetic data.</sub>
 
 ## What it is
 
@@ -76,7 +76,7 @@ xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp -destination 'platform=iO
 # Build widget
 xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSWidget -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -configuration Debug build
 
-# Tests (262 passing as of build 96)
+# Tests (350+ passing as of build 121)
 xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' test
 ```
