@@ -78,20 +78,20 @@ struct AddInsulinView: View {
     private var navBar: some View {
         HStack {
             Button("Cancel") { dismiss() }
-                .font(.system(size: 14, design: .monospaced))
+                .font(DOSTypography.mono(size: 14))
                 .foregroundStyle(AmberTheme.amberDark)
 
             Spacer()
 
             Text("ADD INSULIN")
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                .font(DOSTypography.mono(size: 13, weight: .semibold))
                 .tracking(0.6)
                 .foregroundStyle(AmberTheme.amberLight)
 
             Spacer()
 
             Button("Add") { save() }
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .font(DOSTypography.mono(size: 14, weight: .semibold))
                 .foregroundStyle((units ?? 0) > 0 ? AmberTheme.amber : AmberTheme.amberDark.opacity(0.4))
                 .disabled((units ?? 0) <= 0)
         }
@@ -108,7 +108,7 @@ struct AddInsulinView: View {
 
     private func formLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 10, weight: .medium, design: .monospaced))
+            .font(DOSTypography.microLabel)
             .tracking(0.6)
             .foregroundStyle(AmberTheme.amber)
     }
@@ -166,7 +166,7 @@ struct AddInsulinView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(AmberTheme.amber)
             Text("ACTIVE IOB: \(String(format: "%.1f", currentIOB))U")
-                .font(.system(size: 12, design: .monospaced))
+                .font(DOSTypography.caption)
                 .foregroundStyle(AmberTheme.amber)
             Spacer()
         }

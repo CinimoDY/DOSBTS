@@ -169,7 +169,7 @@ struct FoodPhotoAnalysisView: View {
         Section {
             VStack(spacing: 12) {
                 Image(systemName: "camera.viewfinder")
-                    .font(.system(size: 48))
+                    .font(DOSTypography.mono(size: 48))
                     .foregroundStyle(AmberTheme.amber)
 
                 Text("AI-powered food analysis requires sending your photo and food preferences to Anthropic (Claude AI).")
@@ -297,7 +297,7 @@ struct FoodPhotoAnalysisView: View {
         Section {
             VStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 36))
+                    .font(DOSTypography.mono(size: 36))
                     .foregroundStyle(AmberTheme.cgaRed)
 
                 Text(error)
@@ -325,7 +325,7 @@ struct FoodPhotoAnalysisView: View {
                 Section {
                     VStack(spacing: 12) {
                         Image(systemName: "questionmark.circle")
-                            .font(.system(size: 36))
+                            .font(DOSTypography.mono(size: 36))
                             .foregroundStyle(AmberTheme.amber)
 
                         Text("Couldn't identify any foods. Try being more specific or use manual entry.")

@@ -147,7 +147,7 @@ struct StatisticsView: View {
                     // Target range + period footer.
                     VStack(spacing: 4) {
                         Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
-                            .font(.system(size: 10, design: .monospaced))
+                            .font(DOSTypography.mono(size: 10))
                             .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
                         Text("\(glucoseStatistics.readings) readings · \(glucoseStatistics.days) of \(glucoseStatistics.maxDays) days")
                             .font(DOSTypography.caption)
@@ -182,7 +182,7 @@ struct StatisticsView: View {
     private func periodPicker(stats: GlucoseStatistics) -> some View {
         HStack(spacing: DOSSpacing.sm) {
             Text("PERIOD")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(DOSTypography.microLabel)
                 .tracking(0.6)
                 .foregroundStyle(AmberTheme.amberDark)
 
@@ -194,7 +194,7 @@ struct StatisticsView: View {
                     store.dispatch(.setStatisticsDays(days: level.days))
                 }) {
                     Text(level.name)
-                        .font(.system(size: 11, weight: isSelectedChartLevel(days: level.days) ? .bold : .regular, design: .monospaced))
+                        .font(DOSTypography.mono(size: 11, weight: isSelectedChartLevel(days: level.days) ? .bold : .regular))
                         .foregroundStyle(isSelectedChartLevel(days: level.days) ? Color.black : AmberTheme.amber)
                         .padding(.horizontal, DOSSpacing.sm)
                         .padding(.vertical, 6)
@@ -231,7 +231,7 @@ struct StatisticsView: View {
     private func annotation(label: String, text: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .font(DOSTypography.mono(size: 10, weight: .semibold))
                 .tracking(0.6)
                 .foregroundStyle(AmberTheme.amber)
             Text(text)
