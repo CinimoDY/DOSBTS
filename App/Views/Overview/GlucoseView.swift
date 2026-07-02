@@ -23,7 +23,7 @@ struct GlucoseView: View {
                     if latestGlucose.type != .high {
                         Text(verbatim: latestGlucose.glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit))
                             .font(DOSTypography.glucoseHero)
-                            .foregroundColor(getGlucoseColor(glucose: latestGlucose))
+                            .foregroundStyle(getGlucoseColor(glucose: latestGlucose))
                             .dosGlowLarge(color: getGlucoseColor(glucose: latestGlucose))
                             .opacity(isDangerouslyLow ? (lowPulse ? 0.4 : 1.0) : 1.0)
                             .animation(isDangerouslyLow ?
@@ -34,7 +34,7 @@ struct GlucoseView: View {
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(verbatim: latestGlucose.trend.description)
-                                .foregroundColor(getGlucoseColor(glucose: latestGlucose))
+                                .foregroundStyle(getGlucoseColor(glucose: latestGlucose))
                                 .font(DOSTypography.mono(size: 36, weight: .bold))
 
                             if let minuteChange = latestGlucose.minuteChange?.asMinuteChange(glucoseUnit: store.state.glucoseUnit) {
@@ -48,7 +48,7 @@ struct GlucoseView: View {
                     } else {
                         Text("HIGH")
                             .font(DOSTypography.glucoseHero)
-                            .foregroundColor(AmberTheme.cgaRed)
+                            .foregroundStyle(AmberTheme.cgaRed)
                             .dosGlowLarge(color: AmberTheme.cgaRed)
                     }
                 }
@@ -59,7 +59,7 @@ struct GlucoseView: View {
                         Text(verbatim: staleLabel)
                     }
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.stalenessColor(staleness))
+                    .foregroundStyle(AmberTheme.stalenessColor(staleness))
                     .padding(.top, 2)
                 }
 
@@ -69,7 +69,7 @@ struct GlucoseView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 3)
                         .background(AmberTheme.cgaRed)
-                        .foregroundColor(AmberTheme.dosBlack)
+                        .foregroundStyle(AmberTheme.dosBlack)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             DirectNotifications.shared.hapticFeedback()
@@ -90,7 +90,7 @@ struct GlucoseView: View {
             } else {
                 Text("No Data")
                     .font(DOSTypography.mono(size: 42, weight: .bold))
-                    .foregroundColor(AmberTheme.cgaRed)
+                    .foregroundStyle(AmberTheme.cgaRed)
 
                 Text(verbatim: "---")
                     .font(DOSTypography.caption)
@@ -220,7 +220,7 @@ struct GlucoseView: View {
                 }
                 Text("·")
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(AmberTheme.amberDark.opacity(0.6))
+                    .foregroundStyle(AmberTheme.borderStrong)
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(formatIOB(iobResult.correctionBasalIOB))
                         .font(.system(size: 14, weight: .semibold, design: .monospaced))

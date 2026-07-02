@@ -33,7 +33,7 @@ struct AddCalibrationView: View {
                         }
                     }
                     .listRowBackground(AmberTheme.dosBlack)
-                    .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
+                    .listRowSeparatorTint(AmberTheme.borderFaint)
                 }
                 .scrollContentBackground(.hidden)
                 .background(AmberTheme.dosBlack.ignoresSafeArea())
@@ -80,7 +80,7 @@ struct AddCalibrationView2: View {
                         }
                     }
                     .listRowBackground(AmberTheme.dosBlack)
-                    .listRowSeparatorTint(AmberTheme.amberDark.opacity(0.3))
+                    .listRowSeparatorTint(AmberTheme.borderFaint)
                 }
                 .scrollContentBackground(.hidden)
                 .background(AmberTheme.dosBlack.ignoresSafeArea())

@@ -28,7 +28,7 @@ struct ItemBarcodeScannerView: View {
                         .foregroundStyle(AmberTheme.amber)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black)
+                .background(AmberTheme.dosBlack)
             } else if let error = errorMessage {
                 VStack(spacing: 12) {
                     Image(systemName: "barcode.viewfinder")
@@ -49,10 +49,10 @@ struct ItemBarcodeScannerView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black)
+                .background(AmberTheme.dosBlack)
             } else {
                 ZStack {
-                    Color.black.edgesIgnoringSafeArea(.all)
+                    AmberTheme.dosBlack.edgesIgnoringSafeArea(.all)
                     #if targetEnvironment(simulator)
                     simulatorFallback
                     #else

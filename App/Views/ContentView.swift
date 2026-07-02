@@ -165,7 +165,7 @@ struct ContentView: View {
                 // item) instead.
                 let navAppearance = UINavigationBarAppearance()
                 navAppearance.configureWithOpaqueBackground()
-                navAppearance.backgroundColor = .black
+                navAppearance.backgroundColor = UIColor(AmberTheme.dosBlack)
                 navAppearance.shadowColor = .clear
                 UINavigationBar.appearance().standardAppearance = navAppearance
                 UINavigationBar.appearance().scrollEdgeAppearance = navAppearance

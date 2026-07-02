@@ -32,7 +32,7 @@ struct TimeInRangeReportView: View {
                 VStack(spacing: 4) {
                     Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
                         .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
+                        .foregroundStyle(AmberTheme.textFaint)
                     Text("\(stats.days) of \(stats.maxDays) days")
                         .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
@@ -40,7 +40,7 @@ struct TimeInRangeReportView: View {
             } else {
                 Text("No statistics available")
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             }
         }
         .padding(.vertical, DOSSpacing.md)
@@ -99,7 +99,7 @@ struct StatisticsReportView: View {
             } else {
                 Text("No statistics available")
                     .font(DOSTypography.bodySmall)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             }
         }
         .padding(.vertical, DOSSpacing.md)
@@ -130,7 +130,7 @@ struct ChartSelectionTooltip: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(AmberTheme.amberLight)
-                    .foregroundColor(AmberTheme.dosBlack)
+                    .foregroundStyle(AmberTheme.dosBlack)
                 }
 
                 if let selectedRawPoint = selectedRawSensorPoint, showRawPoint {
@@ -142,7 +142,7 @@ struct ChartSelectionTooltip: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(AmberTheme.amberDark)
-                    .foregroundColor(AmberTheme.dosBlack)
+                    .foregroundStyle(AmberTheme.dosBlack)
                 }
             }
 
@@ -159,7 +159,7 @@ struct ChartSelectionTooltip: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(AmberTheme.cgaRed)
-                .foregroundColor(AmberTheme.dosBlack)
+                .foregroundStyle(AmberTheme.dosBlack)
             }
 
             if let hr = selectedHeartRate, showHeartRate {
@@ -172,7 +172,7 @@ struct ChartSelectionTooltip: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
                 .background(AmberTheme.cgaMagenta)
-                .foregroundColor(AmberTheme.dosBlack)
+                .foregroundStyle(AmberTheme.dosBlack)
             }
         }.opacity(0.75)
     }

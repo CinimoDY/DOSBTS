@@ -31,7 +31,7 @@ struct DigestView: View {
             .padding(.horizontal, DOSSpacing.md)
             .padding(.top, DOSSpacing.sm)
         }
-        .background(Color.black)
+        .background(AmberTheme.dosBlack)
         // Slim glucose strip at the top — the value sits where the
         // Overview hero puts it, on every tab (R7b).
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -60,21 +60,21 @@ struct DigestView: View {
             Button(action: { navigateDate(by: -1) }) {
                 Text("<")
                     .font(DOSTypography.bodyLarge)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberDark)
             }
 
             Spacer()
 
             Text(dateLabel)
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
 
             Spacer()
 
             Button(action: { navigateDate(by: 1) }) {
                 Text(">")
                     .font(DOSTypography.bodyLarge)
-                    .foregroundColor(isToday ? AmberTheme.amberDark.opacity(0.3) : AmberTheme.amberDark)
+                    .foregroundStyle(isToday ? AmberTheme.borderFaint : AmberTheme.amberDark)
             }
             .disabled(isToday)
         }
@@ -138,7 +138,7 @@ struct DigestView: View {
                     }) {
                         Text("REFRESH")
                             .font(DOSTypography.caption)
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amberDark)
                     }
                 }
             }
@@ -146,7 +146,7 @@ struct DigestView: View {
             if store.state.dailyDigestInsightLoading {
                 Text("ANALYZING...")
                     .font(DOSTypography.body)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                     .opacity(0.7)
             } else if let insight = digest.aiInsight, !insight.isEmpty {
                 if let structured = DigestInsight.parse(insight) {
@@ -160,18 +160,18 @@ struct DigestView: View {
             } else if !store.state.aiConsentDailyDigest {
                 Text("ENABLE AI INSIGHTS IN SETTINGS")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             } else if KeychainService.read(key: ClaudeService.keychainKey) == nil {
                 Text("ADD API KEY IN SETTINGS")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             } else {
                 Button(action: {
                     store.dispatch(.generateDailyDigestInsight(date: selectedDate, force: true))
                 }) {
                     Text("INSIGHT UNAVAILABLE — TAP TO RETRY")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
         }
@@ -191,24 +191,24 @@ struct DigestView: View {
                 if timelineItems.isEmpty {
                     Text("NO EVENTS LOGGED")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 } else {
                     ForEach(timelineItems, id: \.id) { item in
                         HStack(spacing: DOSSpacing.sm) {
                             Text(item.timeString)
                                 .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amber)
+                                .foregroundStyle(AmberTheme.amber)
                                 .frame(width: 45, alignment: .leading)
                             Text(item.label)
                                 .font(DOSTypography.caption)
-                                .foregroundColor(item.color)
+                                .foregroundStyle(item.color)
                         }
                     }
                 }
             } else {
                 Text("LOADING...")
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -222,7 +222,7 @@ struct DigestView: View {
             FiguresLoadingView(dotSize: 10, spacing: 7)
             Text("LOADING...")
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
             Spacer()
         }
         .frame(minHeight: 200)
@@ -233,7 +233,7 @@ struct DigestView: View {
             Spacer()
             Text("NO DATA FOR THIS DAY")
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
             Spacer()
         }
         .frame(minHeight: 200)

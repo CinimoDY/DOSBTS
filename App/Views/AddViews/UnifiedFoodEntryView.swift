@@ -65,7 +65,7 @@ struct UnifiedFoodEntryView: View {
                         Section {
                             Text("NO HYPO TREATMENTS CONFIGURED")
                                 .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amber)
+                                .foregroundStyle(AmberTheme.amber)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.vertical, DOSSpacing.lg)
                         }
@@ -110,7 +110,7 @@ struct UnifiedFoodEntryView: View {
                         showingFavoriteManagement = true
                     } label: {
                         Image(systemName: "gear")
-                            .foregroundColor(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amberDark)
                     }
                 }
             }
@@ -187,10 +187,10 @@ struct UnifiedFoodEntryView: View {
                 HStack(spacing: DOSSpacing.xs) {
                     Text("> QUICK")
                         .font(DOSTypography.caption)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                         .rotationEffect(.degrees(quickExpanded ? 90 : 0))
                     Spacer()
                 }
@@ -237,11 +237,11 @@ struct UnifiedFoodEntryView: View {
                 if searchText.isEmpty {
                     Text("Log your first meal to see recents here")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 } else {
                     Text("No matches for \"\(searchText)\"")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             } else {
                 ForEach(filteredRecents) { meal in
@@ -270,7 +270,7 @@ struct UnifiedFoodEntryView: View {
         } header: {
             Text("> RECENT")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
         }
     }
 
@@ -286,7 +286,7 @@ struct UnifiedFoodEntryView: View {
         } header: {
             Text("> OTHER")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
         }
     }
 
@@ -312,7 +312,7 @@ struct UnifiedFoodEntryView: View {
                 Text(title)
                     .font(DOSTypography.bodySmall)
             }
-            .foregroundColor(AmberTheme.amber)
+            .foregroundStyle(AmberTheme.amber)
         }
         // Keep the visible label ("MANUAL" / "LOG OTHER FOOD") as the VoiceOver
         // label so the two rows stay distinguishable; the shared destination is
@@ -340,7 +340,7 @@ struct UnifiedFoodEntryView: View {
                     Text("SCAN")
                         .font(DOSTypography.bodySmall)
                 }
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
             }
 
             if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
@@ -354,7 +354,7 @@ struct UnifiedFoodEntryView: View {
                         Text("PHOTO")
                             .font(DOSTypography.bodySmall)
                     }
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
                 }
 
                 // NL text parsing — appears when search text >= 3 chars
@@ -365,7 +365,7 @@ struct UnifiedFoodEntryView: View {
                                 .tint(AmberTheme.amber)
                             Text("Analyzing...")
                                 .font(DOSTypography.bodySmall)
-                                .foregroundColor(AmberTheme.amber)
+                                .foregroundStyle(AmberTheme.amber)
                         }
                     } else {
                         // Deliberately NOT a NavigationLink: the destination's onAppear
@@ -402,9 +402,9 @@ struct UnifiedFoodEntryView: View {
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(DOSTypography.caption)
-                                    .foregroundColor(AmberTheme.amberDark)
+                                    .foregroundStyle(AmberTheme.amberDark)
                             }
-                            .foregroundColor(AmberTheme.amber)
+                            .foregroundStyle(AmberTheme.amber)
                         }
                     }
                 }
@@ -476,7 +476,7 @@ struct FavoriteManagementView: View {
                 if store.state.favoriteFoodValues.isEmpty {
                     Text("No favorites yet. Swipe left on a recent meal to add it.")
                         .font(DOSTypography.bodySmall)
-                        .foregroundColor(AmberTheme.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 } else {
                     ForEach(store.state.favoriteFoodValues) { favorite in
                         Button {
@@ -486,25 +486,25 @@ struct FavoriteManagementView: View {
                                 if favorite.isHypoTreatment {
                                     Image(systemName: "cross.case")
                                         .font(DOSTypography.caption)
-                                        .foregroundColor(AmberTheme.cgaGreen)
+                                        .foregroundStyle(AmberTheme.cgaGreen)
                                         .frame(height: 16)
                                 } else {
                                     Image(systemName: "star.fill")
                                         .font(DOSTypography.caption)
-                                        .foregroundColor(AmberTheme.amber)
+                                        .foregroundStyle(AmberTheme.amber)
                                         .frame(height: 16)
                                 }
 
                                 Text(favorite.mealDescription)
                                     .font(DOSTypography.bodySmall)
-                                    .foregroundColor(AmberTheme.amber)
+                                    .foregroundStyle(AmberTheme.amber)
 
                                 Spacer()
 
                                 if let carbs = favorite.carbsGrams {
                                     Text("\(Int(carbs))g")
                                         .font(DOSTypography.caption)
-                                        .foregroundColor(AmberTheme.amber)
+                                        .foregroundStyle(AmberTheme.amber)
                                 }
                             }
                         }

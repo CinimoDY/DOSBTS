@@ -60,7 +60,7 @@ struct NumberSelectorView: View {
                 }
                 .frame(width: 40, height: 40, alignment: .leading)
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
                 .buttonStyle(.borderless)
 
                 Slider(value: doubleProxy, in: min ... max, step: Double(step)).onChange(of: value) { _, newValue in
@@ -76,7 +76,7 @@ struct NumberSelectorView: View {
                 }
                 .frame(width: 40, height: 40, alignment: .trailing)
                 .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
                 .buttonStyle(.borderless)
             }
         }

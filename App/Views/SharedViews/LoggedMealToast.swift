@@ -21,14 +21,14 @@ struct LoggedMealToast: View {
         HStack {
             Text("Logged: \(meal.mealDescription)")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
                 .lineLimit(1)
 
             Spacer()
 
             Button("UNDO", action: onUndo)
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.cgaGreen)
+                .foregroundStyle(AmberTheme.cgaGreen)
         }
         // Keep the original dim border (amberDark) rather than the .toast
         // default amber — this confirmation toast is deliberately quiet.

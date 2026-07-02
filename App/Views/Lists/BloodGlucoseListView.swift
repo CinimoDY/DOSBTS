@@ -37,7 +37,7 @@ struct BloodGlucoseListView: View {
                             Text(verbatim: bloodGlucose.glucoseValue.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true))
                                 .monospacedDigit()
                                 .if(store.state.isAlarm(glucoseValue: bloodGlucose.glucoseValue) != .none) { text in
-                                    text.foregroundColor(AmberTheme.cgaRed)
+                                    text.foregroundStyle(AmberTheme.cgaRed)
                                 }
                         }
                         .dosAddedHighlight(addedHighlighter.highlightedID == bloodGlucose.id)

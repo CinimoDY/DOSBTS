@@ -67,7 +67,7 @@ struct TreatmentModalView: View {
                         dismiss()
                     }
                     .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberDark)
                 }
             }
         }
@@ -87,24 +87,24 @@ struct TreatmentModalView: View {
             if isRecheckMode {
                 Text("STILL LOW")
                     .font(DOSTypography.displayMedium)
-                    .foregroundColor(AmberTheme.cgaRed)
+                    .foregroundStyle(AmberTheme.cgaRed)
 
                 Text("\(recheckGlucoseValue) \(store.state.glucoseUnit.localizedDescription)")
                     .font(DOSTypography.glucoseHero)
-                    .foregroundColor(AmberTheme.cgaRed)
+                    .foregroundStyle(AmberTheme.cgaRed)
 
                 Text("Treat again?")
                     .font(DOSTypography.body)
-                    .foregroundColor(AmberTheme.amber)
+                    .foregroundStyle(AmberTheme.amber)
             } else {
                 Text("LOW GLUCOSE DETECTED")
                     .font(DOSTypography.displayMedium)
-                    .foregroundColor(AmberTheme.cgaRed)
+                    .foregroundStyle(AmberTheme.cgaRed)
 
                 if let glucose = store.state.latestSensorGlucose {
                     Text("\(glucose.glucoseValue) \(store.state.glucoseUnit.localizedDescription)")
                         .font(DOSTypography.glucoseHero)
-                        .foregroundColor(AmberTheme.cgaRed)
+                        .foregroundStyle(AmberTheme.cgaRed)
                 }
             }
         }
@@ -117,7 +117,7 @@ struct TreatmentModalView: View {
         VStack(spacing: DOSSpacing.xs) {
             Text("When did you take this?")
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
+                .foregroundStyle(AmberTheme.amber)
 
             if showTimePicker {
                 DatePicker(
@@ -138,14 +138,14 @@ struct TreatmentModalView: View {
                 }
             }
             .font(DOSTypography.caption)
-            .foregroundColor(AmberTheme.cgaCyan)
+            .foregroundStyle(AmberTheme.cgaCyan)
 
             if !showTimePicker {
                 Button("Pick a time") {
                     showTimePicker = true
                 }
                 .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberDark)
             }
         }
         .padding(DOSSpacing.sm)
