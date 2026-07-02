@@ -12,7 +12,12 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 - Lock-screen widget metadata (TIR, IOB, timestamp) now uses the amber palette instead of system secondary colour — DMNC-1221
 
 ### Changed
-- All panels, toasts, and stat cards now use sharp DOS corners (cornerRadius 0, no exceptions)
+- Section headers and card panels now share one canonical DOS style. Daily Digest section headers (AI INSIGHT, TIMELINE) adopt the canonical section-header treatment (12pt semibold mono, wider letter-spacing). The hypo-treatment banner gains a state-colored border — green while counting down or recovered, amber while rechecking or when data is stale — and What's New patch-notes cards pick up a unified warm-panel background — DMNC-1216
+
+## [Build 118] — 2026-07-02
+
+### Changed
+- All panels, toasts, and stat cards now use sharp DOS corners (cornerRadius 0, no exceptions) — PR #74
 
 ## [Build 117] — 2026-06-28
 

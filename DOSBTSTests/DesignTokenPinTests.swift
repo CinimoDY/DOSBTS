@@ -354,6 +354,68 @@ struct DesignTokenPinTests {
     func spacingHeroPin() {
         #expect(DOSSpacing.hero == 64)
     }
+
+    // MARK: - DOSCardVariant fill / stroke mapping (DMNC-1216)
+
+    /// Straight RGBA of a SwiftUI `Color`, for variant-mapping assertions.
+    private func rgba(_ color: Color) -> (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (r, g, b, a)
+    }
+
+    @Test("DOSCardVariant.panel maps to cardBackground fill + dosBorder stroke")
+    func panelVariantPin() {
+        let fill = rgba(DOSCardVariant.panel.fill)
+        #expect(abs(fill.r - 27.0 / 255.0) < tolerance)
+        #expect(abs(fill.g - 25.0 / 255.0) < tolerance)
+        #expect(abs(fill.b - 23.0 / 255.0) < tolerance)
+        #expect(abs(fill.a - 1.0) < tolerance)
+        let stroke = rgba(DOSCardVariant.panel.stroke)
+        #expect(abs(stroke.r - 89.0 / 255.0) < tolerance)
+        #expect(abs(stroke.g - 79.0 / 255.0) < tolerance)
+        #expect(abs(stroke.b - 71.0 / 255.0) < tolerance)
+        #expect(abs(stroke.a - 1.0) < tolerance)
+    }
+
+    @Test("DOSCardVariant.info maps to clear fill + cgaCyan stroke")
+    func infoVariantPin() {
+        let fill = rgba(DOSCardVariant.info.fill)
+        #expect(abs(fill.a - 0.0) < tolerance, "info fill is clear")
+        let stroke = rgba(DOSCardVariant.info.stroke)
+        #expect(abs(stroke.r - 85.0 / 255.0) < tolerance)
+        #expect(abs(stroke.g - 1.0) < tolerance)
+        #expect(abs(stroke.b - 1.0) < tolerance)
+        #expect(abs(stroke.a - 1.0) < tolerance)
+    }
+
+    @Test("DOSCardVariant.stat maps to surfaceTint fill + borderSubtle stroke")
+    func statVariantPin() {
+        let fill = rgba(DOSCardVariant.stat.fill)
+        #expect(abs(fill.r - 1.0) < tolerance)
+        #expect(abs(fill.g - 176.0 / 255.0) < tolerance)
+        #expect(abs(fill.b - 0.0) < tolerance)
+        #expect(abs(fill.a - 0.04) < tolerance)
+        let stroke = rgba(DOSCardVariant.stat.stroke)
+        #expect(abs(stroke.r - 154.0 / 255.0) < tolerance)
+        #expect(abs(stroke.g - 87.0 / 255.0) < tolerance)
+        #expect(abs(stroke.b - 0.0) < tolerance)
+        #expect(abs(stroke.a - 0.4) < tolerance)
+    }
+
+    @Test("DOSCardVariant.toast maps to scrimHeavy fill + amber stroke")
+    func toastVariantPin() {
+        let fill = rgba(DOSCardVariant.toast.fill)
+        #expect(abs(fill.r - 0.0) < tolerance)
+        #expect(abs(fill.g - 0.0) < tolerance)
+        #expect(abs(fill.b - 0.0) < tolerance)
+        #expect(abs(fill.a - 0.95) < tolerance, "toast fill is scrimHeavy (dosBlack @ 0.95)")
+        let stroke = rgba(DOSCardVariant.toast.stroke)
+        #expect(abs(stroke.r - 1.0) < tolerance)
+        #expect(abs(stroke.g - 176.0 / 255.0) < tolerance)
+        #expect(abs(stroke.b - 0.0) < tolerance)
+        #expect(abs(stroke.a - 1.0) < tolerance)
+    }
 }
 
 // MARK: - Token Adaptation Notes

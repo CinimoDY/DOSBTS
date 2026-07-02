@@ -97,11 +97,18 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 - **Headers**: 1.5pt wide spacing
 
 ### View Modifiers
-- `.dosText()` — Amber monospace text (no shadow, safe for lists/charts)
-- `.dosHeader()` — Header with 1.5pt spacing + phosphor glow
-- `.dosData()` — Data display with phosphor glow
-- `.dosGlowSmall()` — Subtle CRT phosphor glow shadow
-- `.dosGlowLarge()` — Strong phosphor glow shadow
+
+Shared (both targets) — `Library/DesignSystem/`:
+- `.dosCard(_ variant:stroke:padding:)` — DOS panel chrome (fill + 1px stroke + sharp corners). See **Cards** below. `Modifiers/DOSSurfaces.swift`
+- `.dosHeader(_ color:)` — canonical section header: 12pt semibold mono, 1.2 tracking, uppercase. **No glow** (a phosphor shadow here would break the "no glow in list rows" performance rule). Color carries semantics: `amberDark` default, `amber` emphasis, `cgaCyan` AI/info. `Modifiers/DOSSurfaces.swift`
+- `.dosGlowLarge(color:)` — strong multi-layer phosphor glow shadow (hero glucose, banner titles). `DOSTypography.swift`
+- `.dosPowerOn(isActive:)` / `.dosPowerOff(isActive:)` — CRT warm-up / power-off transitions. `DOSTypography.swift`
+
+App-only — `App/DesignSystem/Modifiers/DOSModifiers.swift`:
+- `.dosNavigationTitle(_:)` — CGA principal-toolbar nav title (iOS 26 ignores `UINavigationBar` title attributes).
+- `.stagedReveal(_:revealed:)` — staged CRT reveal cascade (digest insight, What's New patch-notes cards).
+
+There is intentionally **no** `.dosText()`, `.dosData()`, `.dosGlowSmall()`, or `.dosTextField()`: unstyled text already renders amber mono via the App.swift root styling, so a dedicated text modifier is redundant, and `.dosGlowLarge` is the only glow (there is no "small" tier). Earlier revisions of this doc listed those four — corrected in DMNC-1216.
 
 ## Spacing (DOSSpacing.swift)
 
@@ -129,15 +136,32 @@ Multi-layer shadows to simulate amber CRT phosphor:
 - **Ghost**: Transparent background, amber text, 1px amber border
 - Spring animation on press (0.97 scale)
 
-### Cards (.dosCard() modifier)
-- Card background (#1B1917)
-- 1px amber-muted border
-- DOSSpacing.md padding
+### Cards (`.dosCard()` modifier — `Library/DesignSystem/Modifiers/DOSSurfaces.swift`)
 
-### Text Fields (.dosTextField() modifier)
-- DOS black background
-- Amber text
-- 1px amber-muted border
+`.dosCard(_ variant: DOSCardVariant = .panel, stroke: Color? = nil, padding: CGFloat? = DOSSpacing.md)`
+wraps content in sharp-cornered DOS panel chrome (1px stroke + variant fill).
+Four canonical variants; `fill`/`stroke` are exposed on `DOSCardVariant` and
+pinned by `DesignTokenPinTests`:
+
+| Variant | Fill | Stroke | Use |
+|---------|------|--------|-----|
+| `.panel` | `cardBackground` | `dosBorder` | General warm panels (What's New build cards) |
+| `.info` | clear | `cgaCyan` | AI / info framing (Digest AI-insight card) |
+| `.stat` | `surfaceTint` | `borderSubtle` | Quiet data cells (`StatCard`) |
+| `.toast` | `scrimHeavy` | `amber` | Floating overlays / toasts (logged-meal, tight-control, treatment banner) |
+
+- `stroke:` overrides the variant stroke for **stateful** borders — e.g. the
+  treatment banner colors its border green (countdown/recovered) or amber
+  (rechecking/stale) without hand-rolling a card assembly.
+- `padding: nil` lets the caller manage its own (often asymmetric) padding
+  before the modifier.
+- **Never** hand-roll `overlay(Rectangle().stroke(...)) + background` for a
+  card — use `.dosCard()` so every panel shares one stroke width, corner
+  treatment, and token mapping (DMNC-1216).
+
+### Text Fields
+- DOS black background, amber text, 1px `amberDark` border applied inline
+  (`overlay(Rectangle().stroke(...))`). There is no `.dosTextField()` modifier.
 
 ### Navigation
 - Tab bar: black background, amber tint, amberDark unselected

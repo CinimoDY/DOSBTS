@@ -130,8 +130,7 @@ struct DigestView: View {
         VStack(alignment: .leading, spacing: DOSSpacing.sm) {
             HStack {
                 Text("AI INSIGHT")
-                    .font(DOSTypography.caption)
-                    .foregroundColor(AmberTheme.cgaCyan)
+                    .dosHeader(AmberTheme.cgaCyan)
                 Spacer()
                 if digest.aiInsight != nil {
                     Button(action: {
@@ -176,11 +175,7 @@ struct DigestView: View {
                 }
             }
         }
-        .padding(DOSSpacing.md)
-        .overlay(
-            RoundedRectangle(cornerRadius: 0)
-                .stroke(AmberTheme.cgaCyan, lineWidth: 1)
-        )
+        .dosCard(.info)
     }
 
     // MARK: - Event Timeline
@@ -188,8 +183,7 @@ struct DigestView: View {
     private var eventTimeline: some View {
         VStack(alignment: .leading, spacing: DOSSpacing.xs) {
             Text("TIMELINE")
-                .font(DOSTypography.caption)
-                .foregroundColor(AmberTheme.amber)
+                .dosHeader(AmberTheme.amber)
                 .padding(.bottom, 4)
 
             if let events = store.state.dailyDigestEvents {

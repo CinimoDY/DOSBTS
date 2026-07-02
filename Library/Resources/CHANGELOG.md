@@ -7,6 +7,16 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 118] — 2026-07-02
+
+### Changed
+- All panels, toasts, and stat cards now use sharp DOS corners (cornerRadius 0, no exceptions) — PR #74
+
+## [Build 117] — 2026-06-28
+
+### Fixed
+- Overview sensor line no longer truncates the remaining sensor lifetime to minutes-only (e.g. it now shows "3d 2h LEFT" instead of a misleading "…18min LEFT"). The label uses a compact days+hours format and reserves space for the action chip only when one is shown
+
 ## [Build 116] — 2026-06-26
 
 ### Fixed
