@@ -403,13 +403,13 @@ struct DesignTokenPinTests {
         #expect(abs(stroke.a - 0.4) < tolerance)
     }
 
-    @Test("DOSCardVariant.toast maps to dosBlack fill + amber stroke")
+    @Test("DOSCardVariant.toast maps to scrimHeavy fill + amber stroke")
     func toastVariantPin() {
         let fill = rgba(DOSCardVariant.toast.fill)
         #expect(abs(fill.r - 0.0) < tolerance)
         #expect(abs(fill.g - 0.0) < tolerance)
         #expect(abs(fill.b - 0.0) < tolerance)
-        #expect(abs(fill.a - 1.0) < tolerance)
+        #expect(abs(fill.a - 0.95) < tolerance, "toast fill is scrimHeavy (dosBlack @ 0.95)")
         let stroke = rgba(DOSCardVariant.toast.stroke)
         #expect(abs(stroke.r - 1.0) < tolerance)
         #expect(abs(stroke.g - 176.0 / 255.0) < tolerance)

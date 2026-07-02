@@ -68,8 +68,8 @@ struct TreatmentBannerView: View {
     /// hypo cycle is progressing well (countdown / recovered), amber when it
     /// needs attention (rechecking / stale data). Mirrors the accent color of
     /// each state's own content.
-    private var bannerBorderColor: Color {
-        switch bannerState {
+    private func bannerBorderColor(for state: BannerState) -> Color {
+        switch state {
         case .countdown, .recovered:
             return AmberTheme.cgaGreen
         case .rechecking, .staleData:
@@ -78,8 +78,12 @@ struct TreatmentBannerView: View {
     }
 
     var body: some View {
-        HStack(spacing: DOSSpacing.sm) {
-            bannerContent
+        // Resolve the time-dependent state ONCE per render so the border and
+        // the content never sample Date() on opposite sides of the countdown /
+        // staleness boundary (which would briefly mismatch their colors).
+        let state = bannerState
+        return HStack(spacing: DOSSpacing.sm) {
+            bannerContent(for: state)
 
             Spacer()
 
@@ -94,7 +98,7 @@ struct TreatmentBannerView: View {
         }
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.sm)
-        .dosCard(.toast, stroke: bannerBorderColor, padding: nil)
+        .dosCard(.toast, stroke: bannerBorderColor(for: state), padding: nil)
         .onAppear {
             startTimer()
             refreshBannerIOB()
@@ -110,8 +114,8 @@ struct TreatmentBannerView: View {
     // MARK: - Banner Content
 
     @ViewBuilder
-    private var bannerContent: some View {
-        switch bannerState {
+    private func bannerContent(for state: BannerState) -> some View {
+        switch state {
         case .countdown:
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: DOSSpacing.xs) {

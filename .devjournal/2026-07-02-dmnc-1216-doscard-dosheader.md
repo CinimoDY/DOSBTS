@@ -99,6 +99,36 @@ mapping, and rewrote the docs to match reality.
   Both are verified via build + tests + code review + the identical `.dosCard`
   mechanism proven on Digest.
 
+## Review follow-up (xhigh workflow code review)
+
+The adversarial review confirmed three genuine issues, all fixed in the same PR:
+
+1. **`.toast` fill dropped 5% translucency** — the toasts used
+   `Color.black.opacity(0.95)`; my `.toast` variant used opaque `dosBlack`.
+   `AmberTheme.scrimHeavy` (dosBlack @ 0.95) is the design system's purpose-built
+   toast backdrop and exactly matches the prior value. Changed `.toast` fill →
+   `scrimHeavy` (deviates from the issue's literal "dosBlack" spec, but preserves
+   behavior and uses the existing token). Pin test + docs updated.
+2. **LoggedMealToast border silently brightened** `amberDark` → `.toast`'s default
+   `amber`. Added `stroke: AmberTheme.amberDark` to keep the quiet dim border.
+3. **TreatmentBannerView sampled `Date()` twice per render** (`bannerContent` and
+   the new `bannerBorderColor` each re-read the time-dependent `bannerState`), so
+   at the exact expiry instant the border and content could disagree for one
+   frame. Resolved `bannerState` once in `body` and threaded it to both
+   `bannerContent(for:)` and `bannerBorderColor(for:)`.
+
+Net effect of the fixes: the toasts and stat cells are now **pixel-preserved**;
+the only intended user-visible changes are the Digest section headers, the
+treatment-banner state border, and the What's New warm-panel fill (all disclosed
+in the CHANGELOG).
+
+Findings intentionally **not** changed:
+- **BuildCard → `.panel`** (gains cardBackground fill, dosBorder stroke): the
+  disclosed, intended "general warm panel" consolidation for patch-notes cards.
+- **`padding:` param bypassed by most callers**: it's the issue-specified API
+  (`padding: nil` = caller-managed); the 2 default-padding callers justify it.
+- **DigestView header weight/tracking change**: the point of the task.
+
 ## Notes
 
 - `DOSSurfaces.swift` lives under `Library/DesignSystem/Modifiers/` (new dir) —

@@ -24,7 +24,8 @@ public enum DOSCardVariant {
     /// Quiet data cell (e.g. `StatCard`): `surfaceTint` fill, `borderSubtle`
     /// stroke.
     case stat
-    /// Floating overlay / toast: `dosBlack` fill, `amber` stroke.
+    /// Floating overlay / toast: `scrimHeavy` fill (near-opaque black backdrop),
+    /// `amber` stroke.
     case toast
 
     public var fill: Color {
@@ -32,7 +33,10 @@ public enum DOSCardVariant {
         case .panel: return AmberTheme.cardBackground
         case .info: return .clear
         case .stat: return AmberTheme.surfaceTint
-        case .toast: return AmberTheme.dosBlack
+        // scrimHeavy (dosBlack @ 0.95) is the design system's purpose-built
+        // toast backdrop and matches the black@0.95 the toast sites hand-rolled
+        // before this consolidation — preserves their prior translucency.
+        case .toast: return AmberTheme.scrimHeavy
         }
     }
 

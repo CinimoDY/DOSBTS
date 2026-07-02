@@ -148,7 +148,7 @@ pinned by `DesignTokenPinTests`:
 | `.panel` | `cardBackground` | `dosBorder` | General warm panels (What's New build cards) |
 | `.info` | clear | `cgaCyan` | AI / info framing (Digest AI-insight card) |
 | `.stat` | `surfaceTint` | `borderSubtle` | Quiet data cells (`StatCard`) |
-| `.toast` | `dosBlack` | `amber` | Floating overlays / toasts (logged-meal, tight-control, treatment banner) |
+| `.toast` | `scrimHeavy` | `amber` | Floating overlays / toasts (logged-meal, tight-control, treatment banner) |
 
 - `stroke:` overrides the variant stroke for **stateful** borders — e.g. the
   treatment banner colors its border green (countdown/recovered) or amber
