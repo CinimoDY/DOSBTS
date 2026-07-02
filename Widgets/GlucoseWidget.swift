@@ -178,7 +178,7 @@ struct GlucoseView: View {
     }
 
     private var glucoseColor: Color {
-        isAlarm ? WidgetColors.cgaRed : WidgetColors.amber
+        isAlarm ? AmberTheme.cgaRed : AmberTheme.amber
     }
 
     var body: some View {
@@ -203,7 +203,7 @@ struct GlucoseView: View {
                 default:
                     Text("---")
                         .font(WidgetFonts.body)
-                        .foregroundColor(WidgetColors.amberDark)
+                        .foregroundStyle(AmberTheme.amberDark)
                 }
             } else {
                 noDataView
@@ -212,8 +212,8 @@ struct GlucoseView: View {
         .overlay(alignment: .topTrailing) {
             if entry.activeAlarmProfile == .night {
                 Image(systemName: "moon.fill")
-                    .font(.system(size: 10))
-                    .foregroundStyle(WidgetColors.amberDark)
+                    .font(WidgetFonts.mono(size: 10))
+                    .foregroundStyle(AmberTheme.amberDark)
                     .padding(4)
                     .accessibilityLabel("Night profile active")
             }
@@ -226,13 +226,13 @@ struct GlucoseView: View {
         VStack(spacing: 4) {
             Text("---")
                 .font(WidgetFonts.glucoseHero)
-                .foregroundColor(WidgetColors.amberDark)
+                .foregroundStyle(AmberTheme.amberDark)
             Text("NO DATA")
                 .font(WidgetFonts.caption)
-                .foregroundColor(WidgetColors.amber)
+                .foregroundStyle(AmberTheme.amber)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .widgetBackground(backgroundView: WidgetColors.dosBlack)
+        .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }
 
     // MARK: - Lock Screen: Circular
@@ -247,7 +247,7 @@ struct GlucoseView: View {
             Text(glucose.trend.description)
                 .font(WidgetFonts.mono(size: 14, weight: .bold))
         }
-        .widgetBackground(backgroundView: Color("WidgetBackground"))
+        .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }
 
     // MARK: - Lock Screen: Rectangular
@@ -279,9 +279,9 @@ struct GlucoseView: View {
                 Text(glucose.timestamp.toLocalTime())
             }
             .font(WidgetFonts.tabBar)
-            .foregroundColor(.secondary)
+            .foregroundStyle(AmberTheme.amberDark)
         }
-        .widgetBackground(backgroundView: Color("WidgetBackground"))
+        .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }
 
     // MARK: - Home Screen: Small
@@ -297,27 +297,27 @@ struct GlucoseView: View {
                         .font(WidgetFonts.glucoseHero)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)  // 3-digit mg/dL values shrink to fit alongside the trend column
-                        .foregroundColor(glucoseColor)
+                        .foregroundStyle(glucoseColor)
                         .phosphorGlow(color: glucoseColor)
                         .opacity(staleness.glucoseOpacity)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(verbatim: glucose.trend.description)
                             .font(WidgetFonts.mono(size: 18, weight: .bold))
-                            .foregroundColor(glucoseColor)
+                            .foregroundStyle(glucoseColor)
 
                         if let minuteChange = glucose.minuteChange?.asShortMinuteChange(glucoseUnit: glucoseUnit) {
                             Text(verbatim: minuteChange)
                                 .font(WidgetFonts.caption)
-                                .foregroundColor(WidgetColors.amber)
+                                .foregroundStyle(AmberTheme.amber)
                         }
                     }
                 }
             } else {
                 Text("HIGH")
                     .font(WidgetFonts.mono(size: 44, weight: .bold))
-                    .foregroundColor(WidgetColors.cgaRed)
-                    .phosphorGlow(color: WidgetColors.cgaRed)
+                    .foregroundStyle(AmberTheme.cgaRed)
+                    .phosphorGlow(color: AmberTheme.cgaRed)
             }
 
             Spacer(minLength: 0)
@@ -326,11 +326,11 @@ struct GlucoseView: View {
             Text(glucose.timestamp, style: .time)
                 .font(WidgetFonts.caption)
                 .monospacedDigit()
-                .foregroundColor(staleness.timestampColor)
+                .foregroundStyle(staleness.timestampColor)
         }
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .widgetBackground(backgroundView: WidgetColors.dosBlack)
+        .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }
 
     // MARK: - Home Screen: Medium
@@ -346,18 +346,18 @@ struct GlucoseView: View {
                         .font(WidgetFonts.glucoseLarge)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
-                        .foregroundColor(glucoseColor)
+                        .foregroundStyle(glucoseColor)
                         .phosphorGlow(color: glucoseColor)
                         .opacity(staleness.glucoseOpacity)
 
                     Text(verbatim: glucose.trend.description)
                         .font(WidgetFonts.mono(size: 22, weight: .bold))
-                        .foregroundColor(glucoseColor)
+                        .foregroundStyle(glucoseColor)
                 } else {
                     Text("HIGH")
                         .font(WidgetFonts.glucoseLarge)
-                        .foregroundColor(WidgetColors.cgaRed)
-                        .phosphorGlow(color: WidgetColors.cgaRed)
+                        .foregroundStyle(AmberTheme.cgaRed)
+                        .phosphorGlow(color: AmberTheme.cgaRed)
                 }
 
                 Spacer(minLength: 0)
@@ -366,7 +366,7 @@ struct GlucoseView: View {
 
             // Divider
             Rectangle()
-                .fill(WidgetColors.amberDark.opacity(0.4))
+                .fill(AmberTheme.borderSubtle)
                 .frame(width: 1)
                 .padding(.vertical, 12)
 
@@ -377,9 +377,9 @@ struct GlucoseView: View {
                 if let tir = entry.tir {
                     HStack(spacing: 4) {
                         Text("TIR")
-                            .foregroundColor(WidgetColors.amber)
+                            .foregroundStyle(AmberTheme.amber)
                         Text("\(Int(tir))%")
-                            .foregroundColor(tir >= 70 ? WidgetColors.cgaGreen : WidgetColors.amber)
+                            .foregroundStyle(tir >= 70 ? AmberTheme.cgaGreen : AmberTheme.amber)
                     }
                     .font(WidgetFonts.label)
                 }
@@ -387,9 +387,9 @@ struct GlucoseView: View {
                 if let iob = entry.iob {
                     HStack(spacing: 4) {
                         Text("IOB")
-                            .foregroundColor(WidgetColors.amber)
+                            .foregroundStyle(AmberTheme.amber)
                         Text(String(format: "%.1fU", iob))
-                            .foregroundColor(WidgetColors.cgaCyan)
+                            .foregroundStyle(AmberTheme.cgaCyan)
                     }
                     .font(WidgetFonts.label)
                 }
@@ -398,18 +398,18 @@ struct GlucoseView: View {
                     HStack(spacing: 4) {
                         AppleIcon()
                             .frame(width: 10, height: 10)
-                            .foregroundColor(WidgetColors.amberDark)
+                            .foregroundStyle(AmberTheme.amberDark)
                         VStack(alignment: .leading, spacing: 0) {
                             Text(meal)
                                 .lineLimit(1)
                             if let carbs = entry.lastMealCarbs {
                                 Text("\(Int(carbs))g")
-                                    .foregroundColor(WidgetColors.amber)
+                                    .foregroundStyle(AmberTheme.amber)
                             }
                         }
                     }
                     .font(WidgetFonts.labelSmall)
-                    .foregroundColor(WidgetColors.amber)
+                    .foregroundStyle(AmberTheme.amber)
                 }
 
                 Spacer(minLength: 0)
@@ -417,14 +417,14 @@ struct GlucoseView: View {
                 Text(glucose.timestamp, style: .time)
                     .font(WidgetFonts.caption)
                     .monospacedDigit()
-                    .foregroundColor(staleness.timestampColor)
+                    .foregroundStyle(staleness.timestampColor)
             }
             .padding(.leading, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .widgetBackground(backgroundView: WidgetColors.dosBlack)
+        .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }
 
     // MARK: - Home Screen: Large
@@ -439,18 +439,18 @@ struct GlucoseView: View {
                         HStack(alignment: .lastTextBaseline, spacing: 6) {
                             Text(verbatim: glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                                 .font(WidgetFonts.glucoseLarge)
-                                .foregroundColor(glucoseColor)
+                                .foregroundStyle(glucoseColor)
                                 .phosphorGlow(color: glucoseColor)
 
                             Text(verbatim: glucose.trend.description)
                                 .font(WidgetFonts.mono(size: 24, weight: .bold))
-                                .foregroundColor(glucoseColor)
+                                .foregroundStyle(glucoseColor)
                         }
                     } else {
                         Text("HIGH")
                             .font(WidgetFonts.glucoseLarge)
-                            .foregroundColor(WidgetColors.cgaRed)
-                            .phosphorGlow(color: WidgetColors.cgaRed)
+                            .foregroundStyle(AmberTheme.cgaRed)
+                            .phosphorGlow(color: AmberTheme.cgaRed)
                     }
                 }
 
@@ -460,15 +460,15 @@ struct GlucoseView: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     if let tir = entry.tir {
                         Text("TIR \(Int(tir))%")
-                            .foregroundColor(tir >= 70 ? WidgetColors.cgaGreen : WidgetColors.amber)
+                            .foregroundStyle(tir >= 70 ? AmberTheme.cgaGreen : AmberTheme.amber)
                     }
                     if let iob = entry.iob {
                         Text(String(format: "IOB %.1fU", iob))
-                            .foregroundColor(WidgetColors.cgaCyan)
+                            .foregroundStyle(AmberTheme.cgaCyan)
                     }
                     if let carbs = entry.lastMealCarbs {
                         Text("\(Int(carbs))g")
-                            .foregroundColor(WidgetColors.amber)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                 }
                 .font(WidgetFonts.label)
@@ -491,7 +491,7 @@ struct GlucoseView: View {
                                 path.move(to: CGPoint(x: 0, y: lowY))
                                 path.addLine(to: CGPoint(x: geo.size.width, y: lowY))
                             }
-                            .stroke(WidgetColors.cgaRed.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                            .stroke(AmberTheme.cgaRed.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
                         }
 
                         if let highY = result.highY {
@@ -499,13 +499,13 @@ struct GlucoseView: View {
                                 path.move(to: CGPoint(x: 0, y: highY))
                                 path.addLine(to: CGPoint(x: geo.size.width, y: highY))
                             }
-                            .stroke(WidgetColors.cgaRed.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                            .stroke(AmberTheme.cgaRed.opacity(0.3), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
                         }
 
                         // Sparkline
                         result.path
-                            .stroke(WidgetColors.amber, style: StrokeStyle(lineWidth: 2, lineJoin: .round))
-                            .shadow(color: WidgetColors.amber.opacity(0.4), radius: 3)
+                            .stroke(AmberTheme.amber, style: StrokeStyle(lineWidth: 2, lineJoin: .round))
+                            .shadow(color: AmberTheme.amber.opacity(0.4), radius: 3)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -513,12 +513,12 @@ struct GlucoseView: View {
             } else {
                 // No sparkline data
                 Rectangle()
-                    .fill(WidgetColors.amberDark.opacity(0.1))
+                    .fill(AmberTheme.amberDark.opacity(0.1))
                     .frame(height: 100)
                     .overlay(
                         Text("NO CHART DATA")
                             .font(WidgetFonts.caption)
-                            .foregroundColor(WidgetColors.amber)
+                            .foregroundStyle(AmberTheme.amber)
                     )
             }
 
@@ -528,20 +528,20 @@ struct GlucoseView: View {
             HStack {
                 Text(glucose.timestamp, style: .time)
                     .monospacedDigit()
-                    .foregroundColor(staleness.timestampColor)
+                    .foregroundStyle(staleness.timestampColor)
 
                 Spacer()
 
                 if let sensorName = UserDefaults.shared.sharedSensor {
                     Text(sensorName)
-                        .foregroundColor(WidgetColors.amber)
+                        .foregroundStyle(AmberTheme.amber)
                 }
             }
             .font(WidgetFonts.caption)
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .widgetBackground(backgroundView: WidgetColors.dosBlack)
+        .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }
 }
 

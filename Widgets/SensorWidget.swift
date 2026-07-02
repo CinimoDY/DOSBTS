@@ -102,51 +102,51 @@ struct SensorView: View {
             ZStack {
                 // Background arc track
                 Circle()
-                    .stroke(WidgetColors.amberDark.opacity(0.3), style: StrokeStyle(lineWidth: 6))
+                    .stroke(AmberTheme.borderFaint, style: StrokeStyle(lineWidth: 6))
 
                 // Filled arc
                 Circle()
                     .trim(from: 0, to: CGFloat(fraction))
                     .stroke(
-                        isWarmup ? WidgetColors.cgaCyan : WidgetColors.amber,
+                        isWarmup ? AmberTheme.cgaCyan : AmberTheme.amber,
                         style: StrokeStyle(lineWidth: 6, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
-                    .shadow(color: (isWarmup ? WidgetColors.cgaCyan : WidgetColors.amber).opacity(0.4), radius: 3)
+                    .shadow(color: (isWarmup ? AmberTheme.cgaCyan : AmberTheme.amber).opacity(0.4), radius: 3)
 
                 // Center label
                 VStack(spacing: 1) {
                     if isWarmup {
                         Text("WARM")
                             .font(WidgetFonts.tabBar)
-                            .foregroundColor(WidgetColors.cgaCyan)
+                            .foregroundStyle(AmberTheme.cgaCyan)
                     } else {
                         let days = sensor.remainingLifetime / (24 * 60)
                         let hours = (sensor.remainingLifetime % (24 * 60)) / 60
                         Text("\(days)d\(hours)h")
                             .font(WidgetFonts.mono(size: 13, weight: .bold))
-                            .foregroundColor(WidgetColors.amber)
+                            .foregroundStyle(AmberTheme.amber)
                     }
                     Text(sensor.family.localizedDescription)
                         .font(WidgetFonts.tabBar)
-                        .foregroundColor(WidgetColors.amber)
+                        .foregroundStyle(AmberTheme.amber)
                         .lineLimit(1)
                 }
             }
             .padding(4)
-            .widgetBackground(backgroundView: WidgetColors.dosBlack)
+            .widgetBackground(backgroundView: AmberTheme.dosBlack)
         } else {
             ZStack(alignment: .center) {
                 Circle()
                     .stroke(style: StrokeStyle(lineWidth: 6, dash: [6, 3]))
-                    .foregroundColor(WidgetColors.amberDark.opacity(0.3))
+                    .foregroundStyle(AmberTheme.borderFaint)
 
                 Image(systemName: "questionmark")
                     .font(WidgetFonts.mono(size: 16, weight: .bold))
-                    .foregroundColor(WidgetColors.amberDark)
+                    .foregroundStyle(AmberTheme.amberDark)
             }
             .padding(4)
-            .widgetBackground(backgroundView: WidgetColors.dosBlack)
+            .widgetBackground(backgroundView: AmberTheme.dosBlack)
         }
     }
 }
