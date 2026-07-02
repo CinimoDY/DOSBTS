@@ -43,10 +43,12 @@ Pure mechanical refactor to enforce DOS aesthetic: all `cornerRadius` values ≥
 ✅ **Grep**: `grep -rn "cornerRadius: [1-9]" App Library Widgets` → 0 matches  
 ✅ **Grep**: `grep -rn "\.cornerRadius([1-9]" App Library Widgets` → 0 matches (only `.cornerRadius(0)` deleted, non-0 modifiers removed entirely)
 
-## Out of Scope
+## Review follow-up (same PR)
 
-- `AddInsulinView.swift:177` — not in the explicit 19-site list from the audit
-- `AmberChip.swift` (lines 66, 83, 87) — not in the explicit audit list
+The acceptance criterion was the grep (radius 0 *everywhere*), not the enumerated site list — the four sites initially skipped as "not in the explicit list" were swept in a review-fix commit:
+
+- `AddInsulinView.swift:177` (IOB stacking warning border, radius 3 → sharp)
+- `AmberChip.swift` lines 66/83/87 (chip border + segmented fill/stroke, radius 2–3 → sharp)
 
 ## Notes
 
