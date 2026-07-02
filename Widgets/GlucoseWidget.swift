@@ -254,7 +254,7 @@ struct GlucoseView: View {
 
     private func rectangularView(glucose: SensorGlucose, glucoseUnit: GlucoseUnit) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .lastTextBaseline, spacing: 6) {
+            HStack(alignment: .lastTextBaseline, spacing: DOSSpacing.xxs) {
                 Text(glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                     .widgetAccentable()
                     .bold()
@@ -269,7 +269,7 @@ struct GlucoseView: View {
                 }
             }
 
-            HStack(spacing: 6) {
+            HStack(spacing: DOSSpacing.xxs) {
                 if let tir = entry.tir {
                     Text("TIR \(Int(tir))%")
                 }
@@ -292,7 +292,7 @@ struct GlucoseView: View {
 
             // Glucose value
             if glucose.type != .high {
-                HStack(alignment: .lastTextBaseline, spacing: 6) {
+                HStack(alignment: .lastTextBaseline, spacing: DOSSpacing.xxs) {
                     Text(verbatim: glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                         .font(WidgetFonts.glucoseHero)
                         .lineLimit(1)
@@ -371,7 +371,7 @@ struct GlucoseView: View {
                 .padding(.vertical, 12)
 
             // Right: Stats
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
                 Spacer(minLength: 0)
 
                 if let tir = entry.tir {
@@ -436,7 +436,7 @@ struct GlucoseView: View {
                 // Glucose
                 VStack(alignment: .leading, spacing: 2) {
                     if glucose.type != .high {
-                        HStack(alignment: .lastTextBaseline, spacing: 6) {
+                        HStack(alignment: .lastTextBaseline, spacing: DOSSpacing.xxs) {
                             Text(verbatim: glucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
                                 .font(WidgetFonts.glucoseLarge)
                                 .foregroundStyle(glucoseColor)

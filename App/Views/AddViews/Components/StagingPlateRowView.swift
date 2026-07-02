@@ -61,7 +61,7 @@ struct StagingPlateRowView: View {
                 .foregroundStyle(AmberTheme.amberDark)
         }
         .contentShape(Rectangle())
-        .onTapGesture { withAnimation(.linear(duration: 0.18)) { onToggleExpand() } }
+        .onTapGesture { withAnimation(AnimationTokens.easeStandard) { onToggleExpand() } }
     }
 
     @ViewBuilder

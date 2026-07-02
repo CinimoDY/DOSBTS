@@ -26,8 +26,7 @@ struct GlucoseView: View {
                             .foregroundColor(getGlucoseColor(glucose: latestGlucose))
                             .dosGlowLarge(color: getGlucoseColor(glucose: latestGlucose))
                             .opacity(isDangerouslyLow ? (lowPulse ? 0.4 : 1.0) : 1.0)
-                            .animation(isDangerouslyLow ?
-                                .easeInOut(duration: 0.8).repeatForever(autoreverses: true) : .default,
+                            .animation(isDangerouslyLow ? AnimationTokens.pulse : .default,
                                 value: lowPulse
                             )
                             .onAppear { lowPulse = true }
@@ -202,7 +201,7 @@ struct GlucoseView: View {
 
     @ViewBuilder
     private var iobLabel: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: DOSSpacing.xxs) {
             Text("IOB")
                 .font(DOSTypography.label)
                 .tracking(0.6)

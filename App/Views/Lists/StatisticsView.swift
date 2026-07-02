@@ -197,7 +197,7 @@ struct StatisticsView: View {
                         .font(DOSTypography.mono(size: 11, weight: isSelectedChartLevel(days: level.days) ? .bold : .regular))
                         .foregroundStyle(isSelectedChartLevel(days: level.days) ? Color.black : AmberTheme.amber)
                         .padding(.horizontal, DOSSpacing.sm)
-                        .padding(.vertical, 6)
+                        .padding(.vertical, DOSSpacing.xxs)
                         .background(
                             Rectangle()
                                 .fill(isSelectedChartLevel(days: level.days) ? AmberTheme.amber : Color.clear)

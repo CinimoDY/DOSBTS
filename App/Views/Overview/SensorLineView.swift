@@ -71,7 +71,7 @@ struct SensorLineView: View {
     // MARK: - Row parts
 
     private var dotAndLabel: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: DOSSpacing.xxs) {
             if store.state.activeAlarmProfile == .night {
                 Image(systemName: "moon.fill")
                     .font(DOSTypography.caption)

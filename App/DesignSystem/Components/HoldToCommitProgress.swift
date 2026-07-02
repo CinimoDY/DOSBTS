@@ -135,7 +135,7 @@ struct HoldToCommitProgress<Content: View>: View {
                 }
             }
         } else {
-            withAnimation(.linear(duration: Self.holdDuration)) {
+            withAnimation(AnimationTokens.gestureProgress(duration: Self.holdDuration)) {
                 fillProgress = 1
             }
         }
@@ -144,7 +144,7 @@ struct HoldToCommitProgress<Content: View>: View {
     private func cancelFill() {
         stepTask?.cancel()
         stepTask = nil
-        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) {
+        withAnimation(reduceMotion ? nil : AnimationTokens.easeSnap) {
             fillProgress = 0
         }
     }

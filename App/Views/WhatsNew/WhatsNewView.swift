@@ -70,7 +70,7 @@ struct WhatsNewView: View {
 
                     if canExpand {
                         Button {
-                            withAnimation(.easeOut(duration: 0.25)) { expanded = true }
+                            withAnimation(AnimationTokens.easeReveal) { expanded = true }
                         } label: {
                             Text(verbatim: "SHOW ALL \(allBuilds.count) BUILDS")
                                 .font(DOSTypography.mono(size: 13, weight: .bold))
@@ -214,7 +214,7 @@ private struct BuildCard: View {
         }
         Task { @MainActor in
             for stage in 0 ..< stageCount {
-                withAnimation(.easeOut(duration: 0.3)) {
+                withAnimation(AnimationTokens.easeReveal) {
                     revealedStages = stage + 1
                 }
                 try? await Task.sleep(for: .milliseconds(140))
