@@ -76,7 +76,7 @@ xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp -destination 'platform=iO
 # Build widget
 xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSWidget -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -configuration Debug build
 
-# Tests (262 passing as of build 96)
+# Tests (350+ passing as of build 121)
 xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' test
 ```
