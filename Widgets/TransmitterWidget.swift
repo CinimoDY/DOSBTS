@@ -68,12 +68,12 @@ struct TransmitterView: View {
     var body: some View {
         if let transmitter {
             let fraction = Double(transmitter.battery) / 100.0
-            let batteryColor = transmitter.battery > 20 ? WidgetColors.amber : WidgetColors.cgaRed
+            let batteryColor = transmitter.battery > 20 ? AmberTheme.amber : AmberTheme.cgaRed
 
             ZStack {
                 // Background arc track
                 Circle()
-                    .stroke(WidgetColors.amberDark.opacity(0.3), style: StrokeStyle(lineWidth: 6))
+                    .stroke(AmberTheme.borderFaint, style: StrokeStyle(lineWidth: 6))
 
                 // Filled arc
                 Circle()
@@ -89,28 +89,28 @@ struct TransmitterView: View {
                 VStack(spacing: 1) {
                     Text("\(transmitter.battery)%")
                         .font(WidgetFonts.mono(size: 13, weight: .bold))
-                        .foregroundColor(batteryColor)
+                        .foregroundStyle(batteryColor)
 
                     Text(transmitter.name)
                         .font(WidgetFonts.tabBar)
-                        .foregroundColor(WidgetColors.amber)
+                        .foregroundStyle(AmberTheme.amber)
                         .lineLimit(1)
                 }
             }
             .padding(4)
-            .widgetBackground(backgroundView: WidgetColors.dosBlack)
+            .widgetBackground(backgroundView: AmberTheme.dosBlack)
         } else {
             ZStack(alignment: .center) {
                 Circle()
                     .stroke(style: StrokeStyle(lineWidth: 6, dash: [6, 3]))
-                    .foregroundColor(WidgetColors.amberDark.opacity(0.3))
+                    .foregroundStyle(AmberTheme.borderFaint)
 
                 Image(systemName: "questionmark")
                     .font(WidgetFonts.mono(size: 16, weight: .bold))
-                    .foregroundColor(WidgetColors.amberDark)
+                    .foregroundStyle(AmberTheme.amberDark)
             }
             .padding(4)
-            .widgetBackground(backgroundView: WidgetColors.dosBlack)
+            .widgetBackground(backgroundView: AmberTheme.dosBlack)
         }
     }
 }
