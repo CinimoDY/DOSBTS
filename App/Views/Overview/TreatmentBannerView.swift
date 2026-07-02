@@ -64,6 +64,19 @@ struct TreatmentBannerView: View {
         return .rechecking
     }
 
+    /// State-colored toast border for the 4 banner states: green while the
+    /// hypo cycle is progressing well (countdown / recovered), amber when it
+    /// needs attention (rechecking / stale data). Mirrors the accent color of
+    /// each state's own content.
+    private var bannerBorderColor: Color {
+        switch bannerState {
+        case .countdown, .recovered:
+            return AmberTheme.cgaGreen
+        case .rechecking, .staleData:
+            return AmberTheme.amber
+        }
+    }
+
     var body: some View {
         HStack(spacing: DOSSpacing.sm) {
             bannerContent
@@ -81,6 +94,7 @@ struct TreatmentBannerView: View {
         }
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.sm)
+        .dosCard(.toast, stroke: bannerBorderColor, padding: nil)
         .onAppear {
             startTimer()
             refreshBannerIOB()

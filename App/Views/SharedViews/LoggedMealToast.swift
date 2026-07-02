@@ -30,12 +30,7 @@ struct LoggedMealToast: View {
                 .font(DOSTypography.caption)
                 .foregroundColor(AmberTheme.cgaGreen)
         }
-        .padding(DOSSpacing.sm)
-        .background(Color.black.opacity(0.95))
-        .overlay(
-            Rectangle()
-                .stroke(AmberTheme.amberDark, lineWidth: 1)
-        )
+        .dosCard(.toast, padding: DOSSpacing.sm)
         .padding(.horizontal, DOSSpacing.md)
         .padding(.bottom, DOSSpacing.md)
         .transition(.move(edge: .bottom).combined(with: .opacity))

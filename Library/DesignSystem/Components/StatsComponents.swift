@@ -93,11 +93,7 @@ public struct StatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, DOSSpacing.sm)
         .padding(.horizontal, DOSSpacing.xs)
-        .background(AmberTheme.amber.opacity(0.04))
-        .overlay(
-            Rectangle()
-                .stroke(AmberTheme.amberDark.opacity(0.4), lineWidth: 1)
-        )
+        .dosCard(.stat, padding: nil)
     }
 }
 
