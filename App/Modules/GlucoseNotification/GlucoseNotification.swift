@@ -187,7 +187,7 @@ private class GlucoseNotificationService {
     }
 
     func clear() {
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)
         DirectNotifications.shared.removeNotification(identifier: Identifier.sensorGlucoseAlarm.rawValue)
     }
 
