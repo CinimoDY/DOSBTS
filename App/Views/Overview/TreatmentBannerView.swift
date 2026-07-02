@@ -99,6 +99,11 @@ struct TreatmentBannerView: View {
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.sm)
         .dosCard(.toast, stroke: bannerBorderColor(for: state), padding: nil)
+        // Inset the card from the screen edges — OverviewView stacks the banner
+        // in a zero-spacing VStack with no outer margin, so without this the new
+        // toast stroke would render full-bleed flush against the bezels.
+        .padding(.horizontal, DOSSpacing.md)
+        .padding(.vertical, DOSSpacing.xs)
         .onAppear {
             startTimer()
             refreshBannerIOB()

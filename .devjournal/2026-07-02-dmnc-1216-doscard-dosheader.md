@@ -116,6 +116,13 @@ The adversarial review confirmed three genuine issues, all fixed in the same PR:
    at the exact expiry instant the border and content could disagree for one
    frame. Resolved `bannerState` once in `body` and threaded it to both
    `bannerContent(for:)` and `bannerBorderColor(for:)`.
+4. **TreatmentBanner border was full-bleed** (found in the final report): the
+   banner's only horizontal padding is *interior* (before `.dosCard`), and its
+   parent `OverviewView` stacks it in a `VStack(spacing: 0)` with no outer
+   margin — so the new toast stroke rendered flush against the screen bezels
+   (invisible before, when the banner was borderless). Added outer
+   `.padding(.horizontal, .md)` (+ `.vertical, .xs`) after `.dosCard` to inset
+   it like every other card.
 
 Net effect of the fixes: the toasts and stat cells are now **pixel-preserved**;
 the only intended user-visible changes are the Digest section headers, the
