@@ -188,7 +188,7 @@ struct UnifiedFoodEntryView: View {
                         .font(DOSTypography.caption)
                         .foregroundColor(AmberTheme.amber)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(DOSTypography.mono(size: 9, weight: .semibold))
                         .foregroundColor(AmberTheme.amber)
                         .rotationEffect(.degrees(quickExpanded ? 90 : 0))
                     Spacer()

@@ -161,7 +161,7 @@ struct BarcodeScannerView: View {
                     .frame(width: 280, height: 120)
 
                 Image(systemName: "barcode.viewfinder")
-                    .font(.system(size: 64))
+                    .font(DOSTypography.mono(size: 64))
                     .foregroundStyle(AmberTheme.amber)
             }
 

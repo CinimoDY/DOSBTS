@@ -36,16 +36,16 @@ public struct HeroStatView: View {
         VStack(spacing: 2) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(value)
-                    .font(.system(size: 56, weight: .bold, design: .monospaced))
+                    .font(DOSTypography.mono(size: 56, weight: .bold))
                     .foregroundStyle(valueColor)
                 if let unit, !unit.isEmpty {
                     Text(unit)
-                        .font(.system(size: 14, weight: .medium, design: .monospaced))
+                        .font(DOSTypography.mono(size: 14, weight: .medium))
                         .foregroundStyle(AmberTheme.amberDark)
                 }
             }
             Text(label)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(DOSTypography.label)
                 .tracking(0.6)
                 .foregroundStyle(AmberTheme.amberDark)
         }
@@ -75,16 +75,16 @@ public struct StatCard: View {
     public var body: some View {
         VStack(spacing: 6) {
             Text(label)
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .font(DOSTypography.microLabel)
                 .tracking(0.6)
                 .foregroundStyle(AmberTheme.amberDark)
             Text(value)
-                .font(.system(size: 24, weight: .semibold, design: .monospaced))
+                .font(DOSTypography.numeral)
                 .foregroundStyle(valueColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(help ?? "")
-                .font(.system(size: 9, design: .monospaced))
+                .font(DOSTypography.micro)
                 .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
                 .lineLimit(1)
                 .opacity(help != nil ? 1 : 0)
@@ -179,10 +179,10 @@ public struct TIRBreakdownRow: View {
     private func stat(label: String, value: Double, color: Color) -> some View {
         VStack(spacing: 4) {
             Text("\(Int(value))%")
-                .font(.system(size: 22, weight: .semibold, design: .monospaced))
+                .font(DOSTypography.mono(size: 22, weight: .semibold))
                 .foregroundStyle(color)
             Text(label)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
+                .font(DOSTypography.mono(size: 9, weight: .medium))
                 .tracking(0.5)
                 .foregroundStyle(AmberTheme.amberDark)
         }

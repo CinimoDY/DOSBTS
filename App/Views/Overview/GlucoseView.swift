@@ -204,35 +204,35 @@ struct GlucoseView: View {
     private var iobLabel: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text("IOB")
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .font(DOSTypography.label)
                 .tracking(0.6)
                 .foregroundStyle(AmberTheme.amber)
 
             if store.state.showSplitIOB && (iobResult.mealSnackIOB > 0 || iobResult.correctionBasalIOB > 0) {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(formatIOB(iobResult.mealSnackIOB))
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .font(DOSTypography.mono(size: 14, weight: .semibold))
                         .foregroundStyle(AmberTheme.iobBolus)
                     Text("BOLUS")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .font(DOSTypography.mono(size: 9, weight: .medium))
                         .tracking(0.4)
                         .foregroundStyle(AmberTheme.iobBolus.opacity(0.7))
                 }
                 Text("·")
-                    .font(.system(size: 11, design: .monospaced))
+                    .font(DOSTypography.mono(size: 11))
                     .foregroundStyle(AmberTheme.amberDark.opacity(0.6))
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(formatIOB(iobResult.correctionBasalIOB))
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .font(DOSTypography.mono(size: 14, weight: .semibold))
                         .foregroundStyle(AmberTheme.iobBasal)
                     Text("BASAL")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
+                        .font(DOSTypography.mono(size: 9, weight: .medium))
                         .tracking(0.4)
                         .foregroundStyle(AmberTheme.iobBasal.opacity(0.7))
                 }
             } else {
                 Text(formatIOB(iobResult.total))
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .font(DOSTypography.mono(size: 14, weight: .semibold))
                     .foregroundStyle(AmberTheme.iobBolus)
             }
         }
