@@ -231,9 +231,7 @@ struct DigestView: View {
     private var noDataView: some View {
         VStack {
             Spacer()
-            Text("NO DATA FOR THIS DAY")
-                .font(DOSTypography.bodyLarge)
-                .foregroundColor(AmberTheme.amber)
+            DOSEmptyState(title: "NO DATA FOR THIS DAY")
             Spacer()
         }
         .frame(minHeight: 200)

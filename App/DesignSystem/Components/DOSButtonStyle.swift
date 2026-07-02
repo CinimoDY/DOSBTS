@@ -52,6 +52,11 @@ struct DOSButtonStyle: ButtonStyle {
     }
 }
 
+extension ButtonStyle where Self == DOSButtonStyle {
+    static var dosPrimary: DOSButtonStyle { DOSButtonStyle(variant: .primary) }
+    static var dosGhost: DOSButtonStyle { DOSButtonStyle(variant: .ghost) }
+}
+
 #if DEBUG
 struct DOSButtonStyle_Previews: PreviewProvider {
     static var previews: some View {

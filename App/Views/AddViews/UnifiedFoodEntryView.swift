@@ -63,11 +63,10 @@ struct UnifiedFoodEntryView: View {
                 if filterToHypoTreatments {
                     if model.showsEmptyHypoMessage {
                         Section {
-                            Text("NO HYPO TREATMENTS CONFIGURED")
-                                .font(DOSTypography.caption)
-                                .foregroundColor(AmberTheme.amber)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, DOSSpacing.lg)
+                            DOSEmptyState(
+                                title: "NO HYPO TREATMENTS CONFIGURED",
+                                detail: "Add hypo treatments in Favorites to see them here"
+                            )
                         }
                     } else {
                         favoritesSection
@@ -361,8 +360,7 @@ struct UnifiedFoodEntryView: View {
                 if searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 {
                     if store.state.foodAnalysisLoading {
                         HStack {
-                            ProgressView()
-                                .tint(AmberTheme.amber)
+                            FiguresLoadingView.inline
                             Text("Analyzing...")
                                 .font(DOSTypography.bodySmall)
                                 .foregroundColor(AmberTheme.amber)

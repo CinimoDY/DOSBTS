@@ -93,8 +93,7 @@ struct BarcodeScannerView: View {
 
     private var loadingView: some View {
         VStack(spacing: DOSSpacing.md) {
-            ProgressView()
-                .tint(AmberTheme.amber)
+            FiguresLoadingView.inline
 
             Text("Looking up product...")
                 .font(DOSTypography.body)
@@ -107,30 +106,9 @@ struct BarcodeScannerView: View {
     // MARK: - Error
 
     private func errorView(_ error: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "barcode.viewfinder")
-                .font(.system(size: 48))
-                .foregroundStyle(AmberTheme.cgaRed)
-
-            Text(error)
-                .font(DOSTypography.body)
-                .foregroundStyle(AmberTheme.cgaRed)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            HStack(spacing: DOSSpacing.md) {
-                Button("Try Again") {
-                    hasScanned = false
-                    // Clear error state — setFoodAnalysisResult(nil) clears both error and loading
-                    store.dispatch(.setFoodAnalysisResult(result: nil))
-                }
-                .foregroundStyle(AmberTheme.amber)
-
-                Button("Cancel") {
-                    dismiss()
-                }
-                .foregroundStyle(AmberTheme.amberDark)
-            }
+        DOSErrorState(message: error) {
+            hasScanned = false
+            store.dispatch(.setFoodAnalysisResult(result: nil))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)

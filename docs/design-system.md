@@ -131,10 +131,17 @@ Multi-layer shadows to simulate amber CRT phosphor:
 
 ## UI Components
 
-### Buttons (DOSButtonStyle.swift)
-- **Primary**: Amber background, black text, 1px border
-- **Ghost**: Transparent background, amber text, 1px amber border
-- Spring animation on press (0.97 scale)
+### Buttons (`App/DesignSystem/Components/DOSButtonStyle.swift`)
+
+DOSButtonStyle **only** — no system button chrome (`.borderedProminent`, `.bordered`, `.borderless` are all forbidden except in `NumberSelectorView` stepper pair where `.borderless` preserves tap isolation, tracked for WP-I).
+
+Use the convenience sugar:
+```swift
+.buttonStyle(.dosPrimary)  // amber fill, dosBlack ink, 1px border, 0.97 press scale
+.buttonStyle(.dosGhost)    // clear fill, amber text, 1px amber border, 0.97 press scale
+```
+
+Direct initializer fallback: `.buttonStyle(DOSButtonStyle(variant: .primary))` (same thing, more verbose).
 
 ### Cards (`.dosCard()` modifier — `Library/DesignSystem/Modifiers/DOSSurfaces.swift`)
 
@@ -330,4 +337,26 @@ Under reduce motion, renders three static dots at reduced opacity instead of pul
 FiguresLoadingView()                                   // default: 8pt amber dots, smooth
 FiguresLoadingView(dotSize: 10, spacing: 7)            // larger inline variant
 FiguresLoadingView(dotSize: 5, spacing: 3, color: AmberTheme.amberLight, cadence: .lowPower)  // subtle, long-lived
+FiguresLoadingView.inline                              // standard drop-in for ProgressView()
 ```
+
+`FiguresLoadingView.inline` (dotSize 8, spacing 6) is the canonical replacement for bare `ProgressView()` — never use `ProgressView()` without a `value:` parameter in DOSBTS views.
+
+### State views (`App/Views/SharedViews/DOSStateViews.swift`)
+
+Two shared components for empty and error states. Always prefer these over bespoke inline VStacks.
+
+**`DOSEmptyState`** — when a data set is genuinely empty:
+```swift
+DOSEmptyState(title: "NO DATA FOR THIS DAY")
+DOSEmptyState(title: "EMPTY", detail: "Some clarifying text")
+DOSEmptyState(title: "EMPTY", action: ("REFRESH", { reload() }))
+```
+title renders `bodyLarge` amber; detail renders `caption` amberDark; action renders as a `.dosGhost` button.
+
+**`DOSErrorState`** — when an operation has failed:
+```swift
+DOSErrorState(message: "Product not found.")
+DOSErrorState(message: "Network error.") { retry() }
+```
+message renders `caption` cgaRed; optional retry renders as a `.dosGhost` RETRY button.
