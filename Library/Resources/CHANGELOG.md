@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 121] — 2026-07-02
+
+_No user-visible changes — build bump only (internal color refactor)._
+
 ## [Build 120] — 2026-07-02
 
 ### Changed
