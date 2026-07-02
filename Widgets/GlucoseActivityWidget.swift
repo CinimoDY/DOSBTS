@@ -199,7 +199,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
             if let latestGlucose = context.glucose, let glucoseUnit = context.glucoseUnit {
                 // Left: Glucose + trend
                 VStack(spacing: 2) {
-                    HStack(alignment: .top, spacing: 6) {
+                    HStack(alignment: .top, spacing: DOSSpacing.xxs) {
                         Group {
                             if latestGlucose.type != .high {
                                 Text(verbatim: latestGlucose.glucoseValue.asGlucose(glucoseUnit: glucoseUnit))
@@ -293,7 +293,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                 Image(systemName: "moon.fill")
                     .font(WidgetFonts.mono(size: 10))
                     .foregroundStyle(AmberTheme.amberDark)
-                    .padding(6)
+                    .padding(DOSSpacing.xxs)
                     .accessibilityLabel("Night profile active")
             }
         }

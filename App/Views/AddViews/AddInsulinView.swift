@@ -36,7 +36,7 @@ struct AddInsulinView: View {
             navBar
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: DOSSpacing.lg) {
                     typeRow
                     unitsRow
                     timeRow
@@ -116,7 +116,7 @@ struct AddInsulinView: View {
     private var typeRow: some View {
         VStack(alignment: .leading, spacing: 8) {
             formLabel("TYPE")
-            HStack(spacing: 6) {
+            HStack(spacing: DOSSpacing.xxs) {
                 ForEach(InsulinType.allCases, id: \.self) { type in
                     AmberChip(
                         label: type.shortLabel,

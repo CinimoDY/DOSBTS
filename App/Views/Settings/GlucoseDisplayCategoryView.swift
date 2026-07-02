@@ -44,7 +44,7 @@ private struct DisplaySettingsSection: View {
 
                 Toggle("CRT scanline overlay", isOn: showScanlines).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
                     Toggle("Keep screen awake", isOn: preventScreenLock).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                     Text("Prevents the device from auto-locking while monitoring. Resets automatically when the app is backgrounded.")
                         .font(DOSTypography.caption)
@@ -52,7 +52,7 @@ private struct DisplaySettingsSection: View {
                 }
                 .padding(.vertical, 4)
 
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
                     Text("Chart event markers")
                     Picker("Chart event markers", selection: markerLanePosition) {
                         ForEach(MarkerLanePosition.allCases) { position in

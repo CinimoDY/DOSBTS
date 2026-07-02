@@ -67,4 +67,29 @@ struct AnimationTokensTests {
     func pulseSmoke() {
         _ = AnimationTokens.pulse
     }
+
+    @Test("highlightFade compiles (one-shot, same cadence as durationPulse)")
+    func highlightFadeSmoke() {
+        _ = AnimationTokens.highlightFade
+    }
+
+    @Test("blink compiles (repeat-forever cursor blink)")
+    func blinkSmoke() {
+        _ = AnimationTokens.blink
+    }
+
+    @Test("easeReveal compiles (fast-start entry transition)")
+    func easeRevealSmoke() {
+        _ = AnimationTokens.easeReveal
+    }
+
+    @Test("easeSnap compiles (quick cancel/collapse)")
+    func easeSnapSmoke() {
+        _ = AnimationTokens.easeSnap
+    }
+
+    @Test("gestureProgress compiles with arbitrary duration")
+    func gestureProgressSmoke() {
+        _ = AnimationTokens.gestureProgress(duration: 0.8)
+    }
 }

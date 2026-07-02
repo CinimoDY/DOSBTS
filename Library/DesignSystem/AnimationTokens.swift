@@ -38,13 +38,32 @@ public enum AnimationTokens {
     public static let durationPulse: Double = 1.2
     public static let pulse = Animation.easeInOut(duration: durationPulse).repeatForever(autoreverses: true)
 
+    /// Slow highlight fade (easeOut, 1.2 s — same cadence as durationPulse, one-shot).
+    public static let highlightFade = Animation.easeOut(duration: durationPulse)
+
+    /// Cursor / indicator blink (easeInOut, 0.4 s, repeat forever).
+    public static let blink = Animation.easeInOut(duration: durationLong).repeatForever()
+
     // MARK: - Eases
 
     /// Standard cross-fade easing.
     public static let easeStandard = Animation.easeInOut(duration: durationMedium)
 
+    /// Reveal easing: fast-start entry transitions (0.25 s easeOut).
+    public static let easeReveal = Animation.easeOut(duration: durationMedium)
+
     /// Exit easing: fast-out.
     public static let easeExit = Animation.easeIn(duration: durationShort)
+
+    /// Snap easing: quick element collapse or cancel (0.15 s easeOut).
+    public static let easeSnap = Animation.easeOut(duration: durationShort)
+
+    // MARK: - Gesture
+
+    /// Linear fill for press-and-hold gestures; caller supplies the hold threshold.
+    public static func gestureProgress(duration: TimeInterval) -> Animation {
+        .linear(duration: duration)
+    }
 
     // MARK: - Reduce-motion adaptation
 

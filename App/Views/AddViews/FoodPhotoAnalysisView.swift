@@ -197,7 +197,7 @@ struct FoodPhotoAnalysisView: View {
     private var loadingSection: some View {
         Section {
             VStack(spacing: DOSSpacing.md) {
-                FiguresLoadingView(dotSize: 10, spacing: 7)
+                FiguresLoadingView(dotSize: DOSSpacing.xs, spacing: DOSSpacing.xxs)
 
                 Text(analysisPhases[analysisPhase])
                     .font(DOSTypography.body)
@@ -465,7 +465,7 @@ struct FoodPhotoAnalysisView: View {
                             },
                             isExpanded: item.isExpanded,
                             onToggleExpand: {
-                                withAnimation(.linear(duration: 0.18)) { item.isExpanded.toggle() }
+                                withAnimation(AnimationTokens.easeStandard) { item.isExpanded.toggle() }
                             }
                         )
                     }
