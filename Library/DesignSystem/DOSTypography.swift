@@ -112,7 +112,7 @@ private struct DOSPowerOnModifier: ViewModifier {
                     animating = true
                 }
             }
-            .onChange(of: isActive) { active in
+            .onChange(of: isActive) { _, active in
                 if active {
                     animating = false
                     withAnimation(.easeOut(duration: duration)) {
@@ -133,7 +133,7 @@ private struct DOSPowerOffModifier: ViewModifier {
             .scaleEffect(y: animating ? 0.002 : 1)
             .opacity(animating ? 0 : 1)
             .brightness(animating ? 1 : 0)
-            .onChange(of: isActive) { active in
+            .onChange(of: isActive) { _, active in
                 if active {
                     withAnimation(.easeIn(duration: duration)) {
                         animating = true
