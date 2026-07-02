@@ -23,7 +23,7 @@ struct StepperField: View {
                     Self.decrement(&value, step: step, range: range)
                 } label: {
                     Image(systemName: "minus")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(DOSTypography.mono(size: 18, weight: .medium))
                         .foregroundStyle(AmberTheme.amber)
                         .frame(width: 60, height: 56)
                         .background(AmberTheme.amber.opacity(0.08))
@@ -42,7 +42,7 @@ struct StepperField: View {
                             .multilineTextAlignment(.center)
                             .keyboardType(.decimalPad)
                             .focused($isFocused)
-                            .font(.system(size: 24, weight: .semibold, design: .monospaced))
+                            .font(DOSTypography.numeral)
                             .foregroundStyle(AmberTheme.amber)
                             .onChange(of: editorText) { _, newText in
                                 value = Self.parseEditorValue(newText)
@@ -63,11 +63,11 @@ struct StepperField: View {
                             // Drop the trailing ".0" for whole numbers so the
                             // display matches what the user typed.
                             Text(v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v))
-                                .font(.system(size: 24, weight: .semibold, design: .monospaced))
+                                .font(DOSTypography.numeral)
                                 .foregroundStyle(AmberTheme.amber)
                             if !unit.isEmpty {
                                 Text(unit)
-                                    .font(.system(size: 14, weight: .regular, design: .monospaced))
+                                    .font(DOSTypography.mono(size: 14))
                                     .foregroundStyle(AmberTheme.amberDark)
                             }
                         }
@@ -82,7 +82,7 @@ struct StepperField: View {
                     Self.increment(&value, step: step, range: range)
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(DOSTypography.mono(size: 18, weight: .medium))
                         .foregroundStyle(AmberTheme.amber)
                         .frame(width: 60, height: 56)
                         .background(AmberTheme.amber.opacity(0.08))
@@ -99,7 +99,7 @@ struct StepperField: View {
 
             if let helpText {
                 Text(helpText)
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(DOSTypography.mono(size: 10))
                     .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
             }
         }

@@ -77,7 +77,7 @@ struct AlarmSettingsView: View {
                 if store.state.nightAlarmLow < store.state.dayAlarmLow {
                     let delta = store.state.dayAlarmLow - store.state.nightAlarmLow
                     Text("Lows will need to drop \(delta.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true)) further before alarming at night. Less margin to react if you're asleep.")
-                        .font(.caption)
+                        .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
                 }
 
@@ -94,7 +94,7 @@ struct AlarmSettingsView: View {
                 if store.state.nightAlarmHigh > store.state.dayAlarmHigh {
                     let delta = store.state.nightAlarmHigh - store.state.dayAlarmHigh
                     Text("Highs will need to rise \(delta.asGlucose(glucoseUnit: store.state.glucoseUnit, withUnit: true)) further before alarming at night.")
-                        .font(.caption)
+                        .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
                 }
 
@@ -104,7 +104,7 @@ struct AlarmSettingsView: View {
                 // tolerating reasonable conservative ranges (e.g., 100-130 over a 80-180 day).
                 if store.state.nightAlarmHigh <= store.state.dayAlarmLow + 30 {
                     Text("Night high is unusually close to your low threshold — most readings will fire a high alarm at night.")
-                        .font(.caption)
+                        .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.cgaRed)
                 }
 
@@ -131,7 +131,7 @@ struct AlarmSettingsView: View {
                 if store.state.nightStartHour == store.state.nightEndHour
                     && store.state.nightStartMinute == store.state.nightEndMinute {
                     Text("Night profile inactive — start and end times are equal.")
-                        .font(.caption)
+                        .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
                 }
             },
@@ -168,7 +168,7 @@ struct AlarmSettingsView: View {
                 }.pickerStyle(.menu)
 
                 Text("Previews play at day volume.")
-                    .font(.caption)
+                    .font(DOSTypography.caption)
                     .foregroundStyle(AmberTheme.amber)
 
                 Toggle("Ignore mute", isOn: ignoreMute).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))

@@ -74,7 +74,7 @@ struct StagingPlateRowView: View {
                     .focused($isNameFocused)
                 Button { onBarcodeRescan(item.id) } label: {
                     Image(systemName: "barcode.viewfinder")
-                        .font(.system(size: 18))
+                        .font(DOSTypography.mono(size: 18))
                         .frame(width: 44, height: 44)
                         .foregroundStyle(AmberTheme.amberDark)
                 }

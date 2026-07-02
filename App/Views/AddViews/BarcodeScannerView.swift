@@ -109,7 +109,7 @@ struct BarcodeScannerView: View {
     private func errorView(_ error: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "barcode.viewfinder")
-                .font(.system(size: 48))
+                .font(DOSTypography.mono(size: 48))
                 .foregroundStyle(AmberTheme.cgaRed)
 
             Text(error)
@@ -183,7 +183,7 @@ struct BarcodeScannerView: View {
                     .frame(width: 280, height: 120)
 
                 Image(systemName: "barcode.viewfinder")
-                    .font(.system(size: 64))
+                    .font(DOSTypography.mono(size: 64))
                     .foregroundStyle(AmberTheme.amber)
             }
 

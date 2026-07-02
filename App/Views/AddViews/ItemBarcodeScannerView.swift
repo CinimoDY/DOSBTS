@@ -32,7 +32,7 @@ struct ItemBarcodeScannerView: View {
             } else if let error = errorMessage {
                 VStack(spacing: 12) {
                     Image(systemName: "barcode.viewfinder")
-                        .font(.system(size: 48))
+                        .font(DOSTypography.mono(size: 48))
                         .foregroundStyle(AmberTheme.cgaRed)
                     Text(error)
                         .font(DOSTypography.body)
@@ -135,7 +135,7 @@ struct ItemBarcodeScannerView: View {
                     .frame(width: 280, height: 120)
 
                 Image(systemName: "barcode.viewfinder")
-                    .font(.system(size: 64))
+                    .font(DOSTypography.mono(size: 64))
                     .foregroundStyle(AmberTheme.amber)
             }
             Text("Camera unavailable in simulator")

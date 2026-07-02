@@ -31,7 +31,7 @@ struct TimeInRangeReportView: View {
 
                 VStack(spacing: 4) {
                     Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(DOSTypography.mono(size: 10))
                         .foregroundStyle(AmberTheme.amberDark.opacity(0.7))
                     Text("\(stats.days) of \(stats.maxDays) days")
                         .font(DOSTypography.caption)
@@ -165,7 +165,7 @@ struct ChartSelectionTooltip: View {
             if let hr = selectedHeartRate, showHeartRate {
                 HStack(spacing: 4) {
                     Image(systemName: "heart.fill")
-                        .font(.system(size: 10))
+                        .font(DOSTypography.mono(size: 10))
                     Text("\(hr) bpm").bold()
                 }
                 .font(DOSTypography.caption)
