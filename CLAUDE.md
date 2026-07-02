@@ -171,8 +171,9 @@ Key colors:
 - **Error/High:** `#ff5555` (CGA red) → `AmberTheme.cgaRed`
 - **Warning:** `#ffff55` (CGA yellow) — no dedicated property yet
 - **Info:** `#55ffff` (CGA cyan) → `AmberTheme.cgaCyan`
+- **Semantic tiers (pre-blended):** `borderFaint/Subtle/Strong` (amberDark @0.3/0.4/0.6), `textFaint` (amberDark @0.7), `surfaceTint` (amber @0.04), `scrim` (black @0.7), `scrimHeavy` (black @0.95), `inkOnAmber` (dosBlack) — never write `.opacity()` on palette tokens in views; use these instead
 
-Typography API (`DOSTypography`): `displayMedium` (28pt bold), `bodyLarge` (20pt), `body` (17pt), `bodySmall` (15pt), `caption` (12pt), `button` (17pt semibold), `tabBar` (10pt), `glucoseHero` (60pt bold), `mono(size:weight:)`. No `headline` or `title` members.
+Typography API (`DOSTypography`): `displayMedium` (28pt bold), `numeral` (24pt semibold), `bodyLarge` (20pt), `body` (17pt), `bodySmall` (15pt), `caption` (12pt), `button` (17pt semibold), `label` (11pt medium), `microLabel` (10pt medium), `tabBar` (10pt medium — tab semantics only), `micro` (9pt), `glucoseHero` (60pt bold), `mono(size:weight:)`. No `headline` or `title` members. Sizes 13/14/18/20/22 and heroes 36–64 use `mono(size:weight:)`.
 
 Rules:
 - All text uses monospace fonts (`DOSTypography`)

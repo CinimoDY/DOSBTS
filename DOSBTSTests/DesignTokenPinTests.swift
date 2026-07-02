@@ -159,6 +159,118 @@ struct DesignTokenPinTests {
         #expect(abs(b - 243.0 / 255.0) < tolerance)
     }
 
+    // MARK: - Semantic Tier Token Pins (blended; alpha-channel included)
+
+    @Test("borderFaint pins to amberDark @ alpha 0.3")
+    func borderFaintPin() {
+        let color = UIColor(AmberTheme.borderFaint)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 154.0 / 255.0) < tolerance)
+        #expect(abs(g - 87.0 / 255.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.3) < tolerance)
+    }
+
+    @Test("borderSubtle pins to amberDark @ alpha 0.4")
+    func borderSubtlePin() {
+        let color = UIColor(AmberTheme.borderSubtle)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 154.0 / 255.0) < tolerance)
+        #expect(abs(g - 87.0 / 255.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.4) < tolerance)
+    }
+
+    @Test("borderStrong pins to amberDark @ alpha 0.6")
+    func borderStrongPin() {
+        let color = UIColor(AmberTheme.borderStrong)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 154.0 / 255.0) < tolerance)
+        #expect(abs(g - 87.0 / 255.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.6) < tolerance)
+    }
+
+    @Test("textFaint pins to amberDark @ alpha 0.7")
+    func textFaintPin() {
+        let color = UIColor(AmberTheme.textFaint)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 154.0 / 255.0) < tolerance)
+        #expect(abs(g - 87.0 / 255.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.7) < tolerance)
+    }
+
+    @Test("surfaceTint pins to amber @ alpha 0.04")
+    func surfaceTintPin() {
+        let color = UIColor(AmberTheme.surfaceTint)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 1.0) < tolerance)
+        #expect(abs(g - 176.0 / 255.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.04) < tolerance)
+    }
+
+    @Test("scrim pins to dosBlack @ alpha 0.7")
+    func scrimPin() {
+        let color = UIColor(AmberTheme.scrim)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 0.0) < tolerance)
+        #expect(abs(g - 0.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.7) < tolerance)
+    }
+
+    @Test("scrimHeavy pins to dosBlack @ alpha 0.95")
+    func scrimHeavyPin() {
+        let color = UIColor(AmberTheme.scrimHeavy)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 0.0) < tolerance)
+        #expect(abs(g - 0.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 0.95) < tolerance)
+    }
+
+    @Test("inkOnAmber pins to dosBlack (opaque black)")
+    func inkOnAmberPin() {
+        let color = UIColor(AmberTheme.inkOnAmber)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 0.0) < tolerance)
+        #expect(abs(g - 0.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
+        #expect(abs(a - 1.0) < tolerance)
+    }
+
+    // MARK: - DOSTypography Micro Scale Pins
+
+    @Test("micro font pins to 9pt regular monospaced")
+    func microFontPin() {
+        #expect(DOSTypography.micro == Font.system(size: 9, weight: .regular, design: .monospaced))
+    }
+
+    @Test("microLabel font pins to 10pt medium monospaced")
+    func microLabelFontPin() {
+        #expect(DOSTypography.microLabel == Font.system(size: 10, weight: .medium, design: .monospaced))
+    }
+
+    @Test("label font pins to 11pt medium monospaced")
+    func labelFontPin() {
+        #expect(DOSTypography.label == Font.system(size: 11, weight: .medium, design: .monospaced))
+    }
+
+    @Test("numeral font pins to 24pt semibold monospaced")
+    func numeralFontPin() {
+        #expect(DOSTypography.numeral == Font.system(size: 24, weight: .semibold, design: .monospaced))
+    }
+
     // MARK: - DOSTypography Font Size Pins
 
     @Test("displayMedium font pins to 28pt bold monospaced")

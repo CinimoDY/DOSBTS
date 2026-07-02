@@ -32,6 +32,12 @@ public enum AnimationTokens {
     /// 0.4 s — enter/exit transitions
     public static let durationLong: Double = 0.4
 
+    // MARK: - Pulse
+
+    /// ~1.2 s breathing loop for loading/attention pulses (rationalizes 0.8/1.2/1.4 singletons)
+    public static let durationPulse: Double = 1.2
+    public static let pulse = Animation.easeInOut(duration: durationPulse).repeatForever(autoreverses: true)
+
     // MARK: - Eases
 
     /// Standard cross-fade easing.

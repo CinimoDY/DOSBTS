@@ -29,9 +29,23 @@ public enum DOSTypography {
 
     // MARK: - Data Display (Tabular Numbers)
 
+    /// 24pt semibold — stat-card values, stepper display digits
+    public static let numeral = Font.system(size: 24, weight: .semibold, design: .monospaced)
+
     /// Glucose hero (60pt) - The main glucose reading
     public static let glucoseHero = Font.system(size: 60, weight: .bold, design: .monospaced)
         .monospacedDigit()
+
+    // MARK: - Micro / Label Scale
+
+    /// 9pt regular — smallest legible: stat help captions, axis micro-labels
+    public static let micro = Font.system(size: 9, weight: .regular, design: .monospaced)
+
+    /// 10pt medium — ALL-CAPS stat/grid labels (pair with .tracking(0.6)); tabBar stays for tab semantics
+    public static let microLabel = Font.system(size: 10, weight: .medium, design: .monospaced)
+
+    /// 11pt medium — chip labels, hero-stat captions, IOB sublabels
+    public static let label = Font.system(size: 11, weight: .medium, design: .monospaced)
 
     // MARK: - Labels & Captions
 
