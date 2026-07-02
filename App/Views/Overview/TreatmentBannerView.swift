@@ -180,11 +180,11 @@ struct TreatmentBannerView: View {
             let progress = total > 0 ? min(elapsed / total, 1) : 0
 
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 2)
+                Rectangle()
                     .fill(AmberTheme.amberDark.opacity(0.3))
                     .frame(width: geo.size.width, height: 4)
 
-                RoundedRectangle(cornerRadius: 2)
+                Rectangle()
                     .fill(AmberTheme.cgaGreen)
                     .frame(width: max(0, geo.size.width * progress), height: 4)
             }

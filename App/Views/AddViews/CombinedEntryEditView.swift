@@ -227,7 +227,7 @@ struct CombinedEntryEditView: View {
                     .padding(.horizontal, DOSSpacing.sm)
                     .padding(.vertical, 4)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 2)
+                        Rectangle()
                             .stroke(AmberTheme.amberDark, lineWidth: 1)
                     )
                 ForEach($stagedItems) { $item in

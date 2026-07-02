@@ -92,10 +92,10 @@ struct StepperField: View {
             }
             .background(Color.black)
             .overlay(
-                RoundedRectangle(cornerRadius: 3)
+                Rectangle()
                     .stroke(AmberTheme.amberDark, lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 3))
+            .clipShape(Rectangle())
 
             if let helpText {
                 Text(helpText)

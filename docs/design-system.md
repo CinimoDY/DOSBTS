@@ -147,8 +147,8 @@ live in one place.
 
 Every new shared component PR certifies against this list:
 
-- [ ] **Layout**: 8px grid (`DOSSpacing`), sharp corners, no system-gray
-      grouped surfaces outside exempt chrome.
+- [ ] **Layout**: 8px grid (`DOSSpacing`), cornerRadius 0 (sharp DOS corners, 
+      no exceptions), no system-gray grouped surfaces outside exempt chrome.
 - [ ] **Type scale**: `DOSTypography` roles only (no ad-hoc font sizes);
       hierarchy carried by size/weight, not by dimming informational text.
 - [ ] **Color roles**: `AmberTheme` tokens only. `amber` for informational

@@ -131,7 +131,6 @@ struct ChartSelectionTooltip: View {
                     .padding(.vertical, 5)
                     .background(AmberTheme.amberLight)
                     .foregroundColor(AmberTheme.dosBlack)
-                    .cornerRadius(0)
                 }
 
                 if let selectedRawPoint = selectedRawSensorPoint, showRawPoint {
@@ -144,7 +143,6 @@ struct ChartSelectionTooltip: View {
                     .padding(.vertical, 5)
                     .background(AmberTheme.amberDark)
                     .foregroundColor(AmberTheme.dosBlack)
-                    .cornerRadius(0)
                 }
             }
 
@@ -162,7 +160,6 @@ struct ChartSelectionTooltip: View {
                 .padding(.vertical, 5)
                 .background(AmberTheme.cgaRed)
                 .foregroundColor(AmberTheme.dosBlack)
-                .cornerRadius(0)
             }
 
             if let hr = selectedHeartRate, showHeartRate {
@@ -176,7 +173,6 @@ struct ChartSelectionTooltip: View {
                 .padding(.vertical, 5)
                 .background(AmberTheme.cgaMagenta)
                 .foregroundColor(AmberTheme.dosBlack)
-                .cornerRadius(0)
             }
         }.opacity(0.75)
     }

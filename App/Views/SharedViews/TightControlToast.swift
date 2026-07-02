@@ -73,7 +73,7 @@ struct TightControlToastView: View {
         .padding(.horizontal, DOSSpacing.lg)
         .background(Color.black.opacity(0.95))
         .overlay(
-            RoundedRectangle(cornerRadius: 2)
+            Rectangle()
                 .stroke(AmberTheme.cgaCyan, lineWidth: 1)
         )
         .shadow(color: AmberTheme.cgaCyan.opacity(0.6), radius: 8) // phosphor glow

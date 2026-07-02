@@ -269,7 +269,6 @@ struct ChartView: View {
                         .foregroundStyle(AmberTheme.amberDark)
                         .padding(.horizontal, 2.5)
                         .background(Color.black.opacity(0.5))
-                        .cornerRadius(2)
                         .bold()
                         .font(DOSTypography.caption)
                 }

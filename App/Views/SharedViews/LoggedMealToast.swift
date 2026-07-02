@@ -33,7 +33,7 @@ struct LoggedMealToast: View {
         .padding(DOSSpacing.sm)
         .background(Color.black.opacity(0.95))
         .overlay(
-            RoundedRectangle(cornerRadius: 2)
+            Rectangle()
                 .stroke(AmberTheme.amberDark, lineWidth: 1)
         )
         .padding(.horizontal, DOSSpacing.md)

@@ -83,7 +83,7 @@ struct ItemBarcodeScannerView: View {
     private var viewfinderOverlay: some View {
         VStack {
             Spacer()
-            RoundedRectangle(cornerRadius: 2)
+            Rectangle()
                 .stroke(AmberTheme.amber, lineWidth: 2)
                 .frame(width: 280, height: 120)
             Text("Scan barcode to replace item")
@@ -130,7 +130,7 @@ struct ItemBarcodeScannerView: View {
         VStack(spacing: DOSSpacing.md) {
             // Icon centered inside the framing box (mirrors the on-device viewfinder).
             ZStack {
-                RoundedRectangle(cornerRadius: 2)
+                Rectangle()
                     .stroke(AmberTheme.amber, lineWidth: 2)
                     .frame(width: 280, height: 120)
 

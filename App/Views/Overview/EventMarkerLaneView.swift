@@ -142,7 +142,7 @@ private struct FlagView: View {
         .padding(.vertical, 3)
         .background(Color.black.opacity(0.92))
         .overlay(
-            RoundedRectangle(cornerRadius: 3)
+            Rectangle()
                 .stroke(isScored ? AmberTheme.amber : AmberTheme.amberDark, lineWidth: 1)
         )
     }
