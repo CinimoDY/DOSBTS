@@ -57,6 +57,7 @@
 		TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002100A00021 /* DesignTokenPinTests.swift */; };
 		TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */; };
 		TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */; };
+		TE0100010000002400A00024 /* StyleGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002400A00024 /* StyleGuardTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -142,6 +143,7 @@
 		TE0100020000002100A00021 /* DesignTokenPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenPinTests.swift; sourceTree = "<group>"; };
 		TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSTabBarAppearanceTests.swift; sourceTree = "<group>"; };
 		TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HypoFilteredEntryTests.swift; sourceTree = "<group>"; };
+		TE0100020000002400A00024 /* StyleGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleGuardTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -304,6 +306,7 @@
 				TE0100020000002100A00021 /* DesignTokenPinTests.swift */,
 				TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */,
 				TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */,
+				TE0100020000002400A00024 /* StyleGuardTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -518,6 +521,7 @@
 				TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */,
 				TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */,
 				TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */,
+				TE0100010000002400A00024 /* StyleGuardTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

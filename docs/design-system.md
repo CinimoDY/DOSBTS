@@ -281,6 +281,48 @@ Every frame must be implementable within these iOS/DOSBTS constraints. Flag viol
 
 `DOSBTSTests/DesignTokenPinTests.swift` pins the hand-mirrored eiDotter token values. When you add or change a token in `AmberTheme.swift`, update the corresponding expected RGB value in that test. The guard catches accidental local edits; true upstream-divergence detection awaits DMNC-801's generated tokens.
 
+## Enforcement
+
+`DOSBTSTests/StyleGuardTests.swift` (`@Suite("Design-system source guards")`, DMNC-1222) turns the conventions above into `Cmd+U` failures. Unlike `DesignTokenPinTests` (which links app symbols), these guards read the `.swift` sources straight off disk — resolving the repo root from `#filePath` — and fail if a banned pattern appears anywhere in scope (previews included; they obey the system too). One `@Test` per rule so a violation names its own policy, and a `repoRootResolves()` sanity test that checks **each** root (App / Library / Widgets / App/Views) is individually reachable and non-empty — so a renamed root can't silently drop a whole target while an aggregate count still passes. `scan(_:)` **throws** (rather than returning `[]`) on a malformed pattern or unreadable file, so a broken rule fails loudly instead of vacuously. Comment lines (trimmed content starting with `//`) are skipped — a doc comment may mention a banned token without tripping its rule. The table below is a human summary; **`StyleGuardTests.swift` is the authoritative rule set — when they differ, the test wins.**
+
+### Guard rules
+
+| # | Bans | Scope | Fix / exemption |
+| -- | -- | -- | -- |
+| 1 | `.font(.system(…))` and `.font(Font.system(…))` | App, Library, Widgets | Use a `DOSTypography` role. (A bare `Font.system(…)` — how the token defs spell it — has no `.font(` prefix, so it passes.) |
+| 2 | System Dynamic Type styles — `.font(.largeTitle/.title/.headline/.subheadline/.body/.callout/.footnote/.caption…)` | App, Library, Widgets | Use a `DOSTypography` role. |
+| 3 | `Color.black` and `.foregroundStyle/.foregroundColor/.fill/.background(.black…)` — including a `.black.opacity(…)` chain | App, Library, Widgets | Use `AmberTheme.inkOnAmber` (ink on amber) or `AmberTheme.dosBlack`. |
+| 4 | `.foregroundColor(…)` | App, Library, Widgets | Migrate to `.foregroundStyle(…)`. |
+| 5 | `.cornerRadius(…)` and `cornerRadius: N` | App, Library, Widgets | Sharp corners only — drop the radius. |
+| 6 | The indeterminate spinner `ProgressView()` | App/Views | Use `FiguresLoadingView` (or `.inline`). Determinate `ProgressView(value:total:)` gauges (e.g. sensor-life / battery bars) are intentionally allowed — no DOS equivalent. |
+| 7 | Inline curves — `.easeIn/.easeOut/.easeInOut/.linear(duration:)` and `.spring(response:)` | App, Library, Widgets | Reference an `AnimationTokens` value. **Exempt:** `Library/DesignSystem/` (where the tokens are defined). |
+| 8 | Raw component color literals — `Color(red:…)`, `Color(.sRGB, red:…)`, `Color(white:…)`, `Color(hue:…)`, `UIColor(red:…)` | App, Library, Widgets | Add a token to `AmberTheme`. **Exempt:** `Library/DesignSystem/AmberTheme.swift` only — this locks the zero-raw-hex win permanently. |
+
+There is deliberately **no `deploy.sh` preflight duplicate** of this list — a bash copy would drift from the test. `Cmd+U` / conductr PR checks are the real gates.
+
+The scan is line-oriented, which trades two accepted edge cases for simplicity: a banned construct split across a newline isn't seen, and a banned token in a *trailing* comment or a string literal is still matched. If a legitimate line trips a rule that way, rewrite the line rather than loosening the guard.
+
+### Extending an allowlist
+
+Each `Rule` carries an `exempt: Set<String>` of repo-relative paths. To sanction a match, add the path to that rule's `exempt` set in `StyleGuardTests.swift` and document why here:
+
+- A **trailing `/`** marks a directory prefix — the whole subtree is exempt (e.g. rule 7's `Library/DesignSystem/`).
+- Otherwise the entry is an **exact file path** (e.g. rule 8's `Library/DesignSystem/AmberTheme.swift`).
+
+Prefer narrowing scope or fixing the call site over widening an allowlist. Comment-only mentions never need an entry (they're skipped) — e.g. `FiguresLoadingView.swift`'s doc comment "…replacement for a system `ProgressView()` spinner" does not trip rule 6.
+
+### Sanctioned `.opacity()` exceptions
+
+The rules intentionally do **not** ban `.opacity()`, so these need no allowlist entry — but they are the agreed parametric/tokenless cases (don't "fix" them into tokens). For a fixed one-off dim, reach for a pre-blended [semantic tier](#semantic-tier-tokens-pre-blended--never-opacity-on-palette-tokens-in-views) instead; these remain because their alpha is animated or genuinely one-of-a-kind:
+
+- `DOSButtonStyle` pressed-ghost fill — `amber.opacity(0.1)`
+- `AddedEntryHighlighter` animated glow — `amber.opacity(0.5 → 0)`
+- `WhatsNewView` — `dosGlowLarge(color: amber.opacity(0.4))`
+- `AddInsulinView` stacking-warning wash/stroke — `amber.opacity(0.08 / 0.4)`
+- `StepperField` washes — `amber.opacity(0.08)`
+
+`amberDark.opacity(…)` is folded into the `borderFaint/Subtle/Strong` + `textFaint` tiers across the app — reach for a tier, never a raw palette-token opacity. The sole raw survivor is `GlucoseWidget`'s "NO CHART DATA" placeholder fill (`amberDark.opacity(0.1)`), for which no tier exists; don't add more.
+
 ## Brand Identity
 
 ### Personality
