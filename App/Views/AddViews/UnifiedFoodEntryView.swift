@@ -63,11 +63,10 @@ struct UnifiedFoodEntryView: View {
                 if filterToHypoTreatments {
                     if model.showsEmptyHypoMessage {
                         Section {
-                            Text("NO HYPO TREATMENTS CONFIGURED")
-                                .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amber)
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.vertical, DOSSpacing.lg)
+                            DOSEmptyState(
+                                title: "NO HYPO TREATMENTS CONFIGURED",
+                                detail: "Add hypo treatments in Favorites to see them here"
+                            )
                         }
                     } else {
                         favoritesSection
@@ -94,7 +93,7 @@ struct UnifiedFoodEntryView: View {
             .onChange(of: store.state.recentMealEntries) { _, recents in
                 guard let id = addedHighlighter.highlightedID,
                       recents.contains(where: { $0.id == id }) else { return }
-                withAnimation(.easeInOut(duration: 0.3)) {
+                withAnimation(AnimationTokens.easeStandard) {
                     scrollProxy.scrollTo(id, anchor: .center)
                 }
             }
@@ -123,7 +122,7 @@ struct UnifiedFoodEntryView: View {
                         }
                     }
                 }
-                .animation(.linear(duration: 0.2), value: toast.meal)
+                .animation(AnimationTokens.easeStandard, value: toast.meal)
             }
             // No .navigationBarHidden: FoodPhotoAnalysisView's title + Cancel live
             // in the toolbar, which the parent NavigationStack's bar hosts.
@@ -180,7 +179,7 @@ struct UnifiedFoodEntryView: View {
             }
         } header: {
             Button {
-                withAnimation(.linear(duration: 0.15)) {
+                withAnimation(AnimationTokens.easeSnap) {
                     quickExpanded.toggle()
                 }
             } label: {
@@ -189,7 +188,7 @@ struct UnifiedFoodEntryView: View {
                         .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(DOSTypography.mono(size: 9, weight: .semibold))
                         .foregroundStyle(AmberTheme.amber)
                         .rotationEffect(.degrees(quickExpanded ? 90 : 0))
                     Spacer()
@@ -361,8 +360,7 @@ struct UnifiedFoodEntryView: View {
                 if searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 {
                     if store.state.foodAnalysisLoading {
                         HStack {
-                            ProgressView()
-                                .tint(AmberTheme.amber)
+                            FiguresLoadingView.inline
                             Text("Analyzing...")
                                 .font(DOSTypography.bodySmall)
                                 .foregroundStyle(AmberTheme.amber)

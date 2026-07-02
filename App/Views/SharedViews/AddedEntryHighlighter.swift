@@ -53,13 +53,13 @@ private struct DOSAddedHighlight: ViewModifier {
                     .background(AmberTheme.dosBlack)
                     // Snap on, fade off: the flash should be instant when the
                     // entry lands and dissolve once the highlight clears.
-                    .animation(active ? nil : .easeOut(duration: 1.2), value: active)
+                    .animation(active ? nil : AnimationTokens.highlightFade, value: active)
             )
             .shadow(
                 color: AmberTheme.amber.opacity(active ? 0.5 : 0),
                 radius: active ? 6 : 0, x: 0, y: 0
             )
-            .animation(active ? nil : .easeOut(duration: 1.2), value: active)
+            .animation(active ? nil : AnimationTokens.highlightFade, value: active)
     }
 }
 

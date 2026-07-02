@@ -231,7 +231,7 @@ struct EntryGroupListOverlay: View {
             AppleIcon().frame(width: 20, height: 20)
         case .bolus, .correction, .basal, .exercise:
             Image(systemName: marker.type.icon)
-                .font(.system(size: 20))
+                .font(DOSTypography.bodyLarge)
         }
     }
 

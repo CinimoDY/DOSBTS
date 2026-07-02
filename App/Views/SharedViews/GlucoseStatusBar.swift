@@ -214,7 +214,7 @@ struct GlucoseTopBar: View {
                     // treatment cycle; the full countdown lives in the
                     // Overview banner the safety flows route to.
                     Image(systemName: "timer")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(DOSTypography.mono(size: 11, weight: .bold))
                         .foregroundStyle(AmberTheme.cgaGreen)
                 } else if let trendText {
                     // Trend drops first when space runs out.
@@ -227,7 +227,7 @@ struct GlucoseTopBar: View {
                 if let staleLabel = staleness.minutesAgoLabel {
                     HStack(spacing: 2) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 9))
+                            .font(DOSTypography.micro)
                         Text(verbatim: staleLabel)
                             .font(DOSTypography.tabBar)
                     }

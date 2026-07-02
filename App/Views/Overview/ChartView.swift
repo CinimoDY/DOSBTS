@@ -89,13 +89,13 @@ struct ChartView: View {
                                 }
                                 .frame(width: 16, height: 8)
                                 Text("HR")
-                                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                                    .font(DOSTypography.mono(size: 9, weight: .medium))
                                     .foregroundStyle(AmberTheme.cgaMagenta.opacity(0.5))
                             }
                             .padding(.trailing, 4)
                         }
                         Text(store.state.glucoseUnit.localizedDescription)
-                            .font(.system(size: 9, weight: .medium, design: .monospaced))
+                            .font(DOSTypography.mono(size: 9, weight: .medium))
                             .foregroundStyle(AmberTheme.amberMuted)
                     }
 
@@ -430,7 +430,7 @@ struct ChartView: View {
                     AxisTick(length: 4, stroke: Config.tickStyle)
                         .foregroundStyle(AmberTheme.amberMuted)
                     AxisValueLabel()
-                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                        .font(DOSTypography.mono(size: 10))
                 }
             }
         }

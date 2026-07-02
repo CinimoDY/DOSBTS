@@ -54,7 +54,7 @@ private struct BlinkingCursor: View {
             .foregroundStyle(AmberTheme.amber)
             .opacity(visible ? 1 : 0)
             .onAppear {
-                withAnimation(.easeInOut(duration: 0.5).repeatForever()) {
+                withAnimation(AnimationTokens.blink) {
                     visible.toggle()
                 }
             }

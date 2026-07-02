@@ -90,7 +90,7 @@ public struct CombinedFoodInsulinIcon: View {
 
             // Syringe, smaller, anchored top-right.
             Image(systemName: "syringe.fill")
-                .font(.system(size: size * 0.55, weight: .semibold))
+                .font(DOSTypography.mono(size: size * 0.55, weight: .semibold))
                 .foregroundStyle(AmberTheme.amberDark)
                 .offset(x: size * 0.20, y: -size * 0.18)
         }

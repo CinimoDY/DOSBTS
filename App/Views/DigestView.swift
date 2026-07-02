@@ -219,7 +219,7 @@ struct DigestView: View {
     private var loadingView: some View {
         VStack(spacing: DOSSpacing.md) {
             Spacer()
-            FiguresLoadingView(dotSize: 10, spacing: 7)
+            FiguresLoadingView(dotSize: DOSSpacing.xs, spacing: DOSSpacing.xxs)
             Text("LOADING...")
                 .font(DOSTypography.bodyLarge)
                 .foregroundStyle(AmberTheme.amber)
@@ -231,9 +231,7 @@ struct DigestView: View {
     private var noDataView: some View {
         VStack {
             Spacer()
-            Text("NO DATA FOR THIS DAY")
-                .font(DOSTypography.bodyLarge)
-                .foregroundStyle(AmberTheme.amber)
+            DOSEmptyState(title: "NO DATA FOR THIS DAY")
             Spacer()
         }
         .frame(minHeight: 200)
@@ -330,7 +328,7 @@ private struct DigestInsightCard: View {
                                 .minimumScaleFactor(0.7)
                         }
                         .padding(.horizontal, DOSSpacing.xs)
-                        .padding(.vertical, 6)
+                        .padding(.vertical, DOSSpacing.xxs)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .overlay(
                             Rectangle()
@@ -386,12 +384,12 @@ private struct DigestInsightCard: View {
             // into a single fade instead of staggering.
             Task { @MainActor in
                 for stage in 0...3 {
-                    withAnimation(.easeOut(duration: 0.3)) {
+                    withAnimation(AnimationTokens.easeReveal) {
                         revealedStages = stage + 1
                     }
                     try? await Task.sleep(for: .milliseconds(180))
                 }
-                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                withAnimation(AnimationTokens.pulse) {
                     cheerPulse = true
                 }
             }

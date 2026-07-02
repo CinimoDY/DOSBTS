@@ -169,7 +169,7 @@ struct FoodPhotoAnalysisView: View {
         Section {
             VStack(spacing: 12) {
                 Image(systemName: "camera.viewfinder")
-                    .font(.system(size: 48))
+                    .font(DOSTypography.mono(size: 48))
                     .foregroundStyle(AmberTheme.amber)
 
                 Text("AI-powered food analysis requires sending your photo and food preferences to Anthropic (Claude AI).")
@@ -179,8 +179,7 @@ struct FoodPhotoAnalysisView: View {
                 Button("Set Up AI Analysis") {
                     showConsentSheet = true
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AmberTheme.amber)
+                .buttonStyle(.dosPrimary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -197,7 +196,7 @@ struct FoodPhotoAnalysisView: View {
     private var loadingSection: some View {
         Section {
             VStack(spacing: DOSSpacing.md) {
-                FiguresLoadingView(dotSize: 10, spacing: 7)
+                FiguresLoadingView(dotSize: DOSSpacing.xs, spacing: DOSSpacing.xxs)
 
                 Text(analysisPhases[analysisPhase])
                     .font(DOSTypography.body)
@@ -297,7 +296,7 @@ struct FoodPhotoAnalysisView: View {
         Section {
             VStack(spacing: 12) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 36))
+                    .font(DOSTypography.mono(size: 36))
                     .foregroundStyle(AmberTheme.cgaRed)
 
                 Text(error)
@@ -325,7 +324,7 @@ struct FoodPhotoAnalysisView: View {
                 Section {
                     VStack(spacing: 12) {
                         Image(systemName: "questionmark.circle")
-                            .font(.system(size: 36))
+                            .font(DOSTypography.mono(size: 36))
                             .foregroundStyle(AmberTheme.amber)
 
                         Text("Couldn't identify any foods. Try being more specific or use manual entry.")
@@ -465,7 +464,7 @@ struct FoodPhotoAnalysisView: View {
                             },
                             isExpanded: item.isExpanded,
                             onToggleExpand: {
-                                withAnimation(.linear(duration: 0.18)) { item.isExpanded.toggle() }
+                                withAnimation(AnimationTokens.easeStandard) { item.isExpanded.toggle() }
                             }
                         )
                     }
@@ -491,8 +490,7 @@ struct FoodPhotoAnalysisView: View {
                     content: {
                         if isFollowingUp {
                             HStack {
-                                ProgressView()
-                                    .tint(AmberTheme.amber)
+                                FiguresLoadingView.inline
                                 Text("Updating estimate...")
                                     .font(DOSTypography.caption)
                                     .foregroundStyle(AmberTheme.amber)

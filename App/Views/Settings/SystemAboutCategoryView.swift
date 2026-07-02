@@ -37,7 +37,7 @@ private struct DigestReminderSection: View {
     var body: some View {
         Section(
             content: {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
                     Toggle("Daily digest reminder", isOn: dailyDigestReminderEnabled).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
                     DatePicker(

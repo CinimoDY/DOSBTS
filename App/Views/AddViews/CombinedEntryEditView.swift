@@ -236,7 +236,7 @@ struct CombinedEntryEditView: View {
                         onBarcodeRescan: { _ in },  // disabled in combined modal v1
                         isExpanded: expandedItemID == item.id,
                         onToggleExpand: {
-                            withAnimation(.linear(duration: 0.18)) {
+                            withAnimation(AnimationTokens.easeStandard) {
                                 expandedItemID = (expandedItemID == item.id) ? nil : item.id
                             }
                         }

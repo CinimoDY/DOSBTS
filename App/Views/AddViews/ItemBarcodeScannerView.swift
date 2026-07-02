@@ -21,8 +21,7 @@ struct ItemBarcodeScannerView: View {
         ZStack {
             if isLoading {
                 VStack(spacing: DOSSpacing.md) {
-                    ProgressView()
-                        .tint(AmberTheme.amber)
+                    FiguresLoadingView.inline
                     Text("Looking up product...")
                         .font(DOSTypography.body)
                         .foregroundStyle(AmberTheme.amber)
@@ -30,23 +29,9 @@ struct ItemBarcodeScannerView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(AmberTheme.dosBlack)
             } else if let error = errorMessage {
-                VStack(spacing: 12) {
-                    Image(systemName: "barcode.viewfinder")
-                        .font(.system(size: 48))
-                        .foregroundStyle(AmberTheme.cgaRed)
-                    Text(error)
-                        .font(DOSTypography.body)
-                        .foregroundStyle(AmberTheme.cgaRed)
-                        .multilineTextAlignment(.center)
-                    HStack(spacing: DOSSpacing.md) {
-                        Button("Try Again") {
-                            hasScanned = false
-                            errorMessage = nil
-                        }
-                        .foregroundStyle(AmberTheme.amber)
-                        Button("Cancel") { dismiss() }
-                            .foregroundStyle(AmberTheme.amberDark)
-                    }
+                DOSErrorState(message: error) {
+                    hasScanned = false
+                    errorMessage = nil
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(AmberTheme.dosBlack)
@@ -135,7 +120,7 @@ struct ItemBarcodeScannerView: View {
                     .frame(width: 280, height: 120)
 
                 Image(systemName: "barcode.viewfinder")
-                    .font(.system(size: 64))
+                    .font(DOSTypography.mono(size: 64))
                     .foregroundStyle(AmberTheme.amber)
             }
             Text("Camera unavailable in simulator")

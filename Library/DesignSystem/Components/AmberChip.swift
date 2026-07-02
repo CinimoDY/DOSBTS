@@ -70,9 +70,9 @@ public struct AmberChipLabel: View {
 
     private var segmentedBody: some View {
         HStack(spacing: 4) {
-            if let icon { Image(systemName: icon).font(.system(size: 11)) }
+            if let icon { Image(systemName: icon).font(DOSTypography.mono(size: 11)) }
             Text(label)
-                .font(.system(size: variant == .type ? 13 : 12, weight: isSelected ? .semibold : .regular, design: .monospaced))
+                .font(DOSTypography.mono(size: variant == .type ? 13 : 12, weight: isSelected ? .semibold : .regular))
                 .tracking(0.4)
         }
         .padding(.horizontal, 8)

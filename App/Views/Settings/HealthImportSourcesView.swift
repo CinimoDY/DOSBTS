@@ -15,7 +15,7 @@ struct HealthImportSourcesView: View {
         List {
             if isLoading {
                 HStack {
-                    ProgressView()
+                    FiguresLoadingView.inline
                     Text("Loading sources...")
                         .foregroundStyle(AmberTheme.amber)
                 }

@@ -132,7 +132,7 @@ private struct FlagView: View {
                     ForEach(row.segments.indices, id: \.self) { segIdx in
                         let seg = row.segments[segIdx]
                         Text(seg.label)
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .font(DOSTypography.mono(size: 11, weight: .semibold))
                             .foregroundStyle(seg.type.color)
                     }
                 }
@@ -153,13 +153,13 @@ private struct FlagView: View {
         case .meal:
             AppleIcon().frame(width: 11, height: 11)
         case .bolus:
-            Image(systemName: "syringe.fill").font(.system(size: 11))
+            Image(systemName: "syringe.fill").font(DOSTypography.mono(size: 11))
         case .correction:
-            Image(systemName: "syringe.fill").font(.system(size: 11))
+            Image(systemName: "syringe.fill").font(DOSTypography.mono(size: 11))
         case .basal:
-            Image(systemName: "syringe").font(.system(size: 11))
+            Image(systemName: "syringe").font(DOSTypography.mono(size: 11))
         case .exercise:
-            Image(systemName: "figure.run").font(.system(size: 11))
+            Image(systemName: "figure.run").font(DOSTypography.mono(size: 11))
         }
     }
 }

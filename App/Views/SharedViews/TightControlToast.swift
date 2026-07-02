@@ -44,7 +44,7 @@ enum TightControlToastReveal {
     }
 
     static func animation(reduceMotion: Bool) -> Animation? {
-        reduceMotion ? nil : .easeOut(duration: 0.25)
+        reduceMotion ? nil : AnimationTokens.easeReveal
     }
 }
 

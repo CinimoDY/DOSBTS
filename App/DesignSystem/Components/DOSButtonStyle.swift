@@ -30,7 +30,7 @@ struct DOSButtonStyle: ButtonStyle {
             .overlay(Rectangle().stroke(borderColor, lineWidth: 1))
             .shadow(color: isEnabled ? borderColor.opacity(0.4) : .clear, radius: 4, x: 0, y: 0)
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.9), value: configuration.isPressed)
+            .animation(AnimationTokens.snappy, value: configuration.isPressed)
     }
 
     private func foregroundColor(_ configuration: Configuration) -> Color {
@@ -50,6 +50,11 @@ struct DOSButtonStyle: ButtonStyle {
         }
         return configuration.isPressed ? AmberTheme.amber.opacity(0.1) : Color.clear
     }
+}
+
+extension ButtonStyle where Self == DOSButtonStyle {
+    static var dosPrimary: DOSButtonStyle { DOSButtonStyle(variant: .primary) }
+    static var dosGhost: DOSButtonStyle { DOSButtonStyle(variant: .ghost) }
 }
 
 #if DEBUG
