@@ -7,8 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 118] — 2026-07-02
+
 ### Changed
-- All panels, toasts, and stat cards now use sharp DOS corners (cornerRadius 0, no exceptions)
+- All panels, toasts, and stat cards now use sharp DOS corners (cornerRadius 0, no exceptions) — PR #74
 
 ## [Build 117] — 2026-06-28
 
