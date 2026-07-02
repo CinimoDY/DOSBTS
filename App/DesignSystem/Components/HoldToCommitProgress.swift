@@ -114,7 +114,7 @@ struct HoldToCommitProgress<Content: View>: View {
     @ViewBuilder
     private var fillOverlay: some View {
         GeometryReader { geometry in
-            RoundedRectangle(cornerRadius: 2)
+            Rectangle()
                 .fill(tint.opacity(0.35))
                 .frame(width: geometry.size.width * fillProgress)
         }
@@ -186,7 +186,7 @@ private struct PressTrackingButtonStyle: ButtonStyle {
             .padding(.horizontal, DOSSpacing.sm)
             .padding(.vertical, DOSSpacing.xs)
             .background(Color.black)
-            .overlay(RoundedRectangle(cornerRadius: 2).stroke(AmberTheme.amber, lineWidth: 1))
+            .overlay(Rectangle().stroke(AmberTheme.amber, lineWidth: 1))
     }
     .padding()
     .background(Color.black)

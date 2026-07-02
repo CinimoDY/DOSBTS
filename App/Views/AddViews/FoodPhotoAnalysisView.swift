@@ -392,7 +392,7 @@ struct FoodPhotoAnalysisView: View {
                                             .padding(.horizontal, DOSSpacing.sm)
                                             .padding(.vertical, 4)
                                             .background(
-                                                RoundedRectangle(cornerRadius: 2)
+                                                Rectangle()
                                                     .stroke(AmberTheme.amberDark, lineWidth: 1)
                                             )
                                     }

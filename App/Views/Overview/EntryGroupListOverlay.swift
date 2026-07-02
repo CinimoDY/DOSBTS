@@ -99,7 +99,7 @@ struct EntryGroupListOverlay: View {
                 .font(DOSTypography.button)
                 .foregroundStyle(.black)
                 .frame(maxWidth: .infinity, minHeight: 44)
-                .background(RoundedRectangle(cornerRadius: 2).fill(AmberTheme.amber))
+                .background(Rectangle().fill(AmberTheme.amber))
         }
         .padding(DOSSpacing.md)
     }

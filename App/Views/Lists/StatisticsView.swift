@@ -199,11 +199,11 @@ struct StatisticsView: View {
                         .padding(.horizontal, DOSSpacing.sm)
                         .padding(.vertical, 6)
                         .background(
-                            RoundedRectangle(cornerRadius: 3)
+                            Rectangle()
                                 .fill(isSelectedChartLevel(days: level.days) ? AmberTheme.amber : Color.clear)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 3)
+                            Rectangle()
                                 .stroke(AmberTheme.amberDark, lineWidth: 1)
                         )
                 }

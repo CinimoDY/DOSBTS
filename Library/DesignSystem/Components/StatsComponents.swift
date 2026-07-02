@@ -95,7 +95,7 @@ public struct StatCard: View {
         .padding(.horizontal, DOSSpacing.xs)
         .background(AmberTheme.amber.opacity(0.04))
         .overlay(
-            RoundedRectangle(cornerRadius: 3)
+            Rectangle()
                 .stroke(AmberTheme.amberDark.opacity(0.4), lineWidth: 1)
         )
     }
@@ -131,9 +131,9 @@ public struct StackedTIRBar: View {
             }
         }
         .frame(height: height)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
+        .clipShape(Rectangle())
         .overlay(
-            RoundedRectangle(cornerRadius: 3)
+            Rectangle()
                 .stroke(AmberTheme.amberDark.opacity(0.4), lineWidth: 0.5)
         )
     }

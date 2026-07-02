@@ -63,7 +63,7 @@ public struct AmberChipLabel: View {
         .foregroundStyle(isSelected ? Color.black : tint)
         .background(isSelected ? tint : Color.black)
         .overlay(
-            RoundedRectangle(cornerRadius: 2)
+            Rectangle()
                 .stroke(tint, lineWidth: 1)
         )
     }
@@ -80,11 +80,11 @@ public struct AmberChipLabel: View {
         .frame(minHeight: variant == .type ? 44 : 40)
         .foregroundStyle(isSelected ? Color.black : tint)
         .background(
-            RoundedRectangle(cornerRadius: 3)
+            Rectangle()
                 .fill(isSelected ? tint : Color.black)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 3)
+            Rectangle()
                 .stroke(isSelected ? tint : AmberTheme.amberDark, lineWidth: 1)
         )
     }

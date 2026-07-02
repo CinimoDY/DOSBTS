@@ -145,7 +145,7 @@ struct BarcodeScannerView: View {
         VStack {
             Spacer()
 
-            RoundedRectangle(cornerRadius: 2)
+            Rectangle()
                 .stroke(AmberTheme.amber, lineWidth: 2)
                 .frame(width: 280, height: 120)
 
@@ -178,7 +178,7 @@ struct BarcodeScannerView: View {
         VStack(spacing: DOSSpacing.md) {
             // Icon centered inside the framing box (mirrors the on-device viewfinder).
             ZStack {
-                RoundedRectangle(cornerRadius: 2)
+                Rectangle()
                     .stroke(AmberTheme.amber, lineWidth: 2)
                     .frame(width: 280, height: 120)
 

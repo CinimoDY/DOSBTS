@@ -174,7 +174,7 @@ struct AddInsulinView: View {
         .padding(.vertical, 10)
         .background(AmberTheme.amber.opacity(0.08))
         .overlay(
-            RoundedRectangle(cornerRadius: 3)
+            Rectangle()
                 .stroke(AmberTheme.amber.opacity(0.4), lineWidth: 1)
         )
     }
