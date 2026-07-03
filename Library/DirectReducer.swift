@@ -473,6 +473,13 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .clearTightControlCelebration:
         state.tightControlCelebration = nil
 
+    // MARK: View State Persistence (DMNC-1293)
+    case .setSelectedReportType(reportType: let reportType):
+        state.selectedReportType = reportType
+
+    case .setListSectionExpanded(sectionName: let sectionName, isExpanded: let isExpanded):
+        state.listSectionExpanded[sectionName] = isExpanded
+
     // MARK: What's New / changelog (DMNC-1147)
     case .setLastSeenBuild(build: let build):
         state.lastSeenBuild = build

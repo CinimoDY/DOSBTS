@@ -176,6 +176,10 @@ enum DirectAction {
     /// Clears the transient celebration after the toast has been shown.
     case clearTightControlCelebration
 
+    // MARK: View State Persistence (DMNC-1293)
+    case setSelectedReportType(reportType: ReportType)
+    case setListSectionExpanded(sectionName: String, isExpanded: Bool)
+
     // MARK: What's New / changelog (DMNC-1147)
     /// Records the highest build whose What's New the user has seen. Dispatched
     /// at present time (and silently on fresh install) — never on dismiss (KTD5).
