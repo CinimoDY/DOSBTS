@@ -22,6 +22,10 @@ func ratioLabMiddleware() -> Middleware<DirectState, DirectAction> {
     return { state, action, _ in
         switch action {
         case .loadRatioEvidence:
+            // Silently drops when not .active, with NO .setAppState(.active) re-trigger:
+            // this load is on-demand from RatioLabView.onAppear, which can only run
+            // after ContentView sets .active. A future startup-path dispatch would
+            // no-op here — add the re-trigger pattern if that ever becomes a thing.
             guard state.appState == .active else {
                 break
             }
