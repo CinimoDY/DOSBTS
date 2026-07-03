@@ -110,6 +110,8 @@ App-only — `App/DesignSystem/Modifiers/DOSModifiers.swift`:
 
 There is intentionally **no** `.dosText()`, `.dosData()`, `.dosGlowSmall()`, or `.dosTextField()`: unstyled text already renders amber mono via the App.swift root styling, so a dedicated text modifier is redundant, and `.dosGlowLarge` is the only glow (there is no "small" tier). Earlier revisions of this doc listed those four — corrected in DMNC-1216.
 
+**`.dosHeader()` scope — list-section headers are a sanctioned exception (DMNC-1228).** `.dosHeader()` is for *standalone content headers* that would otherwise be hand-rolled — e.g. the Daily Digest `AI INSIGHT` / `TIMELINE` labels. SwiftUI `List` `Section(header: Label(...))` headers across Settings and the Lists tab are a **deliberate separate pattern**: their Title-Case text + leading SF Symbol icon (amber, body-size) are more scannable than a dim uppercase 12pt label, and they are already a consistent family. Do **not** sweep them into `.dosHeader()` — the decision (2026-07-03, DMNC-1228) was to keep them as-is. This is a design choice, not drift, so it is not guarded by `StyleGuardTests`.
+
 ## Spacing (DOSSpacing.swift)
 
 8-step scale: xxs(4), xs(8), sm(12), md(16), lg(24), xl(32), xxl(48), hero(64)
