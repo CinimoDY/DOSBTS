@@ -6,6 +6,10 @@
 import SwiftUI
 
 struct MealEntryListView: View {
+    /// UserDefaults persistence key for this section's expanded state —
+    /// must stay stable across releases (display name may change freely).
+    private let sectionKey = "Meals"
+
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
@@ -25,8 +29,11 @@ struct MealEntryListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Meals",
-                collapsed: true,
-                collapsible: !mealEntryValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
+                collapsible: !mealEntryValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
+                })
             {
                 if mealEntryValues.isEmpty {
                     Text(getTeaser(mealEntryValues.count))

@@ -6,6 +6,10 @@
 import SwiftUI
 
 struct InsulinDeliveryListView: View {
+    /// UserDefaults persistence key for this section's expanded state —
+    /// must stay stable across releases (display name may change freely).
+    private let sectionKey = "Insulin"
+
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
@@ -21,8 +25,11 @@ struct InsulinDeliveryListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Insulin",
-                collapsed: true,
-                collapsible: !insulinDeliveryValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
+                collapsible: !insulinDeliveryValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
+                })
             {
                 if insulinDeliveryValues.isEmpty {
                     Text(getTeaser(insulinDeliveryValues.count))

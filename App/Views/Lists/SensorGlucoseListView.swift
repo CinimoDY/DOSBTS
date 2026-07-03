@@ -6,6 +6,10 @@
 import SwiftUI
 
 struct SensorGlucoseListView: View {
+    /// UserDefaults persistence key for this section's expanded state —
+    /// must stay stable across releases (display name may change freely).
+    private let sectionKey = "CGM"
+
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
@@ -21,8 +25,11 @@ struct SensorGlucoseListView: View {
                 }.buttonStyle(.plain),
 
                 sectionName: "CGM",
-                collapsed: true,
-                collapsible: !sensorGlucoseValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
+                collapsible: !sensorGlucoseValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
+                })
             {
                 if sensorGlucoseValues.isEmpty {
                     Text(getTeaser(sensorGlucoseValues.count))

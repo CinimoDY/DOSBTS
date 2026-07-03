@@ -102,6 +102,10 @@ private enum Keys: String {
     case dailyDigestReminderHour = "libre-direct.settings.daily-digest-reminder-hour"
     case dailyDigestReminderMinute = "libre-direct.settings.daily-digest-reminder-minute"
 
+    // View state persistence (DMNC-1293)
+    case selectedReportType = "libre-direct.settings.selected-report-type"
+    case listSectionExpanded = "libre-direct.settings.list-section-expanded"
+
     // Widget shared data (App Group)
     case sharedTIR = "glucosedirect--tir"
     case sharedIOB = "glucosedirect--iob"
@@ -1268,6 +1272,18 @@ extension UserDefaults {
                 removeObject(forKey: Keys.dailyDigestReminderMinute.rawValue)
             }
         }
+    }
+
+    // MARK: View State Persistence (DMNC-1293)
+
+    var selectedReportType: ReportType {
+        get { ReportType(rawValue: string(forKey: Keys.selectedReportType.rawValue) ?? "") ?? .glucose }
+        set { set(newValue.rawValue, forKey: Keys.selectedReportType.rawValue) }
+    }
+
+    var listSectionExpanded: [String: Bool] {
+        get { dictionary(forKey: Keys.listSectionExpanded.rawValue) as? [String: Bool] ?? [:] }
+        set { set(newValue, forKey: Keys.listSectionExpanded.rawValue) }
     }
 
     // MARK: Migration helpers

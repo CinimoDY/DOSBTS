@@ -9,8 +9,6 @@ struct OverviewView: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var sheets: SheetCoordinator
 
-    @State private var selectedReportType: ReportType = .glucose
-
     var body: some View {
         VStack(spacing: 0) {
             GlucoseView()
@@ -22,18 +20,18 @@ struct OverviewView: View {
                 TreatmentBannerView()
             }
 
-            ChartReportTypeRow(selectedReportType: $selectedReportType)
+            ChartReportTypeRow()
 
             if !store.state.sensorGlucoseValues.isEmpty || !store.state.bloodGlucoseValues.isEmpty {
                 ChartView(
-                    selectedReportType: selectedReportType,
+                    selectedReportType: store.state.selectedReportType,
                     onTapMarkerGroup: { group in
                         sheets.present(.entryGroupReadOverlay(group))
                     }
                 )
                 .frame(maxHeight: .infinity)
 
-                ChartZoomRow(selectedReportType: selectedReportType)
+                ChartZoomRow()
             } else {
                 Spacer()
             }

@@ -151,6 +151,8 @@ struct AppState: DirectState {
         self.tightControlLastCelebratedStreakStart = defaults.tightControlLastCelebratedStreakStart
         self.tightControlPendingCelebrationCount = defaults.tightControlPendingCelebrationCount
         self.lastSeenBuild = defaults.lastSeenBuild
+        self.selectedReportType = defaults.selectedReportType
+        self.listSectionExpanded = defaults.listSectionExpanded
     }
 
     // MARK: Internal
@@ -319,4 +321,8 @@ struct AppState: DirectState {
     // MARK: What's New / changelog (DMNC-1147)
     var lastSeenBuild: Int { didSet { defaults.lastSeenBuild = lastSeenBuild } }
     var selectedSettingsCategory: SettingsCategory? // ephemeral nav state — not persisted
+
+    // MARK: View State Persistence (DMNC-1293)
+    var selectedReportType: ReportType { didSet { defaults.selectedReportType = selectedReportType } }
+    var listSectionExpanded: [String: Bool] { didSet { defaults.listSectionExpanded = listSectionExpanded } }
 }
