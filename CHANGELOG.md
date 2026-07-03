@@ -7,8 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 124] — 2026-07-04
+
 ### Changed
-- Chart view and list sections now remember their last state across tab switches and relaunches — DMNC-1293
+- Chart view and list sections now remember their last state across tab switches and relaunches — DMNC-1293, PR #87
 
 ### Fixed
 - Content no longer scrolls beneath the INSULIN/MEAL bar on the Log and Settings tabs, and on pushed detail screens (Settings categories, Calibrations) — DMNC-1292, PR #88
