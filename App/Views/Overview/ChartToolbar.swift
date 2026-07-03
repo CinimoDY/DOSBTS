@@ -46,7 +46,7 @@ struct ChartReportTypeRow: View {
         HStack(spacing: DOSSpacing.md) {
             ForEach(ReportType.allCases, id: \.self) { type in
                 ChartTabButton(
-                    label: type.rawValue,
+                    label: type.label,
                     isSelected: store.state.selectedReportType == type,
                     action: { store.dispatch(.setSelectedReportType(reportType: type)) }
                 )

@@ -6,6 +6,10 @@
 import SwiftUI
 
 struct BloodGlucoseListView: View {
+    /// UserDefaults persistence key for this section's expanded state —
+    /// must stay stable across releases (display name may change freely).
+    private let sectionKey = "Blood glucose"
+
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
@@ -21,10 +25,10 @@ struct BloodGlucoseListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Blood glucose",
-                collapsed: !store.state.listSectionExpanded["Blood glucose", default: false],
+                collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !bloodGlucoseValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
-                    store.dispatch(.setListSectionExpanded(sectionName: "Blood glucose", isExpanded: !isCollapsed))
+                    store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
                 if bloodGlucoseValues.isEmpty {

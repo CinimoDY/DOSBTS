@@ -6,6 +6,10 @@
 import SwiftUI
 
 struct SensorErrorListView: View {
+    /// UserDefaults persistence key for this section's expanded state —
+    /// must stay stable across releases (display name may change freely).
+    private let sectionKey = "Sensor errors"
+
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
@@ -20,10 +24,10 @@ struct SensorErrorListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Sensor errors",
-                collapsed: !store.state.listSectionExpanded["Sensor errors", default: false],
+                collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !sensorErrorValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
-                    store.dispatch(.setListSectionExpanded(sectionName: "Sensor errors", isExpanded: !isCollapsed))
+                    store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
                 if sensorErrorValues.isEmpty {
