@@ -53,7 +53,7 @@ struct BarcodeScannerView: View {
         .interactiveDismissDisabled(store.state.foodAnalysisResult == nil)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") {
+                Button("Cancel", role: .cancel) {
                     store.dispatch(.setFoodAnalysisResult(result: nil))
                     store.dispatch(.setFoodAnalysisLoading(isLoading: false))
                     dismiss()

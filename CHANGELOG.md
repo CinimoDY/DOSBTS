@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Insulin units in the Insulin list now display as "U" instead of "IE" for consistent phrasing across the app — DMNC-1296
+
 ## [Build 122] — 2026-07-02
 
 _No user-visible changes — build bump only (internal test tooling + build-warning cleanup)._
