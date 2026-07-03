@@ -104,6 +104,9 @@ private enum Keys: String {
 
     // Ratio Lab
     case confirmedICR = "libre-direct.settings.confirmed-icr"
+    // View state persistence (DMNC-1293)
+    case selectedReportType = "libre-direct.settings.selected-report-type"
+    case listSectionExpanded = "libre-direct.settings.list-section-expanded"
 
     // Widget shared data (App Group)
     case sharedTIR = "glucosedirect--tir"
@@ -1290,6 +1293,18 @@ extension UserDefaults {
                 removeObject(forKey: Keys.confirmedICR.rawValue)
             }
         }
+    }
+
+    // MARK: View State Persistence (DMNC-1293)
+
+    var selectedReportType: ReportType {
+        get { ReportType(rawValue: string(forKey: Keys.selectedReportType.rawValue) ?? "") ?? .glucose }
+        set { set(newValue.rawValue, forKey: Keys.selectedReportType.rawValue) }
+    }
+
+    var listSectionExpanded: [String: Bool] {
+        get { dictionary(forKey: Keys.listSectionExpanded.rawValue) as? [String: Bool] ?? [:] }
+        set { set(newValue, forKey: Keys.listSectionExpanded.rawValue) }
     }
 
     // MARK: Migration helpers

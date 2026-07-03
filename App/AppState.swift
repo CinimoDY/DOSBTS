@@ -152,6 +152,8 @@ struct AppState: DirectState {
         self.tightControlPendingCelebrationCount = defaults.tightControlPendingCelebrationCount
         self.lastSeenBuild = defaults.lastSeenBuild
         self.confirmedICR = defaults.confirmedICR
+        self.selectedReportType = defaults.selectedReportType
+        self.listSectionExpanded = defaults.listSectionExpanded
     }
 
     // MARK: Internal
@@ -324,4 +326,7 @@ struct AppState: DirectState {
     // MARK: Ratio Lab
     var ratioEvidence: RatioEvidence? // transient — loaded on demand, not persisted
     var confirmedICR: Double? { didSet { defaults.confirmedICR = confirmedICR } }
+    // MARK: View State Persistence (DMNC-1293)
+    var selectedReportType: ReportType { didSet { defaults.selectedReportType = selectedReportType } }
+    var listSectionExpanded: [String: Bool] { didSet { defaults.listSectionExpanded = listSectionExpanded } }
 }

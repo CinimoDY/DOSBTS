@@ -700,3 +700,67 @@ struct RatioLabStateTests {
         #expect(restored.confirmedICR == nil)
     }
 }
+
+// MARK: - View State Persistence Tests (DMNC-1293)
+
+@Suite("View State Persistence")
+struct ViewStatePersistenceTests {
+
+    @Test("setSelectedReportType cycles through all values")
+    func cycleReportType() {
+        var state: DirectState = makeState()
+        #expect(state.selectedReportType == .glucose)
+
+        reduce(&state, .setSelectedReportType(reportType: .timeInRange))
+        #expect(state.selectedReportType == .timeInRange)
+
+        reduce(&state, .setSelectedReportType(reportType: .statistics))
+        #expect(state.selectedReportType == .statistics)
+
+        reduce(&state, .setSelectedReportType(reportType: .glucose))
+        #expect(state.selectedReportType == .glucose)
+    }
+
+    @Test("setSelectedReportType persists to UserDefaults on AppState")
+    func reportTypePersists() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+        reduce(&state, .setSelectedReportType(reportType: .statistics))
+        #expect(defaults.selectedReportType == .statistics)
+
+        // Simulate relaunch: new AppState reads the persisted value.
+        let reloaded = AppState(defaults: defaults)
+        #expect(reloaded.selectedReportType == .statistics)
+    }
+
+    @Test("setListSectionExpanded expands a section and leaves others untouched")
+    func expandSection() {
+        var state: DirectState = makeState()
+        #expect(state.listSectionExpanded.isEmpty)
+
+        reduce(&state, .setListSectionExpanded(sectionName: "Meals", isExpanded: true))
+        #expect(state.listSectionExpanded["Meals"] == true)
+        #expect(state.listSectionExpanded["CGM"] == nil)
+    }
+
+    @Test("setListSectionExpanded collapses a previously expanded section")
+    func collapseSection() {
+        var state: DirectState = makeState()
+        reduce(&state, .setListSectionExpanded(sectionName: "CGM", isExpanded: true))
+        reduce(&state, .setListSectionExpanded(sectionName: "CGM", isExpanded: false))
+        #expect(state.listSectionExpanded["CGM"] == false)
+    }
+
+    @Test("listSectionExpanded persists to UserDefaults on AppState")
+    func sectionExpandedPersists() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+        reduce(&state, .setListSectionExpanded(sectionName: "Meals", isExpanded: true))
+        reduce(&state, .setListSectionExpanded(sectionName: "Insulin", isExpanded: true))
+
+        let reloaded = AppState(defaults: defaults)
+        #expect(reloaded.listSectionExpanded["Meals"] == true)
+        #expect(reloaded.listSectionExpanded["Insulin"] == true)
+        #expect(reloaded.listSectionExpanded["CGM"] == nil)
+    }
+}

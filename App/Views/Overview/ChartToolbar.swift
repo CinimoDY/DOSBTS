@@ -5,14 +5,6 @@
 
 import SwiftUI
 
-// MARK: - ReportType
-
-enum ReportType: String, CaseIterable {
-    case glucose = "GLUCOSE"
-    case timeInRange = "TIME IN RANGE"
-    case statistics = "STATISTICS"
-}
-
 // MARK: - Shared visual primitives
 
 /// A tab-like text row with bottom underline, used by both the report-type
@@ -49,29 +41,28 @@ private struct ChartTabButton: View {
 /// Top selector: GLUCOSE · TIME IN RANGE · STATISTICS. Sits above the chart.
 struct ChartReportTypeRow: View {
     @EnvironmentObject var store: DirectStore
-    @Binding var selectedReportType: ReportType
 
     var body: some View {
         HStack(spacing: DOSSpacing.md) {
             ForEach(ReportType.allCases, id: \.self) { type in
                 ChartTabButton(
-                    label: type.rawValue,
-                    isSelected: selectedReportType == type,
-                    action: { selectedReportType = type }
+                    label: type.label,
+                    isSelected: store.state.selectedReportType == type,
+                    action: { store.dispatch(.setSelectedReportType(reportType: type)) }
                 )
             }
         }
         .padding(.vertical, DOSSpacing.xs)
         .background(AmberTheme.dosBlack)
         .onAppear(perform: normaliseDaysIfNeeded)
-        .onChange(of: selectedReportType) { normaliseDaysIfNeeded() }
+        .onChange(of: store.state.selectedReportType) { normaliseDaysIfNeeded() }
     }
 
     /// When the user switches to TIR or STATISTICS and the persisted `statisticsDays`
     /// is not one of the day chips exposed by `ChartZoomRow`, bump it to `30d` so a
     /// chip always reflects the active aggregation window.
     private func normaliseDaysIfNeeded() {
-        guard selectedReportType != .glucose else { return }
+        guard store.state.selectedReportType != .glucose else { return }
         let validDays: Set<Int> = Set(DaysZoom.allCases.map(\.days))
         guard !validDays.contains(store.state.statisticsDays) else { return }
         store.dispatch(.setStatisticsDays(days: 30))
@@ -86,11 +77,10 @@ struct ChartReportTypeRow: View {
 /// chart, then pick a window.
 struct ChartZoomRow: View {
     @EnvironmentObject var store: DirectStore
-    let selectedReportType: ReportType
 
     var body: some View {
         Group {
-            switch selectedReportType {
+            switch store.state.selectedReportType {
             case .glucose:
                 hoursRow
             case .timeInRange, .statistics:
@@ -175,9 +165,9 @@ private enum DaysZoom: CaseIterable {
 struct ChartToolbar_Previews: PreviewProvider {
     static var previews: some View {
         VStack {
-            ChartReportTypeRow(selectedReportType: .constant(.glucose))
+            ChartReportTypeRow()
             Spacer()
-            ChartZoomRow(selectedReportType: .glucose)
+            ChartZoomRow()
         }
         .background(AmberTheme.dosBlack)
         .preferredColorScheme(.dark)
