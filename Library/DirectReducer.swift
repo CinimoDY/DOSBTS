@@ -501,6 +501,13 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setIOBDeliveries(deliveries: let deliveries):
         state.iobDeliveries = deliveries
 
+    // MARK: Ratio Lab
+    case .setRatioEvidence(evidence: let evidence):
+        state.ratioEvidence = evidence
+
+    case .setConfirmedICR(icr: let icr):
+        state.confirmedICR = icr
+
     // MARK: Meal Impact
     case .setScoredMealEntryIds(scoredMealEntryIds: let ids):
         state.scoredMealEntryIds = ids

@@ -129,6 +129,12 @@ protocol DirectState {
     // MARK: Meal Impact
     var scoredMealEntryIds: Set<UUID> { get set }
 
+    // MARK: Ratio Lab
+    /// Transient — loaded on demand when Ratio Lab screen opens. Not persisted.
+    var ratioEvidence: RatioEvidence? { get set }
+    /// Persisted confirmed ICR (g/U) chosen by the user as their reference. nil = not set.
+    var confirmedICR: Double? { get set }
+
     // MARK: Daily Digest
     var currentDailyDigest: DailyDigest? { get set }
     var dailyDigestLoading: Bool { get set }

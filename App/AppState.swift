@@ -151,6 +151,7 @@ struct AppState: DirectState {
         self.tightControlLastCelebratedStreakStart = defaults.tightControlLastCelebratedStreakStart
         self.tightControlPendingCelebrationCount = defaults.tightControlPendingCelebrationCount
         self.lastSeenBuild = defaults.lastSeenBuild
+        self.confirmedICR = defaults.confirmedICR
     }
 
     // MARK: Internal
@@ -319,4 +320,8 @@ struct AppState: DirectState {
     // MARK: What's New / changelog (DMNC-1147)
     var lastSeenBuild: Int { didSet { defaults.lastSeenBuild = lastSeenBuild } }
     var selectedSettingsCategory: SettingsCategory? // ephemeral nav state — not persisted
+
+    // MARK: Ratio Lab
+    var ratioEvidence: RatioEvidence? // transient — loaded on demand, not persisted
+    var confirmedICR: Double? { didSet { defaults.confirmedICR = confirmedICR } }
 }
