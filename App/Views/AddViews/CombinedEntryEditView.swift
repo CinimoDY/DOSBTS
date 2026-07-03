@@ -44,7 +44,7 @@ struct CombinedEntryEditView: View {
             .dosNavigationTitle(navTitle)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { cancel() }
+                    Button("Cancel", role: .cancel) { cancel() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { save() }.disabled(!isSaveEnabled)

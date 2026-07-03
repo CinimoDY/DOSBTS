@@ -77,7 +77,7 @@ struct AddInsulinView: View {
 
     private var navBar: some View {
         HStack {
-            Button("Cancel") { dismiss() }
+            Button("Cancel", role: .cancel) { dismiss() }
                 .font(DOSTypography.mono(size: 14))
                 .foregroundStyle(AmberTheme.amberDark)
 
