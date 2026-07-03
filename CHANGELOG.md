@@ -15,7 +15,6 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ### Fixed
 - Insulin units in the Insulin list now display as "U" instead of "IE" for consistent phrasing across the app — DMNC-1296, PR #86
 - Blood glucose and calibration entry screens no longer show a redundant back button alongside Cancel, and Cancel buttons across entry forms now carry the system cancel role for better accessibility — DMNC-1296, PR #86
->>>>>>> origin/main
 
 ## [Build 122] — 2026-07-02
 
