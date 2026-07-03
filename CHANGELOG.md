@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Chart view and list sections now remember their last state across tab switches and relaunches — DMNC-1293
+
 ## [Build 122] — 2026-07-02
 
 _No user-visible changes — build bump only (internal test tooling + build-warning cleanup)._

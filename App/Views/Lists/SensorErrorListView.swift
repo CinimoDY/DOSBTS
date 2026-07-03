@@ -20,8 +20,11 @@ struct SensorErrorListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Sensor errors",
-                collapsed: true,
-                collapsible: !sensorErrorValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded["Sensor errors", default: false],
+                collapsible: !sensorErrorValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: "Sensor errors", isExpanded: !isCollapsed))
+                })
             {
                 if sensorErrorValues.isEmpty {
                     Text(getTeaser(sensorErrorValues.count))

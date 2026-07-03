@@ -151,6 +151,15 @@ protocol DirectState {
     /// presented, observed by ContentView to drive the toast, then cleared.
     var tightControlCelebration: TightControlCelebration? { get set }
 
+    // MARK: View State Persistence (DMNC-1293)
+    /// Chart report type tab (GLUCOSE / TIME IN RANGE / STATISTICS). Persisted
+    /// so kill + relaunch restores the last-viewed chart mode.
+    var selectedReportType: ReportType { get set }
+    /// Per-section expanded state for the Lists tab. Keys are the stable
+    /// `sectionName` strings passed to `CollapsableSection`; `true` = expanded.
+    /// Defaults to collapsed for any key not present.
+    var listSectionExpanded: [String: Bool] { get set }
+
     // MARK: What's New / changelog (DMNC-1147)
     /// Highest build whose "What's New" the user has seen. `0` is the
     /// fresh-install sentinel (`integer(forKey:)` default) → record current,

@@ -25,8 +25,11 @@ struct MealEntryListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Meals",
-                collapsed: true,
-                collapsible: !mealEntryValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded["Meals", default: false],
+                collapsible: !mealEntryValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: "Meals", isExpanded: !isCollapsed))
+                })
             {
                 if mealEntryValues.isEmpty {
                     Text(getTeaser(mealEntryValues.count))

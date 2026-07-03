@@ -21,8 +21,11 @@ struct BloodGlucoseListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Blood glucose",
-                collapsed: true,
-                collapsible: !bloodGlucoseValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded["Blood glucose", default: false],
+                collapsible: !bloodGlucoseValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: "Blood glucose", isExpanded: !isCollapsed))
+                })
             {
                 if bloodGlucoseValues.isEmpty {
                     Text(getTeaser(bloodGlucoseValues.count))

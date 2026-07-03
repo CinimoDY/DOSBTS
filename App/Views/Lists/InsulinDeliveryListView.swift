@@ -21,8 +21,11 @@ struct InsulinDeliveryListView: View {
                     SelectedDatePager().padding(.trailing)
                 }.buttonStyle(.plain),
                 sectionName: "Insulin",
-                collapsed: true,
-                collapsible: !insulinDeliveryValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded["Insulin", default: false],
+                collapsible: !insulinDeliveryValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: "Insulin", isExpanded: !isCollapsed))
+                })
             {
                 if insulinDeliveryValues.isEmpty {
                     Text(getTeaser(insulinDeliveryValues.count))

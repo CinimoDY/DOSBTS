@@ -10,12 +10,13 @@ import SwiftUI
 struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Content: View, Teaser: View {
     // MARK: Lifecycle
 
-    init(teaser: Teaser, header: Parent, sectionName: String = "section", collapsed: Bool = false, collapsible: Bool = true, @ViewBuilder content: @escaping () -> Content) {
+    init(teaser: Teaser, header: Parent, sectionName: String = "section", collapsed: Bool = false, collapsible: Bool = true, onCollapsedChange: ((Bool) -> Void)? = nil, @ViewBuilder content: @escaping () -> Content) {
         self.teaser = teaser
         self.header = header
         self.sectionName = sectionName
         self._collapsed = State(initialValue: collapsed)
         self.collapsible = collapsible
+        self.onCollapsedChange = onCollapsedChange
         self.content = content
     }
 
@@ -35,7 +36,9 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
                 Spacer()
 
                 Button(action: {
-                    collapsed.toggle()
+                    let newCollapsed = !collapsed
+                    collapsed = newCollapsed
+                    onCollapsedChange?(newCollapsed)
                 }, label: {
                     Image(systemName: collapsed ? "chevron.up" : "chevron.down")
                 })
@@ -51,6 +54,7 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
                     // chevron in the header.
                     Button {
                         collapsed = false
+                        onCollapsedChange?(false)
                     } label: {
                         HStack {
                             teaser
@@ -78,6 +82,7 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
 
     @State private var collapsed: Bool
     private var collapsible: Bool
+    private let onCollapsedChange: ((Bool) -> Void)?
 }
 
 extension CollapsableSection where Teaser == EmptyView {

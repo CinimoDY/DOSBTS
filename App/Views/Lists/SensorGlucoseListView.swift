@@ -21,8 +21,11 @@ struct SensorGlucoseListView: View {
                 }.buttonStyle(.plain),
 
                 sectionName: "CGM",
-                collapsed: true,
-                collapsible: !sensorGlucoseValues.isEmpty)
+                collapsed: !store.state.listSectionExpanded["CGM", default: false],
+                collapsible: !sensorGlucoseValues.isEmpty,
+                onCollapsedChange: { isCollapsed in
+                    store.dispatch(.setListSectionExpanded(sectionName: "CGM", isExpanded: !isCollapsed))
+                })
             {
                 if sensorGlucoseValues.isEmpty {
                     Text(getTeaser(sensorGlucoseValues.count))
