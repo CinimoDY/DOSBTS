@@ -93,8 +93,9 @@ struct GlucoseStatusBar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Divider()
-                .background(AmberTheme.dosBorder)
+            Rectangle()
+                .fill(AmberTheme.dosBorder)
+                .frame(height: 1)
 
             HStack(spacing: DOSSpacing.sm) {
                 if DirectConfig.showInsulinInput, store.state.showInsulinInput {
@@ -112,8 +113,8 @@ struct GlucoseStatusBar: View {
             }
             .padding(.horizontal, DOSSpacing.md)
             .padding(.vertical, DOSSpacing.xs)
-            .background(AmberTheme.dosBlack)
         }
+        .background(AmberTheme.dosBlack)
     }
 
     /// The Overview quick-action look: ghost box, icon beside caption,
@@ -140,19 +141,25 @@ struct GlucoseStatusBar: View {
 // MARK: - Framed tab shell
 
 /// Frames a tab's content with the persistent surfaces: GlucoseTopBar
-/// above (over the page title) and GlucoseStatusBar below. Used by the
-/// NavigationStack-rooted tabs (Log, Settings); Overview and Digest mount
-/// the bars themselves around their custom layouts.
+/// above (over the page title) and GlucoseStatusBar below. Owns the
+/// NavigationStack so the bottom safeAreaInset is applied inside the
+/// stack — that way both the root List and every pushed detail screen
+/// inherit the inset and their last row clears the bar. Pass the root
+/// List (or scroll view) directly; do NOT wrap in a NavigationStack at
+/// the call site. Overview and Digest mount the bars themselves around
+/// their custom layouts.
 struct GlucoseFramedTab<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(spacing: 0) {
             GlucoseTopBar()
-            content()
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    GlucoseStatusBar()
-                }
+            NavigationStack {
+                content()
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        GlucoseStatusBar()
+                    }
+            }
         }
         .background(AmberTheme.dosBlack)
     }

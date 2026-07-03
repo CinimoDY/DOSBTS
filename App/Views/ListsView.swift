@@ -13,10 +13,10 @@ struct ListsView: View {
     @State private var showingMigrationHint: Bool = false
 
     var body: some View {
-        // Strip above the page title + bar below — nav bars ignore outer
-        // safe-area insets, so the shell wraps the NavigationStack.
+        // GlucoseFramedTab owns the NavigationStack; passing the root List
+        // directly lets the bottom-bar safeAreaInset propagate to pushed
+        // detail screens as well as this root.
         GlucoseFramedTab {
-            NavigationStack {
             List {
                 SensorGlucoseListView()
 
@@ -66,7 +66,6 @@ struct ListsView: View {
                 if !store.state.hasSeenBGRelocationHint && DirectConfig.bloodGlucoseInput {
                     showingMigrationHint = true
                 }
-            }
             }
         }
     }

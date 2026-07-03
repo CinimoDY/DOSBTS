@@ -12,9 +12,10 @@ struct SettingsView: View {
     @EnvironmentObject var store: DirectStore
 
     var body: some View {
-        // Strip above the page title + bar below — see GlucoseFramedTab.
+        // GlucoseFramedTab owns the NavigationStack; passing the root List
+        // directly lets the bottom-bar safeAreaInset propagate to pushed
+        // category screens as well as this root.
         GlucoseFramedTab {
-            NavigationStack {
             List {
                 // Destinations route through categoryView(for:) — the single
                 // source of truth shared with the deep-link navigationDestination
@@ -96,7 +97,6 @@ struct SettingsView: View {
             // transient state so a relaunch never re-pushes (KTD6).
             .navigationDestination(item: settingsCategoryBinding) { category in
                 categoryView(for: category)
-            }
             }
         }
     }
