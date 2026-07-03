@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Content no longer scrolls beneath the INSULIN/MEAL bar on the Log and Settings tabs, and on pushed detail screens (Settings categories, Calibrations) — DMNC-1292, PR #87
+
 ## [Build 123] — 2026-07-03
 
 ### Fixed
