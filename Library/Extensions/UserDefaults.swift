@@ -102,6 +102,8 @@ private enum Keys: String {
     case dailyDigestReminderHour = "libre-direct.settings.daily-digest-reminder-hour"
     case dailyDigestReminderMinute = "libre-direct.settings.daily-digest-reminder-minute"
 
+    // Ratio Lab
+    case confirmedICR = "libre-direct.settings.confirmed-icr"
     // View state persistence (DMNC-1293)
     case selectedReportType = "libre-direct.settings.selected-report-type"
     case listSectionExpanded = "libre-direct.settings.list-section-expanded"
@@ -1270,6 +1272,25 @@ extension UserDefaults {
                 set(newValue, forKey: Keys.dailyDigestReminderMinute.rawValue)
             } else {
                 removeObject(forKey: Keys.dailyDigestReminderMinute.rawValue)
+            }
+        }
+    }
+
+    // MARK: Ratio Lab
+
+    /// User's confirmed reference ICR (g/U). nil = no reference set.
+    /// Uses `object(forKey:) != nil` guard so a stored 0.0 is still
+    /// distinguishable from "never set" (same pattern as dailyDigestReminderHour).
+    var confirmedICR: Double? {
+        get {
+            guard object(forKey: Keys.confirmedICR.rawValue) != nil else { return nil }
+            return double(forKey: Keys.confirmedICR.rawValue)
+        }
+        set {
+            if let newValue = newValue {
+                set(newValue, forKey: Keys.confirmedICR.rawValue)
+            } else {
+                removeObject(forKey: Keys.confirmedICR.rawValue)
             }
         }
     }

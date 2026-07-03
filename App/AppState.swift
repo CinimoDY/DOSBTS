@@ -151,6 +151,7 @@ struct AppState: DirectState {
         self.tightControlLastCelebratedStreakStart = defaults.tightControlLastCelebratedStreakStart
         self.tightControlPendingCelebrationCount = defaults.tightControlPendingCelebrationCount
         self.lastSeenBuild = defaults.lastSeenBuild
+        self.confirmedICR = defaults.confirmedICR
         self.selectedReportType = defaults.selectedReportType
         self.listSectionExpanded = defaults.listSectionExpanded
     }
@@ -322,6 +323,9 @@ struct AppState: DirectState {
     var lastSeenBuild: Int { didSet { defaults.lastSeenBuild = lastSeenBuild } }
     var selectedSettingsCategory: SettingsCategory? // ephemeral nav state — not persisted
 
+    // MARK: Ratio Lab
+    var ratioEvidence: RatioEvidence? // transient — loaded on demand, not persisted
+    var confirmedICR: Double? { didSet { defaults.confirmedICR = confirmedICR } }
     // MARK: View State Persistence (DMNC-1293)
     var selectedReportType: ReportType { didSet { defaults.selectedReportType = selectedReportType } }
     var listSectionExpanded: [String: Bool] { didSet { defaults.listSectionExpanded = listSectionExpanded } }

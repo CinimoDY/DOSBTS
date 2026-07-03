@@ -626,6 +626,81 @@ struct MarkerLanePositionTests {
     }
 }
 
+// MARK: - Ratio Lab Tests (DMNC-1298)
+
+@Suite("Ratio Lab State")
+struct RatioLabStateTests {
+
+    @Test("setRatioEvidence stores evidence and nil clears it")
+    func setRatioEvidence() {
+        var state: DirectState = makeState()
+        #expect(state.ratioEvidence == nil)
+
+        let evidence = RatioEvidence(tddDays: [], mealObservations: [])
+        reduce(&state, .setRatioEvidence(evidence: evidence))
+        #expect(state.ratioEvidence != nil)
+
+        reduce(&state, .setRatioEvidence(evidence: nil))
+        #expect(state.ratioEvidence == nil)
+    }
+
+    @Test("setRatioEvidence is transient — not persisted to UserDefaults")
+    func ratioEvidenceIsTransient() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+        let evidence = RatioEvidence(tddDays: [], mealObservations: [])
+        reduce(&state, .setRatioEvidence(evidence: evidence))
+        #expect(state.ratioEvidence != nil)
+
+        // A fresh AppState from the same defaults must not see the evidence.
+        let fresh: DirectState = AppState(defaults: defaults)
+        #expect(fresh.ratioEvidence == nil)
+    }
+
+    @Test("setConfirmedICR stores and retrieves value")
+    func setConfirmedICR() {
+        var state: DirectState = makeState()
+        #expect(state.confirmedICR == nil)
+
+        reduce(&state, .setConfirmedICR(icr: 12.0))
+        #expect(state.confirmedICR == 12.0)
+    }
+
+    @Test("setConfirmedICR nil clears the value")
+    func clearConfirmedICR() {
+        var state: DirectState = makeState()
+        reduce(&state, .setConfirmedICR(icr: 10.0))
+        #expect(state.confirmedICR == 10.0)
+
+        reduce(&state, .setConfirmedICR(icr: nil))
+        #expect(state.confirmedICR == nil)
+    }
+
+    @Test("confirmedICR UserDefaults round-trip via AppState")
+    func confirmedICRRoundTrip() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+        reduce(&state, .setConfirmedICR(icr: 15.5))
+        #expect(state.confirmedICR == 15.5)
+
+        // A fresh AppState reading from the same defaults must recover the value.
+        let restored: DirectState = AppState(defaults: defaults)
+        #expect(restored.confirmedICR == 15.5)
+    }
+
+    @Test("confirmedICR nil clears UserDefaults so fresh AppState starts nil")
+    func confirmedICRClearRoundTrip() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+        reduce(&state, .setConfirmedICR(icr: 8.0))
+        reduce(&state, .setConfirmedICR(icr: nil))
+        #expect(state.confirmedICR == nil)
+
+        let restored: DirectState = AppState(defaults: defaults)
+        #expect(restored.confirmedICR == nil)
+    }
+}
+
 // MARK: - View State Persistence Tests (DMNC-1293)
 
 @Suite("View State Persistence")

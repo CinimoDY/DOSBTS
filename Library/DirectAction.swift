@@ -215,6 +215,11 @@ enum DirectAction {
     case setAIConsentDailyDigest(enabled: Bool)
     case setDailyDigestReminderTime(hour: Int?, minute: Int?)
 
+    // MARK: Ratio Lab
+    case loadRatioEvidence
+    case setRatioEvidence(evidence: RatioEvidence?)
+    case setConfirmedICR(icr: Double?)
+
     case debugAlarm
     case debugNotification
 }
