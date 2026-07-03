@@ -39,6 +39,7 @@ struct AddCalibrationView: View {
                 .background(AmberTheme.dosBlack.ignoresSafeArea())
             }
             .dosNavigationTitle("Calibration")
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
@@ -47,7 +48,7 @@ struct AddCalibrationView: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button("Cancel", role: .cancel) {
                         dismiss()
                     }
                 }
@@ -86,6 +87,7 @@ struct AddCalibrationView2: View {
                 .background(AmberTheme.dosBlack.ignoresSafeArea())
             }
             .dosNavigationTitle("Calibration")
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
@@ -96,7 +98,7 @@ struct AddCalibrationView2: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button("Cancel", role: .cancel) {
                         dismiss()
                     }
                 }

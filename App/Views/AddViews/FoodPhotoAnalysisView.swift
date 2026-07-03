@@ -82,7 +82,7 @@ struct FoodPhotoAnalysisView: View {
         .interactiveDismissDisabled(store.state.foodAnalysisResult != nil || !stagedItems.isEmpty)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") {
+                Button("Cancel", role: .cancel) {
                     store.dispatch(.setFoodAnalysisResult(result: nil))
                     store.dispatch(.setFoodAnalysisLoading(isLoading: false))
                     dismiss()

@@ -275,6 +275,7 @@ Every frame must be implementable within these iOS/DOSBTS constraints. Flag viol
 - [ ] **Nav titles** — use `dosNavigationTitle` (principal toolbar item), never bare `.navigationTitle` — iOS 26 ignores `UINavigationBar.appearance()` title attributes
 - [ ] **Persistent bars** — bottom bars must use `safeAreaInset(edge: .bottom)`, not `tabViewBottomAccessory` (liquid glass conflicts with DOS theme)
 - [ ] **Sheets** — no nested sheets; use `NavigationLink` (push) inside a sheet-presented view
+- [ ] **Sheet presentation styles** — intentional pattern: data-entry forms (Add* views) use full-screen sheets (`.fullScreenCover`), while read/edit overlays use detented sheets (`.presentationDetents([.medium, .large])`). Full-screen entry sheets hold user focus; detented overlays preserve context. Never mix for the same interaction type — consistency across all entry paths is critical.
 - [ ] **No real white** — all text is amber/CGA; `.foregroundStyle(.white)` is forbidden
 - [ ] **No ad-hoc font sizes** — use `DOSTypography` members only
 - [ ] **NavigationStack** — new screens must use `NavigationStack`, not legacy `NavigationView`

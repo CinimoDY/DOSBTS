@@ -46,6 +46,7 @@ struct AddBloodGlucoseView: View {
                 .background(AmberTheme.dosBlack.ignoresSafeArea())
             }
             .dosNavigationTitle("Blood glucose")
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {
@@ -56,7 +57,7 @@ struct AddBloodGlucoseView: View {
                     .disabled(enteredMgdL == nil)
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button("Cancel", role: .cancel) {
                         dismiss()
                     }
                 }

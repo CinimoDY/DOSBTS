@@ -42,7 +42,7 @@ struct InsulinDeliveryListView: View {
                             Spacer()
 
                             VStack(alignment: .trailing) {
-                                Text(verbatim: "\(insulinDeliveryValue.units) IE")
+                                Text(verbatim: insulinDeliveryValue.units.asInsulinUnits())
                                     .monospacedDigit()
 
                                 Text(verbatim: insulinDeliveryValue.type.localizedDescription)

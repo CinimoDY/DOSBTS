@@ -58,7 +58,7 @@ struct ItemBarcodeScannerView: View {
         .interactiveDismissDisabled()
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") { dismiss() }
+                Button("Cancel", role: .cancel) { dismiss() }
                     .foregroundStyle(AmberTheme.amber)
             }
         }
