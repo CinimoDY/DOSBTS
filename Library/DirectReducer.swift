@@ -450,6 +450,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setPredictiveLowAlarmFired(fired: let fired):
         state.predictiveLowAlarmFired = fired
 
+    // MARK: Missed-Bolus Nudge (DMNC-1300)
+    case .setShowMissedBolusNudge(enabled: let enabled):
+        state.showMissedBolusNudge = enabled
+
     // MARK: Celebrations (DMNC-772)
     case .setShowCelebrations(enabled: let enabled):
         state.showCelebrations = enabled
