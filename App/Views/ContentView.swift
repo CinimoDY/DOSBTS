@@ -30,6 +30,11 @@ struct ContentView: View {
     /// row inside a tab's VStack (the safeAreaInset-overflow class).
     @StateObject private var tightControlToast = TightControlToastController()
 
+    /// Post-dismiss log confirmation toast (DMNC-1294). Staged during the add
+    /// callback (before the sheet closes), then shown in onDismiss so it
+    /// appears after the sheet is fully gone. Covers manual meal, insulin, BG.
+    @StateObject private var loggedEntryToast = LoggedEntryToastController()
+
     var body: some View {
         // TabView is the outermost view so the appIsBusy LoadingOverlay can
         // sit on top via .overlay — wrapping the TabView in another
@@ -77,13 +82,39 @@ struct ContentView: View {
                 }
             }
             .animation(TightControlToastReveal.animation(reduceMotion: reduceMotion), value: tightControlToast.celebration)
+            .overlay(alignment: .bottom) {
+                if let entry = loggedEntryToast.active {
+                    LoggedEntryToastView(
+                        label: entry.label(glucoseUnit: store.state.glucoseUnit),
+                        onUndo: {
+                            switch entry {
+                            case .meal(let m):
+                                store.dispatch(.deleteMealEntry(mealEntry: m))
+                            case .insulin(let i):
+                                store.dispatch(.deleteInsulinDelivery(insulinDelivery: i))
+                            case .bloodGlucose(let g):
+                                store.dispatch(.deleteBloodGlucose(glucose: g))
+                            }
+                            loggedEntryToast.dismiss()
+                        }
+                    )
+                    // Clear the tab bar + per-tab GlucoseStatusBar so the toast
+                    // never overlaps the persistent INSULIN/MEAL bar.
+                    .padding(.bottom, 116)
+                }
+            }
+            .animation(AnimationTokens.easeStandard, value: loggedEntryToast.active)
             .environmentObject(sheets)
             .environmentObject(addedHighlighter)
-            .sheet(item: $sheets.activeSheet, onDismiss: sheets.sheetDidDismiss) { sheet in
+            .sheet(item: $sheets.activeSheet, onDismiss: {
+                sheets.sheetDidDismiss()
+                loggedEntryToast.showStagedIfAny()
+            }) { sheet in
                 RootSheetContent(sheet: sheet)
                     .environmentObject(store)
                     .environmentObject(sheets)
                     .environmentObject(addedHighlighter)
+                    .environmentObject(loggedEntryToast)
             }
             .onAppear {
                 // Cold launch: the prompt flag may already be set before the

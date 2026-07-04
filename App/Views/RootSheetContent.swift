@@ -13,6 +13,7 @@ struct RootSheetContent: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var sheets: SheetCoordinator
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
+    @EnvironmentObject var loggedEntryToast: LoggedEntryToastController
 
     let sheet: ActiveSheet
 
@@ -28,6 +29,8 @@ struct RootSheetContent: View {
                     let insulinDelivery = InsulinDelivery(id: UUID(), starts: start, ends: end, units: units, type: insulinType)
                     store.dispatch(.addInsulinDelivery(insulinDeliveryValues: [insulinDelivery]))
                     addedHighlighter.flash(insulinDelivery.id)
+                    DirectNotifications.shared.hapticNotification(.success)
+                    loggedEntryToast.stage(.insulin(insulinDelivery))
                 }
             )
             .environmentObject(store)
@@ -41,6 +44,8 @@ struct RootSheetContent: View {
                 let glucose = BloodGlucose(id: UUID(), timestamp: time, glucoseValue: value)
                 store.dispatch(.addBloodGlucose(glucoseValues: [glucose]))
                 addedHighlighter.flash(glucose.id)
+                DirectNotifications.shared.hapticNotification(.success)
+                loggedEntryToast.stage(.bloodGlucose(glucose))
             }
 
         case .treatmentModal(let alarmFiredAt):
