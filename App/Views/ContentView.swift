@@ -95,13 +95,14 @@ struct ContentView: View {
                                 store.dispatch(.deleteInsulinDelivery(insulinDelivery: i))
                             case .bloodGlucose(let g):
                                 store.dispatch(.deleteBloodGlucose(glucose: g))
-                            // Swipe-delete undo — restore the deleted entry
+                            // Swipe-delete undo — restore via targeted DB-only path to
+                            // avoid live-sensor side effects (alarms, HealthKit, Nightscout).
                             case .deletedBloodGlucose(let g):
-                                store.dispatch(.addBloodGlucose(glucoseValues: [g]))
+                                store.dispatch(.restoreBloodGlucose(glucose: g))
                             case .deletedInsulin(let i):
-                                store.dispatch(.addInsulinDelivery(insulinDeliveryValues: [i]))
+                                store.dispatch(.restoreInsulinDelivery(insulinDelivery: i))
                             case .deletedSensorGlucose(let g):
-                                store.dispatch(.addSensorGlucose(glucoseValues: [g]))
+                                store.dispatch(.restoreSensorGlucose(glucose: g))
                             }
                             loggedEntryToast.dismiss()
                         }

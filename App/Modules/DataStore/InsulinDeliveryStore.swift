@@ -28,6 +28,11 @@ func insulinDeliveryStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 .map { _ in DirectAction.loadInsulinDeliveryValues }
                 .eraseToAnyPublisher()
 
+        case .restoreInsulinDelivery(insulinDelivery: let insulinDelivery):
+            return DataStore.shared.insertInsulinDelivery([insulinDelivery])
+                .map { _ in DirectAction.loadInsulinDeliveryValues }
+                .eraseToAnyPublisher()
+
         case .deleteInsulinDelivery(insulinDelivery: let insulinDelivery):
             return DataStore.shared.deleteInsulinDelivery(insulinDelivery)
                 .map { _ in DirectAction.loadInsulinDeliveryValues }

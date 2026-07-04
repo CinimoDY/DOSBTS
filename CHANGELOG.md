@@ -7,13 +7,13 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- All four log paths (meal favorites/recents, manual meal, insulin, blood glucose) now show a confirmation toast with UNDO and fire a success haptic — DMNC-1294, PR #93
+
 ### Changed
 - Swipe-delete in the Log tab (blood glucose, insulin, CGM readings) now shows an undo-capable toast matching the log-feedback pattern — DMNC-1295
 - Tapping an insulin row in the Log tab opens the combined entry editor — DMNC-1295
 - Insulin, blood glucose, and calibration entry sheets now block swipe-dismiss to prevent accidental data loss — DMNC-1295
-
-### Added
-- All four log paths (meal favorites/recents, manual meal, insulin, blood glucose) now show a confirmation toast with UNDO and fire a success haptic — DMNC-1294, PR #93
 
 ## [Build 126] — 2026-07-04
 

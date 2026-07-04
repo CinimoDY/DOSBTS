@@ -99,16 +99,17 @@ struct InsulinDeliveryListView: View {
     /// Wraps an insulin delivery in a single-marker ConsolidatedMarkerGroup
     /// so it can be opened in CombinedEntryEditView.
     private func markerGroup(for delivery: InsulinDelivery) -> ConsolidatedMarkerGroup {
+        let id = "insulin-\(delivery.id.uuidString)"
         let marker = EventMarker(
-            id: delivery.id.uuidString,
+            id: id,
             time: delivery.starts,
             type: delivery.type.markerType,
-            label: delivery.units.asInsulinUnits(),
+            label: delivery.units.asInsulin(),
             rawValue: delivery.units,
             sourceID: delivery.id
         )
         return ConsolidatedMarkerGroup(
-            id: delivery.id.uuidString,
+            id: id,
             time: delivery.starts,
             markers: [marker]
         )
