@@ -336,6 +336,18 @@ enum RatioEstimator {
             .min()
     }
 
+    // MARK: Display
+
+    /// Canonical `1:X` ICR label (rounded whole grams-per-unit). Used by every
+    /// surface that renders a ratio — the Ratio Lab estimates grid, evidence
+    /// rows, and the Settings reference line — so the format can never drift
+    /// between them. Non-finite input (a stray NaN/Inf from bad logged data)
+    /// renders `—` rather than trapping in `Int(_:)`.
+    static func icrLabel(_ ratio: Double) -> String {
+        guard ratio.isFinite else { return "—" }
+        return "1:\(Int(ratio.rounded()))"
+    }
+
     // MARK: Statistics helpers
 
     /// Median via `percentile(_:0.5)`; `nil` for an empty sample.

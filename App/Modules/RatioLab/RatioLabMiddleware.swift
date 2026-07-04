@@ -30,9 +30,19 @@ func ratioLabMiddleware() -> Middleware<DirectState, DirectAction> {
                 break
             }
 
-            return DataStore.shared.getRatioEvidence().map { evidence in
-                DirectAction.setRatioEvidence(evidence: evidence)
-            }.eraseToAnyPublisher()
+            // On a GRDB read error `getRatioEvidence()` emits `.failure`, which the
+            // Store logs but never re-dispatches — so `.setRatioEvidence` would never
+            // land and RatioLabView (which treats `ratioEvidence == nil` as loading)
+            // would spin forever. Fall back to empty evidence: the screen shows its
+            // safe empty / "collecting evidence" state instead of an endless spinner.
+            return DataStore.shared.getRatioEvidence()
+                .map { DirectAction.setRatioEvidence(evidence: $0) }
+                .catch { error -> Just<DirectAction> in
+                    DirectLog.error("Ratio Lab evidence load failed: \(error)")
+                    return Just(.setRatioEvidence(evidence: RatioEvidence(tddDays: [], mealObservations: [])))
+                }
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
 
         default:
             break
@@ -77,11 +87,14 @@ extension DataStore {
                         return
                     }
 
-                    // 1. InsulinDelivery — 14-day window; type-filter deferred to Swift because
-                    //    InsulinType is Codable (not a SQL-native type).
+                    // 1. InsulinDelivery — from `tddWindowStart` through now (today INCLUDED).
+                    //    `RatioEstimator.tddDays` re-filters to `< startOfToday` internally, so
+                    //    TDD still counts only complete days; but bolus pairing needs today's
+                    //    deliveries too — excluding them here mislabels a meal logged today as
+                    //    `.noBolus` (paired bolus resolves to 0) and drops it from the sample.
+                    //    Type-filter is deferred to Swift because InsulinType is Codable (not SQL-native).
                     let allDeliveries = try InsulinDelivery
                         .filter(Column(InsulinDelivery.Columns.starts.name) >= tddWindowStart)
-                        .filter(Column(InsulinDelivery.Columns.starts.name) < startOfToday)
                         .order(Column(InsulinDelivery.Columns.starts.name))
                         .fetchAll(db)
 

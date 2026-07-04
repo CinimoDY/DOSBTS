@@ -55,6 +55,29 @@ struct InsulinSettingsView: View {
                 Label("Display", systemImage: "eye")
             }
         )
+
+        Section(
+            content: {
+                NavigationLink {
+                    RatioLabView()
+                } label: {
+                    Text("Ratio Lab")
+                        .font(DOSTypography.body)
+                }
+                if let icr = store.state.confirmedICR {
+                    Text("REF \(RatioEstimator.icrLabel(icr))")
+                        .font(DOSTypography.caption)
+                        .foregroundStyle(AmberTheme.amberDark)
+                }
+            },
+            header: {
+                Label("Ratios", systemImage: "function")
+            },
+            footer: {
+                Text("Estimate your insulin-to-carb ratio and correction factor from your own logged data. Reference only.")
+                    .font(DOSTypography.caption)
+            }
+        )
     }
 
     // MARK: Private
