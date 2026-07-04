@@ -27,6 +27,7 @@ struct HypoFilteredEntryModel: Equatable {
 struct UnifiedFoodEntryView: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
+    @EnvironmentObject var loggedEntryToast: LoggedEntryToastController
     @Environment(\.dismiss) var dismiss
 
     var filterToHypoTreatments: Bool = false
@@ -302,6 +303,8 @@ struct UnifiedFoodEntryView: View {
                 let mealEntry = MealEntry(timestamp: time, mealDescription: description, carbsGrams: carbs)
                 store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
                 addedHighlighter.flash(mealEntry.id)
+                DirectNotifications.shared.hapticNotification(.success)
+                loggedEntryToast.stage(.meal(mealEntry))
                 dismiss()
             }
         } label: {
@@ -433,6 +436,7 @@ struct UnifiedFoodEntryView: View {
         let mealEntry = favorite.toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
+        DirectNotifications.shared.hapticNotification(.success)
         toast.show(mealEntry)
         addedHighlighter.flash(mealEntry.id)
     }
@@ -447,6 +451,7 @@ struct UnifiedFoodEntryView: View {
     private func logRecent(_ meal: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: meal).toMealEntry()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
+        DirectNotifications.shared.hapticNotification(.success)
         toast.show(newEntry)
         addedHighlighter.flash(newEntry.id)
     }

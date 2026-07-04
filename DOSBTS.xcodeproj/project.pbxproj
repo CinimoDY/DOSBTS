@@ -32,6 +32,7 @@
 		TE0100010000000D000A0013 /* GlucoseStatusBarTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000D000A0013 /* GlucoseStatusBarTests.swift */; };
 		7D796C0FFEE00000000A0002 /* HoldToCommitProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D796C0FFEE00000000A0001 /* HoldToCommitProgressTests.swift */; };
 		7D796C0FFEE00000000B0002 /* LoggedMealToastControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D796C0FFEE00000000B0001 /* LoggedMealToastControllerTests.swift */; };
+		7D796C0FFEE00000000C0002 /* LoggedEntryToastControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D796C0FFEE00000000C0001 /* LoggedEntryToastControllerTests.swift */; };
 		1DA4B45CFC6E42E78B81BFD8 /* EntryGroupListOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */; };
 		014BC5267E0D43B3B9F2B6F9 /* InsulinImpactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF0395D4E22484C9E6488BD /* InsulinImpactTests.swift */; };
 		TE0100010000000F000A000F /* QuickTimeChipsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000F000A000F /* QuickTimeChipsTests.swift */; };
@@ -120,6 +121,7 @@
 		TE0100020000000D000A0013 /* GlucoseStatusBarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseStatusBarTests.swift; sourceTree = "<group>"; };
 		7D796C0FFEE00000000A0001 /* HoldToCommitProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToCommitProgressTests.swift; sourceTree = "<group>"; };
 		7D796C0FFEE00000000B0001 /* LoggedMealToastControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedMealToastControllerTests.swift; sourceTree = "<group>"; };
+		7D796C0FFEE00000000C0001 /* LoggedEntryToastControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedEntryToastControllerTests.swift; sourceTree = "<group>"; };
 		D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryGroupListOverlayTests.swift; sourceTree = "<group>"; };
 		2DF0395D4E22484C9E6488BD /* InsulinImpactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinImpactTests.swift; sourceTree = "<group>"; };
 		TE0100020000000F000A000F /* QuickTimeChipsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickTimeChipsTests.swift; sourceTree = "<group>"; };
@@ -285,6 +287,7 @@
 				TE0100020000000D000A0013 /* GlucoseStatusBarTests.swift */,
 				7D796C0FFEE00000000A0001 /* HoldToCommitProgressTests.swift */,
 				7D796C0FFEE00000000B0001 /* LoggedMealToastControllerTests.swift */,
+				7D796C0FFEE00000000C0001 /* LoggedEntryToastControllerTests.swift */,
 				D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */,
 				2DF0395D4E22484C9E6488BD /* InsulinImpactTests.swift */,
 				TE0100020000000F000A000F /* QuickTimeChipsTests.swift */,
@@ -502,6 +505,7 @@
 				TE0100010000000D000A0013 /* GlucoseStatusBarTests.swift in Sources */,
 				7D796C0FFEE00000000A0002 /* HoldToCommitProgressTests.swift in Sources */,
 				7D796C0FFEE00000000B0002 /* LoggedMealToastControllerTests.swift in Sources */,
+				7D796C0FFEE00000000C0002 /* LoggedEntryToastControllerTests.swift in Sources */,
 				1DA4B45CFC6E42E78B81BFD8 /* EntryGroupListOverlayTests.swift in Sources */,
 				014BC5267E0D43B3B9F2B6F9 /* InsulinImpactTests.swift in Sources */,
 				TE0100010000000F000A000F /* QuickTimeChipsTests.swift in Sources */,
