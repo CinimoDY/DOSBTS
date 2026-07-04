@@ -52,6 +52,12 @@ struct TightControlConfig {
     /// Default for tests and default parameters. A 6-min interval yields the 12-min gap
     /// floor (`max(2×6, 12)`), matching the production minimum.
     static let `default` = TightControlConfig.resolved(sensorIntervalMinutes: 6)
+
+    /// Formatted band range for display (e.g. "80–120" or "4.4–6.7"). Unit-aware single
+    /// source of truth — call sites must not inline this formatting.
+    func bandDescription(glucoseUnit: GlucoseUnit) -> String {
+        "\(bandLow.asGlucose(glucoseUnit: glucoseUnit))–\(bandHigh.asGlucose(glucoseUnit: glucoseUnit))"
+    }
 }
 
 // MARK: - TightControlStreakDetector
