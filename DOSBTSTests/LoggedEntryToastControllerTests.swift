@@ -107,7 +107,9 @@ struct LoggedEntryToastControllerTests {
     func insulinFractionalLabel() {
         let delivery = makeInsulin()
         let label = LoggedEntry.insulin(delivery).label(glucoseUnit: .mgdL)
-        #expect(label == "Logged: 4.5 U Meal Bolus")
+        // Derive via the same locale-aware formatter (renders "4,5 U" in de-DE):
+        // a literal pin here would only pass in dot-decimal locales.
+        #expect(label == "Logged: \(4.5.asInsulinUnits()) Meal Bolus")
     }
 
     @Test("blood glucose label uses mg/dL unit")
