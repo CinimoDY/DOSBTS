@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Insulin entry sheet matches the standard entry chrome (system nav bar with Cancel / title / Add) — DMNC-1312
+- Decorative "> " prefixes removed from meal section labels (QUICK, RECENT, OTHER) and recent meal rows — DMNC-1312
+
 ## [Build 127] — 2026-07-04
 
 ### Added
