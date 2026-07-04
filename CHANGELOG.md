@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Statistics card tight-control subtitle now states the band (80–120 mg/dL / 4.4–6.7 mmol/L); settings celebrations toggle footer clarifies what earns a streak — DMNC-1317
+
 ## [Build 128] — 2026-07-04
 
 ### Changed

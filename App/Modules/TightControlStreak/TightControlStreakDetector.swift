@@ -16,7 +16,8 @@ import Foundation
 
 // MARK: - TightControlConfig
 
-/// Fixed detection thresholds (KTD5). Not user-configurable.
+/// Fixed detection thresholds (KTD5). The 80–120 mg/dL band is fixed by design
+/// (DMNC-1317) — do NOT make bandLow/bandHigh user-configurable.
 struct TightControlConfig {
     /// Inclusive lower bound of the tight-control band (mg/dL, internal value).
     let bandLow: Int
@@ -39,8 +40,8 @@ struct TightControlConfig {
     static func resolved(sensorIntervalMinutes: Int) -> TightControlConfig {
         let gapSeconds = max(2 * sensorIntervalMinutes * 60, 12 * 60)
         return TightControlConfig(
-            bandLow: 80,
-            bandHigh: 120,
+            bandLow: 80,   // fixed by design — DMNC-1317
+            bandHigh: 120, // fixed by design — DMNC-1317
             requiredDuration: 2 * 60 * 60,
             gapThreshold: TimeInterval(gapSeconds),
             hysteresisMargin: 5,

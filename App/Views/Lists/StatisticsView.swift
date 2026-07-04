@@ -71,7 +71,7 @@ struct StatisticsView: View {
                 label: "TIGHT CONTROL",
                 value: "\(store.state.tightControlStreakCount)",
                 valueColor: store.state.tightControlStreakCount > 0 ? AmberTheme.cgaGreen : AmberTheme.amberDark,
-                help: "2h streaks in range"
+                help: "2h streaks at \(TightControlConfig.default.bandLow.asGlucose(glucoseUnit: store.state.glucoseUnit))–\(TightControlConfig.default.bandHigh.asGlucose(glucoseUnit: store.state.glucoseUnit))"
             )
         } header: {
             Label("Tight control", systemImage: "checkmark.seal")

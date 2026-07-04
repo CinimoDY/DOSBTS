@@ -189,7 +189,11 @@ struct AlarmSettingsView: View {
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: { Label("Alarm settings", systemImage: "alarm") },
-            footer: { Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold.\nMissed bolus nudge: reminds you to log a bolus if a carb-containing meal was recorded without one.\nCelebrations: a toast, sound, and lifetime count for tight-control streaks (2+ hours in range). Silent during night hours.") }
+            footer: {
+                let low = TightControlConfig.default.bandLow.asGlucose(glucoseUnit: store.state.glucoseUnit)
+                let high = TightControlConfig.default.bandHigh.asGlucose(glucoseUnit: store.state.glucoseUnit)
+                Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold.\nMissed bolus nudge: reminds you to log a bolus if a carb-containing meal was recorded without one.\nCelebrations: a toast, sound, and lifetime count for tight-control streaks (2 continuous hours with every reading in \(low)–\(high), no gaps). Silent during night hours.")
+            }
         )
     }
 
