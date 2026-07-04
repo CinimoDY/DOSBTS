@@ -182,11 +182,14 @@ struct AlarmSettingsView: View {
                 Toggle("Predictive low alarm", isOn: showPredictiveLowAlarm)
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
 
+                Toggle("Missed bolus nudge", isOn: showMissedBolusNudge)
+                    .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+
                 Toggle("Celebrations", isOn: celebrationsEnabled)
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: { Label("Alarm settings", systemImage: "alarm") },
-            footer: { Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold.\nCelebrations: a toast, sound, and lifetime count for tight-control streaks (2+ hours in range). Silent during night hours.") }
+            footer: { Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold.\nMissed bolus nudge: reminds you to log a bolus if a carb-containing meal was recorded without one.\nCelebrations: a toast, sound, and lifetime count for tight-control streaks (2+ hours in range). Silent during night hours.") }
         )
     }
 
@@ -263,6 +266,13 @@ struct AlarmSettingsView: View {
         Binding(
             get: { store.state.showPredictiveLowAlarm },
             set: { store.dispatch(.setShowPredictiveLowAlarm(enabled: $0)) }
+        )
+    }
+
+    private var showMissedBolusNudge: Binding<Bool> {
+        Binding(
+            get: { store.state.showMissedBolusNudge },
+            set: { store.dispatch(.setShowMissedBolusNudge(enabled: $0)) }
         )
     }
 

@@ -73,6 +73,7 @@ private enum Keys: String {
     case treatmentCycleSnoozeUntil = "libre-direct.settings.treatment-cycle-snooze-until"
     case hypoTreatmentWaitMinutes = "libre-direct.settings.hypo-treatment-wait-minutes"
     case showPredictiveLowAlarm = "libre-direct.settings.show-predictive-low-alarm"
+    case showMissedBolusNudge = "libre-direct.settings.show-missed-bolus-nudge"
     case showHeartRateOverlay = "libre-direct.settings.show-heart-rate-overlay"
     case markerLanePosition = "libre-direct.settings.marker-lane-position"
     case bolusInsulinPreset = "libre-direct.settings.bolus-insulin-preset"
@@ -994,6 +995,21 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Keys.showPredictiveLowAlarm.rawValue)
+        }
+    }
+
+    // MARK: Missed-Bolus Nudge (DMNC-1300)
+
+    var showMissedBolusNudge: Bool {
+        get {
+            if object(forKey: Keys.showMissedBolusNudge.rawValue) != nil {
+                return bool(forKey: Keys.showMissedBolusNudge.rawValue)
+            }
+
+            return true
+        }
+        set {
+            set(newValue, forKey: Keys.showMissedBolusNudge.rawValue)
         }
     }
 

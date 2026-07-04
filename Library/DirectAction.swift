@@ -163,6 +163,9 @@ enum DirectAction {
     case setShowPredictiveLowAlarm(enabled: Bool)
     case setPredictiveLowAlarmFired(fired: Bool)
 
+    // MARK: Missed-Bolus Nudge (DMNC-1300)
+    case setShowMissedBolusNudge(enabled: Bool)
+
     // MARK: Celebrations (DMNC-772)
     case setShowCelebrations(enabled: Bool)
     /// A qualifying tight-control streak fired. Increments the lifetime count and stores the
