@@ -176,6 +176,10 @@ enum RatioEstimator {
     static let maxRatioGramsPerUnit: Double = 50
     /// Minimum qualifying meals before the empirical estimate is surfaced.
     static let minQualifyingMeals: Int = 5
+    /// Maximum confounded (isClean == false) MealImpact rows the evidence loader surfaces
+    /// in the table. Capped so a run of confounded meals cannot crowd out clean teaching rows;
+    /// the most-recent N are selected by the loader.
+    static let maxConfoundedEvidenceRows: Int = 3
 
     // MARK: Estimation
 
