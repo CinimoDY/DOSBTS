@@ -31,6 +31,9 @@ private func makeBolus(type: InsulinType = .mealBolus, units: Double = 5, offset
 private func shouldNudge(
     meal: MealEntry,
     deliveries: [InsulinDelivery] = [],
+    // Production evaluates at grace expiry (~20 min after the meal), so paired
+    // boluses logged minutes after eating are in the past by evaluation time.
+    now: Date = baseMealTime.addingTimeInterval(20 * 60),
     treatmentCycleActive: Bool = false,
     isHypoTreatmentMeal: Bool = false,
     showMissedBolusNudge: Bool = true,
@@ -39,7 +42,7 @@ private func shouldNudge(
     MissedBolusDetector.shouldNudge(
         meal: meal,
         deliveries: deliveries,
-        now: baseMealTime,
+        now: now,
         treatmentCycleActive: treatmentCycleActive,
         isHypoTreatmentMeal: isHypoTreatmentMeal,
         showMissedBolusNudge: showMissedBolusNudge,
@@ -144,6 +147,19 @@ struct MissedBolusDetectorTests {
     func dedup() {
         let meal = makeMeal(carbs: 30)
         #expect(shouldNudge(meal: meal, nudgedMealIds: [meal.id]) == false)
+    }
+
+    // MARK: Future-dated deliveries
+
+    @Test("future-dated bolus does not count as coverage")
+    func futureDatedBolusExcluded() {
+        let meal = makeMeal(carbs: 30)
+        let bolus = makeBolus(offsetSeconds: 5 * 60)
+        // Evaluate BEFORE the bolus's start time: it hasn't been delivered yet,
+        // so the meal counts as uncovered (mirrors the IOB convention).
+        #expect(shouldNudge(meal: meal, deliveries: [bolus], now: baseMealTime) == true)
+        // At grace expiry the same bolus is in the past and covers the meal.
+        #expect(shouldNudge(meal: meal, deliveries: [bolus]) == false)
     }
 }
 

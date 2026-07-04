@@ -69,6 +69,12 @@ func missedBolusNudgeMiddleware() -> Middleware<DirectState, DirectAction> {
                 DirectLog.info("MissedBolus: scheduled nudge for '\(meal.mealDescription)' in 20 min")
             }
 
+        case .deleteMealEntry(mealEntry: let meal):
+            // A deleted meal must not nudge 20 minutes later for an entry that
+            // no longer exists (typo/wrong-entry deletions during the grace).
+            DirectNotifications.shared.removeNotification(identifier: "\(nudgeNotificationBase)-\(meal.id.uuidString)")
+            scheduledMealIds.remove(meal.id)
+
         case .addInsulinDelivery(insulinDeliveryValues: let deliveries):
             // Cancel any pending nudge whose meal falls within the pairing window of this delivery.
             for delivery in deliveries {

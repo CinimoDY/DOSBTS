@@ -45,6 +45,9 @@ enum MissedBolusDetector {
             .filter {
                 ($0.type == .mealBolus || $0.type == .snackBolus)
                     && abs($0.starts.timeIntervalSince(meal.timestamp)) <= pairingWindowSeconds
+                    // Future-dated deliveries don't cover a meal yet — mirrors the
+                    // IOB convention of excluding not-yet-delivered doses.
+                    && $0.starts <= now
             }
             .reduce(0.0) { $0 + $1.units }
 
