@@ -20,12 +20,14 @@ func foodCorrectionStoreMiddleware() -> Middleware<DirectState, DirectAction> {
             DataStore.shared.createPersonalFoodTable()
             DataStore.shared.prunePersonalFoodHistory()
 
-            return Publishers.Merge(
+            return Publishers.MergeMany([
                 Just(DirectAction.loadPersonalFoods)
                     .setFailureType(to: DirectError.self),
+                Just(DirectAction.loadScoredPersonalFoods)
+                    .setFailureType(to: DirectError.self),
                 Just(DirectAction.loadRecentFoodCorrections)
-                    .setFailureType(to: DirectError.self)
-            ).eraseToAnyPublisher()
+                    .setFailureType(to: DirectError.self),
+            ]).eraseToAnyPublisher()
 
         case .saveMealWithCorrections(meal: let meal, corrections: let corrections):
             // Atomic write: corrections + PersonalFood upserts in one transaction.
@@ -36,14 +38,16 @@ func foodCorrectionStoreMiddleware() -> Middleware<DirectState, DirectAction> {
 
             // Cross-middleware: .addMealEntry is also handled by mealEntryStoreMiddleware
             // (DB write) and favoriteFoodStoreMiddleware (recents update)
-            return Publishers.Merge3(
+            return Publishers.MergeMany([
                 Just(DirectAction.addMealEntry(mealEntryValues: [meal]))
                     .setFailureType(to: DirectError.self),
                 Just(DirectAction.loadPersonalFoods)
                     .setFailureType(to: DirectError.self),
+                Just(DirectAction.loadScoredPersonalFoods)
+                    .setFailureType(to: DirectError.self),
                 Just(DirectAction.loadRecentFoodCorrections)
-                    .setFailureType(to: DirectError.self)
-            ).eraseToAnyPublisher()
+                    .setFailureType(to: DirectError.self),
+            ]).eraseToAnyPublisher()
 
         case .loadPersonalFoods:
             guard state.appState == .active else {
@@ -52,6 +56,15 @@ func foodCorrectionStoreMiddleware() -> Middleware<DirectState, DirectAction> {
 
             return DataStore.shared.getPersonalFoods().map { personalFoods in
                 DirectAction.setPersonalFoods(personalFoods: personalFoods)
+            }.eraseToAnyPublisher()
+
+        case .loadScoredPersonalFoods:
+            guard state.appState == .active else {
+                return Empty().eraseToAnyPublisher()
+            }
+
+            return DataStore.shared.getScoredPersonalFoods().map { foods in
+                DirectAction.setScoredPersonalFoods(scoredPersonalFoods: foods)
             }.eraseToAnyPublisher()
 
         case .loadRecentFoodCorrections:
@@ -68,12 +81,14 @@ func foodCorrectionStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 return Empty().eraseToAnyPublisher()
             }
 
-            return Publishers.Merge(
+            return Publishers.MergeMany([
                 Just(DirectAction.loadPersonalFoods)
                     .setFailureType(to: DirectError.self),
+                Just(DirectAction.loadScoredPersonalFoods)
+                    .setFailureType(to: DirectError.self),
                 Just(DirectAction.loadRecentFoodCorrections)
-                    .setFailureType(to: DirectError.self)
-            ).eraseToAnyPublisher()
+                    .setFailureType(to: DirectError.self),
+            ]).eraseToAnyPublisher()
 
         default:
             break
@@ -249,6 +264,29 @@ private extension DataStore {
                 }
             } catch {
                 DirectLog.error("\(error)")
+            }
+        }
+    }
+
+    func getScoredPersonalFoods() -> Future<[PersonalFood], DirectError> {
+        return Future { promise in
+            if let dbQueue = self.dbQueue {
+                dbQueue.asyncRead { asyncDB in
+                    do {
+                        let db = try asyncDB.get()
+
+                        let result = try PersonalFood
+                            .filter(sql: "\(PersonalFood.Columns.avgDeltaMgDL.name) IS NOT NULL")
+                            .order(Column(PersonalFood.Columns.avgDeltaMgDL.name).desc)
+                            .fetchAll(db)
+
+                        promise(.success(result))
+                    } catch {
+                        promise(.failure(.withError(error)))
+                    }
+                }
+            } else {
+                promise(.success([]))
             }
         }
     }

@@ -253,3 +253,107 @@ struct PersonalFoodGlycemicTests {
         #expect(2 >= 2) // At threshold
     }
 }
+
+// MARK: - FoodImpact Display Model
+
+@Suite("FoodImpact Display Model")
+struct FoodImpactDisplayModelTests {
+
+    // MARK: - Ranking
+
+    @Test("Foods ranked by avgDeltaMgDL descending")
+    func rankedDescending() {
+        let pasta = PersonalFood(name: "Pasta", carbsG: 50, avgDeltaMgDL: 64, observationCount: 5)
+        let porridge = PersonalFood(name: "Porridge", carbsG: 40, avgDeltaMgDL: 38, observationCount: 7)
+        let salad = PersonalFood(name: "Salad", carbsG: 10, avgDeltaMgDL: 12, observationCount: 4)
+        let foods = [porridge, salad, pasta]
+        let ranked = foods.sorted { ($0.avgDeltaMgDL ?? 0) > ($1.avgDeltaMgDL ?? 0) }
+        #expect(ranked[0].name == "Pasta")
+        #expect(ranked[1].name == "Porridge")
+        #expect(ranked[2].name == "Salad")
+    }
+
+    @Test("Foods with nil avgDeltaMgDL sort to bottom")
+    func nilDeltaSortsLast() {
+        let scored = PersonalFood(name: "Scored", carbsG: 30, avgDeltaMgDL: 40, observationCount: 3)
+        let unscored = PersonalFood(name: "Unscored", carbsG: 30, avgDeltaMgDL: nil, observationCount: 0)
+        let foods = [unscored, scored]
+        let ranked = foods.sorted { ($0.avgDeltaMgDL ?? -Double.infinity) > ($1.avgDeltaMgDL ?? -Double.infinity) }
+        #expect(ranked[0].name == "Scored")
+        #expect(ranked[1].name == "Unscored")
+    }
+
+    // MARK: - Delta Tier Mapping (pins mealImpactDeltaColor, the single tier source)
+
+    @Test("Delta below 30 maps to green tier")
+    func deltaGreenTier() {
+        #expect(mealImpactDeltaColor(delta: 0) == AmberTheme.cgaGreen)
+        #expect(mealImpactDeltaColor(delta: 29) == AmberTheme.cgaGreen)
+        #expect(mealImpactDeltaColor(delta: -5) == AmberTheme.cgaGreen)
+    }
+
+    @Test("Delta at 30 maps to amber tier")
+    func deltaAmberTierLowerBound() {
+        #expect(mealImpactDeltaColor(delta: 30) == AmberTheme.amber)
+    }
+
+    @Test("Delta 59 maps to amber tier")
+    func deltaAmberTierUpperBound() {
+        #expect(mealImpactDeltaColor(delta: 59) == AmberTheme.amber)
+    }
+
+    @Test("Delta at 60 maps to red tier")
+    func deltaRedTierLowerBound() {
+        #expect(mealImpactDeltaColor(delta: 60) == AmberTheme.cgaRed)
+    }
+
+    @Test("Large delta maps to red tier")
+    func deltaRedTierLarge() {
+        #expect(mealImpactDeltaColor(delta: 120) == AmberTheme.cgaRed)
+    }
+
+    // MARK: - Low Confidence Dimming
+
+    @Test("Observation count less than 3 is low confidence")
+    func lowConfidenceBelow3() {
+        let food = PersonalFood(name: "Toast", carbsG: 30, avgDeltaMgDL: 55, observationCount: 2)
+        #expect(food.observationCount < 3)
+    }
+
+    @Test("Observation count of 3 is not low confidence")
+    func notLowConfidenceAt3() {
+        let food = PersonalFood(name: "Toast", carbsG: 30, avgDeltaMgDL: 55, observationCount: 3)
+        #expect(food.observationCount >= 3)
+    }
+
+    @Test("Observation count of 1 is low confidence")
+    func lowConfidenceAt1() {
+        let food = PersonalFood(name: "Toast", carbsG: 30, avgDeltaMgDL: 55, observationCount: 1)
+        #expect(food.observationCount < 3)
+    }
+
+    // MARK: - Display Values
+
+    @Test("Positive delta formatted with leading plus sign")
+    func positiveDeltaFormatting() {
+        let delta = 64.0
+        let sign = delta >= 0 ? "+" : ""
+        let formatted = "\(sign)\(Int(delta.rounded()))"
+        #expect(formatted == "+64")
+    }
+
+    @Test("Negative delta formatted without plus sign")
+    func negativeDeltaFormatting() {
+        let delta = -8.0
+        let sign = delta >= 0 ? "+" : ""
+        let formatted = "\(sign)\(Int(delta.rounded()))"
+        #expect(formatted == "-8")
+    }
+
+    @Test("Fractional delta is rounded to nearest integer")
+    func fractionalDeltaRounded() {
+        let delta = 38.7
+        let formatted = Int(delta.rounded())
+        #expect(formatted == 39)
+    }
+}

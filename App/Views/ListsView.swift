@@ -26,6 +26,15 @@ struct ListsView: View {
 
                 MealEntryListView()
 
+                Section {
+                    NavigationLink {
+                        FoodImpactView()
+                    } label: {
+                        Label("Food Impact", systemImage: "chart.bar.doc.horizontal")
+                            .font(DOSTypography.body)
+                    }
+                }
+
                 if DirectConfig.showInsulinInput, store.state.showInsulinInput {
                     InsulinDeliveryListView()
                 }

@@ -7,6 +7,19 @@
 //
 
 import Foundation
+import SwiftUI
+
+// MARK: - Delta Tier Color
+
+/// Color-code a glucose delta using the MealImpact tier bands.
+/// < 30 mg/dL → green (minimal spike)
+/// 30–59 mg/dL → amber (moderate spike)
+/// ≥ 60 mg/dL → red (significant spike)
+func mealImpactDeltaColor(delta: Int) -> Color {
+    if delta >= 60 { return AmberTheme.cgaRed }
+    if delta >= 30 { return AmberTheme.amber }
+    return AmberTheme.cgaGreen
+}
 
 // MARK: - Delta
 
