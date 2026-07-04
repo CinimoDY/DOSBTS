@@ -114,6 +114,9 @@ protocol DirectState {
     var showPredictiveLowAlarm: Bool { get set }
     var predictiveLowAlarmFired: Bool { get set }
 
+    // MARK: Missed-Bolus Nudge (DMNC-1300)
+    var showMissedBolusNudge: Bool { get set }
+
     // MARK: Heart Rate Overlay (DMNC-848)
     var showHeartRateOverlay: Bool { get set }
 

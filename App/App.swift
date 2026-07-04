@@ -223,6 +223,8 @@ private func createSimulatorAppStore() -> DirectStore {
         treatmentEventStoreMiddleware(),
         treatmentCycleMiddleware(),
         tightControlStreakMiddleware(),
+        // Cross-middleware: .addMealEntry also handled above by mealEntryStoreMiddleware + favoriteFoodStoreMiddleware
+        missedBolusNudgeMiddleware(),
         glucoseStatisticsMiddleware(),
         expiringNotificationMiddleware(),
         glucoseNotificationMiddleware(),
@@ -274,6 +276,8 @@ private func createAppStore() -> DirectStore {
         treatmentEventStoreMiddleware(),
         treatmentCycleMiddleware(),
         tightControlStreakMiddleware(),
+        // Cross-middleware: .addMealEntry also handled above by mealEntryStoreMiddleware + favoriteFoodStoreMiddleware
+        missedBolusNudgeMiddleware(),
         glucoseStatisticsMiddleware(),
         expiringNotificationMiddleware(),
         glucoseNotificationMiddleware(),

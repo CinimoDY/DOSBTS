@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Missed-bolus nudge: a single notification fires ~20 min after logging a carb-containing meal (≥15 g) if no meal or snack bolus has been recorded within ±15 min. Log-completeness framing — never dose advice. Suppressed during hypo treatment cycles and for meals from hypo-treatment favourites. Toggle in Settings → Alarms & Alerts — DMNC-1300
+
 ## [Build 124] — 2026-07-04
 
 ### Changed

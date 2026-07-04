@@ -59,6 +59,7 @@
 		TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */; };
 		TE0100010000002400A00024 /* StyleGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002400A00024 /* StyleGuardTests.swift */; };
 		TE0100010000002500A00025 /* RatioEstimatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002500A00025 /* RatioEstimatorTests.swift */; };
+		TE0100010000002600A00026 /* MissedBolusDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002600A00026 /* MissedBolusDetectorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -146,6 +147,7 @@
 		TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HypoFilteredEntryTests.swift; sourceTree = "<group>"; };
 		TE0100020000002400A00024 /* StyleGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleGuardTests.swift; sourceTree = "<group>"; };
 		TE0100020000002500A00025 /* RatioEstimatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatioEstimatorTests.swift; sourceTree = "<group>"; };
+		TE0100020000002600A00026 /* MissedBolusDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissedBolusDetectorTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -310,6 +312,7 @@
 				TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */,
 				TE0100020000002400A00024 /* StyleGuardTests.swift */,
 				TE0100020000002500A00025 /* RatioEstimatorTests.swift */,
+				TE0100020000002600A00026 /* MissedBolusDetectorTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -526,6 +529,7 @@
 				TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */,
 				TE0100010000002400A00024 /* StyleGuardTests.swift in Sources */,
 				TE0100010000002500A00025 /* RatioEstimatorTests.swift in Sources */,
+				TE0100010000002600A00026 /* MissedBolusDetectorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
