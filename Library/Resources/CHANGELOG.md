@@ -7,6 +7,11 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 126] — 2026-07-04
+
+### Added
+- Ratio Lab (Settings → Insulin → Ratios): estimates your insulin-to-carb ratio and correction factor from your own logged meals and insulin, teaches the "clean experiment" method with a guidance checklist, and shows an evidence table where excluded meals explain why. Reference only — no dosing advice. — DMNC-1299, PR #92
+
 ## [Build 125] — 2026-07-04
 
 ### Added
