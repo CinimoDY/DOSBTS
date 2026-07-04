@@ -7,6 +7,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 127] — 2026-07-04
+
 ### Added
 - All four log paths (meal favorites/recents, manual meal, insulin, blood glucose) now show a confirmation toast with UNDO and fire a success haptic — DMNC-1294, PR #93
 
