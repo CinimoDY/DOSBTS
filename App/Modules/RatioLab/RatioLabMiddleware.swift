@@ -57,11 +57,18 @@ func ratioLabMiddleware() -> Middleware<DirectState, DirectAction> {
 extension DataStore {
     /// Fetches all evidence needed by `RatioEstimator` in ONE asyncRead.
     ///
-    /// - 14-day InsulinDelivery window for TDD + bolus pairing (type-filtered in Swift
-    ///   because `InsulinType` is Codable, not SQL-filterable).
+    /// - 30-day InsulinDelivery window for TDD + bolus pairing (type-filtered in Swift
+    ///   because `InsulinType` is Codable, not SQL-filterable). The window matches the
+    ///   meal-impact cutoff so bolus pairing works for confounded meals from days 15–30;
+    ///   `RatioEstimator.tddDays` re-filters to the last 14 complete days internally.
     /// - 30-day clean MealImpact window joined in Swift to MealEntry.
-    /// - Per-candidate SensorGlucose window [t, t+135 min] for endGlucose + minInWindow.
-    /// - Paired meal/snack boluses within ±15 min (from the 14-day delivery set).
+    /// - Up to `RatioEstimator.maxConfoundedEvidenceRows` of the most-recent non-clean
+    ///   MealImpacts from the same window. The estimator enforces `isClean == false →
+    ///   .confounded` exclusion at criterion 1; these appear in the evidence table as
+    ///   "CONFOUNDED" teaching rows. SensorGlucose reads are skipped for confounded
+    ///   impacts since the estimator discards them before inspecting glucose values.
+    /// - Per-clean-candidate SensorGlucose window [t, t+135 min] for endGlucose + minInWindow.
+    /// - Paired meal/snack boluses within ±15 min (from the 30-day delivery set).
     ///
     /// NO writes inside this method — GRDB deadlock rule applies.
     func getRatioEvidence() -> Future<RatioEvidence, DirectError> {
@@ -78,60 +85,80 @@ extension DataStore {
                     let calendar = Calendar.current
                     let startOfToday = calendar.startOfDay(for: now)
 
-                    guard let tddWindowStart = calendar.date(
+                    // Guard calendar arithmetic before touching the DB.
+                    guard calendar.date(
                         byAdding: .day,
                         value: -RatioEstimator.tddLookbackDays,
                         to: startOfToday
-                    ) else {
+                    ) != nil else {
                         promise(.success(RatioEvidence(tddDays: [], mealObservations: [])))
                         return
                     }
 
-                    // 1. InsulinDelivery — from `tddWindowStart` through now (today INCLUDED).
-                    //    `RatioEstimator.tddDays` re-filters to `< startOfToday` internally, so
-                    //    TDD still counts only complete days; but bolus pairing needs today's
-                    //    deliveries too — excluding them here mislabels a meal logged today as
-                    //    `.noBolus` (paired bolus resolves to 0) and drops it from the sample.
-                    //    Type-filter is deferred to Swift because InsulinType is Codable (not SQL-native).
+                    // Use the wider 30-day meal-impact window for the delivery fetch.
+                    // This ensures `pairedBolusUnits` can pair boluses for confounded meals
+                    // from days 15–30 (the previous 14-day window silently dropped them).
+                    // `tddDays()` re-filters to the last 14 complete days internally, so
+                    // TDD is unaffected. Today's deliveries are included — excluding them
+                    // would mislabel a meal logged today as `.noBolus`.
+                    // Type-filter is deferred to Swift because InsulinType is Codable (not SQL-native).
+                    let mealImpactCutoff = now.addingTimeInterval(-30 * 24 * 3600)
                     let allDeliveries = try InsulinDelivery
-                        .filter(Column(InsulinDelivery.Columns.starts.name) >= tddWindowStart)
+                        .filter(Column(InsulinDelivery.Columns.starts.name) >= mealImpactCutoff)
                         .order(Column(InsulinDelivery.Columns.starts.name))
                         .fetchAll(db)
 
                     let tddDays = RatioEstimator.tddDays(from: allDeliveries, asOf: now, calendar: calendar)
 
-                    // 2. Clean MealImpacts — 30-day backfill bound (matches MealImpactStore).
-                    let mealImpactCutoff = now.addingTimeInterval(-30 * 24 * 3600)
+                    // 2a. Clean MealImpacts — 30-day backfill bound (matches MealImpactStore).
                     let cleanImpacts = try MealImpact
                         .filter(Column(MealImpact.Columns.isClean.name) == true)
                         .filter(Column(MealImpact.Columns.timestamp.name) >= mealImpactCutoff)
                         .fetchAll(db)
 
-                    guard !cleanImpacts.isEmpty else {
+                    // 2b. Confounded MealImpacts — same window, capped so they don't crowd
+                    //     out clean teaching rows. Most-recent N only.
+                    let confoundedImpacts = try MealImpact
+                        .filter(Column(MealImpact.Columns.isClean.name) == false)
+                        .filter(Column(MealImpact.Columns.timestamp.name) >= mealImpactCutoff)
+                        .order(Column(MealImpact.Columns.timestamp.name).desc)
+                        .limit(RatioEstimator.maxConfoundedEvidenceRows)
+                        .fetchAll(db)
+
+                    let allImpacts = cleanImpacts + confoundedImpacts
+                    guard !allImpacts.isEmpty else {
                         promise(.success(RatioEvidence(tddDays: tddDays, mealObservations: [])))
                         return
                     }
 
-                    // 3. Join to MealEntry in Swift by mealEntryId.
-                    let idStrings = cleanImpacts.map { $0.mealEntryId.uuidString.uppercased() }
+                    // 3. Join all impacts to MealEntry in Swift by mealEntryId.
+                    let idStrings = allImpacts.map { $0.mealEntryId.uuidString.uppercased() }
                     let mealEntries = try MealEntry
                         .filter(idStrings.contains(Column(MealEntry.Columns.id.name)))
                         .fetchAll(db)
                     let mealById = Dictionary(uniqueKeysWithValues: mealEntries.map { ($0.id, $0) })
 
-                    // 4. Per candidate: SensorGlucose window + bolus pairing.
+                    // 4. Per candidate: SensorGlucose window (clean only) + bolus pairing.
+                    //    Confounded impacts skip the glucose reads — the estimator rejects them
+                    //    at criterion 1 (`!isClean → .confounded`) before inspecting endGlucose
+                    //    or minGlucoseInWindow, so the DB reads would be dead work.
                     let upperWindowSeconds = TimeInterval(RatioEstimator.endGlucoseWindowUpperMinutes * 60)
-                    let mealObservations: [MealObservation] = try cleanImpacts.compactMap { impact in
+                    let mealObservations: [MealObservation] = try allImpacts.compactMap { impact in
                         guard let meal = mealById[impact.mealEntryId] else { return nil }
 
                         let t = meal.timestamp
-                        let windowEnd = t.addingTimeInterval(upperWindowSeconds)
 
-                        let readings = try SensorGlucose
-                            .filter(Column(SensorGlucose.Columns.timestamp.name) >= t)
-                            .filter(Column(SensorGlucose.Columns.timestamp.name) <= windowEnd)
-                            .order(Column(SensorGlucose.Columns.timestamp.name))
-                            .fetchAll(db)
+                        let readings: [SensorGlucose]
+                        if impact.isClean {
+                            let windowEnd = t.addingTimeInterval(upperWindowSeconds)
+                            readings = try SensorGlucose
+                                .filter(Column(SensorGlucose.Columns.timestamp.name) >= t)
+                                .filter(Column(SensorGlucose.Columns.timestamp.name) <= windowEnd)
+                                .order(Column(SensorGlucose.Columns.timestamp.name))
+                                .fetchAll(db)
+                        } else {
+                            readings = []
+                        }
 
                         let endGlucose = RatioEstimator.endGlucose(mealTimestamp: t, readings: readings)
                         let minInWindow = RatioEstimator.minGlucoseInWindow(mealTimestamp: t, readings: readings)
