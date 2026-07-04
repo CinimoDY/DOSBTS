@@ -8,7 +8,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Changed
-- Ratio Lab evidence table now surfaces confounded meals (correction bolus nearby / overlapping exercise / stacked meal) as dimmed "CONFOUNDED" teaching rows, explaining why they didn't qualify — DMNC-1307
+- Ratio Lab evidence table now surfaces confounded meals (correction bolus nearby / overlapping exercise / stacked meal) as dimmed "CONFOUNDED" teaching rows, explaining why they didn't qualify — DMNC-1307, PR #96
 
 ## [Build 128] — 2026-07-04
 
