@@ -7,9 +7,11 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 125] — 2026-07-04
+
 ### Added
-- Food Impact screen in the Log tab ranks all scored foods by average post-meal glucose delta (color-coded green/amber/red), with low-confidence dimming for n<3 observations and an empty state for fresh installs — DMNC-1301
-- Missed-bolus nudge: a single notification fires ~20 min after logging a carb-containing meal (≥15 g) if no meal or snack bolus has been recorded within ±15 min. Log-completeness framing — never dose advice. Suppressed during hypo treatment cycles and for meals from hypo-treatment favourites. Toggle in Settings → Alarms & Alerts — DMNC-1300
+- Food Impact screen in the Log tab ranks all scored foods by average post-meal glucose delta (color-coded green/amber/red), with low-confidence dimming for n<3 observations and an empty state for fresh installs — DMNC-1301, PR #90
+- Missed-bolus nudge: a single notification fires ~20 min after logging a carb-containing meal (≥15 g) if no meal or snack bolus has been recorded within ±15 min. Log-completeness framing — never dose advice. Suppressed during hypo treatment cycles and for meals from hypo-treatment favourites. Toggle in Settings → Alarms & Alerts — DMNC-1300, PR #91
 
 ## [Build 124] — 2026-07-04
 
