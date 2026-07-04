@@ -32,9 +32,7 @@ struct AddInsulinView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            navBar
-
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: DOSSpacing.lg) {
                     typeRow
@@ -53,57 +51,38 @@ struct AddInsulinView: View {
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .background(AmberTheme.dosBlack.ignoresSafeArea())
+            .dosNavigationTitle("Insulin")
+            .navigationBarBackButtonHidden(true)
+            // Prevent swipe-dismiss so half-entered data isn't silently discarded.
+            .interactiveDismissDisabled()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel", role: .cancel) { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Add") { save() }
+                        .disabled((units ?? 0) <= 0)
+                        .foregroundStyle((units ?? 0) > 0 ? AmberTheme.amber : AmberTheme.borderSubtle)
+                }
+            }
+            // Auto-set ENDS to 24 hours after STARTS for basal entries — once-daily
+            // injections (Tresiba/Lantus/Levemir) are the dominant case and saving
+            // the manual date+time picker click on every entry is a meaningful win.
+            // Triggers when the user picks .basal as the type AND when they adjust
+            // the starts time while basal is selected.
+            .onChange(of: insulinType) { _, newType in
+                if newType == .basal {
+                    ends = Calendar.current.date(byAdding: .hour, value: 24, to: starts) ?? starts.addingTimeInterval(24 * 60 * 60)
+                }
+            }
+            .onChange(of: starts) { _, newStarts in
+                if insulinType == .basal {
+                    ends = Calendar.current.date(byAdding: .hour, value: 24, to: newStarts) ?? newStarts.addingTimeInterval(24 * 60 * 60)
+                }
+            }
         }
-        .background(AmberTheme.dosBlack.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        // Prevent swipe-dismiss so half-entered data isn't silently discarded.
-        .interactiveDismissDisabled()
-        // Auto-set ENDS to 24 hours after STARTS for basal entries — once-daily
-        // injections (Tresiba/Lantus/Levemir) are the dominant case and saving
-        // the manual date+time picker click on every entry is a meaningful win.
-        // Triggers when the user picks .basal as the type AND when they adjust
-        // the starts time while basal is selected.
-        .onChange(of: insulinType) { _, newType in
-            if newType == .basal {
-                ends = Calendar.current.date(byAdding: .hour, value: 24, to: starts) ?? starts.addingTimeInterval(24 * 60 * 60)
-            }
-        }
-        .onChange(of: starts) { _, newStarts in
-            if insulinType == .basal {
-                ends = Calendar.current.date(byAdding: .hour, value: 24, to: newStarts) ?? newStarts.addingTimeInterval(24 * 60 * 60)
-            }
-        }
-    }
-
-    // MARK: - Nav bar
-
-    private var navBar: some View {
-        HStack {
-            Button("Cancel", role: .cancel) { dismiss() }
-                .font(DOSTypography.mono(size: 14))
-                .foregroundStyle(AmberTheme.amberDark)
-
-            Spacer()
-
-            Text("ADD INSULIN")
-                .font(DOSTypography.mono(size: 13, weight: .semibold))
-                .tracking(0.6)
-                .foregroundStyle(AmberTheme.amberLight)
-
-            Spacer()
-
-            Button("Add") { save() }
-                .font(DOSTypography.mono(size: 14, weight: .semibold))
-                .foregroundStyle((units ?? 0) > 0 ? AmberTheme.amber : AmberTheme.borderSubtle)
-                .disabled((units ?? 0) <= 0)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(AmberTheme.borderFaint)
-                .frame(height: 1)
-        }
     }
 
     // MARK: - Form rows

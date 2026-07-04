@@ -48,7 +48,7 @@ struct MealItemDisplayModel: Equatable {
 // MARK: - MealItemRow
 
 /// Documented variants:
-/// - `.recent` — compact single line (`> name … carbs`). Rides inside
+/// - `.recent` — compact single line (`name … carbs`). Rides inside
 ///   `HoldToCommitProgress`, so it attaches NO affordances of its own:
 ///   a context menu can't coexist with the hold recognizer (DMNC-796
 ///   KTD-3), and swipe actions must hang off the hold wrapper at the
@@ -124,13 +124,6 @@ struct MealItemRow: View {
         switch variant {
         case .recent:
             HStack {
-                // Deliberately dim: the prompt glyph is a decorative DOS
-                // affordance, not informational text — it stays amberDark
-                // even though section headers migrated to amber (R5 audit).
-                Text("> ")
-                    .font(DOSTypography.bodySmall)
-                    .foregroundStyle(AmberTheme.amberDark)
-
                 Text(model.name)
                     .font(DOSTypography.bodySmall)
                     .foregroundStyle(AmberTheme.amber)
