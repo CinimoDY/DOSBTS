@@ -40,6 +40,7 @@ struct AddCalibrationView: View {
             }
             .dosNavigationTitle("Calibration")
             .navigationBarBackButtonHidden(true)
+            .interactiveDismissDisabled()
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {

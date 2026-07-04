@@ -13,6 +13,7 @@ struct SensorGlucoseListView: View {
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var loggedEntryToast: LoggedEntryToastController
 
     var body: some View {
         Group {
@@ -55,16 +56,14 @@ struct SensorGlucoseListView: View {
                                     }
                             }
                         }
-                    }.onDelete { offsets in
-                        DirectLog.info("onDelete: \(offsets)")
-
-                        let deletables = offsets.map { i in
-                            (index: i, glucose: sensorGlucoseValues[i])
-                        }
-
-                        deletables.forEach { delete in
-                            sensorGlucoseValues.remove(at: delete.index)
-                            store.dispatch(.deleteSensorGlucose(glucose: delete.glucose))
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                sensorGlucoseValues.removeAll { $0.id == sensorGlucose.id }
+                                store.dispatch(.deleteSensorGlucose(glucose: sensorGlucose))
+                                loggedEntryToast.show(.deletedSensorGlucose(sensorGlucose))
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
                 }

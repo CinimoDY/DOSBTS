@@ -14,6 +14,7 @@ struct BloodGlucoseListView: View {
 
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
+    @EnvironmentObject var loggedEntryToast: LoggedEntryToastController
 
     var body: some View {
         Group {
@@ -48,16 +49,14 @@ struct BloodGlucoseListView: View {
                                 }
                         }
                         .dosAddedHighlight(addedHighlighter.highlightedID == bloodGlucose.id)
-                    }.onDelete { offsets in
-                        DirectLog.info("onDelete: \(offsets)")
-
-                        let deletables = offsets.map { i in
-                            (index: i, glucose: bloodGlucoseValues[i])
-                        }
-
-                        deletables.forEach { delete in
-                            bloodGlucoseValues.remove(at: delete.index)
-                            store.dispatch(.deleteBloodGlucose(glucose: delete.glucose))
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                bloodGlucoseValues.removeAll { $0.id == bloodGlucose.id }
+                                store.dispatch(.deleteBloodGlucose(glucose: bloodGlucose))
+                                loggedEntryToast.show(.deletedBloodGlucose(bloodGlucose))
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
                 }

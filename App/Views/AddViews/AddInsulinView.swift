@@ -56,6 +56,8 @@ struct AddInsulinView: View {
         }
         .background(AmberTheme.dosBlack.ignoresSafeArea())
         .preferredColorScheme(.dark)
+        // Prevent swipe-dismiss so half-entered data isn't silently discarded.
+        .interactiveDismissDisabled()
         // Auto-set ENDS to 24 hours after STARTS for basal entries — once-daily
         // injections (Tresiba/Lantus/Levemir) are the dominant case and saving
         // the manual date+time picker click on every entry is a meaningful win.

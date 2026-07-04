@@ -88,12 +88,20 @@ struct ContentView: View {
                         label: entry.label(glucoseUnit: store.state.glucoseUnit),
                         onUndo: {
                             switch entry {
+                            // Log undo — remove the just-logged entry
                             case .meal(let m):
                                 store.dispatch(.deleteMealEntry(mealEntry: m))
                             case .insulin(let i):
                                 store.dispatch(.deleteInsulinDelivery(insulinDelivery: i))
                             case .bloodGlucose(let g):
                                 store.dispatch(.deleteBloodGlucose(glucose: g))
+                            // Swipe-delete undo — restore the deleted entry
+                            case .deletedBloodGlucose(let g):
+                                store.dispatch(.addBloodGlucose(glucoseValues: [g]))
+                            case .deletedInsulin(let i):
+                                store.dispatch(.addInsulinDelivery(insulinDeliveryValues: [i]))
+                            case .deletedSensorGlucose(let g):
+                                store.dispatch(.addSensorGlucose(glucoseValues: [g]))
                             }
                             loggedEntryToast.dismiss()
                         }
@@ -106,6 +114,7 @@ struct ContentView: View {
             .animation(AnimationTokens.easeStandard, value: loggedEntryToast.active)
             .environmentObject(sheets)
             .environmentObject(addedHighlighter)
+            .environmentObject(loggedEntryToast)
             .sheet(item: $sheets.activeSheet, onDismiss: {
                 sheets.sheetDidDismiss()
                 loggedEntryToast.showStagedIfAny()
