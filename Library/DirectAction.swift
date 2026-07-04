@@ -21,6 +21,9 @@ enum DirectAction {
     case clearSensorGlucoseValues
     case connectConnection
     case deleteBloodGlucose(glucose: BloodGlucose)
+    case restoreBloodGlucose(glucose: BloodGlucose)
+    case restoreInsulinDelivery(insulinDelivery: InsulinDelivery)
+    case restoreSensorGlucose(glucose: SensorGlucose)
     case addExerciseEntry(exerciseEntryValues: [ExerciseEntry])
     case addFavoriteFoodValues(favoriteFoodValues: [FavoriteFood])
     case addMealEntry(mealEntryValues: [MealEntry])

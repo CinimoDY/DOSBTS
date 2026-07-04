@@ -30,6 +30,13 @@ func bloodGlucoseStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 .setFailureType(to: DirectError.self)
                 .eraseToAnyPublisher()
 
+        case .restoreBloodGlucose(glucose: let glucose):
+            DataStore.shared.insertBloodGlucose([glucose])
+
+            return Just(DirectAction.loadBloodGlucoseValues)
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
+
         case .deleteBloodGlucose(glucose: let glucose):
             DataStore.shared.deleteBloodGlucose(glucose)
 

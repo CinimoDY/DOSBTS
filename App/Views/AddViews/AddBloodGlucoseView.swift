@@ -47,6 +47,7 @@ struct AddBloodGlucoseView: View {
             }
             .dosNavigationTitle("Blood glucose")
             .navigationBarBackButtonHidden(true)
+            .interactiveDismissDisabled()
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add") {

@@ -193,6 +193,21 @@ live in one place.
   from whichever callbacks the caller supplies.
 - The digest timeline stays flat text (out of scope this wave).
 
+### Interaction Patterns
+
+#### Delete-confirmation policy (DMNC-1295)
+
+Two paths, two confirmation strategies:
+
+- **Swipe-delete** (list rows) — immediate, no dialog. Pairs with an undo-capable `LoggedEntryToast` that appears for 3 seconds. The toast label starts with "Deleted: …"; tapping UNDO re-adds the entry. Use `loggedEntryToast.show(.deletedXxx(entry))` from the row's `.swipeActions` handler.
+- **Modal Delete button** (inside an add/edit sheet, e.g. `AddMealView`, `CombinedEntryEditView`) — confirmed via `confirmationDialog`. No undo; the dialog is the safeguard.
+
+Never add a `confirmationDialog` to a swipe-delete action — the undo toast is the recovery path. Never omit the dialog on a modal Delete button — there is no undo there.
+
+#### Swipe-dismiss protection
+
+Every entry sheet that can hold half-typed data uses `.interactiveDismissDisabled()` on its root view. Current coverage: `AddMealView`, `AddInsulinView`, `AddBloodGlucoseView`, `AddCalibrationView`. Cancel and Add/Save buttons are the only exit paths.
+
 ## Component Standard (self-certify checklist)
 
 Every new shared component PR certifies against this list:

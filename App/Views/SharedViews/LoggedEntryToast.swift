@@ -17,33 +17,29 @@ import SwiftUI
 // MARK: - LoggedEntry
 
 enum LoggedEntry: Equatable {
+    // Log actions — undo = delete the just-logged entry
     case meal(MealEntry)
     case insulin(InsulinDelivery)
     case bloodGlucose(BloodGlucose)
-
-    var entryID: UUID {
-        switch self {
-        case .meal(let m): return m.id
-        case .insulin(let i): return i.id
-        case .bloodGlucose(let g): return g.id
-        }
-    }
+    // Swipe-delete actions — undo = restore the deleted entry
+    case deletedBloodGlucose(BloodGlucose)
+    case deletedInsulin(InsulinDelivery)
+    case deletedSensorGlucose(SensorGlucose)
 
     func label(glucoseUnit: GlucoseUnit) -> String {
         switch self {
         case .meal(let m):
             return "Logged: \(m.mealDescription)"
         case .insulin(let i):
-            let unitStr = i.units.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(i.units))U" : String(format: "%.1fU", i.units)
-            return "Logged: \(unitStr) \(i.type.description)"
+            return "Logged: \(i.units.asInsulinUnits()) \(i.type.localizedDescription)"
         case .bloodGlucose(let g):
-            if glucoseUnit == .mmolL {
-                let mmol = Double(g.glucoseValue) * GlucoseUnit.exchangeRate
-                return String(format: "Logged: BG %.1f mmol/L", mmol)
-            } else {
-                return "Logged: BG \(g.glucoseValue) mg/dL"
-            }
+            return "Logged: BG \(g.glucoseValue.asGlucose(glucoseUnit: glucoseUnit, withUnit: true))"
+        case .deletedBloodGlucose(let g):
+            return "Deleted: BG \(g.glucoseValue.asGlucose(glucoseUnit: glucoseUnit, withUnit: true))"
+        case .deletedInsulin(let i):
+            return "Deleted: \(i.units.asInsulinUnits()) \(i.type.localizedDescription)"
+        case .deletedSensorGlucose:
+            return "Deleted CGM reading"
         }
     }
 }

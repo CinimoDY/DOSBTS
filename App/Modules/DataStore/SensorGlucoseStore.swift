@@ -68,6 +68,13 @@ func sensorGlucoseStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 .setFailureType(to: DirectError.self)
                 .eraseToAnyPublisher()
 
+        case .restoreSensorGlucose(glucose: let glucose):
+            DataStore.shared.insertSensorGlucose([glucose])
+
+            return Just(DirectAction.loadSensorGlucoseValues)
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
+
         case .deleteSensorGlucose(glucose: let glucose):
             DataStore.shared.deleteSensorGlucose(glucose)
 

@@ -13,7 +13,9 @@ struct InsulinDeliveryListView: View {
     // MARK: Internal
 
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var sheets: SheetCoordinator
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
+    @EnvironmentObject var loggedEntryToast: LoggedEntryToastController
 
     var body: some View {
         Group {
@@ -34,14 +36,14 @@ struct InsulinDeliveryListView: View {
                 if insulinDeliveryValues.isEmpty {
                     Text(getTeaser(insulinDeliveryValues.count))
                 } else {
-                    ForEach(insulinDeliveryValues) { insulinDeliveryValue in
+                    ForEach(insulinDeliveryValues) { insulinDelivery in
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(verbatim: insulinDeliveryValue.starts.toLocalDateTime())
+                                Text(verbatim: insulinDelivery.starts.toLocalDateTime())
                                     .monospacedDigit()
 
-                                if insulinDeliveryValue.type == .basal {
-                                    Text(verbatim: insulinDeliveryValue.ends.toLocalDateTime())
+                                if insulinDelivery.type == .basal {
+                                    Text(verbatim: insulinDelivery.ends.toLocalDateTime())
                                         .monospacedDigit()
                                 }
                             }
@@ -49,25 +51,27 @@ struct InsulinDeliveryListView: View {
                             Spacer()
 
                             VStack(alignment: .trailing) {
-                                Text(verbatim: insulinDeliveryValue.units.asInsulinUnits())
+                                Text(verbatim: insulinDelivery.units.asInsulinUnits())
                                     .monospacedDigit()
 
-                                Text(verbatim: insulinDeliveryValue.type.localizedDescription)
+                                Text(verbatim: insulinDelivery.type.localizedDescription)
                                     .opacity(0.5)
                                     .font(DOSTypography.caption)
                             }
                         }
-                        .dosAddedHighlight(addedHighlighter.highlightedID == insulinDeliveryValue.id)
-                    }.onDelete { offsets in
-                        DirectLog.info("onDelete: \(offsets)")
-
-                        let deletables = offsets.map { i in
-                            (index: i, insulinDelivery: insulinDeliveryValues[i])
+                        .dosAddedHighlight(addedHighlighter.highlightedID == insulinDelivery.id)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            sheets.present(.combinedEntryEdit(markerGroup(for: insulinDelivery)))
                         }
-
-                        deletables.forEach { delete in
-                            insulinDeliveryValues.remove(at: delete.index)
-                            store.dispatch(.deleteInsulinDelivery(insulinDelivery: delete.insulinDelivery))
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                insulinDeliveryValues.removeAll { $0.id == insulinDelivery.id }
+                                store.dispatch(.deleteInsulinDelivery(insulinDelivery: insulinDelivery))
+                                loggedEntryToast.show(.deletedInsulin(insulinDelivery))
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
                 }
@@ -90,5 +94,24 @@ struct InsulinDeliveryListView: View {
 
     private func getTeaser(_ count: Int) -> String {
         return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
+    }
+
+    /// Wraps an insulin delivery in a single-marker ConsolidatedMarkerGroup
+    /// so it can be opened in CombinedEntryEditView.
+    private func markerGroup(for delivery: InsulinDelivery) -> ConsolidatedMarkerGroup {
+        let id = "insulin-\(delivery.id.uuidString)"
+        let marker = EventMarker(
+            id: id,
+            time: delivery.starts,
+            type: delivery.type.markerType,
+            label: delivery.units.asInsulin(),
+            rawValue: delivery.units,
+            sourceID: delivery.id
+        )
+        return ConsolidatedMarkerGroup(
+            id: id,
+            time: delivery.starts,
+            markers: [marker]
+        )
     }
 }

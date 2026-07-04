@@ -100,14 +100,16 @@ struct LoggedEntryToastControllerTests {
     func insulinIntegerLabel() {
         let delivery = InsulinDelivery(starts: Date(), ends: Date().addingTimeInterval(3600), units: 4.0, type: .correctionBolus)
         let label = LoggedEntry.insulin(delivery).label(glucoseUnit: .mgdL)
-        #expect(label == "Logged: 4U Correction Bolus")
+        #expect(label == "Logged: 4 U Correction Bolus")
     }
 
     @Test("insulin label formats fractional units with one decimal")
     func insulinFractionalLabel() {
         let delivery = makeInsulin()
         let label = LoggedEntry.insulin(delivery).label(glucoseUnit: .mgdL)
-        #expect(label == "Logged: 4.5U Meal Bolus")
+        // Derive via the same locale-aware formatter (renders "4,5 U" in de-DE):
+        // a literal pin here would only pass in dot-decimal locales.
+        #expect(label == "Logged: \(4.5.asInsulinUnits()) Meal Bolus")
     }
 
     @Test("blood glucose label uses mg/dL unit")
