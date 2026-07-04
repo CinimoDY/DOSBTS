@@ -283,35 +283,33 @@ struct FoodImpactDisplayModelTests {
         #expect(ranked[1].name == "Unscored")
     }
 
-    // MARK: - Delta Tier Mapping
+    // MARK: - Delta Tier Mapping (pins mealImpactDeltaColor, the single tier source)
 
     @Test("Delta below 30 maps to green tier")
     func deltaGreenTier() {
-        #expect(0 < 30)
-        #expect(29 < 30)
-        #expect(-5 < 30)
+        #expect(mealImpactDeltaColor(delta: 0) == AmberTheme.cgaGreen)
+        #expect(mealImpactDeltaColor(delta: 29) == AmberTheme.cgaGreen)
+        #expect(mealImpactDeltaColor(delta: -5) == AmberTheme.cgaGreen)
     }
 
     @Test("Delta at 30 maps to amber tier")
     func deltaAmberTierLowerBound() {
-        #expect(30 >= 30)
-        #expect(30 < 60)
+        #expect(mealImpactDeltaColor(delta: 30) == AmberTheme.amber)
     }
 
     @Test("Delta 59 maps to amber tier")
     func deltaAmberTierUpperBound() {
-        #expect(59 >= 30)
-        #expect(59 < 60)
+        #expect(mealImpactDeltaColor(delta: 59) == AmberTheme.amber)
     }
 
     @Test("Delta at 60 maps to red tier")
     func deltaRedTierLowerBound() {
-        #expect(60 >= 60)
+        #expect(mealImpactDeltaColor(delta: 60) == AmberTheme.cgaRed)
     }
 
     @Test("Large delta maps to red tier")
     func deltaRedTierLarge() {
-        #expect(120 >= 60)
+        #expect(mealImpactDeltaColor(delta: 120) == AmberTheme.cgaRed)
     }
 
     // MARK: - Low Confidence Dimming
