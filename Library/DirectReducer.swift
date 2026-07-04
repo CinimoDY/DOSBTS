@@ -230,6 +230,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setPersonalFoods(personalFoods: let personalFoods):
         state.personalFoodValues = personalFoods
 
+    case .setScoredPersonalFoods(scoredPersonalFoods: let scoredPersonalFoods):
+        state.scoredPersonalFoodValues = scoredPersonalFoods
+
     case .setRecentFoodCorrections(recentFoodCorrections: let recentFoodCorrections):
         state.recentFoodCorrections = recentFoodCorrections
 

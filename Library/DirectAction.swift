@@ -135,10 +135,12 @@ enum DirectAction {
     case setFoodAnalysisLoading(isLoading: Bool)
     case setThumbCalibration(widthMM: Double?)
     case loadPersonalFoods
+    case loadScoredPersonalFoods
     case loadRecentFoodCorrections
     case reorderFavoriteFoods(favoriteFoodValues: [FavoriteFood])
     case saveMealWithCorrections(meal: MealEntry, corrections: [FoodCorrection])
     case setPersonalFoods(personalFoods: [PersonalFood])
+    case setScoredPersonalFoods(scoredPersonalFoods: [PersonalFood])
     case setServingPresets(servingPresets: [ServingPreset])
     case setRecentFoodCorrections(recentFoodCorrections: [FoodCorrection])
     case updateFavoriteFood(favoriteFood: FavoriteFood)

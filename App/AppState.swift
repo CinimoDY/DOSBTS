@@ -174,6 +174,7 @@ struct AppState: DirectState {
     var insulinDeliveryValues: [InsulinDelivery] = []
     var favoriteFoodValues: [FavoriteFood] = []
     var personalFoodValues: [PersonalFood] = []
+    var scoredPersonalFoodValues: [PersonalFood] = []
     var recentFoodCorrections: [FoodCorrection] = []
     var recentMealEntries: [MealEntry] = []
     var mealEntryValues: [MealEntry] = []

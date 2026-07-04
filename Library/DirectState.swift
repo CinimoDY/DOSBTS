@@ -128,6 +128,7 @@ protocol DirectState {
 
     // MARK: Meal Impact
     var scoredMealEntryIds: Set<UUID> { get set }
+    var scoredPersonalFoodValues: [PersonalFood] { get set }
 
     // MARK: Ratio Lab
     /// Transient — loaded on demand when Ratio Lab screen opens. Not persisted.

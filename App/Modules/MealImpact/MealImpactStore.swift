@@ -21,8 +21,12 @@ func mealImpactStoreMiddleware() -> Middleware<DirectState, DirectAction> {
             }
             // Retroactive scan: compute impacts for meals that have completed their 2hr window
             return DataStore.shared.computePendingMealImpacts().flatMap { _ in
-                Just(DirectAction.loadScoredMealEntryIds)
-                    .setFailureType(to: DirectError.self)
+                Publishers.MergeMany([
+                    Just(DirectAction.loadScoredMealEntryIds)
+                        .setFailureType(to: DirectError.self),
+                    Just(DirectAction.loadScoredPersonalFoods)
+                        .setFailureType(to: DirectError.self),
+                ]).eraseToAnyPublisher()
             }.eraseToAnyPublisher()
 
         // Cross-middleware: .addSensorGlucose is also handled by SensorConnector,
@@ -30,8 +34,12 @@ func mealImpactStoreMiddleware() -> Middleware<DirectState, DirectAction> {
         case .addSensorGlucose:
             // Incremental: check if any meals just completed their 2hr window
             return DataStore.shared.computePendingMealImpacts().flatMap { _ in
-                Just(DirectAction.loadScoredMealEntryIds)
-                    .setFailureType(to: DirectError.self)
+                Publishers.MergeMany([
+                    Just(DirectAction.loadScoredMealEntryIds)
+                        .setFailureType(to: DirectError.self),
+                    Just(DirectAction.loadScoredPersonalFoods)
+                        .setFailureType(to: DirectError.self),
+                ]).eraseToAnyPublisher()
             }.eraseToAnyPublisher()
 
         // Cross-middleware: MealStore also handles .deleteMealEntry

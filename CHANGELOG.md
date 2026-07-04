@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Food Impact screen in the Log tab ranks all scored foods by average post-meal glucose delta (color-coded green/amber/red), with low-confidence dimming for n<3 observations and an empty state for fresh installs — DMNC-1301
+
 ### Changed
 - Chart view and list sections now remember their last state across tab switches and relaunches — DMNC-1293
 
