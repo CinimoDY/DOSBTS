@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DOSBTS — Siri Voice Logging</title>
+<style>
+  :root {
+    --amber: #ffb000;
+    --amber-dark: #9a5700;
+    --amber-light: #fdca9f;
+    --cyan: #55ffff;
+    --green: #55ff55;
+    --red: #ff5555;
+    --bg: #000000;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--amber);
+    font-family: "SF Mono", "Menlo", "Consolas", "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .frame {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 48px 56px;
+    position: relative;
+  }
+  /* CRT scanline overlay */
+  .frame::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.22) 2px,
+      rgba(0, 0, 0, 0.22) 3px
+    );
+    z-index: 100;
+  }
+  header {
+    border: 1px solid var(--amber);
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+  h1 {
+    margin: 0 0 6px 0;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 8px rgba(255, 176, 0, 0.5);
+  }
+  .subtitle {
+    color: var(--amber-dark);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .panel {
+    border: 1px solid var(--amber);
+    padding: 16px 18px;
+    background: rgba(255, 176, 0, 0.02);
+  }
+  .panel.full { grid-column: 1 / -1; }
+  .panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber-light);
+    border-bottom: 1px dashed var(--amber-dark);
+    padding-bottom: 6px;
+  }
+  ol, ul { margin: 0; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  .phrase {
+    color: var(--cyan);
+    font-weight: 600;
+  }
+  .arrow {
+    color: var(--amber-dark);
+    margin: 0 6px;
+  }
+  pre {
+    margin: 8px 0;
+    padding: 0;
+    font-family: inherit;
+    color: var(--amber);
+    white-space: pre;
+  }
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .step {
+    border: 1px solid var(--amber-dark);
+    padding: 10px 12px;
+    position: relative;
+    min-height: 84px;
+  }
+  .step .n {
+    color: var(--amber-light);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .step .label { color: var(--amber); font-size: 13px; }
+  .step .ex { color: var(--amber-dark); font-size: 11px; margin-top: 4px; }
+  .step + .step::before {
+    content: "▶";
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--amber-dark);
+    font-size: 12px;
+  }
+  .twocol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .twocol h3 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--cyan);
+    letter-spacing: 0.12em;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid var(--amber-dark);
+    color: var(--amber-light);
+    font-size: 11px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+  .tip {
+    color: var(--amber-dark);
+    border-left: 2px solid var(--green);
+    padding-left: 10px;
+    margin: 6px 0;
+    font-size: 12px;
+  }
+  .warn {
+    color: var(--amber-dark);
+    border-left: 2px solid var(--red);
+    padding-left: 10px;
+    margin: 6px 0;
+    font-size: 12px;
+  }
+  footer {
+    margin-top: 28px;
+    text-align: center;
+    color: var(--amber-dark);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+  .blink {
+    animation: blink 1.06s steps(2, start) infinite;
+  }
+  @keyframes blink {
+    to { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header>
+    <h1>DOSBTS &mdash; SIRI VOICE LOGGING<span class="blink">_</span></h1>
+    <div class="subtitle">Build 94+ &middot; Insulin &amp; Meals, hands-free</div>
+  </header>
+
+  <div class="grid">
+
+    <div class="panel">
+      <h2>1. Setup</h2>
+      <ol>
+        <li>Install build 94 (or later) from TestFlight.</li>
+        <li>Open DOSBTS <strong>once</strong> after upgrading &mdash; this registers the shortcuts with iOS.</li>
+        <li>Done. No permission prompts, no Shortcuts app required.</li>
+      </ol>
+      <div class="tip">Siri, Spotlight, and the Shortcuts app all pick up the intents automatically.</div>
+    </div>
+
+    <div class="panel">
+      <h2>2. Where Siri lives</h2>
+      <ul>
+        <li><span class="pill">SIRI</span>&nbsp;"Hey Siri" or side-button</li>
+        <li><span class="pill">SPOTLIGHT</span>&nbsp;Swipe down on Home Screen &rarr; type "log insulin"</li>
+        <li><span class="pill">SHORTCUTS</span>&nbsp;Build a 1-tap home-screen tile with preset values</li>
+      </ul>
+    </div>
+
+    <div class="panel full">
+      <h2>3. Insulin &mdash; trigger phrases</h2>
+      <ul>
+        <li><span class="phrase">"Hey Siri, log insulin in DOSBTS"</span></li>
+        <li><span class="phrase">"Hey Siri, log a dose in DOSBTS"</span></li>
+        <li><span class="phrase">"Hey Siri, log a basal in DOSBTS"</span> <span class="arrow">|</span> swap in <code>snack</code>, <code>meal</code>, or <code>correction</code></li>
+        <li><span class="phrase">"Hey Siri, add insulin to DOSBTS"</span></li>
+      </ul>
+
+      <h3 style="color: var(--cyan); margin-top: 16px; font-size: 12px; letter-spacing: 0.12em;">FLOW</h3>
+      <div class="flow">
+        <div class="step">
+          <span class="n">01 YOU</span>
+          <span class="label">Trigger phrase</span>
+          <div class="ex">"Log a basal in DOSBTS"</div>
+        </div>
+        <div class="step">
+          <span class="n">02 SIRI</span>
+          <span class="label">Asks for units</span>
+          <div class="ex">"How many units?"</div>
+        </div>
+        <div class="step">
+          <span class="n">03 YOU</span>
+          <span class="label">Reply with number</span>
+          <div class="ex">"Twenty" / "Two point five"</div>
+        </div>
+        <div class="step">
+          <span class="n">04 SIRI</span>
+          <span class="label">Confirms &amp; logs</span>
+          <div class="ex">"Logged 20 units of basal."</div>
+        </div>
+      </div>
+
+      <div class="tip">Defaults: type = <strong>snack bolus</strong>. Basal entries get a <strong>24h ENDS</strong> automatically.</div>
+      <div class="warn">Numeric values can't ride in the trigger phrase &mdash; Apple only allows enum/entity params there. Siri asks for the number as a follow-up.</div>
+    </div>
+
+    <div class="panel full">
+      <h2>4. Meals &mdash; trigger phrases</h2>
+      <ul>
+        <li><span class="phrase">"Hey Siri, log a meal in DOSBTS"</span></li>
+        <li><span class="phrase">"Hey Siri, log food in DOSBTS"</span></li>
+        <li><span class="phrase">"Hey Siri, log carbs in DOSBTS"</span></li>
+        <li><span class="phrase">"Hey Siri, add a meal to DOSBTS"</span></li>
+      </ul>
+
+      <h3 style="color: var(--cyan); margin-top: 16px; font-size: 12px; letter-spacing: 0.12em;">FLOW</h3>
+      <div class="flow">
+        <div class="step">
+          <span class="n">01 YOU</span>
+          <span class="label">Trigger phrase</span>
+          <div class="ex">"Log a meal in DOSBTS"</div>
+        </div>
+        <div class="step">
+          <span class="n">02 SIRI</span>
+          <span class="label">Asks for carbs</span>
+          <div class="ex">"How many grams?"</div>
+        </div>
+        <div class="step">
+          <span class="n">03 YOU</span>
+          <span class="label">Reply</span>
+          <div class="ex">"Forty-five" / "Thirty grams"</div>
+        </div>
+        <div class="step">
+          <span class="n">04 SIRI</span>
+          <span class="label">Confirms &amp; logs</span>
+          <div class="ex">"Logged 45 grams: meal."</div>
+        </div>
+      </div>
+
+      <div class="tip">Default description = "meal". Siri can also ask for a label ("toast", "apple") if you want to keep history readable.</div>
+    </div>
+
+    <div class="panel">
+      <h2>5. Tips</h2>
+      <ul>
+        <li>Both intents run <strong>in the background</strong> &mdash; Siri confirms by voice without opening the app.</li>
+        <li>Chart markers show up next time DOSBTS is foregrounded; widgets refresh right away.</li>
+        <li>Decimals work: "two point five" &rarr; 2.5 U.</li>
+        <li>For a 1-tap preset, open Shortcuts.app, find "DOSBTS &mdash; Log insulin", fill in fixed values, add to Home Screen.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>6. Limits</h2>
+      <ul>
+        <li>Trigger phrase can't include numbers &mdash; Siri prompts for them after.</li>
+        <li>Insulin type is one of: <code>meal</code> / <code>snack</code> / <code>correction</code> / <code>basal</code>.</li>
+        <li>Edits, deletes, and rich entries (photo, barcode) still go through the app.</li>
+        <li>Critically: this is for <strong>recording</strong>, not dosing decisions.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <footer>
+    DOSBTS &middot; CGA AMBER &middot; 602nm &middot; Build 94 &mdash; Siri voice logging shipped 2026-05-13
+  </footer>
+
+</div>
+</body>
+</html>
