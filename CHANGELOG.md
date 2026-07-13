@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Add Insulin sheet shows your saved Ratio Lab reference (`REF RATIO 1:X — SET IN RATIO LAB`) as a passive info line for meal/snack boluses — DMNC-1302
+
 ## [Build 129] — 2026-07-04
 
 ### Changed
