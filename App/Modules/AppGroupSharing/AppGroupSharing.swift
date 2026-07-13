@@ -235,6 +235,7 @@ private class AppGroupSharingService {
             .compactMap { $0 }
 
         guard let sharedValuesJson = try? JSONSerialization.data(withJSONObject: sharedValues) else {
+            DirectLog.error("AppGroupSharing: failed to serialize shared blood-glucose payload (\(sharedValues.count) values) — widget will show stale data")
             return
         }
 
@@ -264,6 +265,7 @@ private class AppGroupSharingService {
             .compactMap { $0 }
 
         guard let sharedValuesJson = try? JSONSerialization.data(withJSONObject: sharedValues) else {
+            DirectLog.error("AppGroupSharing: failed to serialize shared sensor-glucose payload (\(sharedValues.count) values) — widget will show stale data")
             return
         }
 
@@ -271,7 +273,8 @@ private class AppGroupSharingService {
     }
 }
 
-private extension BloodGlucose {
+// Internal (not fileprivate) so the payload-mapper tests can reach it via @testable import.
+extension BloodGlucose {
     func toFreeAPS() -> [String: Any]? {
         let date = "/Date(" + Int64(floor(timestamp.toMillisecondsAsDouble() / 1000) * 1000).description + ")/"
 
@@ -287,7 +290,8 @@ private extension BloodGlucose {
     }
 }
 
-private extension SensorGlucose {
+// Internal (not fileprivate) so the payload-mapper tests can reach it via @testable import.
+extension SensorGlucose {
     func toFreeAPS() -> [String: Any]? {
         let date = "/Date(" + Int64(floor(timestamp.toMillisecondsAsDouble() / 1000) * 1000).description + ")/"
 
