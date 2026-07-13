@@ -96,6 +96,7 @@ private class NightscoutService {
         }
 
         guard let nightscoutJson = try? JSONSerialization.data(withJSONObject: nightscoutValue) else {
+            DirectLog.error("Nightscout: failed to serialize sensor-start payload — upload skipped")
             return
         }
 
@@ -279,6 +280,7 @@ private class NightscoutService {
         }.compactMap { $0 }
 
         guard let nightscoutJson = try? JSONSerialization.data(withJSONObject: nightscoutValues) else {
+            DirectLog.error("Nightscout: failed to serialize blood-glucose entries payload (\(nightscoutValues.count) values) — upload skipped")
             return
         }
 
@@ -315,6 +317,7 @@ private class NightscoutService {
         }.compactMap { $0 }
 
         guard let nightscoutJson = try? JSONSerialization.data(withJSONObject: nightscoutValues) else {
+            DirectLog.error("Nightscout: failed to serialize sensor-glucose entries payload (\(nightscoutValues.count) values) — upload skipped")
             return
         }
 
@@ -397,6 +400,7 @@ private class NightscoutService {
         }.compactMap { $0 }
 
         guard let nightscoutJson = try? JSONSerialization.data(withJSONObject: nightscoutValues) else {
+            DirectLog.error("Nightscout: failed to serialize insulin-delivery treatment payload (\(nightscoutValues.count) values) — upload skipped")
             return
         }
 
@@ -449,7 +453,8 @@ private struct Treatment: Decodable {
     let enteredBy: String
 }
 
-private extension Sensor {
+// Internal (not fileprivate) so the payload-mapper tests can reach it via @testable import.
+extension Sensor {
     func toNightscoutSensorStart() -> [String: Any]? {
         guard let startTimestamp = startTimestamp else {
             return nil
@@ -470,7 +475,8 @@ private extension Sensor {
     }
 }
 
-private extension BloodGlucose {
+// Internal (not fileprivate) so the payload-mapper tests can reach it via @testable import.
+extension BloodGlucose {
     func toNightscoutGlucose() -> [String: Any]? {
         let nightscout: [String: Any] = [
             "_id": id.uuidString,
@@ -486,7 +492,8 @@ private extension BloodGlucose {
     }
 }
 
-private extension SensorGlucose {
+// Internal (not fileprivate) so the payload-mapper tests can reach it via @testable import.
+extension SensorGlucose {
     func toNightscoutGlucose() -> [String: Any]? {
         let nightscout: [String: Any] = [
             "_id": id.uuidString,
@@ -505,7 +512,8 @@ private extension SensorGlucose {
     }
 }
 
-private extension InsulinDelivery {
+// Internal (not fileprivate) so the payload-mapper tests can reach it via @testable import.
+extension InsulinDelivery {
     func toNightscoutInsulinDelivery() -> [String: Any]? {
         let nightscout: [String: Any] = [
             "_id": id.uuidString,

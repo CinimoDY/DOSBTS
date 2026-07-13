@@ -35,6 +35,7 @@
 		7D796C0FFEE00000000C0002 /* LoggedEntryToastControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D796C0FFEE00000000C0001 /* LoggedEntryToastControllerTests.swift */; };
 		1DA4B45CFC6E42E78B81BFD8 /* EntryGroupListOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */; };
 		014BC5267E0D43B3B9F2B6F9 /* InsulinImpactTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF0395D4E22484C9E6488BD /* InsulinImpactTests.swift */; };
+		RE1405AA0000000000000001 /* PayloadMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = RE1405BB0000000000000002 /* PayloadMapperTests.swift */; };
 		TE0100010000000F000A000F /* QuickTimeChipsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000F000A000F /* QuickTimeChipsTests.swift */; };
 		940B4124F95646FBA4691020 /* StagingPlateRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDBC4B4C2D774E90898BED6B /* StagingPlateRowTests.swift */; };
 		TE0100010000000E000A000E /* StepperFieldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000000E000A000E /* StepperFieldTests.swift */; };
@@ -124,6 +125,7 @@
 		7D796C0FFEE00000000C0001 /* LoggedEntryToastControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoggedEntryToastControllerTests.swift; sourceTree = "<group>"; };
 		D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryGroupListOverlayTests.swift; sourceTree = "<group>"; };
 		2DF0395D4E22484C9E6488BD /* InsulinImpactTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinImpactTests.swift; sourceTree = "<group>"; };
+		RE1405BB0000000000000002 /* PayloadMapperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayloadMapperTests.swift; sourceTree = "<group>"; };
 		TE0100020000000F000A000F /* QuickTimeChipsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickTimeChipsTests.swift; sourceTree = "<group>"; };
 		FDBC4B4C2D774E90898BED6B /* StagingPlateRowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StagingPlateRowTests.swift; sourceTree = "<group>"; };
 		TE0100020000000E000A000E /* StepperFieldTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepperFieldTests.swift; sourceTree = "<group>"; };
@@ -290,6 +292,7 @@
 				7D796C0FFEE00000000C0001 /* LoggedEntryToastControllerTests.swift */,
 				D9309BBC9D1A45039D88243C /* EntryGroupListOverlayTests.swift */,
 				2DF0395D4E22484C9E6488BD /* InsulinImpactTests.swift */,
+				RE1405BB0000000000000002 /* PayloadMapperTests.swift */,
 				TE0100020000000F000A000F /* QuickTimeChipsTests.swift */,
 				FDBC4B4C2D774E90898BED6B /* StagingPlateRowTests.swift */,
 				TE0100020000000E000A000E /* StepperFieldTests.swift */,
@@ -508,6 +511,7 @@
 				7D796C0FFEE00000000C0002 /* LoggedEntryToastControllerTests.swift in Sources */,
 				1DA4B45CFC6E42E78B81BFD8 /* EntryGroupListOverlayTests.swift in Sources */,
 				014BC5267E0D43B3B9F2B6F9 /* InsulinImpactTests.swift in Sources */,
+				RE1405AA0000000000000001 /* PayloadMapperTests.swift in Sources */,
 				TE0100010000000F000A000F /* QuickTimeChipsTests.swift in Sources */,
 				940B4124F95646FBA4691020 /* StagingPlateRowTests.swift in Sources */,
 				TE0100010000000E000A000E /* StepperFieldTests.swift in Sources */,

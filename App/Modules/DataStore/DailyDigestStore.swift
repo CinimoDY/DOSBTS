@@ -61,7 +61,10 @@ extension DataStore {
                 do {
                     let db = try asyncDB.get()
                     let startOfDay = date.startOfDay
-                    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                    guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+                        promise(.failure(.withMessage("DailyDigestStore: calendar arithmetic failed for \(startOfDay)")))
+                        return
+                    }
 
                     let digest = try DailyDigest
                         .filter(Column(DailyDigest.Columns.date.name) >= startOfDay)
@@ -103,7 +106,10 @@ extension DataStore {
         do {
             try dbQueue.write { db in
                 let startOfDay = date.startOfDay
-                let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+                    DirectLog.error("DailyDigestStore.updateDailyDigestInsight: calendar arithmetic failed for \(startOfDay)")
+                    return
+                }
 
                 try db.execute(
                     sql: """
@@ -135,7 +141,10 @@ extension DataStore {
                 do {
                     let db = try asyncDB.get()
                     let startOfDay = date.startOfDay
-                    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                    guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+                        promise(.failure(.withMessage("DailyDigestStore: calendar arithmetic failed for \(startOfDay)")))
+                        return
+                    }
 
                     // Glucose readings for the day
                     let glucoseReadings = try SensorGlucose
@@ -225,7 +234,10 @@ extension DataStore {
                 do {
                     let db = try asyncDB.get()
                     let startOfDay = date.startOfDay
-                    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                    guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+                        promise(.failure(.withMessage("DailyDigestStore: calendar arithmetic failed for \(startOfDay)")))
+                        return
+                    }
 
                     let meals = try MealEntry
                         .filter(Column(MealEntry.Columns.timestamp.name) >= startOfDay)
@@ -265,7 +277,10 @@ extension DataStore {
                 do {
                     let db = try asyncDB.get()
                     let startOfDay = date.startOfDay
-                    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                    guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+                        promise(.failure(.withMessage("DailyDigestStore: calendar arithmetic failed for \(startOfDay)")))
+                        return
+                    }
 
                     let readings = try SensorGlucose
                         .filter(Column(SensorGlucose.Columns.timestamp.name) >= startOfDay)

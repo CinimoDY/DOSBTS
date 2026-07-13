@@ -60,7 +60,7 @@ private extension DataStore {
                     }
                 }
             } catch {
-                DirectLog.error("\(error)")
+                DirectLog.error("TreatmentEventStore.createTreatmentEventTable: \(error)")
             }
         }
     }
@@ -72,11 +72,11 @@ private extension DataStore {
                     do {
                         try value.insert(db)
                     } catch {
-                        DirectLog.error("\(error)")
+                        DirectLog.error("TreatmentEventStore.insertTreatmentEvent: write error: \(error)")
                     }
                 }
             } catch {
-                DirectLog.error("\(error)")
+                DirectLog.error("TreatmentEventStore.insertTreatmentEvent: transaction error: \(error)")
             }
         }
     }
