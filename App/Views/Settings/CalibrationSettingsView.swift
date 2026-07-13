@@ -16,7 +16,7 @@ struct CalibrationSettingsView: View {
                     FactoryCalibrationView()
                 },
                 header: {
-                    Label("Calibration", systemImage: "tuningfork")
+                    Label("Calibration", systemImage: "tuningfork").dosHeader()
                 }
             )
         }

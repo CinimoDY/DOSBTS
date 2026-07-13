@@ -185,9 +185,7 @@ struct UnifiedFoodEntryView: View {
                 }
             } label: {
                 HStack(spacing: DOSSpacing.xs) {
-                    Text("QUICK")
-                        .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amber)
+                    Text("QUICK").dosHeader()
                     Image(systemName: "chevron.right")
                         .font(DOSTypography.mono(size: 9, weight: .semibold))
                         .foregroundStyle(AmberTheme.amber)
@@ -268,9 +266,7 @@ struct UnifiedFoodEntryView: View {
                 }
             }
         } header: {
-            Text("RECENT")
-                .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amber)
+            Text("RECENT").dosHeader()
         }
     }
 
@@ -284,9 +280,7 @@ struct UnifiedFoodEntryView: View {
         Section {
             manualEntryLink(icon: "keyboard", title: "LOG OTHER FOOD")
         } header: {
-            Text("OTHER")
-                .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amber)
+            Text("OTHER").dosHeader()
         }
     }
 

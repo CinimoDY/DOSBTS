@@ -18,7 +18,7 @@ struct AboutView: View {
                 .font(DOSTypography.caption)
                 .foregroundStyle(AmberTheme.amber)
         } header: {
-            Label("Disclaimer", systemImage: "exclamationmark.shield")
+            Label("Disclaimer", systemImage: "exclamationmark.shield").dosHeader()
         }
 
         // Permanent What's New history (DMNC-1147, R8): full build changelog,
@@ -36,7 +36,7 @@ struct AboutView: View {
                 if changelogBuilds.isEmpty { changelogBuilds = ChangelogParser.bundled() }
             }
         } header: {
-            Label("Changelog", systemImage: "list.bullet.rectangle")
+            Label("Changelog", systemImage: "list.bullet.rectangle").dosHeader()
         }
 
         Section(
@@ -117,7 +117,7 @@ struct AboutView: View {
                 }
             },
             header: {
-                Label("About \(DirectConfig.appName)", systemImage: "info")
+                Label("About \(DirectConfig.appName)", systemImage: "info").dosHeader()
             }
         )
         
@@ -136,7 +136,7 @@ struct AboutView: View {
                 })
             },
             header: {
-                Label("Export", systemImage: "square.and.arrow.up")
+                Label("Export", systemImage: "square.and.arrow.up").dosHeader()
             }
         )
         
@@ -160,7 +160,7 @@ struct AboutView: View {
                     })
                 },
                 header: {
-                    Label("Debug", systemImage: "testtube.2")
+                    Label("Debug", systemImage: "testtube.2").dosHeader()
                 }
             )
         }

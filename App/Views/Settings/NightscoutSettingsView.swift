@@ -37,7 +37,7 @@ struct NightscoutSettingsView: View {
                 .opacity(store.state.nightscoutUpload ? 1 : 0.4)
             },
             header: {
-                Label("Nightscout settings", systemImage: "icloud.and.arrow.up")
+                Label("Nightscout settings", systemImage: "icloud.and.arrow.up").dosHeader()
             }
         )
     }

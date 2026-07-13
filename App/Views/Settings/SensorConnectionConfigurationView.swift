@@ -29,7 +29,7 @@ struct SensorConnectionConfigurationView: View {
                     }
                 },
                 header: {
-                    Label("Connection settings", systemImage: "app.connected.to.app.below.fill")
+                    Label("Connection settings", systemImage: "app.connected.to.app.below.fill").dosHeader()
                 }
             )
         }

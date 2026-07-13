@@ -71,7 +71,7 @@ struct SensorDetailView: View {
                 },
                 header: {
                     Label("Connection error", systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(AmberTheme.cgaRed)
+                        .dosHeader(AmberTheme.cgaRed)
                 }
             )
         }
@@ -97,7 +97,7 @@ struct SensorDetailView: View {
                 }
             },
             header: {
-                Label("Sensor connection", systemImage: "rectangle.connected.to.line.below")
+                Label("Sensor connection", systemImage: "rectangle.connected.to.line.below").dosHeader()
             }
         )
     }
@@ -281,7 +281,7 @@ struct SensorDetailView: View {
                     }
                 },
                 header: {
-                    Label("Sensor lifetime", systemImage: "timer")
+                    Label("Sensor lifetime", systemImage: "timer").dosHeader()
                 }
             )
         }
@@ -327,7 +327,7 @@ struct SensorDetailView: View {
                     }
                 },
                 header: {
-                    Label("Sensor details", systemImage: "text.magnifyingglass")
+                    Label("Sensor details", systemImage: "text.magnifyingglass").dosHeader()
                 }
             )
         }
@@ -377,7 +377,7 @@ struct SensorDetailView: View {
                     }
                 },
                 header: {
-                    Label("Transmitter details", systemImage: "antenna.radiowaves.left.and.right.circle")
+                    Label("Transmitter details", systemImage: "antenna.radiowaves.left.and.right.circle").dosHeader()
                 }
             )
         }

@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Settings, statistics, and entry-sheet section headers now use the canonical DOS header style — DMNC-1406
+
 ## [Build 129] — 2026-07-04
 
 ### Changed

@@ -28,7 +28,7 @@ struct GlucoseSettingsView: View {
                 Toggle("Glucose read aloud", isOn: readGlucose).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: {
-                Label("Glucose settings", systemImage: "cross.case")
+                Label("Glucose settings", systemImage: "cross.case").dosHeader()
             }
         )
     }

@@ -74,7 +74,7 @@ struct StatisticsView: View {
                 help: "2h streaks at \(TightControlConfig.default.bandDescription(glucoseUnit: store.state.glucoseUnit))"
             )
         } header: {
-            Label("Tight control", systemImage: "checkmark.seal")
+            Label("Tight control", systemImage: "checkmark.seal").dosHeader()
         }
     }
 
@@ -164,7 +164,7 @@ struct StatisticsView: View {
                     store.dispatch(.setShowAnnotations(showAnnotations: !store.state.showAnnotations))
                 }
             } header: {
-                Label("Statistics (\(glucoseStatistics.days.description) days)", systemImage: "lightbulb")
+                Label("Statistics (\(glucoseStatistics.days.description) days)", systemImage: "lightbulb").dosHeader()
             } footer: {
                 Text("Double-tap to toggle annotations.")
                     .font(DOSTypography.caption)
@@ -290,7 +290,7 @@ struct UsageSection: View {
             }
             .padding(.vertical, DOSSpacing.xs)
         } header: {
-            Label("Usage", systemImage: "waveform.path.ecg.rectangle")
+            Label("Usage", systemImage: "waveform.path.ecg.rectangle").dosHeader()
         }
     }
 

@@ -56,7 +56,7 @@ struct AlarmSettingsView: View {
                     Slider(value: dayAlarmVolume, in: 0...1, step: 0.05)
                 }
             },
-            header: { Label("Day profile", systemImage: "sun.max") }
+            header: { Label("Day profile", systemImage: "sun.max").dosHeader() }
         )
     }
 
@@ -117,7 +117,7 @@ struct AlarmSettingsView: View {
                     Slider(value: nightAlarmVolume, in: 0...1, step: 0.05)
                 }
             },
-            header: { Label("Night profile", systemImage: "moon.fill") }
+            header: { Label("Night profile", systemImage: "moon.fill").dosHeader() }
         )
     }
 
@@ -135,7 +135,7 @@ struct AlarmSettingsView: View {
                         .foregroundStyle(AmberTheme.amber)
                 }
             },
-            header: { Label("Sleep schedule", systemImage: "clock") }
+            header: { Label("Sleep schedule", systemImage: "clock").dosHeader() }
         )
     }
 
@@ -188,7 +188,7 @@ struct AlarmSettingsView: View {
                 Toggle("Celebrations", isOn: celebrationsEnabled)
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
-            header: { Label("Alarm settings", systemImage: "alarm") },
+            header: { Label("Alarm settings", systemImage: "alarm").dosHeader() },
             footer: {
                 let band = TightControlConfig.default.bandDescription(glucoseUnit: store.state.glucoseUnit)
                 Text("Predictive low alarm: warns before glucose is predicted to drop below your low threshold.\nMissed bolus nudge: reminds you to log a bolus if a carb-containing meal was recorded without one.\nCelebrations: a toast, sound, and lifetime count for tight-control streaks (2 continuous hours with every reading in \(band), no gaps). Silent during night hours.")

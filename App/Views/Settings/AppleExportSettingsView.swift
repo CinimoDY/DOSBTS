@@ -34,7 +34,7 @@ struct AppleExportSettingsView: View {
                 .opacity(store.state.appleCalendarExport ? 1 : 0.4)
             },
             header: {
-                Label("Apple export settings", systemImage: "square.and.arrow.up")
+                Label("Apple export settings", systemImage: "square.and.arrow.up").dosHeader()
             }
         )
 
@@ -63,7 +63,7 @@ struct AppleExportSettingsView: View {
                 .opacity(store.state.appleHealthImport ? 1 : 0.4)
             },
             header: {
-                Label("Apple import settings", systemImage: "square.and.arrow.down")
+                Label("Apple import settings", systemImage: "square.and.arrow.down").dosHeader()
             },
             footer: {
                 Text("Import nutrition, exercise, and heart rate data from other apps via Apple Health.")

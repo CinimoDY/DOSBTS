@@ -22,7 +22,7 @@ struct InsulinSettingsView: View {
                 }.pickerStyle(.menu)
             },
             header: {
-                Label("Bolus insulin", systemImage: "syringe")
+                Label("Bolus insulin", systemImage: "syringe").dosHeader()
             },
             footer: {
                 Text("Duration of Insulin Action — how long insulin remains active after injection. Changes apply to all active insulin.")
@@ -38,7 +38,7 @@ struct InsulinSettingsView: View {
                 }
             },
             header: {
-                Label("Basal duration", systemImage: "clock")
+                Label("Basal duration", systemImage: "clock").dosHeader()
             },
             footer: {
                 Text("For long-acting basal (Lantus/Tresiba), set to the manufacturer-specified duration.")
@@ -52,7 +52,7 @@ struct InsulinSettingsView: View {
                     .toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
             },
             header: {
-                Label("Display", systemImage: "eye")
+                Label("Display", systemImage: "eye").dosHeader()
             }
         )
 
@@ -71,7 +71,7 @@ struct InsulinSettingsView: View {
                 }
             },
             header: {
-                Label("Ratios", systemImage: "function")
+                Label("Ratios", systemImage: "function").dosHeader()
             },
             footer: {
                 Text("Estimate your insulin-to-carb ratio and correction factor from your own logged data. Reference only.")
