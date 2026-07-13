@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Clinic Report (Settings → Glucose & Display → Clinic Report): generate a clinician-ready PDF or CSV summary over 14 / 30 / 90 days — core stats (avg, SD, CV, GMI), consensus time-in-range (70–180 mg/dL), a 24-hour daily glucose pattern, and event counts (meals, boluses by type, basal, hypo episodes) — shared via the system share sheet. Pseudonymous and reference-only. — DMNC-1304
+
 ## [Build 129] — 2026-07-04
 
 ### Changed

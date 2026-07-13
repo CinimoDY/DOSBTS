@@ -15,6 +15,7 @@ struct GlucoseDisplayCategoryView: View {
             Group {
                 GlucoseSettingsView()
                 DisplaySettingsSection()
+                ClinicReportSection()
                 CalibrationSettingsView()
             }
             .listRowBackground(AmberTheme.dosBlack)
@@ -26,6 +27,31 @@ struct GlucoseDisplayCategoryView: View {
         .dosNavigationTitle("Glucose & Display")
         .toolbarBackground(AmberTheme.dosBlack, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+    }
+}
+
+// MARK: - ClinicReportSection
+
+/// Entry point to the clinic-visit report export (DMNC-1304).
+private struct ClinicReportSection: View {
+    var body: some View {
+        Section(
+            content: {
+                NavigationLink {
+                    ClinicReportView()
+                } label: {
+                    Text("Clinic Report")
+                        .font(DOSTypography.body)
+                }
+            },
+            header: {
+                Label("Reports", systemImage: "doc.text")
+            },
+            footer: {
+                Text("Generate a clinician-ready PDF or CSV summary over 14 / 30 / 90 days. Reference only.")
+                    .font(DOSTypography.caption)
+            }
+        )
     }
 }
 

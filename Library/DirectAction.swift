@@ -40,6 +40,7 @@ enum DirectAction {
     case exportToUnknown
     case exportToGlooko
     case exportToTidepool
+    case generateClinicReport(days: Int, format: ClinicReportFormat)
     case loadBloodGlucoseValues
     case loadExerciseEntryValues
     case loadFavoriteFoodValues

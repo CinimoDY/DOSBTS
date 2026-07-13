@@ -120,6 +120,15 @@ func sensorGlucoseStoreMiddleware() -> Middleware<DirectState, DirectAction> {
     }
 }
 
+extension DataStore {
+    /// Module-visible entry point to the (fileprivate) consensus-band statistics query, for
+    /// the clinic report's cross-file middleware (DMNC-1304). Exposes exactly this one query
+    /// rather than widening the whole private extension below.
+    func clinicGlucoseStatistics(days: Int, lowerLimit: Int, upperLimit: Int) -> Future<GlucoseStatistics, DirectError> {
+        getSensorGlucoseStatistics(days: days, lowerLimit: lowerLimit, upperLimit: upperLimit)
+    }
+}
+
 private extension DataStore {
     func createSensorGlucoseTable() {
         if let dbQueue = dbQueue {
