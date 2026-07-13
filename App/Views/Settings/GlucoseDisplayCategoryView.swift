@@ -45,7 +45,7 @@ private struct ClinicReportSection: View {
                 }
             },
             header: {
-                Label("Reports", systemImage: "doc.text")
+                Label("Reports", systemImage: "doc.text").dosHeader()
             },
             footer: {
                 Text("Generate a clinician-ready PDF or CSV summary over 14 / 30 / 90 days. Reference only.")
