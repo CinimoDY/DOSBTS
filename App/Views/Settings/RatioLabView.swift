@@ -113,6 +113,10 @@ struct RatioLabView: View {
             evidenceTable(estimates)
         }
 
+        if !estimates.scoredCorrections.isEmpty {
+            correctionsTable(estimates)
+        }
+
         CleanExperimentCard(glucoseUnit: store.state.glucoseUnit)
 
         Text("ESTIMATES ARE EDUCATIONAL REFERENCE ONLY. DISCUSS RATIO CHANGES WITH YOUR CARE TEAM.")
@@ -132,6 +136,7 @@ struct RatioLabView: View {
             Text("1:X means one unit of rapid insulin covers about X grams of carbs.")
             Text("ISF (correction factor) is how far one unit tends to drop your glucose.")
             Text("This lab estimates both from your own logged meals and insulin — it never tells you what to dose.")
+            Text("Your corrections estimates ISF from doses given with no food, exercise, or stacked insulin nearby.")
         }
         .font(DOSTypography.bodySmall)
         .foregroundStyle(AmberTheme.amberLight)
@@ -143,7 +148,6 @@ struct RatioLabView: View {
 
     private func estimatesGrid(_ estimates: RatioEstimates) -> some View {
         LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: DOSSpacing.sm),
             GridItem(.flexible(), spacing: DOSSpacing.sm),
             GridItem(.flexible(), spacing: DOSSpacing.sm),
         ], spacing: DOSSpacing.sm) {
@@ -161,6 +165,11 @@ struct RatioLabView: View {
                 label: "1800 RULE ISF",
                 value: isfValue(estimates),
                 help: isfHelp(estimates)
+            )
+            StatCard(
+                label: "YOUR CORRECTIONS",
+                value: correctionsValue(estimates),
+                help: correctionsHelp(estimates)
             )
         }
     }
@@ -219,6 +228,24 @@ struct RatioLabView: View {
 
             ForEach(rows, id: \.observation.meal.id) { scored in
                 RatioEvidenceRow(scored: scored, glucoseUnit: store.state.glucoseUnit)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dosCard(.panel)
+    }
+
+    // MARK: Corrections table
+
+    private func correctionsTable(_ estimates: RatioEstimates) -> some View {
+        VStack(alignment: .leading, spacing: DOSSpacing.sm) {
+            Text("CORRECTIONS").dosHeader()
+
+            // Newest first, keyed on the stable dose id.
+            let rows = estimates.scoredCorrections
+                .sorted { $0.impact.dose.starts > $1.impact.dose.starts }
+
+            ForEach(rows, id: \.impact.dose.id) { scored in
+                CorrectionEvidenceRow(scored: scored, glucoseUnit: store.state.glucoseUnit)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -289,6 +316,26 @@ struct RatioLabView: View {
         }
         guard rulePlausible(estimates) else { return "CHECK TDD" }
         return store.state.glucoseUnit == .mmolL ? "MMOL/L PER UNIT" : "MG/DL PER UNIT"
+    }
+
+    private func qualifyingCorrectionCount(_ estimates: RatioEstimates) -> Int {
+        estimates.scoredCorrections.filter { $0.isfMgDLPerUnit != nil }.count
+    }
+
+    /// Empirical ISF in the user's display unit (mg/dL integer, or mmol/L to one decimal).
+    private func correctionsValue(_ estimates: RatioEstimates) -> String {
+        guard let isf = estimates.empiricalISFMgDL, isf.isFinite else { return "—" }
+        return Int(isf.rounded()).asGlucose(glucoseUnit: store.state.glucoseUnit)
+    }
+
+    private func correctionsHelp(_ estimates: RatioEstimates) -> String {
+        guard let spread = estimates.empiricalISFSpread else {
+            return "\(qualifyingCorrectionCount(estimates))/\(RatioEstimator.minQualifyingCorrections) CORRECTIONS"
+        }
+        // Spread bounds are glucose figures too — convert both, not just the card value.
+        let low = Int(spread.lowerBound.rounded()).asGlucose(glucoseUnit: store.state.glucoseUnit)
+        let high = Int(spread.upperBound.rounded()).asGlucose(glucoseUnit: store.state.glucoseUnit)
+        return "n=\(qualifyingCorrectionCount(estimates)) · \(low)–\(high)"
     }
 }
 
@@ -398,6 +445,81 @@ private struct RatioEvidenceRow: View {
         case .hypoInWindow: return "HYPO"
         case .implausibleRatio: return "ODD RATIO"
         case .insufficientData: return "NO CGM"
+        }
+    }
+}
+
+// MARK: - CorrectionEvidenceRow
+
+/// One compact correction-evidence line. Qualifying corrections read
+/// `4 JUL 14:20 · 2.0U CORRECTION … 30/U` in amber; excluded corrections are dimmed
+/// to amberDark with the exclusion reason as a teaching tag *replacing* the ISF — the
+/// exclusion is the lesson. The ISF figure honours `glucoseUnit`.
+private struct CorrectionEvidenceRow: View {
+    let scored: ScoredCorrectionObservation
+    let glucoseUnit: GlucoseUnit
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: DOSSpacing.xs) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(timestampLabel)
+                    .font(DOSTypography.caption)
+                    .foregroundStyle(AmberTheme.amberDark)
+                Text(doseLine)
+                    .font(DOSTypography.bodySmall)
+                    .foregroundStyle(isQualifying ? AmberTheme.amber : AmberTheme.amberDark)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: DOSSpacing.xs)
+
+            Text(resultText)
+                .font(isQualifying ? DOSTypography.numeral : DOSTypography.label)
+                .tracking(isQualifying ? 0 : 0.6)
+                .foregroundStyle(resultColor)
+                .lineLimit(1)
+        }
+        .padding(.vertical, DOSSpacing.xxs)
+    }
+
+    // MARK: Private
+
+    private var dose: InsulinDelivery { scored.impact.dose }
+    private var isQualifying: Bool { scored.isfMgDLPerUnit != nil }
+
+    private var timestampLabel: String {
+        dose.starts
+            .formatted(.dateTime.month(.abbreviated).day().hour().minute())
+            .uppercased()
+    }
+
+    private var doseLine: String { "\(dose.units.asInsulin())U CORRECTION" }
+
+    private var resultText: String {
+        if let isf = scored.isfMgDLPerUnit {
+            return "\(Int(isf.rounded()).asGlucose(glucoseUnit: glucoseUnit))/U"
+        }
+        return scored.exclusion.map(Self.tag(for:)) ?? "—"
+    }
+
+    /// Excluded corrections stay amberDark. Unlike meals there is no hypo tag here — a
+    /// correction that overshoots to a low is caught upstream (it would not qualify as a
+    /// clean correction), and a rise (`ROSE`) is not a hypo-class lesson, so nothing is red.
+    private var resultColor: Color {
+        isQualifying ? AmberTheme.amber : AmberTheme.amberDark
+    }
+
+    private static func tag(for reason: CorrectionExclusionReason) -> String {
+        switch reason {
+        case .noBaseline: return "NO BASELINE"
+        case .lowStart: return "LOW START"
+        case .mealInWindow: return "MEAL IN WINDOW"
+        case .stacked: return "STACKED"
+        case .exercise: return "EXERCISE"
+        case .noCGM: return "NO CGM"
+        case .rose: return "ROSE"
+        case .tinyDose: return "TINY DOSE"
+        case .oddISF: return "ODD ISF"
         }
     }
 }

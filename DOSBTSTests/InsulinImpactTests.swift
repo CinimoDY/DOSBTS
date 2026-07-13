@@ -17,4 +17,20 @@ struct InsulinImpactTests {
         )
         #expect(impact.deltaMgDL == -68)
     }
+
+    @Test("Correction nadir below baseline yields a negative delta (empirical ISF semantics)")
+    func correctionNegativeDelta() {
+        // For a correction, glucoseAtPeak carries the post-dose nadir; an effective
+        // correction fell, so deltaMgDL is negative and ISF = -delta / units.
+        let dose = InsulinDelivery(starts: Date(), ends: Date(), units: 2, type: .correctionBolus)
+        let impact = InsulinImpact.compute(
+            for: dose,
+            glucoseAtDose: 200,
+            glucoseAtPeak: 140,
+            peakOffsetMinutes: 90,
+            iobAtDose: nil,
+            confounders: []
+        )
+        #expect(impact.deltaMgDL == -60)
+    }
 }

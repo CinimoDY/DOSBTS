@@ -63,6 +63,32 @@ private func expectClose(_ actual: Double?, _ expected: Double, tolerance: Doubl
     if let actual { #expect(abs(actual - expected) < tolerance) }
 }
 
+// MARK: - Correction fixtures (empirical ISF — DMNC-1303)
+
+/// A correction impact that qualifies unless one field is overridden to break exactly one
+/// gate. Default: 2 U dose, baseline 200, nadir 140 → ISF = (200 − 140) / 2 = 30 mg/dL/U.
+private func correctionImpact(
+    dose: Double = 2,
+    baseline: Int? = 200,
+    nadir: Int? = 140,
+    confounders: [InsulinConfounder] = [],
+    at timestamp: Date = Date(timeIntervalSince1970: 1_700_000_000)
+) -> InsulinImpact {
+    InsulinImpact.compute(
+        for: InsulinDelivery(starts: timestamp, ends: timestamp, units: dose, type: .correctionBolus),
+        glucoseAtDose: baseline,
+        glucoseAtPeak: nadir,
+        peakOffsetMinutes: 90,
+        iobAtDose: nil,
+        confounders: confounders
+    )
+}
+
+/// A qualifying correction whose ISF is exactly `isf` (dose 2 U, nadir = baseline − 2·isf).
+private func qualifyingCorrection(isf: Double) -> InsulinImpact {
+    correctionImpact(dose: 2, baseline: 200, nadir: 200 - Int(isf * 2))
+}
+
 // MARK: - TDD rules (500 / 1800)
 
 @Suite("RatioEstimator — TDD rules")
@@ -503,5 +529,167 @@ struct RatioEstimatorStatisticsTests {
         expectClose(RatioEstimator.percentile(sorted, 0.25), 10)
         expectClose(RatioEstimator.percentile(sorted, 0.5), 12)
         expectClose(RatioEstimator.percentile(sorted, 0.75), 14)
+    }
+}
+
+// MARK: - Correction exclusion reasons (one test per reason)
+
+@Suite("RatioEstimator — correction exclusion reasons")
+struct RatioEstimatorCorrectionExclusionTests {
+
+    @Test("Qualifying correction yields an ISF and no exclusion")
+    func qualifies() {
+        let scored = RatioEstimator.scoreCorrection(correctionImpact())
+        expectClose(scored.isfMgDLPerUnit, 30) // (200 − 140) / 2 U
+        #expect(scored.exclusion == nil)
+    }
+
+    @Test("Dose under 0.5 U → .tinyDose")
+    func tinyDose() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(dose: 0.25)).exclusion == .tinyDose)
+    }
+
+    @Test("Missing baseline → .noBaseline")
+    func noBaseline() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(baseline: nil)).exclusion == .noBaseline)
+    }
+
+    @Test("Baseline 130 (below the correction floor) → .lowStart")
+    func lowStart() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(baseline: 130)).exclusion == .lowStart)
+    }
+
+    @Test("Carb-bearing meal in the window → .mealInWindow")
+    func mealInWindow() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(confounders: [.mealInWindow])).exclusion == .mealInWindow)
+    }
+
+    @Test("Stacked bolus in the window → .stacked")
+    func stacked() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(confounders: [.stackedBolus(units: 3)])).exclusion == .stacked)
+    }
+
+    @Test("Exercise overlapping the window → .exercise")
+    func exercise() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(confounders: [.exerciseInWindow])).exclusion == .exercise)
+    }
+
+    @Test("Missing nadir (too little CGM coverage) → .noCGM")
+    func noCGM() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(nadir: nil)).exclusion == .noCGM)
+    }
+
+    @Test("Glucose rose (nadir ≥ baseline) → .rose")
+    func rose() {
+        // baseline 150, nadir 170 → delta +20 (glucose did not fall).
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(baseline: 150, nadir: 170)).exclusion == .rose)
+    }
+
+    @Test("ISF above the plausible band → .oddISF")
+    func oddISFHigh() {
+        // dose 0.5, baseline 300, nadir 100 → drop 200, ISF 400 > 200.
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(dose: 0.5, baseline: 300, nadir: 100)).exclusion == .oddISF)
+    }
+
+    @Test("ISF below the plausible band → .oddISF")
+    func oddISFLow() {
+        // dose 10, baseline 200, nadir 195 → drop 5, ISF 0.5 < 10.
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(dose: 10, baseline: 200, nadir: 195)).exclusion == .oddISF)
+    }
+}
+
+// MARK: - Correction boundaries + precedence
+
+@Suite("RatioEstimator — correction boundaries & precedence")
+struct RatioEstimatorCorrectionBoundaryTests {
+
+    private func qualifies(_ impact: InsulinImpact) -> Bool {
+        let scored = RatioEstimator.scoreCorrection(impact)
+        return scored.isfMgDLPerUnit != nil && scored.exclusion == nil
+    }
+
+    @Test("Dose is inclusive at 0.5 U; 0.49 U is a tiny dose")
+    func doseBoundary() {
+        // dose 0.5, baseline 200, nadir 140 → drop 60, ISF 120 (in band).
+        #expect(qualifies(correctionImpact(dose: 0.5, baseline: 200, nadir: 140)))
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(dose: 0.49)).exclusion == .tinyDose)
+    }
+
+    @Test("Baseline is inclusive at 140; 139 is a low start")
+    func baselineBoundary() {
+        // baseline 140, nadir 100 → drop 40, ISF 20.
+        #expect(qualifies(correctionImpact(baseline: 140, nadir: 100)))
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(baseline: 139)).exclusion == .lowStart)
+    }
+
+    @Test("ISF band is inclusive at 10 and 200 mg/dL/U")
+    func isfBoundary() {
+        // ISF 10: dose 6, baseline 200, nadir 140 → drop 60.
+        #expect(qualifies(correctionImpact(dose: 6, baseline: 200, nadir: 140)))
+        // ISF 200: dose 0.5, baseline 200, nadir 100 → drop 100.
+        #expect(qualifies(correctionImpact(dose: 0.5, baseline: 200, nadir: 100)))
+    }
+
+    @Test("Precedence: a tiny dose wins over a missing baseline")
+    func precedence() {
+        #expect(RatioEstimator.scoreCorrection(correctionImpact(dose: 0.25, baseline: nil)).exclusion == .tinyDose)
+    }
+}
+
+// MARK: - Empirical ISF aggregation
+
+@Suite("RatioEstimator — empirical ISF aggregation")
+struct RatioEstimatorCorrectionAggregationTests {
+
+    @Test("Median and P25–P75 spread pinned exactly (ISFs 20/25/30/35/40)")
+    func medianAndSpread() {
+        let evidence = RatioEvidence(
+            tddDays: [],
+            mealObservations: [],
+            correctionImpacts: [20, 25, 30, 35, 40].map { qualifyingCorrection(isf: $0) }
+        )
+        let result = RatioEstimator.estimate(evidence: evidence)
+        expectClose(result.empiricalISFMgDL, 30)
+        #expect(result.empiricalISFSpread != nil)
+        if let spread = result.empiricalISFSpread {
+            expectClose(spread.lowerBound, 25)
+            expectClose(spread.upperBound, 35)
+        }
+    }
+
+    @Test("Four qualifying corrections → nil (below the 5-correction gate)")
+    func belowGate() {
+        let evidence = RatioEvidence(
+            tddDays: [],
+            mealObservations: [],
+            correctionImpacts: [20, 25, 30, 35].map { qualifyingCorrection(isf: $0) }
+        )
+        let result = RatioEstimator.estimate(evidence: evidence)
+        #expect(result.empiricalISFMgDL == nil)
+        #expect(result.empiricalISFSpread == nil)
+    }
+
+    @Test("Five qualifying corrections → value (gate met)")
+    func atGate() {
+        let evidence = RatioEvidence(
+            tddDays: [],
+            mealObservations: [],
+            correctionImpacts: [30, 30, 30, 30, 30].map { qualifyingCorrection(isf: $0) }
+        )
+        let result = RatioEstimator.estimate(evidence: evidence)
+        expectClose(result.empiricalISFMgDL, 30)
+    }
+
+    @Test("Excluded corrections don't count toward the gate")
+    func excludedDoNotCount() {
+        // Four qualifiers plus one no-baseline correction → still below the 5-correction gate.
+        let evidence = RatioEvidence(
+            tddDays: [],
+            mealObservations: [],
+            correctionImpacts: [30, 30, 30, 30].map { qualifyingCorrection(isf: $0) } + [correctionImpact(baseline: nil)]
+        )
+        let result = RatioEstimator.estimate(evidence: evidence)
+        #expect(result.empiricalISFMgDL == nil)
+        #expect(result.scoredCorrections.count == 5) // all candidates still surfaced
     }
 }
