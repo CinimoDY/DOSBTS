@@ -347,7 +347,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         
     case .exportToGlooko:
         state.appIsBusy = true
-        
+
+    case .generateClinicReport:
+        state.appIsBusy = true
+
     case .sendFile(fileURL: _):
         state.appIsBusy = false
         

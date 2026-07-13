@@ -239,6 +239,7 @@ private func createSimulatorAppStore() -> DirectStore {
         screenLockMiddleware(),
         sensorErrorMiddleware(),
         storeExportMiddleware(),
+        clinicReportMiddleware(),
         claudeMiddleware()
     ]
 
@@ -292,6 +293,7 @@ private func createAppStore() -> DirectStore {
         screenLockMiddleware(),
         sensorErrorMiddleware(),
         storeExportMiddleware(),
+        clinicReportMiddleware(),
         claudeMiddleware()
     ]
 
