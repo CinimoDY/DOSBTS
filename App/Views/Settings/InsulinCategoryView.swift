@@ -41,7 +41,7 @@ private struct InsulinEntrySection: View {
                     Toggle("Show insulin input", isOn: showInsulinInput).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                 },
                 header: {
-                    Label("Logging", systemImage: "square.and.pencil")
+                    Label("Logging", systemImage: "square.and.pencil").dosHeader()
                 }
             )
         }

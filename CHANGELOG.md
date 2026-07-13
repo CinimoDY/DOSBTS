@@ -12,6 +12,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 - Ratio Lab now shows a YOUR CORRECTIONS card estimating your correction factor (ISF) from your own clean correction boluses — with a CORRECTIONS evidence table whose dimmed rows teach what a clean correction is (no food, exercise, or stacked insulin nearby). Reference only — no dose advice. — DMNC-1303
 - Clinic Report (Settings → Glucose & Display → Clinic Report): generate a clinician-ready PDF or CSV summary over 14 / 30 / 90 days — core stats (avg, SD, CV, GMI), consensus time-in-range (70–180 mg/dL), a 24-hour daily glucose pattern, and event counts (meals, boluses by type, basal, hypo episodes) — shared via the system share sheet. Pseudonymous and reference-only. — DMNC-1304
 
+### Changed
+- Settings, statistics, and entry-sheet section headers now use the canonical DOS header style — DMNC-1406
+
 ## [Build 129] — 2026-07-04
 
 ### Changed

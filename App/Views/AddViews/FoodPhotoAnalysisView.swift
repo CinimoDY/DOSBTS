@@ -257,6 +257,7 @@ struct FoodPhotoAnalysisView: View {
                 } icon: {
                     AppleIcon().frame(width: 16, height: 16)
                 }
+                .dosHeader()
             },
             footer: {
                 VStack(alignment: .leading, spacing: 4) {
@@ -351,7 +352,7 @@ struct FoodPhotoAnalysisView: View {
                     }
                 },
                 header: {
-                    Label("Nutrition", systemImage: "chart.bar")
+                    Label("Nutrition", systemImage: "chart.bar").dosHeader()
                 }
             )
             .onAppear {
@@ -425,7 +426,7 @@ struct FoodPhotoAnalysisView: View {
                         }
                     },
                     header: {
-                        Label("Portion", systemImage: "scalemass")
+                        Label("Portion", systemImage: "scalemass").dosHeader()
                     }
                 )
             }
@@ -449,6 +450,7 @@ struct FoodPhotoAnalysisView: View {
                     } icon: {
                         AppleIcon().frame(width: 16, height: 16)
                     }
+                    .dosHeader()
                 }
             )
 
@@ -480,7 +482,7 @@ struct FoodPhotoAnalysisView: View {
                     }
                 },
                 header: {
-                    Label("Food items — tap to edit", systemImage: "list.bullet")
+                    Label("Food items — tap to edit", systemImage: "list.bullet").dosHeader()
                 }
             )
 
@@ -520,7 +522,7 @@ struct FoodPhotoAnalysisView: View {
                         }
                     },
                     header: {
-                        Label("Clarify", systemImage: "questionmark.bubble")
+                        Label("Clarify", systemImage: "questionmark.bubble").dosHeader()
                     }
                 )
             } else if followUpRoundsUsed >= 3 {
@@ -543,7 +545,7 @@ struct FoodPhotoAnalysisView: View {
                     }
                 },
                 header: {
-                    Label("Confidence", systemImage: "gauge")
+                    Label("Confidence", systemImage: "gauge").dosHeader()
                 }
             )
 

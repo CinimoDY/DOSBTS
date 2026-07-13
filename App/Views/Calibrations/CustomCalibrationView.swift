@@ -63,7 +63,7 @@ struct CustomCalibrationView: View {
                     }
                 },
                 header: {
-                    Label("Sensor custom calibration", systemImage: "person")
+                    Label("Sensor custom calibration", systemImage: "person").dosHeader()
                 }
             ).onAppear {
                 DirectLog.info("onAppear")

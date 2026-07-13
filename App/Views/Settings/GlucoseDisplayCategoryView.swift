@@ -93,7 +93,7 @@ private struct DisplaySettingsSection: View {
                 .padding(.vertical, 4)
             },
             header: {
-                Label("Display", systemImage: "display")
+                Label("Display", systemImage: "display").dosHeader()
             }
         )
     }

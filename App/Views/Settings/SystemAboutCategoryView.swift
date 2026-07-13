@@ -55,7 +55,7 @@ private struct DigestReminderSection: View {
                 .padding(.vertical, 4)
             },
             header: {
-                Label("Notifications", systemImage: "bell.badge")
+                Label("Notifications", systemImage: "bell.badge").dosHeader()
             }
         )
     }

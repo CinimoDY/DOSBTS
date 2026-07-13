@@ -31,7 +31,7 @@ struct HealthImportSourcesView: View {
                         }
                     },
                     header: {
-                        Text("Toggle which apps to import from")
+                        Text("Toggle which apps to import from").dosHeader()
                     }
                 )
             }

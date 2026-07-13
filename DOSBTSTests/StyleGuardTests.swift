@@ -216,4 +216,30 @@ struct StyleGuardTests {
         let hits = try Self.scan(rule)
         #expect(hits.isEmpty, "All raw color literals live in AmberTheme.swift — add a token there:\n\(Self.report(hits))")
     }
+
+    // Bespoke (not the line-based `Rule` machinery): the ban is a NEGATIVE cross-line
+    // condition — a `header: {` Section-header closure WITHOUT a `.dosHeader(` nearby.
+    // The line-based scanner can't express that, so this walks a small window (the header
+    // line + the following lines) and flags any header closure that never styles its
+    // content. The window covers every real site shape found (Label/Text on the next line,
+    // sometimes with a trailing modifier or a multi-line custom Label). Exemptions: none —
+    // the goal is zero unstyled Section headers. Scoped to `App` (Library/Widgets don't
+    // build List sections this way).
+    @Test("Rule 9 — Section headers use .dosHeader()")
+    func rule9_sectionHeadersUseDosHeader() throws {
+        let windowSize = 8
+        var hits: [Hit] = []
+        for url in Self.swiftFiles(in: "App") {
+            let relative = Self.relativePath(of: url)
+            let lines = try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+            for (index, line) in lines.enumerated()
+                where line.contains("header: {") && !Self.isCommentLine(line) {
+                let window = lines[index ..< min(index + windowSize, lines.count)]
+                if !window.contains(where: { $0.contains(".dosHeader(") }) {
+                    hits.append(Hit(file: relative, line: index + 1, text: line.trimmingCharacters(in: .whitespaces)))
+                }
+            }
+        }
+        #expect(hits.isEmpty, "Section headers must render through .dosHeader():\n\(Self.report(hits))")
+    }
 }

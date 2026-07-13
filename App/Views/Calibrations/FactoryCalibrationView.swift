@@ -51,7 +51,7 @@ struct FactoryCalibrationView: View {
                     }
                 },
                 header: {
-                    Label("Sensor factory calibration", systemImage: "building")
+                    Label("Sensor factory calibration", systemImage: "building").dosHeader()
                 }
             )
         }

@@ -47,7 +47,7 @@ struct AISettingsView: View {
                 }
             },
             header: {
-                Label("AI settings", systemImage: "brain")
+                Label("AI settings", systemImage: "brain").dosHeader()
             },
             footer: {
                 VStack(alignment: .leading, spacing: 4) {
@@ -81,7 +81,7 @@ struct AISettingsView: View {
                     }
                 },
                 header: {
-                    Label("Portion size calibration", systemImage: "hand.raised.fingers.spread")
+                    Label("Portion size calibration", systemImage: "hand.raised.fingers.spread").dosHeader()
                 },
                 footer: {
                     Text("Measure the widest part of your thumb at the joint just below the nail. When taking food photos, hold your thumb next to the food for more accurate portion estimates.")
@@ -126,7 +126,7 @@ struct AISettingsView: View {
                     }
                 },
                 header: {
-                    Label("AI consent", systemImage: "hand.raised")
+                    Label("AI consent", systemImage: "hand.raised").dosHeader()
                 }
             )
         }
