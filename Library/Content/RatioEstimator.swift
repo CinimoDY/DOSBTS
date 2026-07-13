@@ -63,6 +63,16 @@ struct MealObservation: Equatable {
 struct RatioEvidence: Equatable {
     let tddDays: [TDDDay]
     let mealObservations: [MealObservation]
+    /// Correction-bolus impacts (dose + baseline + post-dose nadir + confounders) for
+    /// empirical-ISF estimation. Defaulted so the pre-existing 2-arg constructions (the
+    /// middleware fallbacks and the whole test suite) keep compiling unchanged. — DMNC-1303
+    let correctionImpacts: [InsulinImpact]
+
+    init(tddDays: [TDDDay], mealObservations: [MealObservation], correctionImpacts: [InsulinImpact] = []) {
+        self.tddDays = tddDays
+        self.mealObservations = mealObservations
+        self.correctionImpacts = correctionImpacts
+    }
 }
 
 // MARK: - MealExclusionReason
@@ -135,6 +145,13 @@ struct RatioEstimates: Equatable {
     let empiricalICRSpread: ClosedRange<Double>?
     /// All candidate meals, scored — for the evidence table.
     let scoredObservations: [ScoredMealObservation]
+    /// Empirical ISF (mg/dL drop per unit) = median over qualifying clean corrections;
+    /// `nil` until ≥`minQualifyingCorrections`. Stored in mg/dL; the view converts for display. — DMNC-1303
+    let empiricalISFMgDL: Double?
+    /// P25–P75 spread (mg/dL/U) of the qualifying correction ISFs; `nil` when `empiricalISFMgDL` is `nil`.
+    let empiricalISFSpread: ClosedRange<Double>?
+    /// All candidate corrections, scored — for the CORRECTIONS evidence table.
+    let scoredCorrections: [ScoredCorrectionObservation]
 }
 
 // MARK: - RatioEstimator
@@ -181,6 +198,32 @@ enum RatioEstimator {
     /// the most-recent N are selected by the loader.
     static let maxConfoundedEvidenceRows: Int = 3
 
+    // MARK: Correction thresholds (empirical ISF; test-pinned — DMNC-1303)
+
+    /// Post-dose effect window (min): the nadir is searched in [t+`correctionNadirStartMinutes`, t+this].
+    static let correctionEffectWindowMinutes: Int = 240
+    /// Earliest the correction's effect is read (min) — before this the drop hasn't developed.
+    static let correctionNadirStartMinutes: Int = 30
+    /// Minimum correction dose (U) to attribute an ISF to.
+    static let correctionMinDoseUnits: Double = 0.5
+    /// Baseline is the CGM reading nearest the dose within ±this (min).
+    static let correctionBaselineToleranceMinutes: Int = 10
+    /// Below this baseline (mg/dL) a "correction" is really a low — excluded (rescue-carb territory).
+    static let correctionMinStartMgDL: Int = 140
+    /// Minimum CGM readings in the effect window to trust the nadir.
+    static let correctionMinReadings: Int = 8
+    /// A carb-bearing meal within [t-`correctionMealLookbackMinutes`, t+effectWindow] confounds the drop.
+    static let correctionMealLookbackMinutes: Int = 120
+    /// Another bolus within [t-`correctionStackLookbackMinutes`, t+effectWindow] confounds attribution.
+    static let correctionStackLookbackMinutes: Int = 180
+    /// Plausible per-observation ISF band (mg/dL/U); outside → excluded as implausible.
+    static let correctionMinISF: Double = 10
+    static let correctionMaxISF: Double = 200
+    /// Minimum qualifying corrections before the empirical ISF is surfaced.
+    static let minQualifyingCorrections: Int = 5
+    /// Score at most the most-recent N corrections (bounds per-candidate glucose reads).
+    static let maxCorrectionCandidates: Int = 20
+
     // MARK: Estimation
 
     static func estimate(evidence: RatioEvidence) -> RatioEstimates {
@@ -211,6 +254,20 @@ enum RatioEstimator {
             empiricalICRSpread = nil
         }
 
+        // --- Empirical ISF (mg/dL drop per unit over clean corrections) ---
+        let scoredCorrections = scoreCorrections(evidence.correctionImpacts)
+        let qualifyingISFs = scoredCorrections.compactMap { $0.isfMgDLPerUnit }.sorted()
+
+        let empiricalISFMgDL: Double?
+        let empiricalISFSpread: ClosedRange<Double>?
+        if qualifyingISFs.count >= minQualifyingCorrections {
+            empiricalISFMgDL = percentile(qualifyingISFs, 0.5)
+            empiricalISFSpread = percentile(qualifyingISFs, 0.25)...percentile(qualifyingISFs, 0.75)
+        } else {
+            empiricalISFMgDL = nil
+            empiricalISFSpread = nil
+        }
+
         return RatioEstimates(
             averageTDD: averageTDD,
             qualifyingDayCount: qualifyingDayCount,
@@ -218,7 +275,10 @@ enum RatioEstimator {
             eighteenHundredRuleISFMgDL: eighteenHundredRuleISFMgDL,
             empiricalICR: empiricalICR,
             empiricalICRSpread: empiricalICRSpread,
-            scoredObservations: scored
+            scoredObservations: scored,
+            empiricalISFMgDL: empiricalISFMgDL,
+            empiricalISFSpread: empiricalISFSpread,
+            scoredCorrections: scoredCorrections
         )
     }
 
@@ -272,6 +332,54 @@ enum RatioEstimator {
         }
 
         return ScoredMealObservation(observation: observation, ratio: ratio, exclusion: nil)
+    }
+
+    // MARK: Correction scoring (empirical ISF — DMNC-1303)
+
+    /// Score every candidate correction. The loader gathers (baseline, nadir, coverage,
+    /// confounders); this pure function judges — the same split as the meal path.
+    static func scoreCorrections(_ impacts: [InsulinImpact]) -> [ScoredCorrectionObservation] {
+        impacts.map(scoreCorrection(_:))
+    }
+
+    /// Score a single correction against the qualification ladder (first failing gate wins,
+    /// so the teaching tag points at the earliest unmet requirement). Numeric gates read the
+    /// impact's own fields; the three external confounders (meal / stacked bolus / exercise)
+    /// are read from the loader-populated `confounders`. A too-sparse effect window is encoded
+    /// by the loader as a `nil` nadir (`glucoseAtPeak`), surfaced here as `.noCGM`.
+    static func scoreCorrection(_ impact: InsulinImpact) -> ScoredCorrectionObservation {
+        func excluded(_ reason: CorrectionExclusionReason) -> ScoredCorrectionObservation {
+            ScoredCorrectionObservation(impact: impact, isfMgDLPerUnit: nil, exclusion: reason)
+        }
+
+        // 1 — dose large enough to attribute an ISF.
+        if impact.dose.units < correctionMinDoseUnits { return excluded(.tinyDose) }
+
+        // 2 — baseline present.
+        guard let baseline = impact.glucoseAtDose else { return excluded(.noBaseline) }
+
+        // 3 — started high enough that a correction (not a rescue) is the right frame.
+        if baseline < correctionMinStartMgDL { return excluded(.lowStart) }
+
+        // 4 / 5 / 6 — external confounders detected by the loader.
+        if impact.confounders.contains(.mealInWindow) { return excluded(.mealInWindow) }
+        if impact.confounders.contains(where: { if case .stackedBolus = $0 { return true }; return false }) {
+            return excluded(.stacked)
+        }
+        if impact.confounders.contains(.exerciseInWindow) { return excluded(.exercise) }
+
+        // 7 — enough CGM coverage to trust the nadir (loader nils the peak below the gate).
+        guard let nadir = impact.glucoseAtPeak else { return excluded(.noCGM) }
+
+        // 8 — glucose actually fell.
+        let delta = nadir - baseline // negative when the correction worked
+        if delta >= 0 { return excluded(.rose) }
+
+        // 9 — plausible ISF (mg/dL drop per unit).
+        let isf = Double(-delta) / impact.dose.units
+        if isf < correctionMinISF || isf > correctionMaxISF { return excluded(.oddISF) }
+
+        return ScoredCorrectionObservation(impact: impact, isfMgDLPerUnit: isf, exclusion: nil)
     }
 
     // MARK: Evidence builders (pure; wired by the WP-R2 DataStore/middleware)

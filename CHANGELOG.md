@@ -9,6 +9,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ### Added
 - Add Insulin sheet shows your saved Ratio Lab reference (`REF RATIO 1:X — SET IN RATIO LAB`) as a passive info line for meal/snack boluses — DMNC-1302
+- Ratio Lab now shows a YOUR CORRECTIONS card estimating your correction factor (ISF) from your own clean correction boluses — with a CORRECTIONS evidence table whose dimmed rows teach what a clean correction is (no food, exercise, or stacked insulin nearby). Reference only — no dose advice. — DMNC-1303
 
 ## [Build 129] — 2026-07-04
 
