@@ -37,6 +37,16 @@ struct AddInsulinView: View {
                 VStack(alignment: .leading, spacing: DOSSpacing.lg) {
                     typeRow
                     unitsRow
+
+                    // Surface the Ratio Lab reference ICR (if the user has saved one)
+                    // at the moment it's educationally relevant — carb-bolus entry.
+                    // Display-only: never computes units, reads the entered value,
+                    // or suggests a dose. Hidden for correction/basal (ICR-irrelevant).
+                    if let confirmedICR = store.state.confirmedICR,
+                       insulinType == .mealBolus || insulinType == .snackBolus {
+                        referenceRatioLine(confirmedICR)
+                    }
+
                     timeRow
 
                     if insulinType == .basal {
@@ -157,6 +167,28 @@ struct AddInsulinView: View {
         .overlay(
             Rectangle()
                 .stroke(AmberTheme.amber.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    // Passive reference-ratio line: the confirmed Ratio Lab ICR, styled as
+    // information (dim amberDark + surfaceTint fill), NOT a warning like iobWarning.
+    // No tap action, no math against the entered units — deliberately non-imperative.
+    private func referenceRatioLine(_ icr: Double) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "function")
+                .foregroundStyle(AmberTheme.amberDark)
+                .frame(height: 14)
+            Text("REF RATIO \(RatioEstimator.icrLabel(icr)) — SET IN RATIO LAB")
+                .font(DOSTypography.caption)
+                .foregroundStyle(AmberTheme.amberDark)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(AmberTheme.surfaceTint)
+        .overlay(
+            Rectangle()
+                .stroke(AmberTheme.borderSubtle, lineWidth: 1)
         )
     }
 
