@@ -11,7 +11,10 @@
 #   ASC_KEY_ID     the key id
 #   ASC_ISSUER_ID  the issuer id
 #   ASC_APP_ID     the numeric App Store Connect app id
-# Optional: EDITOR (default vi), CHANGELOG (default CHANGELOG.md).
+# Optional: EDITOR (default vi), CHANGELOG (default CHANGELOG.md),
+#           MAX_BUILD_AGE (recency window in seconds; default 1800 — widen for a late re-run),
+#           ASC_BUILD_NUMBER (target a specific build number directly, ignoring recency — the
+#                             robust path when running well after the deploy, e.g. 130).
 #
 set -euo pipefail
 
@@ -35,7 +38,11 @@ API="https://api.appstoreconnect.apple.com/v1"
 # Caveat: two deploys inside this window, with notes run before the 2nd registers,
 # could match the 1st — re-run once the intended build is the newest.
 RUN_START="$(date -u +%s)"
-MAX_BUILD_AGE=1800  # 30 min: covers upload->registration + clock skew, excludes prior deploys
+# Overridable so a standalone/late re-run can widen (or, via ASC_BUILD_NUMBER, ignore) the window.
+MAX_BUILD_AGE="${MAX_BUILD_AGE:-1800}"  # 30 min default: covers upload->registration + clock skew, excludes prior deploys
+# When set, target this exact build number and ignore recency — the robust path for a late
+# standalone run (the newest build is accepted only when its version equals this).
+ASC_BUILD_NUMBER="${ASC_BUILD_NUMBER:-}"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 not found (needed for JWT signing + JSON)." >&2
@@ -135,7 +142,11 @@ json_get() { python3 -c "$1" 2>/dev/null || true; }
 # Newest build for the app, accepted only when uploaded within MAX_BUILD_AGE of
 # this run (see RUN_START note). NB: /v1/builds does NOT support filter[platform]
 # (ASC returns 400 PARAMETER_ERROR.INVALID) — filter by app only.
-echo "==> Waiting for our just-uploaded build to register in App Store Connect (up to ~15 min)..."
+if [ -n "$ASC_BUILD_NUMBER" ]; then
+  echo "==> Targeting build $ASC_BUILD_NUMBER directly (recency ignored); waiting for it to be the newest in App Store Connect (up to ~15 min)..."
+else
+  echo "==> Waiting for our just-uploaded build to register in App Store Connect (up to ~15 min)..."
+fi
 BUILD_QUERY="filter%5Bapp%5D=$ASC_APP_ID&sort=-uploadedDate&limit=1"
 BUILD_ID=""
 BUILD_VERSION=""
@@ -144,7 +155,7 @@ for _ in $(seq 1 30); do
   # Take the newest build, but only if its uploadedDate is recent enough to be
   # this deploy's — otherwise it's a prior deploy, so keep polling for ours to
   # register. Emits "id|version" so we can reconcile the notes header below.
-  MATCH="$(printf '%s' "$RESP" | RUN_START="$RUN_START" MAX_AGE="$MAX_BUILD_AGE" json_get '
+  MATCH="$(printf '%s' "$RESP" | RUN_START="$RUN_START" MAX_AGE="$MAX_BUILD_AGE" WANT_VER="$ASC_BUILD_NUMBER" json_get '
 import sys, json, os
 from datetime import datetime
 d = json.load(sys.stdin)
@@ -155,6 +166,12 @@ b = data[0]
 bid = b.get("id", "")
 ver = (b.get("attributes") or {}).get("version") or ""
 out = (bid + "|" + ver) if bid else ""
+want = os.environ.get("WANT_VER") or ""
+if want:
+    # Direct target: accept the newest build only when it IS the requested number,
+    # ignoring uploadedDate. Fails safe (keeps polling) if a different build is newest.
+    print(out if ver == want else "")
+    raise SystemExit
 uploaded = (b.get("attributes") or {}).get("uploadedDate")
 if not uploaded:
     print(out); raise SystemExit  # no date -> best effort, accept newest
@@ -173,7 +190,11 @@ print(out if age <= float(os.environ["MAX_AGE"]) else "")')"
 done
 
 if [ -z "$BUILD_ID" ]; then
-  echo "ERROR: no recently-uploaded build registered in App Store Connect within the timeout. Re-run later." >&2
+  if [ -n "$ASC_BUILD_NUMBER" ]; then
+    echo "ERROR: build $ASC_BUILD_NUMBER did not appear as the newest in App Store Connect within the timeout." >&2
+  else
+    echo "ERROR: no recently-uploaded build registered in App Store Connect within the timeout. Re-run later." >&2
+  fi
   exit 1
 fi
 echo "==> Found build ${BUILD_VERSION:-?} (id $BUILD_ID)."
