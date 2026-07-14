@@ -115,30 +115,21 @@ extension ConsolidatedMarkerGroup {
         let bolus = markers.filter { $0.type == .bolus }
         if !bolus.isEmpty {
             let total = bolus.reduce(0.0) { $0 + $1.rawValue }
-            let label = bolus.count > 1
-                ? "\(formatMarkerUnits(total))×\(bolus.count)"
-                : formatMarkerUnits(total)
-            insulin.append(MarkerChipSegment(type: .bolus, label: label))
+            insulin.append(MarkerChipSegment(type: .bolus, label: formatMarkerUnits(total)))
         }
 
         let correction = markers.filter { $0.type == .correction }
         if !correction.isEmpty {
             let total = correction.reduce(0.0) { $0 + $1.rawValue }
             // "c" suffix distinguishes correction from meal/snack bolus (same filled-syringe icon)
-            let label = correction.count > 1
-                ? "\(formatMarkerUnits(total))c×\(correction.count)"
-                : "\(formatMarkerUnits(total))c"
-            insulin.append(MarkerChipSegment(type: .correction, label: label))
+            insulin.append(MarkerChipSegment(type: .correction, label: "\(formatMarkerUnits(total))c"))
         }
 
         let basal = markers.filter { $0.type == .basal }
         if !basal.isEmpty {
             let total = basal.reduce(0.0) { $0 + $1.rawValue }
             // "b" suffix distinguishes basal (long-acting) within the shared insulin row
-            let label = basal.count > 1
-                ? "\(formatMarkerUnits(total))b×\(basal.count)"
-                : "\(formatMarkerUnits(total))b"
-            insulin.append(MarkerChipSegment(type: .basal, label: label))
+            insulin.append(MarkerChipSegment(type: .basal, label: "\(formatMarkerUnits(total))b"))
         }
 
         if let lead = insulin.first {
@@ -152,20 +143,14 @@ extension ConsolidatedMarkerGroup {
         if !meals.isEmpty {
             let total = meals.reduce(0.0) { $0 + $1.rawValue }
             let prefix = isScored ? "★" : ""  // ★ marks meals with a glycemic impact score
-            let label = meals.count > 1
-                ? "\(prefix)\(Int(total))g×\(meals.count)"
-                : "\(prefix)\(Int(total))g"
-            rows.append(MarkerChipRow(leadType: .meal, segments: [MarkerChipSegment(type: .meal, label: label)]))
+            rows.append(MarkerChipRow(leadType: .meal, segments: [MarkerChipSegment(type: .meal, label: "\(prefix)\(Int(total))g")]))
         }
 
         // ---- Exercise lane ----
         let exercise = markers.filter { $0.type == .exercise }
         if !exercise.isEmpty {
             let total = exercise.reduce(0.0) { $0 + $1.rawValue }
-            let label = exercise.count > 1
-                ? "\(Int(total))m×\(exercise.count)"
-                : "\(Int(total))m"
-            rows.append(MarkerChipRow(leadType: .exercise, segments: [MarkerChipSegment(type: .exercise, label: label)]))
+            rows.append(MarkerChipRow(leadType: .exercise, segments: [MarkerChipSegment(type: .exercise, label: "\(Int(total))m")]))
         }
 
         return rows

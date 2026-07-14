@@ -98,10 +98,52 @@ struct MarkerChipRowTests {
         #expect(g.chipRows(isScored: true)[0].segments[0].label == "★45g")
     }
 
-    @Test("multiple boluses collapse to a total with a count suffix")
-    func multipleBolusesCollapse() {
+    @Test("multiple boluses show the clean summed total (no ×N)")
+    func multipleBolusesSumClean() {
         let rows = group([mk(.bolus, 4), mk(.bolus, 6)]).chipRows(isScored: false)
-        #expect(rows[0].segments[0].label == "10U×2")
+        #expect(rows[0].segments[0].label == "10U")
+    }
+
+    @Test("multiple corrections sum within type (no ×N)")
+    func multipleCorrectionsSumClean() {
+        let rows = group([mk(.correction, 2), mk(.correction, 1.5)]).chipRows(isScored: false)
+        #expect(rows[0].segments == [MarkerChipSegment(type: .correction, label: "3.5Uc")])
+    }
+
+    @Test("multiple basal entries sum within type (no ×N)")
+    func multipleBasalSumClean() {
+        let rows = group([mk(.basal, 10), mk(.basal, 8)]).chipRows(isScored: false)
+        #expect(rows[0].segments == [MarkerChipSegment(type: .basal, label: "18Ub")])
+    }
+
+    @Test("mixed insulin sums each type separately, no ×N on any segment")
+    func mixedInsulinSumsPerType() {
+        // 2 boluses (5+3), 2 corrections (1+1), 1 basal (10)
+        let rows = group([
+            mk(.bolus, 5), mk(.bolus, 3),
+            mk(.correction, 1), mk(.correction, 1),
+            mk(.basal, 10),
+        ]).chipRows(isScored: false)
+        #expect(rows.count == 1)
+        #expect(rows[0].segments.map(\.label) == ["8U", "2Uc", "10Ub"])
+    }
+
+    @Test("multiple meals sum carbs to a clean total (no ×N)")
+    func multipleMealsSumClean() {
+        let rows = group([mk(.meal, 20), mk(.meal, 25), mk(.meal, 15)]).chipRows(isScored: false)
+        #expect(rows[0].segments[0].label == "60g")
+    }
+
+    @Test("scored multi-meal group keeps the ★ prefix on the clean total")
+    func scoredMultipleMealsSumClean() {
+        let rows = group([mk(.meal, 20), mk(.meal, 40)]).chipRows(isScored: true)
+        #expect(rows[0].segments[0].label == "★60g")
+    }
+
+    @Test("multiple exercise entries sum minutes to a clean total (no ×N)")
+    func multipleExerciseSumClean() {
+        let rows = group([mk(.exercise, 30), mk(.exercise, 15)]).chipRows(isScored: false)
+        #expect(rows.last?.segments[0].label == "45m")
     }
 
     @Test("fractional units render with one decimal place")
