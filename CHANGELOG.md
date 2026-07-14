@@ -7,6 +7,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 131] — 2026-07-14
+
 ### Changed
 - Chart event markers that group multiple entries now show the clean accumulated total (e.g. `60g`, `8U`) instead of a `×N` count — carbs summed for meals, insulin summed per type (bolus / correction / basal kept separate)
 
