@@ -135,11 +135,50 @@ struct MarkerConsolidationTests {
         #expect(result.isEmpty)
     }
 
+    // MARK: 64pt merge-threshold floor (fixed 88pt touch targets)
+
+    @Test("merge threshold floor is pinned at the legacy 64pt")
+    func mergeFloorPinned() {
+        #expect(ConsolidatedMarkerGroup.minMergeDistance == 64)
+    }
+
+    @Test("two narrow 40pt chips at 45pt separation merge — the floor overrides the content-aware threshold")
+    func narrowChipsFloorMerge() {
+        // avg width + gap = (40+40)/2 + 4 = 44 < 45 would keep them separate,
+        // but each chip carries a fixed 88pt centered touch target: unmerged at
+        // 45pt, the later sibling's hit rect would cover the earlier chip's
+        // visible half (tap on "5U" opens the neighbor's sheet). The 64pt floor
+        // (legacy 60 + 4) caps hit-rect overlap at what main already shipped.
+        let groups = [singleGroup("a", minute: 0), singleGroup("b", minute: 45)]
+        let result = ConsolidatedMarkerGroup.consolidateByOverlap(
+            groups, xFor: xFor(scale: 1), estimatedWidth: constantWidth(40), minGap: 4
+        )
+        #expect(result.count == 1)
+        #expect(result[0].markers.count == 2)
+    }
+
+    // MARK: equality contract (stale-chip guard)
+
+    @Test("groups with the same id but different marker counts are NOT equal (accretion must re-render)")
+    func equalityIncludesMarkerCount() {
+        // Merges preserve the first-in-cluster id, so a new entry accreting
+        // into an on-screen cluster keeps the id but grows markers — id-only
+        // equality would let SwiftUI skip re-rendering the summed label.
+        let one = singleGroup("a", minute: 0)
+        let two = ConsolidatedMarkerGroup(
+            id: one.id, time: one.time,
+            markers: one.markers + singleGroup("b", minute: 1).markers
+        )
+        #expect(one != two)
+        #expect(one == ConsolidatedMarkerGroup(id: one.id, time: one.time.addingTimeInterval(60), markers: one.markers))
+    }
+
     // MARK: merge distance uses the average of the two half-widths (design pin)
 
     @Test("merge threshold is the average of the two chips' widths plus gap")
     func mergeThresholdAveragesWidths() {
-        // wide=100, narrow=40, gap=4 → mergeDistance (100+40)/2 + 4 = 74pt.
+        // wide=100, narrow=40, gap=4 → mergeDistance (100+40)/2 + 4 = 74pt
+        // (above the 64pt floor, so the content-aware threshold governs).
         let wide = singleGroup("wide", minute: 0)
         func widthByContent(_ g: ConsolidatedMarkerGroup) -> CGFloat {
             g.id == "group-wide" ? 100 : 40
@@ -179,7 +218,7 @@ struct ChipWidthEstimateTests {
     @Test("layout constants are pinned")
     func constantsPinned() {
         #expect(ConsolidatedMarkerGroup.chipMonoCharWidth == 7)
-        #expect(ConsolidatedMarkerGroup.chipIconWidth == 12)
+        #expect(ConsolidatedMarkerGroup.chipIconWidth == 14)
         #expect(ConsolidatedMarkerGroup.chipIconTextGap == 4)
         #expect(ConsolidatedMarkerGroup.chipHorizontalPadding == 5)
     }
@@ -187,8 +226,8 @@ struct ChipWidthEstimateTests {
     @Test("a single 5U chip estimates narrower than the 60pt default")
     func singleChipUnderDefault() {
         let width = group([mk(.bolus, 5)]).estimatedChipWidth(isScored: false)
-        // icon 12 + 1 gap (4) + "5U" 2 chars × 7 (14) + 2 × padding 5 (10) = 40
-        #expect(width == 40)
+        // icon 14 + 1 gap (4) + "5U" 2 chars × 7 (14) + 2 × padding 5 (10) = 42
+        #expect(width == 42)
         #expect(width < 60)
     }
 
@@ -199,8 +238,9 @@ struct ChipWidthEstimateTests {
             mk(.meal, 60), mk(.exercise, 45),
         ]).estimatedChipWidth(isScored: true)
         // widest row = insulin "8U"+"2Uc"+"10Ub" = 9 chars, 3 gaps:
-        // 12 + 3×4 (12) + 9×7 (63) + 10 = 97
-        #expect(width == 97)
+        // 14 + 3×4 (12) + 9×7 (63) + 10 = 99
+        // (scored meal row "★60g" = 5 effective chars → 14 + 4 + 35 + 10 = 63)
+        #expect(width == 99)
         #expect(width > 60)
     }
 
@@ -222,11 +262,12 @@ struct ChipWidthEstimateTests {
         #expect(long > short)
     }
 
-    @Test("the ★ score prefix widens the meal chip by one character")
+    @Test("the ★ score prefix widens the meal chip by two mono characters")
     func scorePrefixWidens() {
+        // ★ renders from a fallback font wider than one mono advance → counts as 2.
         let g = group([mk(.meal, 60)])
         let plain = g.estimatedChipWidth(isScored: false)   // "60g"  (3 chars)
-        let scored = g.estimatedChipWidth(isScored: true)   // "★60g" (4 chars)
-        #expect(scored == plain + ConsolidatedMarkerGroup.chipMonoCharWidth)
+        let scored = g.estimatedChipWidth(isScored: true)   // "★60g" (3 + 2 effective chars)
+        #expect(scored == plain + 2 * ConsolidatedMarkerGroup.chipMonoCharWidth)
     }
 }

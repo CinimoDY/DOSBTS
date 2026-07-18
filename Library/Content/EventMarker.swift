@@ -60,8 +60,14 @@ struct ConsolidatedMarkerGroup: Identifiable {
 }
 
 extension ConsolidatedMarkerGroup: Equatable {
+    /// Identity plus marker count. Merges preserve the first-in-cluster `id`
+    /// (stable sheet identity), so a new entry accreting into an on-screen
+    /// cluster changes `markers` but NOT `id` — an id-only `==` would let
+    /// SwiftUI's diff see "equal" and skip re-rendering the summed chip label.
+    /// Comparing `markers.count` too is cheap and catches accretion; marker
+    /// contents beyond the count are deliberately not compared.
     static func == (lhs: ConsolidatedMarkerGroup, rhs: ConsolidatedMarkerGroup) -> Bool {
-        lhs.id == rhs.id
+        lhs.id == rhs.id && lhs.markers.count == rhs.markers.count
     }
 }
 
@@ -174,7 +180,7 @@ extension ConsolidatedMarkerGroup {
     /// so chips err on merging a hair early rather than overlapping. Pinned in
     /// `MarkerConsolidationTests`.
     static let chipMonoCharWidth: CGFloat = 7      // ~advance of 11pt SF Mono semibold
-    static let chipIconWidth: CGFloat = 12         // leading icon glyph box
+    static let chipIconWidth: CGFloat = 14         // leading icon glyph box (SF Symbols exceed their 11pt point size)
     static let chipIconTextGap: CGFloat = 4        // FlagView HStack spacing (icon↔text, text↔text)
     static let chipHorizontalPadding: CGFloat = 5  // FlagView .padding(.horizontal, 5), per side
 
@@ -182,8 +188,12 @@ extension ConsolidatedMarkerGroup {
         let rows = chipRows(isScored: isScored)
         // Width of the widest row: leading icon + one HStack gap per child
         // boundary (icon→seg0, seg0→seg1, …) + the summed label characters.
+        // "★" renders from a fallback font wider than one mono advance, so it
+        // counts as 2 characters.
         let widestRow = rows.map { row -> CGFloat in
-            let labelChars = row.segments.reduce(0) { $0 + $1.label.count }
+            let labelChars = row.segments.reduce(0) { sum, seg in
+                sum + seg.label.reduce(0) { $0 + ($1 == "★" ? 2 : 1) }
+            }
             // children = 1 icon + segments.count texts → segments.count gaps
             let gaps = CGFloat(row.segments.count) * Self.chipIconTextGap
             return Self.chipIconWidth + gaps + CGFloat(labelChars) * Self.chipMonoCharWidth
@@ -204,6 +214,17 @@ extension ConsolidatedMarkerGroup {
     /// A merged group keeps the earlier group's `id` (so sheet identity doesn't
     /// churn across re-renders), concatenates markers, and re-anchors to the
     /// median marker time.
+
+    /// Floor for the merge threshold, matching the legacy fixed estimate
+    /// (60pt chip + 4pt gap). Chips keep a fixed 88pt centered touch target
+    /// (`EventMarkerLaneView.touchTargetWidth`) regardless of visual width, so
+    /// two narrow chips left unmerged below this distance would overlap hit
+    /// rects more than main ever shipped (worst case 88 − 64 = 24pt) — a tap
+    /// on one chip could open its neighbor's sheet. Content-aware widths still
+    /// let WIDE chips merge earlier than before; they just never separate
+    /// closer than this.
+    static let minMergeDistance: CGFloat = 64
+
     static func consolidateByOverlap(
         _ groups: [ConsolidatedMarkerGroup],
         xFor: (Date) -> CGFloat,
@@ -216,11 +237,18 @@ extension ConsolidatedMarkerGroup {
             if let last = visual.last {
                 let lastX = xFor(last.time)
                 let groupX = xFor(group.time)
-                let mergeDistance = (estimatedWidth(last) + estimatedWidth(group)) / 2 + minGap
+                let mergeDistance = max(
+                    (estimatedWidth(last) + estimatedWidth(group)) / 2 + minGap,
+                    Self.minMergeDistance
+                )
                 if groupX - lastX < mergeDistance {
                     let merged = last.markers + group.markers
                     let sortedTimes = merged.map(\.time).sorted()
-                    let medianTime = sortedTimes[sortedTimes.count / 2]
+                    // Empty-markers groups shouldn't occur, but the public API
+                    // stays total: fall back to the earlier group's anchor.
+                    let medianTime = sortedTimes.isEmpty
+                        ? last.time
+                        : sortedTimes[sortedTimes.count / 2]
                     visual[visual.count - 1] = ConsolidatedMarkerGroup(
                         id: last.id,
                         time: medianTime,
