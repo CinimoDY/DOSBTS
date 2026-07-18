@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Chart event markers now split into individual chips as you zoom in and merge only when they'd visually collide — zoomed-in views no longer collapse the whole day into one summed chip — DMNC-1415
+
 ## [Build 131] — 2026-07-14
 
 ### Changed

@@ -510,8 +510,10 @@ struct ChartView: View {
             if shouldRefresh {
                 DirectLog.info("onChange: chartZoomLevel")
 
+                // Marker groups are zoom-independent now (one group per marker);
+                // zoom reactivity flows through updateSeriesMetadata() → seriesWidth
+                // → lane totalWidth → the pixel-overlap consolidator (DMNC-1415).
                 debounceSeriesMetadata()
-                updateMarkerGroups()
             }
 
         }.onChange(of: store.state.showSmoothedGlucose) {
@@ -616,12 +618,6 @@ struct ChartView: View {
             ZoomLevel(level: 24, name: LocalizedString("24h"), visibleHours: 24, labelEvery: 4)
         ]
         static let markerLaneHeight: CGFloat = 60
-        static let consolidationWindows: [Int: TimeInterval] = [
-            3: 0,
-            6: 10 * 60,
-            12: 20 * 60,
-            24: 30 * 60
-        ]
     }
 
     @State private var showUnsmoothedValues: Bool = false
@@ -937,7 +933,6 @@ private var startMarker: Date? {
     }
 
     private func updateMarkerGroups() {
-        let window = Config.consolidationWindows[store.state.chartZoomLevel] ?? 0
         var allMarkers: [EventMarker] = []
 
         for meal in store.state.mealEntryValues {
@@ -982,36 +977,14 @@ private var startMarker: Date? {
 
         allMarkers.sort { $0.time < $1.time }
 
-        // Consolidate into groups based on zoom-level window
-        var groups: [ConsolidatedMarkerGroup] = []
-        var currentMarkers: [EventMarker] = []
-
-        for marker in allMarkers {
-            if let last = currentMarkers.last, window > 0, marker.time.timeIntervalSince(last.time) > window {
-                // New group
-                if !currentMarkers.isEmpty {
-                    let midTime = currentMarkers[currentMarkers.count / 2].time
-                    groups.append(ConsolidatedMarkerGroup(
-                        id: "group-\(currentMarkers[0].id)",
-                        time: midTime,
-                        markers: currentMarkers
-                    ))
-                }
-                currentMarkers = [marker]
-            } else {
-                currentMarkers.append(marker)
-            }
+        // Stage 1 no longer groups (DMNC-1415): emit exactly one group per
+        // marker and let the lane's pixel-overlap consolidator — the single
+        // consolidation authority — merge by zoom. Keep the "group-" id prefix
+        // so merged visual groups inherit the first member's id, preserving
+        // stable sheet identity across re-renders.
+        markerGroups = allMarkers.map {
+            ConsolidatedMarkerGroup(id: "group-\($0.id)", time: $0.time, markers: [$0])
         }
-        if !currentMarkers.isEmpty {
-            let midTime = currentMarkers[currentMarkers.count / 2].time
-            groups.append(ConsolidatedMarkerGroup(
-                id: "group-\(currentMarkers[0].id)",
-                time: midTime,
-                markers: currentMarkers
-            ))
-        }
-
-        markerGroups = groups
     }
 
     private func updateSmoothedMinuteChange() {
