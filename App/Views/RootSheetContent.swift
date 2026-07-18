@@ -134,6 +134,13 @@ struct RootSheetContent: View {
                     case .insulin:
                         if let delivery = store.state.insulinDeliveryValues.first(where: { $0.id == marker.sourceID }) {
                             store.dispatch(.deleteInsulinDelivery(insulinDelivery: delivery))
+                            // Single staged-toast slot, last-wins BY DESIGN: a
+                            // second insulin swipe-delete in the same overlay
+                            // session replaces the first staged UNDO (the slot
+                            // drains on sheet dismiss, not per delete). The
+                            // earlier delete is then un-undoable from the toast
+                            // — an accepted trade-off of the single-slot
+                            // LoggedEntryToastController.
                             loggedEntryToast.stage(.deletedInsulin(delivery))
                         }
                     case .exercise:

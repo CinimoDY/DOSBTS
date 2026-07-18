@@ -165,7 +165,11 @@ struct EntryGroupListOverlay: View {
     @ViewBuilder
     private func row(for marker: EventMarker) -> some View {
         let stub = entryStub(for: marker)
-        let editable = Self.isEditable(marker.type)
+        // Editable requires both an editable TYPE and a resolvable entity —
+        // during a deletion race the row falls back to stub-nil rendering, and
+        // tapping through would open an empty dead-end editor. No entity, no
+        // chevron, no tap.
+        let editable = Self.isEditable(marker.type) && stub != nil
         let time = rowTime(for: marker, stub: stub)
         let subline = sublineText(for: stub, marker: marker)
 
