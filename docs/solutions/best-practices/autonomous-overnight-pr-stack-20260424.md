@@ -63,6 +63,7 @@ Concretely:
 
 ## When to break the pattern
 
+- **The queue is independent enough to fan out** — when the issues are well-specified, mostly-disjoint, and someone is attending the session, the concurrent alternative is [plan-driven parallel worker fan-out](plan-driven-parallel-worker-orchestration.md) (worktrees + per-worker simulators + per-PR review loop): wall-clock ≈ slowest worker instead of the serial sum. This serial stack remains the right shape for unattended overnight runs.
 - **One feature touches shared infra another feature also touches** — stack them, because the second feature's diff will be misleading against stale `main`. Rare in a feature queue but common in refactors.
 - **The build bump is a hotfix** — skip the separate bump PR, bundle the single fix + bump into one PR.
 - **TestFlight isn't available** — deploy.sh can fail (passcode-locked connected device, expired ASC key, simulator build corruption). Fall back to committing the bump + CHANGELOG promotion but not running deploy; user runs it at their next console session.

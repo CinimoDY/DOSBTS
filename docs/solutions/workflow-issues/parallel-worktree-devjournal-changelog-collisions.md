@@ -55,3 +55,4 @@ PR #57 resolution: kept main's `session-report.md` (Build 102 wrap-up), preserve
 
 - The structural fix is keying devjournal session dirs per branch/worktree (e.g. `dosbts-dmnc-1044-2026-06-12/`) so parallel sessions never share files. Until then, expect and budget for this conflict class on every same-day parallel-worktree merge.
 - The deploy-time CHANGELOG cross-check (CLAUDE.md, CHANGELOG section) catches the sibling failure mode where a PR merges with no entry at all.
+- The proactive version of "budget for this conflict class" is now a full orchestration pattern: [plan-driven parallel worker fan-out](../best-practices/plan-driven-parallel-worker-orchestration.md) plans the conflicts into a most-isolated-first merge train (CHANGELOG grouping, pbxproj lint, shared-file build check) instead of per-PR rebase archaeology. The devjournal half of this doc only applies when workers run devjournal — date-keyed session dirs still collide by construction.
