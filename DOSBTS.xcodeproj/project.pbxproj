@@ -57,12 +57,14 @@
 		C0A6101100000003000A1147 /* ChangelogDestinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A6101200000003000A1147 /* ChangelogDestinationTests.swift */; };
 		A7970000FEE00000000A0002 /* AnimationTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7970000FEE00000000A0001 /* AnimationTokensTests.swift */; };
 		F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */; };
+		F7E8D9C0B1A2938475869204 /* MarkerConsolidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E8D9C0B1A2938475869203 /* MarkerConsolidationTests.swift */; };
 		TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002100A00021 /* DesignTokenPinTests.swift */; };
 		TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */; };
 		TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */; };
 		TE0100010000002400A00024 /* StyleGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002400A00024 /* StyleGuardTests.swift */; };
 		TE0100010000002500A00025 /* RatioEstimatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002500A00025 /* RatioEstimatorTests.swift */; };
 		TE0100010000002600A00026 /* MissedBolusDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002600A00026 /* MissedBolusDetectorTests.swift */; };
+		TE0100010000002700A00027 /* InsulinBatchBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002700A00027 /* InsulinBatchBuilderTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -148,12 +150,14 @@
 		C0A6101200000003000A1147 /* ChangelogDestinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogDestinationTests.swift; sourceTree = "<group>"; };
 		A7970000FEE00000000A0001 /* AnimationTokensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationTokensTests.swift; sourceTree = "<group>"; };
 		F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventMarkerTypeTests.swift; sourceTree = "<group>"; };
+		F7E8D9C0B1A2938475869203 /* MarkerConsolidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkerConsolidationTests.swift; sourceTree = "<group>"; };
 		TE0100020000002100A00021 /* DesignTokenPinTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokenPinTests.swift; sourceTree = "<group>"; };
 		TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOSTabBarAppearanceTests.swift; sourceTree = "<group>"; };
 		TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HypoFilteredEntryTests.swift; sourceTree = "<group>"; };
 		TE0100020000002400A00024 /* StyleGuardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleGuardTests.swift; sourceTree = "<group>"; };
 		TE0100020000002500A00025 /* RatioEstimatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatioEstimatorTests.swift; sourceTree = "<group>"; };
 		TE0100020000002600A00026 /* MissedBolusDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissedBolusDetectorTests.swift; sourceTree = "<group>"; };
+		TE0100020000002700A00027 /* InsulinBatchBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinBatchBuilderTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -316,12 +320,14 @@
 				C0A6101200000003000A1147 /* ChangelogDestinationTests.swift */,
 				A7970000FEE00000000A0001 /* AnimationTokensTests.swift */,
 				F7E8D9C0B1A2938475869201 /* EventMarkerTypeTests.swift */,
+				F7E8D9C0B1A2938475869203 /* MarkerConsolidationTests.swift */,
 				TE0100020000002100A00021 /* DesignTokenPinTests.swift */,
 				TE0100020000002200A00022 /* DOSTabBarAppearanceTests.swift */,
 				TE0100020000002300A00023 /* HypoFilteredEntryTests.swift */,
 				TE0100020000002400A00024 /* StyleGuardTests.swift */,
 				TE0100020000002500A00025 /* RatioEstimatorTests.swift */,
 				TE0100020000002600A00026 /* MissedBolusDetectorTests.swift */,
+				TE0100020000002700A00027 /* InsulinBatchBuilderTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -536,12 +542,14 @@
 				C0A6101100000003000A1147 /* ChangelogDestinationTests.swift in Sources */,
 				A7970000FEE00000000A0002 /* AnimationTokensTests.swift in Sources */,
 				F7E8D9C0B1A2938475869202 /* EventMarkerTypeTests.swift in Sources */,
+				F7E8D9C0B1A2938475869204 /* MarkerConsolidationTests.swift in Sources */,
 				TE0100010000002100A00021 /* DesignTokenPinTests.swift in Sources */,
 				TE0100010000002200A00022 /* DOSTabBarAppearanceTests.swift in Sources */,
 				TE0100010000002300A00023 /* HypoFilteredEntryTests.swift in Sources */,
 				TE0100010000002400A00024 /* StyleGuardTests.swift in Sources */,
 				TE0100010000002500A00025 /* RatioEstimatorTests.swift in Sources */,
 				TE0100010000002600A00026 /* MissedBolusDetectorTests.swift in Sources */,
+				TE0100010000002700A00027 /* InsulinBatchBuilderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

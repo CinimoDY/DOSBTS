@@ -93,6 +93,10 @@ struct ContentView: View {
                                 store.dispatch(.deleteMealEntry(mealEntry: m))
                             case .insulin(let i):
                                 store.dispatch(.deleteInsulinDelivery(insulinDelivery: i))
+                            case .insulinBatch(let deliveries):
+                                for delivery in deliveries {
+                                    store.dispatch(.deleteInsulinDelivery(insulinDelivery: delivery))
+                                }
                             case .bloodGlucose(let g):
                                 store.dispatch(.deleteBloodGlucose(glucose: g))
                             // Swipe-delete undo — restore via targeted DB-only path to
