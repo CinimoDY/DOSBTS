@@ -14,7 +14,13 @@ struct AddInsulinView: View {
     @State var units: Double?
     @State var insulinType: InsulinType = .snackBolus
 
-    var addCallback: (_ starts: Date, _ ends: Date, _ units: Double, _ insulinType: InsulinType) -> Void
+    // Batch staging (DMNC-1413): entries queued via STAGE ENTRY, committed all
+    // at once on CONFIRM. See `InsulinBatchBuilder` for the pure commit-set /
+    // staged-IOB rules this view delegates to.
+    @State private var staged: [InsulinDelivery] = []
+    @State private var showDiscardConfirm = false
+
+    var addCallback: (_ deliveries: [InsulinDelivery]) -> Void
 
     private var currentIOB: Double {
         // Stacking warning for correction boluses considers only rapid-acting
@@ -22,13 +28,34 @@ struct AddInsulinView: View {
         // is reasoning about how much *fast* insulin is already on board to
         // bring glucose down; long-acting basal is the steady-state baseline
         // and isn't part of the correction-stacking decision.
+        //
+        // Staged-but-not-yet-committed entries count too: a user who staged a
+        // snack bolus and is now considering a correction bolus needs the
+        // warning to reflect the snack, not just what's already in the DB.
         let bolusModel = ExponentialInsulinModel.bolus(preset: store.state.bolusInsulinPreset)
         let basalModel = ExponentialInsulinModel.basal(diaMinutes: store.state.basalDIAMinutes)
         return computeIOB(
-            deliveries: store.state.iobDeliveries,
+            deliveries: InsulinBatchBuilder.iobInputs(committed: store.state.iobDeliveries, staged: staged),
             bolusModel: bolusModel,
             basalModel: basalModel
         ).mealSnackIOB
+    }
+
+    /// The full set CONFIRM will commit: staged entries plus the current form
+    /// if it holds a valid (units > 0) entry the user never staged.
+    private var commitSet: [InsulinDelivery] {
+        InsulinBatchBuilder.commitSet(
+            staged: staged,
+            currentUnits: units,
+            currentType: insulinType,
+            starts: starts,
+            ends: ends
+        )
+    }
+
+    private var confirmLabel: String {
+        let count = commitSet.count
+        return count > 1 ? "CONFIRM \(count)" : "CONFIRM"
     }
 
     var body: some View {
@@ -56,6 +83,14 @@ struct AddInsulinView: View {
                     if insulinType == .correctionBolus, currentIOB > 0.05 {
                         iobWarning
                     }
+
+                    if (units ?? 0) > 0 {
+                        stageEntryButton
+                    }
+
+                    if !staged.isEmpty {
+                        stagedSection
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)
@@ -68,12 +103,12 @@ struct AddInsulinView: View {
             .interactiveDismissDisabled()
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel", role: .cancel) { dismiss() }
+                    Button("Cancel", role: .cancel) { cancel() }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Add") { save() }
-                        .disabled((units ?? 0) <= 0)
-                        .foregroundStyle((units ?? 0) > 0 ? AmberTheme.amber : AmberTheme.borderSubtle)
+                    Button(confirmLabel) { confirm() }
+                        .disabled(commitSet.isEmpty)
+                        .foregroundStyle(commitSet.isEmpty ? AmberTheme.borderSubtle : AmberTheme.amber)
                 }
             }
             // Auto-set ENDS to 24 hours after STARTS for basal entries — once-daily
@@ -90,6 +125,14 @@ struct AddInsulinView: View {
                 if insulinType == .basal {
                     ends = Calendar.current.date(byAdding: .hour, value: 24, to: newStarts) ?? newStarts.addingTimeInterval(24 * 60 * 60)
                 }
+            }
+            .confirmationDialog(
+                "Discard \(staged.count) staged entries?",
+                isPresented: $showDiscardConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Discard", role: .destructive) { dismiss() }
+                Button("Keep editing", role: .cancel) {}
             }
         }
         .preferredColorScheme(.dark)
@@ -192,13 +235,71 @@ struct AddInsulinView: View {
         )
     }
 
-    // MARK: - Save
+    private var stageEntryButton: some View {
+        Button("STAGE ENTRY") { stageCurrentEntry() }
+            .buttonStyle(.dosGhost)
+            .frame(maxWidth: .infinity)
+    }
 
-    private func save() {
+    private var stagedSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("STAGED · \(staged.count)")
+                .dosHeader()
+            VStack(spacing: DOSSpacing.xs) {
+                ForEach(staged) { entry in
+                    stagedRow(entry)
+                }
+            }
+        }
+    }
+
+    // In-place editing of a staged row is out of scope for V1 — remove + re-enter.
+    private func stagedRow(_ entry: InsulinDelivery) -> some View {
+        HStack(spacing: 8) {
+            Text(entry.type.shortLabel)
+                .font(DOSTypography.caption)
+                .foregroundStyle(AmberTheme.amber)
+            Text(entry.units.asInsulinUnits())
+                .font(DOSTypography.caption)
+                .foregroundStyle(AmberTheme.amber)
+            Spacer()
+            Text(entry.starts.toLocalTime())
+                .font(DOSTypography.caption)
+                .foregroundStyle(AmberTheme.amberDark)
+            Button {
+                staged.removeAll { $0.id == entry.id }
+            } label: {
+                Image(systemName: "xmark")
+                    .foregroundStyle(AmberTheme.amberDark)
+            }
+            .buttonStyle(.plain)
+        }
+        .dosCard(.stat, padding: DOSSpacing.sm)
+    }
+
+    // MARK: - Actions
+
+    private func stageCurrentEntry() {
         guard let u = units, u > 0 else { return }
         let endsTime = insulinType == .basal ? ends : starts
-        addCallback(starts, endsTime, u, insulinType)
+        staged.append(InsulinDelivery(id: UUID(), starts: starts, ends: endsTime, units: u, type: insulinType))
+        // Clear units only — type and time selections persist for the next entry.
+        units = nil
+    }
+
+    private func confirm() {
+        let deliveries = commitSet
+        guard !deliveries.isEmpty else { return }
+        addCallback(deliveries)
         dismiss()
+    }
+
+    private func cancel() {
+        if staged.isEmpty {
+            dismiss()
+        } else {
+            showDiscardConfirm = true
+        }
     }
 }
 
@@ -206,7 +307,7 @@ struct AddInsulinView_Previews: PreviewProvider {
     static var previews: some View {
         Button("Modal always shown") {}
             .sheet(isPresented: .constant(true)) {
-                AddInsulinView(addCallback: { _, _, _, _ in })
+                AddInsulinView(addCallback: { _ in })
                     .environmentObject(DirectStore(initialState: AppState(), reducer: directReducer, middlewares: []))
             }
     }

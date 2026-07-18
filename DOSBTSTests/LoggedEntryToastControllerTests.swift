@@ -112,6 +112,27 @@ struct LoggedEntryToastControllerTests {
         #expect(label == "Logged: \(4.5.asInsulinUnits()) Meal Bolus")
     }
 
+    // MARK: - insulinBatch (DMNC-1413)
+
+    @Test("insulinBatch label states the entry count")
+    func insulinBatchLabel() {
+        let deliveries = [
+            makeInsulin(),
+            InsulinDelivery(starts: Date(), ends: Date(), units: 2, type: .correctionBolus),
+        ]
+        let label = LoggedEntry.insulinBatch(deliveries).label(glucoseUnit: .mgdL)
+        #expect(label == "Logged: 2 insulin entries")
+    }
+
+    @Test("insulinBatch stage/show promotes it to active like other entries")
+    func insulinBatchStageAndShow() {
+        let controller = LoggedEntryToastController()
+        let deliveries = [makeInsulin(), makeInsulin()]
+        controller.stage(.insulinBatch(deliveries))
+        controller.showStagedIfAny()
+        #expect(controller.active == .insulinBatch(deliveries))
+    }
+
     @Test("blood glucose label uses mg/dL unit")
     func bgLabelMgdL() {
         let bg = makeBloodGlucose()

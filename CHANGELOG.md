@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Add Insulin sheet can stage multiple entries (e.g. correction + snack bolus) and log them with one CONFIRM; the IOB stacking warning accounts for staged entries
+
 ## [Build 131] — 2026-07-14
 
 ### Changed
