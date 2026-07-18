@@ -27,7 +27,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         state.latestBloodGlucose = glucoseValues.last
         
     case .addInsulinDelivery(insulinDeliveryValues: let insulinDeliveryValues):
-        state.latestInsulinDelivery = insulinDeliveryValues.last
+        // Most-recent by starts, not array position: a batch commit (DMNC-1413)
+        // can contain a backdated entry appended after a current one, and
+        // "latest" must mean latest in time, not last staged.
+        state.latestInsulinDelivery = insulinDeliveryValues.max(by: { $0.starts < $1.starts })
         // Optimistic append — the marker shows on the chart immediately.
         // The middleware-triggered .loadInsulinDeliveryValues round-trip
         // will subsequently replace this with the canonical DB state.

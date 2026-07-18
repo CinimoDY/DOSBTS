@@ -20,6 +20,10 @@ enum LoggedEntry: Equatable {
     // Log actions — undo = delete the just-logged entry
     case meal(MealEntry)
     case insulin(InsulinDelivery)
+    // Batch insulin log (DMNC-1413) — RootSheetContent stages `.insulin(d)`
+    // when the batch has exactly one element, `.insulinBatch(ds)` otherwise,
+    // so this case is only ever constructed with 2+ deliveries.
+    case insulinBatch([InsulinDelivery])
     case bloodGlucose(BloodGlucose)
     // Swipe-delete actions — undo = restore the deleted entry
     case deletedBloodGlucose(BloodGlucose)
@@ -32,6 +36,8 @@ enum LoggedEntry: Equatable {
             return "Logged: \(m.mealDescription)"
         case .insulin(let i):
             return "Logged: \(i.units.asInsulinUnits()) \(i.type.localizedDescription)"
+        case .insulinBatch(let deliveries):
+            return "Logged: \(deliveries.count) insulin entries"
         case .bloodGlucose(let g):
             return "Logged: BG \(g.glucoseValue.asGlucose(glucoseUnit: glucoseUnit, withUnit: true))"
         case .deletedBloodGlucose(let g):

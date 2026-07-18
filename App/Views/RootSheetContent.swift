@@ -24,13 +24,21 @@ struct RootSheetContent: View {
             // (reads from the same store via @EnvironmentObject), so the
             // stacking warning stays accurate if the user adjusts basal DIA
             // or a new delivery lands while this sheet is open.
+            //
+            // Batch staging (DMNC-1413): CONFIRM commits every staged entry
+            // plus the current form in one dispatch, not one-at-a-time.
             AddInsulinView(
-                addCallback: { start, end, units, insulinType in
-                    let insulinDelivery = InsulinDelivery(id: UUID(), starts: start, ends: end, units: units, type: insulinType)
-                    store.dispatch(.addInsulinDelivery(insulinDeliveryValues: [insulinDelivery]))
-                    addedHighlighter.flash(insulinDelivery.id)
+                addCallback: { deliveries in
+                    store.dispatch(.addInsulinDelivery(insulinDeliveryValues: deliveries))
+                    for delivery in deliveries {
+                        addedHighlighter.flash(delivery.id)
+                    }
                     DirectNotifications.shared.hapticNotification(.success)
-                    loggedEntryToast.stage(.insulin(insulinDelivery))
+                    if deliveries.count == 1, let only = deliveries.first {
+                        loggedEntryToast.stage(.insulin(only))
+                    } else {
+                        loggedEntryToast.stage(.insulinBatch(deliveries))
+                    }
                 }
             )
             .environmentObject(store)
