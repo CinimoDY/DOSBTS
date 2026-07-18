@@ -128,3 +128,64 @@ struct EntryGroupListOverlayTests {
         #expect(line.contains("Running"))
     }
 }
+
+@Suite("EntryGroupListOverlay row helpers")
+struct EntryGroupListOverlayRowHelperTests {
+    /// A local `HH:mm` formatter matching the overlay's private one, so the
+    /// assertions stay timezone-agnostic.
+    private static let hhmm: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+
+    // MARK: - rowTime
+
+    @Test("rowTime uses the insulin delivery's start for insulin rows")
+    func rowTimeUsesInsulinStart() {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let markerTime = start.addingTimeInterval(3600)   // deliberately differs from start
+        let marker = EventMarker(id: "b1", time: markerTime, type: .bolus, label: "5U", rawValue: 5, sourceID: UUID())
+        let delivery = InsulinDelivery(starts: start, ends: start, units: 5, type: .mealBolus)
+
+        let out = EntryGroupListOverlay.rowTime(for: marker, insulin: delivery)
+        #expect(out == Self.hhmm.string(from: start))
+        #expect(out != Self.hhmm.string(from: markerTime))
+    }
+
+    @Test("rowTime uses the marker time for meal rows")
+    func rowTimeUsesMarkerTimeForMeal() {
+        let t = Date(timeIntervalSince1970: 1_700_000_000)
+        let marker = EventMarker(id: "m1", time: t, type: .meal, label: "30g", rawValue: 30, sourceID: UUID())
+        #expect(EntryGroupListOverlay.rowTime(for: marker, insulin: nil) == Self.hhmm.string(from: t))
+    }
+
+    @Test("rowTime falls back to marker time when the insulin lookup is missing")
+    func rowTimeInsulinFallback() {
+        let t = Date(timeIntervalSince1970: 1_700_000_000)
+        let marker = EventMarker(id: "c1", time: t, type: .correction, label: "2Uc", rawValue: 2, sourceID: UUID())
+        #expect(EntryGroupListOverlay.rowTime(for: marker, insulin: nil) == Self.hhmm.string(from: t))
+    }
+
+    // MARK: - isEditable
+
+    @Test("isEditable is true for meal and every insulin type, false for exercise")
+    func isEditableMapping() {
+        #expect(EntryGroupListOverlay.isEditable(.meal))
+        #expect(EntryGroupListOverlay.isEditable(.bolus))
+        #expect(EntryGroupListOverlay.isEditable(.correction))
+        #expect(EntryGroupListOverlay.isEditable(.basal))
+        #expect(!EntryGroupListOverlay.isEditable(.exercise))
+    }
+
+    // MARK: - deleteKind
+
+    @Test("deleteKind maps each type to its whole-record delete")
+    func deleteKindMapping() {
+        #expect(EntryGroupListOverlay.deleteKind(for: .meal) == .meal)
+        #expect(EntryGroupListOverlay.deleteKind(for: .bolus) == .insulin)
+        #expect(EntryGroupListOverlay.deleteKind(for: .correction) == .insulin)
+        #expect(EntryGroupListOverlay.deleteKind(for: .basal) == .insulin)
+        #expect(EntryGroupListOverlay.deleteKind(for: .exercise) == .exercise)
+    }
+}

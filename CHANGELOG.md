@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Chart marker detail sheet: every entry shows its logged time, swipe-left deletes a single entry, tap edits a single entry — the group-level edit with its "Delete Both" is gone — DMNC-1414
+
 ## [Build 131] — 2026-07-14
 
 ### Changed
