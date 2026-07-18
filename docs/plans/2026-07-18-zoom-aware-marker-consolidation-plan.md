@@ -54,28 +54,28 @@ extension ConsolidatedMarkerGroup {
 }
 ```
 
-- [ ] **Step 1 (failing tests first)** — pin with a linear `xFor` stub (e.g. 1pt per minute × a scale factor to simulate zoom):
+- [x] **Step 1 (failing tests first)** — pin with a linear `xFor` stub (e.g. 1pt per minute × a scale factor to simulate zoom):
   - two groups farther apart than `width + gap` stay separate; closer merge;
   - merged group keeps the earlier group's `id`, concatenates markers in order, re-anchors to the **median** marker time (current behavior, lines 65-72);
   - transitive chains merge into one;
   - **zoom-split regression:** the same marker set that merges at a small scale (zoomed out) yields one group per marker at a large scale (zoomed in) — this is the test that would have caught Bug A;
   - empty input → empty output.
-- [ ] **Step 2:** Move the body of `EventMarkerLaneView.consolidateByOverlap` (56-79) into the extension; the lane's `body` calls it passing its `xPosition(for:)` and (until Task 3) a constant-60pt `estimatedWidth`. Tests green; behavior identical.
+- [x] **Step 2:** Move the body of `EventMarkerLaneView.consolidateByOverlap` (56-79) into the extension; the lane's `body` calls it passing its `xPosition(for:)` and (until Task 3) a constant-60pt `estimatedWidth`. Tests green; behavior identical. _(Wired straight to content-aware width in one pass — see IMPLEMENTATION_NOTES sequencing note; overlap tests use a constant-width stub so the constant-60 semantics are still pinned.)_
 
 ### Task 2: Stage 1 stops grouping — one group per marker
 
 **Files:**
 - Modify: `App/Views/Overview/ChartView.swift`
 
-- [ ] **Step 1:** In `updateMarkerGroups()` (939-1015), delete the windowed grouping loop (985-1012). After building + sorting `allMarkers`, emit:
+- [x] **Step 1:** In `updateMarkerGroups()` (939-1015), delete the windowed grouping loop (985-1012). After building + sorting `allMarkers`, emit:
   ```swift
   markerGroups = allMarkers.map {
       ConsolidatedMarkerGroup(id: "group-\($0.id)", time: $0.time, markers: [$0])
   }
   ```
   (Keep the `"group-"` id prefix — merged visual groups inherit the first member's id, preserving current id semantics.)
-- [ ] **Step 2:** Delete `Config.consolidationWindows` (619-624) and every reference. Check the `.onChange(of: chartZoomLevel)` handler (509-516): remove only its `updateMarkerGroups()` call — zoom reactivity now flows automatically via `updateSeriesMetadata()` → `seriesWidth` → lane `totalWidth` → the pure consolidator running in the lane body. **Keep** any series-metadata/scroll work that handler also does, and keep the data-change triggers (meal/insulin/exercise `.onChange`s at 470/497/506).
-- [ ] **Step 3:** Build + run: at 3h zoom, chips are now individual (Bug A gone); at 24h, nearby chips merge.
+- [x] **Step 2:** Delete `Config.consolidationWindows` (619-624) and every reference. Check the `.onChange(of: chartZoomLevel)` handler (509-516): remove only its `updateMarkerGroups()` call — zoom reactivity now flows automatically via `updateSeriesMetadata()` → `seriesWidth` → lane `totalWidth` → the pure consolidator running in the lane body. **Keep** any series-metadata/scroll work that handler also does, and keep the data-change triggers (meal/insulin/exercise `.onChange`s at 470/497/506).
+- [x] **Step 3:** Build + run: at 3h zoom, chips are now individual (Bug A gone); at 24h, nearby chips merge. _(Build green; the split/merge logic is pinned by `MarkerConsolidationTests.zoomSplitRegression`. The live on-device zoom feel still needs human eyes — see the end-to-end Verification section below.)_
 
 ### Task 3: Content-aware chip width estimate
 
@@ -83,14 +83,14 @@ extension ConsolidatedMarkerGroup {
 - Modify: `Library/Content/EventMarker.swift`
 - Extend test: `DOSBTSTests/MarkerConsolidationTests.swift`
 
-- [ ] **Step 1 (failing tests first):** pure `estimatedChipWidth(isScored:) -> CGFloat` on `ConsolidatedMarkerGroup`, derived from its `chipRows` labels: `iconWidth + longestRowLabelCount × monoCharWidth + padding` (constants as `static let`, pinned). A single `5U` chip estimates narrower than a triple-stack `8U 2Uc 10Ub / ★60g / 45m` chip. Pin: single small chip < 60pt default; wide multi-segment chip > 60pt; monotonic in label length.
-- [ ] **Step 2:** Lane passes `{ $0.estimatedChipWidth(isScored: isGroupScored($0)) }` as `estimatedWidth`; delete the fixed `estimatedChipWidth = 60` constant (`EventMarkerLaneView.swift:27`) and its now-stale comment (23-27). Tests green.
+- [x] **Step 1 (failing tests first):** pure `estimatedChipWidth(isScored:) -> CGFloat` on `ConsolidatedMarkerGroup`, derived from its `chipRows` labels: `iconWidth + longestRowLabelCount × monoCharWidth + padding` (constants as `static let`, pinned). A single `5U` chip estimates narrower than a triple-stack `8U 2Uc 10Ub / ★60g / 45m` chip. Pin: single small chip < 60pt default; wide multi-segment chip > 60pt; monotonic in label length.
+- [x] **Step 2:** Lane passes `{ $0.estimatedChipWidth(isScored: isGroupScored($0)) }` as `estimatedWidth`; delete the fixed `estimatedChipWidth = 60` constant (`EventMarkerLaneView.swift:27`) and its now-stale comment (23-27). Tests green.
 
 ### Task 4: CHANGELOG + full verification
 
-- [ ] `CHANGELOG.md` `[Unreleased]` → `### Fixed`: `- Chart event markers now split into individual chips as you zoom in and merge only when they'd visually collide — zoomed-in views no longer collapse the whole day into one summed chip`
-- [ ] Full suite: `xcodebuild test ... -scheme DOSBTSApp ...` → SUCCEEDED (MarkerChipRowTests untouched and green).
-- [ ] Both targets build (app + `DOSBTSWidget`).
+- [x] `CHANGELOG.md` `[Unreleased]` → `### Fixed`: `- Chart event markers now split into individual chips as you zoom in and merge only when they'd visually collide — zoomed-in views no longer collapse the whole day into one summed chip`
+- [x] Full suite: `xcodebuild test ... -scheme DOSBTSApp ...` → SUCCEEDED (MarkerChipRowTests untouched and green). _(651 passed / 0 failed on iPhone 17 Pro Max, OS 26.5.)_
+- [x] Both targets build (app + `DOSBTSWidget`). _(App built as part of the test run; `DOSBTSWidget` scheme → BUILD SUCCEEDED.)_
 
 ## Verification (end-to-end, simulator + VirtualConnection)
 
