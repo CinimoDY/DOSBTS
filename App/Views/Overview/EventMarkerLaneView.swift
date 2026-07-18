@@ -20,15 +20,19 @@ struct EventMarkerLaneView: View {
     private let touchTargetHeight: CGFloat = 48
     private let yAxisPadding: CGFloat = 30
 
-    /// Approximate chip width for the merge heuristic. Real chip widths vary
-    /// by content (single-row "💉 5U" is narrower than triple-stack "💉 5U /
-    /// 🍴 45g / 🏃 20m") but we don't get layout sizes during data prep, so
-    /// we use a conservative average.
-    private let estimatedChipWidth: CGFloat = 60
     private let minChipGap: CGFloat = 4
 
     var body: some View {
-        let visualGroups = consolidateByOverlap(markerGroups)
+        // Pixel-overlap is the SINGLE consolidation authority (DMNC-1415):
+        // `xPosition(for:)` scales with zoom (via totalWidth), and the chip
+        // footprint is content-aware, so chips split when zoomed in and merge
+        // only when they'd visually collide. The pure walk lives on the model.
+        let visualGroups = ConsolidatedMarkerGroup.consolidateByOverlap(
+            markerGroups,
+            xFor: { xPosition(for: $0) },
+            estimatedWidth: { $0.estimatedChipWidth(isScored: isGroupScored($0)) },
+            minGap: minChipGap
+        )
 
         ZStack(alignment: .bottom) {
             ForEach(visualGroups, id: \.id) { group in
@@ -47,35 +51,6 @@ struct EventMarkerLaneView: View {
         .frame(height: laneHeight)
         .padding(.trailing, yAxisPadding)
         .clipped()
-    }
-
-    /// Walk the groups left-to-right and merge any whose visual chip would
-    /// overlap (with a 4pt min gap) into the previous one. Replaces the old
-    /// fixed `consolidationWindows[chartZoomLevel]` so consolidation
-    /// follows the rendered layout, not an arbitrary minute count.
-    private func consolidateByOverlap(_ groups: [ConsolidatedMarkerGroup]) -> [ConsolidatedMarkerGroup] {
-        let mergeDistance = estimatedChipWidth + minChipGap
-        var visual: [ConsolidatedMarkerGroup] = []
-
-        for group in groups.sorted(by: { $0.time < $1.time }) {
-            if let last = visual.last {
-                let lastX = xPosition(for: last.time)
-                let groupX = xPosition(for: group.time)
-                if groupX - lastX < mergeDistance {
-                    let merged = last.markers + group.markers
-                    let sortedTimes = merged.map(\.time).sorted()
-                    let medianTime = sortedTimes[sortedTimes.count / 2]
-                    visual[visual.count - 1] = ConsolidatedMarkerGroup(
-                        id: last.id,
-                        time: medianTime,
-                        markers: merged
-                    )
-                    continue
-                }
-            }
-            visual.append(group)
-        }
-        return visual
     }
 
     private func isGroupScored(_ group: ConsolidatedMarkerGroup) -> Bool {

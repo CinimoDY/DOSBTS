@@ -49,28 +49,28 @@ struct CollapsableSection<Label, Accessory, Content>: View {
 }
 ```
 
-- [ ] **Step 1:** Delete the entire teaser branch (lines 55-73), the `else if collapsed { teaser }` branch (74-77), the `teaser` property/generic, and the `Teaser == EmptyView` convenience init (92-96) if nothing else uses it (grep first — the five list views are the only known call sites).
-- [ ] **Step 2:** Header becomes one row: a toggle `Button` wrapping `[label + count + chevron]` with `.contentShape(Rectangle())` and `.frame(minHeight: 44)` (the taller/easier tap target), then `Spacer()`, then `accessory` as a separate hit region so `SelectedDatePager`'s buttons keep working:
+- [x] **Step 1:** Delete the entire teaser branch (lines 55-73), the `else if collapsed { teaser }` branch (74-77), the `teaser` property/generic, and the `Teaser == EmptyView` convenience init (92-96) if nothing else uses it (grep first — the five list views are the only known call sites).
+- [x] **Step 2:** Header becomes one row: a toggle `Button` wrapping `[label + count + chevron]` with `.contentShape(Rectangle())` and `.frame(minHeight: 44)` (the taller/easier tap target), then `Spacer()`, then `accessory` as a separate hit region so `SelectedDatePager`'s buttons keep working:
   - count rendered like `· 12` in `DOSTypography.caption` / `AmberTheme.amberDark` next to the label (always visible, collapsed or expanded);
   - ONE chevron, flipping with state — collapsed `chevron.down` ("tap to open"), expanded `chevron.up`. Same button both ways (the "same chevron" the user asked for);
   - `collapsible == false` → chevron hidden (`opacity(0)`) and button disabled, as today;
   - VoiceOver on the toggle: `"Expand Meals, 12 entries"` / `"Collapse Meals, 12 entries"`.
-- [ ] **Step 3:** Body: `if !collapsed { content() }` — nothing else. Keep the one-way-seed `@State collapsed` + `onCollapsedChange` mechanics verbatim.
-- [ ] **Step 4:** If the restructure ends up using a `header: {` trailing closure form, put `.dosHeader()` on the label inside it (Rule 9); otherwise the existing `Section(header: HStack {...})` form stays exempt.
+- [x] **Step 3:** Body: `if !collapsed { content() }` — nothing else. Keep the one-way-seed `@State collapsed` + `onCollapsedChange` mechanics verbatim.
+- [x] **Step 4:** If the restructure ends up using a `header: {` trailing closure form, put `.dosHeader()` on the label inside it (Rule 9); otherwise the existing `Section(header: HStack {...})` form stays exempt.
 
 ### Task 2: Update the five call sites
 
 **Files:**
 - Modify: `App/Views/Lists/SensorGlucoseListView.swift`, `BloodGlucoseListView.swift`, `MealEntryListView.swift`, `InsulinDeliveryListView.swift`, `SensorErrorListView.swift`
 
-- [ ] Per call site: drop `teaser:`; split the old header HStack — the `Label(...)` becomes `label:`, `SelectedDatePager().padding(.trailing)` becomes `accessory:`; pass `count: values.count`. Everything else (sectionName, collapsed, collapsible, onCollapsedChange, content) unchanged.
-- [ ] The in-content empty-state line (`if values.isEmpty { Text(getTeaser(...)) }`) is now redundant with the header count (`· 0`) — remove it and let empty sections show just the header row. Remove `getTeaser` if it becomes unused (grep).
+- [x] Per call site: drop `teaser:`; split the old header HStack — the `Label(...)` becomes `label:`, `SelectedDatePager().padding(.trailing)` becomes `accessory:`; pass `count: values.count`. Everything else (sectionName, collapsed, collapsible, onCollapsedChange, content) unchanged.
+- [x] The in-content empty-state line (`if values.isEmpty { Text(getTeaser(...)) }`) is now redundant with the header count (`· 0`) — remove it and let empty sections show just the header row. Remove `getTeaser` if it becomes unused (grep).
 
 ### Task 3: Tests, CHANGELOG, verification
 
-- [ ] Run `StyleGuardTests` + `DirectReducerTests` + full suite → SUCCEEDED (reducer pins at 736-764 must be untouched).
-- [ ] `CHANGELOG.md` `[Unreleased]` → `### Changed`: `- Log tab categories now use a single taller header row with the entry count inline and one chevron — the duplicate collapsed-state summary line is gone`
-- [ ] Both targets build.
+- [x] Run `StyleGuardTests` + `DirectReducerTests` + full suite → SUCCEEDED (reducer pins at 736-764 must be untouched).
+- [x] `CHANGELOG.md` `[Unreleased]` → `### Changed`: `- Log tab categories now use a single taller header row with the entry count inline and one chevron — the duplicate collapsed-state summary line is gone`
+- [x] Both targets build.
 
 ## Verification (end-to-end, simulator)
 
