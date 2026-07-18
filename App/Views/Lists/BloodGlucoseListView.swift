@@ -19,22 +19,17 @@ struct BloodGlucoseListView: View {
     var body: some View {
         Group {
             CollapsableSection(
-                teaser: Text(getTeaser(bloodGlucoseValues.count)),
-                header: HStack {
-                    Label("Blood glucose values", systemImage: "drop")
-                    Spacer()
-                    SelectedDatePager().padding(.trailing)
-                }.buttonStyle(.plain),
+                label: Label("Blood glucose values", systemImage: "drop"),
+                accessory: SelectedDatePager().padding(.trailing),
                 sectionName: "Blood glucose",
+                count: bloodGlucoseValues.count,
                 collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !bloodGlucoseValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
                     store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
-                if bloodGlucoseValues.isEmpty {
-                    Text(getTeaser(bloodGlucoseValues.count))
-                } else {
+                if !bloodGlucoseValues.isEmpty {
                     ForEach(bloodGlucoseValues) { bloodGlucose in
                         HStack {
                             Text(verbatim: bloodGlucose.timestamp.toLocalDateTime())
@@ -76,8 +71,4 @@ struct BloodGlucoseListView: View {
     // MARK: Private
 
     @State private var bloodGlucoseValues: [BloodGlucose] = []
-
-    private func getTeaser(_ count: Int) -> String {
-        return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
-    }
 }

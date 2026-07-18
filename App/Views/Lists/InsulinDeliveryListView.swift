@@ -20,22 +20,17 @@ struct InsulinDeliveryListView: View {
     var body: some View {
         Group {
             CollapsableSection(
-                teaser: Text(getTeaser(insulinDeliveryValues.count)),
-                header: HStack {
-                    Label("Insulin", systemImage: "syringe")
-                    Spacer()
-                    SelectedDatePager().padding(.trailing)
-                }.buttonStyle(.plain),
+                label: Label("Insulin", systemImage: "syringe"),
+                accessory: SelectedDatePager().padding(.trailing),
                 sectionName: "Insulin",
+                count: insulinDeliveryValues.count,
                 collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !insulinDeliveryValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
                     store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
-                if insulinDeliveryValues.isEmpty {
-                    Text(getTeaser(insulinDeliveryValues.count))
-                } else {
+                if !insulinDeliveryValues.isEmpty {
                     ForEach(insulinDeliveryValues) { insulinDelivery in
                         HStack {
                             VStack(alignment: .leading) {
@@ -91,10 +86,6 @@ struct InsulinDeliveryListView: View {
     // MARK: Private
 
     @State private var insulinDeliveryValues: [InsulinDelivery] = []
-
-    private func getTeaser(_ count: Int) -> String {
-        return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
-    }
 
     /// Wraps an insulin delivery in a single-marker ConsolidatedMarkerGroup
     /// so it can be opened in CombinedEntryEditView.

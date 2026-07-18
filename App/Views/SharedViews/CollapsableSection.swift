@@ -7,13 +7,14 @@ import SwiftUI
 
 // MARK: - CollapsableSection
 
-struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Content: View, Teaser: View {
+struct CollapsableSection<Label, Accessory, Content>: View where Label: View, Accessory: View, Content: View {
     // MARK: Lifecycle
 
-    init(teaser: Teaser, header: Parent, sectionName: String = "section", collapsed: Bool = false, collapsible: Bool = true, onCollapsedChange: ((Bool) -> Void)? = nil, @ViewBuilder content: @escaping () -> Content) {
-        self.teaser = teaser
-        self.header = header
+    init(label: Label, accessory: Accessory, sectionName: String = "section", count: Int, collapsed: Bool = false, collapsible: Bool = true, onCollapsedChange: ((Bool) -> Void)? = nil, @ViewBuilder content: @escaping () -> Content) {
+        self.label = label
+        self.accessory = accessory
         self.sectionName = sectionName
+        self.count = count
         // One-way seed: `collapsed` initializes local @State but is not re-read
         // afterwards — the section is its own only writer (via onCollapsedChange).
         // If an external writer of the persisted state ever appears (e.g. a
@@ -26,58 +27,42 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
 
     // MARK: Internal
 
-    let header: Parent
+    let label: Label
+    /// Rendered outside the toggle button as its own hit region (e.g.
+    /// `SelectedDatePager`'s prev/next buttons must not collapse the section).
+    let accessory: Accessory
     let content: () -> Content
-    let teaser: Teaser
-    /// Names the section in the teaser button's VoiceOver label
-    /// ("Expand Meals") so multiple collapsed sections stay distinguishable.
+    /// Names the section in the toggle button's VoiceOver label
+    /// ("Expand Meals, 12 entries") so multiple sections stay distinguishable.
     let sectionName: String
+    let count: Int
 
     var body: some View {
         Section(
             header: HStack {
-                header
+                Button(action: toggle) {
+                    HStack {
+                        label
+                        Text(verbatim: "· \(count)")
+                            .font(DOSTypography.caption)
+                            .foregroundStyle(AmberTheme.amberDark)
+                        Image(systemName: collapsed ? "chevron.down" : "chevron.up")
+                            .opacity(collapsible ? 1 : 0)
+                    }
+                    .contentShape(Rectangle())
+                    .frame(minHeight: 44)
+                }
+                .disabled(!collapsible)
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(collapsed ? "Expand" : "Collapse") \(sectionName), \(count) entries")
+
                 Spacer()
 
-                Button(action: {
-                    let newCollapsed = !collapsed
-                    collapsed = newCollapsed
-                    onCollapsedChange?(newCollapsed)
-                }, label: {
-                    Image(systemName: collapsed ? "chevron.up" : "chevron.down")
-                })
-                .disabled(!collapsible)
-                .opacity(collapsible ? 1 : 0)
-                .buttonStyle(.plain)
+                accessory
             }
         ) {
-            Group {
-                if collapsed, collapsible {
-                    // The teaser row ("675 Entries") is the obvious thing to
-                    // tap — expanding shouldn't require hitting the small
-                    // chevron in the header.
-                    Button {
-                        collapsed = false
-                        onCollapsedChange?(false)
-                    } label: {
-                        HStack {
-                            teaser
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(DOSTypography.caption)
-                                .foregroundStyle(AmberTheme.amberDark)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Expand \(sectionName)")
-                } else if collapsed {
-                    // Empty/non-collapsible sections show the bare teaser —
-                    // no dead chevron affordance.
-                    teaser
-                } else {
-                    content()
-                }
+            if !collapsed {
+                content()
             }
         }
     }
@@ -87,10 +72,10 @@ struct CollapsableSection<Parent, Content, Teaser>: View where Parent: View, Con
     @State private var collapsed: Bool
     private var collapsible: Bool
     private let onCollapsedChange: ((Bool) -> Void)?
-}
 
-extension CollapsableSection where Teaser == EmptyView {
-    init(header: Parent, collapsed: Bool = false, @ViewBuilder content: @escaping () -> Content) {
-        self.init(teaser: EmptyView(), header: header, collapsed: collapsed, content: content)
+    private func toggle() {
+        let newCollapsed = !collapsed
+        collapsed = newCollapsed
+        onCollapsedChange?(newCollapsed)
     }
 }

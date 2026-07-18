@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Log tab categories now use a single taller header row with the entry count inline and one chevron — the duplicate collapsed-state summary line is gone
+
 ## [Build 131] — 2026-07-14
 
 ### Changed
