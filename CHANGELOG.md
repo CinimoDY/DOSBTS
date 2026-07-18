@@ -12,6 +12,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ### Changed
 - Log tab categories now use a single taller header row with the entry count inline and one chevron — the duplicate collapsed-state summary line is gone — DMNC-1416, PR #109
+- Chart marker detail sheet: every entry shows its logged time, swipe-left deletes a single entry, tap edits a single entry — the group-level edit with its "Delete Both" is gone — DMNC-1414, PR #107
 
 ### Fixed
 - Chart event markers now split into individual chips as you zoom in and merge only when they'd visually collide — zoomed-in views no longer collapse the whole day into one summed chip — DMNC-1415, PR #110

@@ -122,7 +122,15 @@ struct ContentView: View {
             .environmentObject(loggedEntryToast)
             .sheet(item: $sheets.activeSheet, onDismiss: {
                 sheets.sheetDidDismiss()
-                loggedEntryToast.showStagedIfAny()
+                // Drain the staged toast only when no pending sheet was just
+                // promoted (sheetDidDismiss() above sets activeSheet for
+                // dismissThenPresent flows). Otherwise the promoted sheet —
+                // e.g. the marker-detail per-row edit — would occlude the
+                // toast while its 3s window burns unseen; leaving it staged
+                // means THAT sheet's own dismissal drains it instead.
+                if sheets.activeSheet == nil {
+                    loggedEntryToast.showStagedIfAny()
+                }
             }) { sheet in
                 RootSheetContent(sheet: sheet)
                     .environmentObject(store)

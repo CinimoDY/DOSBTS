@@ -115,8 +115,47 @@ struct RootSheetContent: View {
                     if c.hasStackedMeal { arr.append(.stackedMeal) }
                     return arr
                 },
-                onEdit: {
-                    sheets.dismissThenPresent(.combinedEntryEdit(group))
+                onEditEntry: { marker in
+                    // Edit just this one entry: synthesize a single-marker group
+                    // and route through the coordinator's dismiss-then-present
+                    // (never a nested sheet). With one marker CombinedEntryEditView's
+                    // delete label resolves to "Delete Meal"/"Delete Insulin" —
+                    // "Delete Both" is unreachable from this flow.
+                    let single = ConsolidatedMarkerGroup(
+                        id: "edit-\(marker.id)",
+                        time: marker.time,
+                        markers: [marker]
+                    )
+                    sheets.dismissThenPresent(.combinedEntryEdit(single))
+                },
+                onDeleteEntry: { marker in
+                    // Resolve the entity by sourceID and dispatch the mapped
+                    // whole-record delete. Insulin stages an UNDO toast (the only
+                    // type with a LoggedEntry undo case); it's staged rather than
+                    // shown because the toast overlay is occluded by this sheet —
+                    // ContentView's sheet onDismiss drains it via showStagedIfAny().
+                    switch EntryGroupListOverlay.deleteKind(for: marker.type) {
+                    case .meal:
+                        if let meal = store.state.mealEntryValues.first(where: { $0.id == marker.sourceID }) {
+                            store.dispatch(.deleteMealEntry(mealEntry: meal))
+                        }
+                    case .insulin:
+                        if let delivery = store.state.insulinDeliveryValues.first(where: { $0.id == marker.sourceID }) {
+                            store.dispatch(.deleteInsulinDelivery(insulinDelivery: delivery))
+                            // Single staged-toast slot, last-wins BY DESIGN: a
+                            // second insulin swipe-delete in the same overlay
+                            // session replaces the first staged UNDO (the slot
+                            // drains on sheet dismiss, not per delete). The
+                            // earlier delete is then un-undoable from the toast
+                            // — an accepted trade-off of the single-slot
+                            // LoggedEntryToastController.
+                            loggedEntryToast.stage(.deletedInsulin(delivery))
+                        }
+                    case .exercise:
+                        if let exercise = store.state.exerciseEntryValues.first(where: { $0.id == marker.sourceID }) {
+                            store.dispatch(.deleteExerciseEntry(exerciseEntry: exercise))
+                        }
+                    }
                 },
                 onDismiss: { sheets.dismiss() }
             )

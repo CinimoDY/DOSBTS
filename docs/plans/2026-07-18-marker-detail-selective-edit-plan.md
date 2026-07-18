@@ -32,26 +32,26 @@
 - Modify: `App/Views/Overview/EntryGroupListOverlay.swift` (add static helpers alongside `subline`)
 - Extend test: `DOSBTSTests/EntryGroupListOverlayTests.swift`
 
-- [ ] **Step 1 (failing tests first):** add static, unit-testable helpers and pin them:
+- [x] **Step 1 (failing tests first):** add static, unit-testable helpers and pin them:
   - `rowTime(for: EventMarker, insulin: InsulinDelivery?) -> String` — `HH:mm`; insulin rows use `delivery.starts`, others `marker.time` (reuse the existing `headerTimeFormatter`).
   - `isEditable(_ type: EventMarkerType) -> Bool` — true for `.meal/.bolus/.correction/.basal`, false for `.exercise` (the combined editor cannot edit exercise).
   - Delete-action mapping per type (meal → `.deleteMealEntry`, insulin types → `.deleteInsulinDelivery`, exercise → `.deleteExerciseEntry`) — expressible as a pure function returning an enum/`DirectAction` the tests can assert on.
-- [ ] **Step 2:** Implement; targeted test run green.
+- [x] **Step 2:** Implement; targeted test run green.
 
 ### Task 2: Overlay rework — List rows, times, swipe-delete, tap-to-edit
 
 **Files:**
 - Modify: `App/Views/Overview/EntryGroupListOverlay.swift`
 
-- [ ] **Step 1:** Replace `onEdit: () -> Void` with two callbacks:
+- [x] **Step 1:** Replace `onEdit: () -> Void` with two callbacks:
   ```swift
   var onEditEntry: (EventMarker) -> Void
   var onDeleteEntry: (EventMarker) -> Void
   var onDismiss: () -> Void
   ```
   Delete the header "edit" button (66-84); the header keeps the time + "Logged" text.
-- [ ] **Step 2:** Local row state: `@State private var markers: [EventMarker]` seeded from `group.markers` (chronological). On delete: call `onDeleteEntry(marker)`, remove locally; when the last row goes, call `onDismiss()`.
-- [ ] **Step 3:** Convert the rows region to a `List` (see Global Constraints for styling). Each row:
+- [x] **Step 2:** Local row state: `@State private var markers: [EventMarker]` seeded from `group.markers` (chronological). On delete: call `onDeleteEntry(marker)`, remove locally; when the last row goes, call `onDismiss()`.
+- [x] **Step 3:** Convert the rows region to a `List` (see Global Constraints for styling). Each row:
   - shows its **own time** — `rowTime(...)` as a `DOSTypography.caption` under the value column (trailing VStack) or leading the subline; pick one placement and keep it consistent for all types;
   - `.swipeActions(edge: .trailing)` destructive DELETE on **every** row type;
   - meal/insulin rows: tappable (add a trailing chevron affordance, `contentShape(Rectangle())`, `onTapGesture { onEditEntry(marker) }`); exercise rows: not tappable, no chevron;
@@ -62,18 +62,18 @@
 **Files:**
 - Modify: `App/Views/RootSheetContent.swift` (the `.entryGroupReadOverlay` construction, currently wiring `onEdit` at 110-112)
 
-- [ ] **Step 1:** `onEditEntry`: synthesize a single-marker group and route through the coordinator:
+- [x] **Step 1:** `onEditEntry`: synthesize a single-marker group and route through the coordinator:
   ```swift
   let single = ConsolidatedMarkerGroup(id: "edit-\(marker.id)", time: marker.time, markers: [marker])
   sheets.dismissThenPresent(.combinedEntryEdit(single))
   ```
-- [ ] **Step 2:** `onDeleteEntry`: dispatch the mapped delete action with the resolved entity (look up by `marker.sourceID` in `store.state.mealEntryValues` / `insulinDeliveryValues` / `exerciseEntryValues`). Mirror the Lists-tab delete behavior per type: stage the undo toast where a `LoggedEntry` case exists (`.deletedInsulin`); meal/exercise deletes without an undo case just delete (adding `.deletedMeal` is optional polish, not required).
-- [ ] **Step 3:** Remove the now-dead `onEdit` wiring. Verify no other caller of the overlay passes `onEdit` (grep).
+- [x] **Step 2:** `onDeleteEntry`: dispatch the mapped delete action with the resolved entity (look up by `marker.sourceID` in `store.state.mealEntryValues` / `insulinDeliveryValues` / `exerciseEntryValues`). Mirror the Lists-tab delete behavior per type: stage the undo toast where a `LoggedEntry` case exists (`.deletedInsulin`); meal/exercise deletes without an undo case just delete (adding `.deletedMeal` is optional polish, not required).
+- [x] **Step 3:** Remove the now-dead `onEdit` wiring. Verify no other caller of the overlay passes `onEdit` (grep).
 
 ### Task 4: CHANGELOG + verification
 
-- [ ] `CHANGELOG.md` `[Unreleased]`: under `### Changed`: `- Chart marker detail sheet: every entry shows its logged time, swipe-left deletes a single entry, tap edits a single entry — the group-level edit with its "Delete Both" is gone`
-- [ ] Full suite green; both targets build.
+- [x] `CHANGELOG.md` `[Unreleased]`: under `### Changed`: `- Chart marker detail sheet: every entry shows its logged time, swipe-left deletes a single entry, tap edits a single entry — the group-level edit with its "Delete Both" is gone`
+- [x] Full suite green; both targets build.
 
 ## Verification (end-to-end, simulator + VirtualConnection)
 

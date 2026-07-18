@@ -40,27 +40,94 @@ struct EntryGroupListOverlay: View {
     let glucoseUnit: GlucoseUnit
     let iobAtTime: (Date) -> Double?
     let confoundersFor: (MealEntry) -> [ConfounderType]
-    var onEdit: () -> Void
-    var onDismiss: () -> Void
+    /// Tapping a meal/insulin row edits just that entry — routed through the
+    /// SheetCoordinator's dismiss-then-present at the call site (never a nested
+    /// sheet). Exercise rows are read-only and never invoke this.
+    let onEditEntry: (EventMarker) -> Void
+    /// Swipe-delete of a single entry. The caller dispatches the mapped
+    /// whole-record delete; the overlay removes the row locally.
+    let onDeleteEntry: (EventMarker) -> Void
+    let onDismiss: () -> Void
+
+    /// Chronological rows, held locally so a swipe-delete animates one entry out
+    /// immediately (and the sheet can self-dismiss when the last row goes)
+    /// without waiting for a full state round-trip.
+    @State private var markers: [EventMarker]
+
+    init(
+        group: ConsolidatedMarkerGroup,
+        mealEntries: [MealEntry],
+        insulinDeliveries: [InsulinDelivery],
+        exerciseEntries: [ExerciseEntry],
+        mealImpacts: [UUID: MealImpact],
+        personalFoodAvgs: [UUID: PersonalFoodGlycemic],
+        glucoseUnit: GlucoseUnit,
+        iobAtTime: @escaping (Date) -> Double?,
+        confoundersFor: @escaping (MealEntry) -> [ConfounderType],
+        onEditEntry: @escaping (EventMarker) -> Void,
+        onDeleteEntry: @escaping (EventMarker) -> Void,
+        onDismiss: @escaping () -> Void
+    ) {
+        self.group = group
+        self.mealEntries = mealEntries
+        self.insulinDeliveries = insulinDeliveries
+        self.exerciseEntries = exerciseEntries
+        self.mealImpacts = mealImpacts
+        self.personalFoodAvgs = personalFoodAvgs
+        self.glucoseUnit = glucoseUnit
+        self.iobAtTime = iobAtTime
+        self.confoundersFor = confoundersFor
+        self.onEditEntry = onEditEntry
+        self.onDeleteEntry = onDeleteEntry
+        self.onDismiss = onDismiss
+        _markers = State(initialValue: group.markers.sorted { $0.time < $1.time })
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                header
-                Divider().background(AmberTheme.amberDark)
-                ForEach(chronologicalRows, id: \.id) { marker in
-                    row(for: marker)
-                    Divider().background(AmberTheme.borderSubtle)
-                }
-            }
+        VStack(spacing: 0) {
+            header
+            Divider().background(AmberTheme.amberDark)
+            entryList
         }
         .safeAreaInset(edge: .bottom) { okBar }
         .background(AmberTheme.dosBlack.ignoresSafeArea())
         .preferredColorScheme(.dark)
     }
 
-    private var chronologicalRows: [EventMarker] {
-        group.markers.sorted { $0.time < $1.time }
+    // `.swipeActions` requires a `List` row — so the rows region is a plain,
+    // background-free List styled to keep the DOS look: black rows, amber
+    // separators. Header stays above the List; okBar stays in the bottom inset.
+    private var entryList: some View {
+        List {
+            ForEach(markers) { marker in
+                row(for: marker)
+                    .listRowBackground(AmberTheme.dosBlack)
+                    .listRowInsets(EdgeInsets(
+                        top: DOSSpacing.sm,
+                        leading: DOSSpacing.md,
+                        bottom: DOSSpacing.sm,
+                        trailing: DOSSpacing.md
+                    ))
+                    .listRowSeparatorTint(AmberTheme.borderSubtle)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            deleteRow(marker)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+
+    private func deleteRow(_ marker: EventMarker) {
+        onDeleteEntry(marker)
+        markers.removeAll { $0.id == marker.id }
+        if markers.isEmpty {
+            onDismiss()
+        }
     }
 
     private var header: some View {
@@ -69,15 +136,6 @@ struct EntryGroupListOverlay: View {
                 .font(DOSTypography.body)
                 .foregroundStyle(AmberTheme.amber)
             Spacer()
-            Button(action: onEdit) {
-                Text("edit")
-                    .font(DOSTypography.caption)
-                    .tracking(0.6)
-                    .foregroundStyle(AmberTheme.amberLight)
-                    .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Edit this entry group")
         }
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.sm)
@@ -107,6 +165,13 @@ struct EntryGroupListOverlay: View {
     @ViewBuilder
     private func row(for marker: EventMarker) -> some View {
         let stub = entryStub(for: marker)
+        // Editable requires both an editable TYPE and a resolvable entity —
+        // during a deletion race the row falls back to stub-nil rendering, and
+        // tapping through would open an empty dead-end editor. No entity, no
+        // chevron, no tap.
+        let editable = Self.isEditable(marker.type) && stub != nil
+        let time = rowTime(for: marker, stub: stub)
+        let subline = sublineText(for: stub, marker: marker)
 
         HStack(alignment: .top, spacing: 10) {
             rowIcon(for: marker)
@@ -116,19 +181,38 @@ struct EntryGroupListOverlay: View {
                 Text(primaryText(for: stub, marker: marker))
                     .font(DOSTypography.body)
                     .foregroundStyle(AmberTheme.amber)
-                Text(sublineText(for: stub, marker: marker))
-                    .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amber)
+                if !subline.isEmpty {
+                    Text(subline)
+                        .font(DOSTypography.caption)
+                        .foregroundStyle(AmberTheme.amber)
+                }
             }
             Spacer()
-            Text(valueText(for: stub, marker: marker))
-                .font(DOSTypography.displayMedium)
-                .foregroundStyle(marker.type.color)
+            // Value on top, this entry's own logged time beneath it — placed
+            // identically for every row type (meal / insulin / exercise).
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(valueText(for: stub, marker: marker))
+                    .font(DOSTypography.displayMedium)
+                    .foregroundStyle(marker.type.color)
+                Text(time)
+                    .font(DOSTypography.caption)
+                    .foregroundStyle(AmberTheme.amberDark)
+            }
+            // Chevron only on editable (meal/insulin) rows — exercise is read-only.
+            if editable {
+                Image(systemName: "chevron.right")
+                    .font(DOSTypography.caption)
+                    .foregroundStyle(AmberTheme.amberDark)
+                    .padding(.top, 4)
+            }
         }
-        .padding(.horizontal, DOSSpacing.md)
-        .padding(.vertical, DOSSpacing.sm)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if editable { onEditEntry(marker) }
+        }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(voiceOverLabel(for: stub, marker: marker))
+        .accessibilityLabel(voiceOverLabel(for: stub, marker: marker, time: time))
+        .accessibilityAddTraits(editable ? .isButton : [])
     }
 
     // MARK: - Per-row helpers
@@ -235,8 +319,58 @@ struct EntryGroupListOverlay: View {
         }
     }
 
-    private func voiceOverLabel(for stub: MarkerEntryStub?, marker: EventMarker) -> String {
-        primaryText(for: stub, marker: marker) + ", " + valueText(for: stub, marker: marker)
+    private func voiceOverLabel(for stub: MarkerEntryStub?, marker: EventMarker, time: String) -> String {
+        primaryText(for: stub, marker: marker) + ", " + valueText(for: stub, marker: marker) + ", " + time
+    }
+
+    /// Instance convenience: extracts the insulin (if any) from the stub, then
+    /// defers to the static `rowTime` so the time logic stays unit-testable.
+    private func rowTime(for marker: EventMarker, stub: MarkerEntryStub?) -> String {
+        if case .insulin(let i) = stub {
+            return Self.rowTime(for: marker, insulin: i)
+        }
+        return Self.rowTime(for: marker, insulin: nil)
+    }
+
+    // MARK: - Static testable helpers
+
+    /// A row's own logged time as `HH:mm`. Insulin rows read the delivery's
+    /// `starts`; every other type reads the marker's `time`.
+    static func rowTime(for marker: EventMarker, insulin: InsulinDelivery?) -> String {
+        let date: Date
+        switch marker.type {
+        case .bolus, .correction, .basal:
+            date = insulin?.starts ?? marker.time
+        case .meal, .exercise:
+            date = marker.time
+        }
+        return headerTimeFormatter.string(from: date)
+    }
+
+    /// Whether tapping a row can open the combined editor. Exercise is read-only
+    /// (the editor cannot edit exercise), so only meal + insulin rows are
+    /// editable.
+    static func isEditable(_ type: EventMarkerType) -> Bool {
+        switch type {
+        case .meal, .bolus, .correction, .basal: return true
+        case .exercise: return false
+        }
+    }
+
+    /// Which whole-record delete a row of this type maps to. Pure so the routing
+    /// is testable without constructing entities or a store.
+    enum MarkerDeleteKind: Equatable {
+        case meal
+        case insulin
+        case exercise
+    }
+
+    static func deleteKind(for type: EventMarkerType) -> MarkerDeleteKind {
+        switch type {
+        case .meal: return .meal
+        case .bolus, .correction, .basal: return .insulin
+        case .exercise: return .exercise
+        }
     }
 
     // MARK: - Static testable helper
