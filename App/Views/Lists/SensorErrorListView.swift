@@ -17,22 +17,17 @@ struct SensorErrorListView: View {
     var body: some View {
         Group {
             CollapsableSection(
-                teaser: Text(getTeaser(sensorErrorValues.count)),
-                header: HStack {
-                    Label("Sensor error values", systemImage: "exclamationmark.triangle")
-                    Spacer()
-                    SelectedDatePager().padding(.trailing)
-                }.buttonStyle(.plain),
+                label: Label("Sensor error values", systemImage: "exclamationmark.triangle"),
+                accessory: SelectedDatePager().padding(.trailing),
                 sectionName: "Sensor errors",
+                count: sensorErrorValues.count,
                 collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !sensorErrorValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
                     store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
-                if sensorErrorValues.isEmpty {
-                    Text(getTeaser(sensorErrorValues.count))
-                } else {
+                if !sensorErrorValues.isEmpty {
                     ForEach(sensorErrorValues) { sensorError in
                         HStack(alignment: .top) {
                             Text(verbatim: sensorError.timestamp.toLocalDateTime())
@@ -71,8 +66,4 @@ struct SensorErrorListView: View {
     // MARK: Private
 
     @State private var sensorErrorValues: [SensorError] = []
-
-    private func getTeaser(_ count: Int) -> String {
-        return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
-    }
 }

@@ -18,23 +18,17 @@ struct SensorGlucoseListView: View {
     var body: some View {
         Group {
             CollapsableSection(
-                teaser: Text(getTeaser(sensorGlucoseValues.count)),
-                header: HStack {
-                    Label("Sensor glucose values", systemImage: "sensor.tag.radiowaves.forward")
-                    Spacer()
-                    SelectedDatePager().padding(.trailing)
-                }.buttonStyle(.plain),
-
+                label: Label("Sensor glucose values", systemImage: "sensor.tag.radiowaves.forward"),
+                accessory: SelectedDatePager().padding(.trailing),
                 sectionName: "CGM",
+                count: sensorGlucoseValues.count,
                 collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !sensorGlucoseValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
                     store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
-                if sensorGlucoseValues.isEmpty {
-                    Text(getTeaser(sensorGlucoseValues.count))
-                } else {
+                if !sensorGlucoseValues.isEmpty {
                     ForEach(sensorGlucoseValues) { sensorGlucose in
                         HStack {
                             Text(verbatim: sensorGlucose.timestamp.toLocalDateTime())
@@ -83,8 +77,4 @@ struct SensorGlucoseListView: View {
     // MARK: Private
 
     @State private var sensorGlucoseValues: [SensorGlucose] = []
-
-    private func getTeaser(_ count: Int) -> String {
-        return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
-    }
 }

@@ -18,26 +18,21 @@ struct MealEntryListView: View {
     var body: some View {
         Group {
             CollapsableSection(
-                teaser: Text(getTeaser(mealEntryValues.count)),
-                header: HStack {
-                    Label {
-                        Text("Meals")
-                    } icon: {
-                        AppleIcon().frame(width: 16, height: 16)
-                    }
-                    Spacer()
-                    SelectedDatePager().padding(.trailing)
-                }.buttonStyle(.plain),
+                label: Label {
+                    Text("Meals")
+                } icon: {
+                    AppleIcon().frame(width: 16, height: 16)
+                },
+                accessory: SelectedDatePager().padding(.trailing),
                 sectionName: "Meals",
+                count: mealEntryValues.count,
                 collapsed: !store.state.listSectionExpanded[sectionKey, default: false],
                 collapsible: !mealEntryValues.isEmpty,
                 onCollapsedChange: { isCollapsed in
                     store.dispatch(.setListSectionExpanded(sectionName: sectionKey, isExpanded: !isCollapsed))
                 })
             {
-                if mealEntryValues.isEmpty {
-                    Text(getTeaser(mealEntryValues.count))
-                } else {
+                if !mealEntryValues.isEmpty {
                     ForEach(mealEntryValues) { mealEntry in
                         MealItemRow(
                             meal: mealEntry,
@@ -65,10 +60,6 @@ struct MealEntryListView: View {
     // MARK: Private
 
     @State private var mealEntryValues: [MealEntry] = []
-
-    private func getTeaser(_ count: Int) -> String {
-        return count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
-    }
 
     private func logAgain(_ mealEntry: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: mealEntry).toMealEntry()
