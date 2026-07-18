@@ -265,3 +265,5 @@ Additional documentation in `docs/`:
 - `ui-mockups.md` — UI mockups
 - `apple-watch-architecture.md` — Watch extension plans
 - `solutions/` — Documented solutions to past problems (bugs, best practices, workflow patterns), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`). Relevant when implementing or debugging in documented areas.
+
+`CONCEPTS.md` (repo root) — shared domain vocabulary (entities, named processes, status concepts); relevant when orienting to the codebase or discussing domain terms.
