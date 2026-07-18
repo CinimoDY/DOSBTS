@@ -11,7 +11,9 @@
 #   ASC_KEY_ID     the key id
 #   ASC_ISSUER_ID  the issuer id
 #   ASC_APP_ID     the numeric App Store Connect app id
-# Optional: EDITOR (default vi), CHANGELOG (default CHANGELOG.md),
+# Optional: EDITOR (default vi; headless runs with no TTY and no EDITOR skip the
+#                   review and push the changelog-derived body without the scaffold),
+#           CHANGELOG (default CHANGELOG.md),
 #           MAX_BUILD_AGE (recency window in seconds; default 1800 — widen for a late re-run),
 #           ASC_BUILD_NUMBER (target a specific build number directly, ignoring recency — the
 #                             robust path when running well after the deploy, e.g. 130).
@@ -96,16 +98,29 @@ NOTES_BODY="$(printf '%s\n' "$BLOCK" \
 ')"
 
 # --- 3. scaffold + review/edit (R14) ---------------------------------------
-{
-  printf '%s\n\n' "$NOTES_BODY"
-  printf '%s\n' '--- FOCUS THIS BUILD ---'
-  printf '%s\n\n' '(what testers should exercise in this build — edit or delete)'
-  printf '%s\n' '--- KNOWN ISSUES ---'
-  printf '%s\n' '(none — edit or delete)'
-} > "$TMP_NOTES"
-
-echo "==> Review the TestFlight notes for build $BUILD_NUMBER (saving closes the editor)..."
-"${EDITOR:-vi}" "$TMP_NOTES"
+# The interactive review only happens when someone can actually review:
+#   - stdin is a TTY               -> scaffold + $EDITOR (default vi), as before
+#   - headless but EDITOR is set   -> scaffold + run $EDITOR (a scripted rewrite,
+#                                     e.g. an agent-provided non-interactive editor)
+#   - headless, no EDITOR          -> push the changelog-derived body ONLY (no
+#                                     scaffold — its "edit or delete" placeholders
+#                                     must never reach testers unreviewed)
+# Without the TTY guard, `vi` blocks forever on a /dev/null stdin and hangs the
+# whole deploy (bit us twice on Build 132, 2026-07-18).
+if [ -t 0 ] || [ -n "${EDITOR:-}" ]; then
+  {
+    printf '%s\n\n' "$NOTES_BODY"
+    printf '%s\n' '--- FOCUS THIS BUILD ---'
+    printf '%s\n\n' '(what testers should exercise in this build — edit or delete)'
+    printf '%s\n' '--- KNOWN ISSUES ---'
+    printf '%s\n' '(none — edit or delete)'
+  } > "$TMP_NOTES"
+  echo "==> Review the TestFlight notes for build $BUILD_NUMBER (saving closes the editor)..."
+  "${EDITOR:-vi}" "$TMP_NOTES"
+else
+  printf '%s\n' "$NOTES_BODY" > "$TMP_NOTES"
+  echo "==> No TTY and no EDITOR: skipping review, pushing changelog-derived notes without the scaffold."
+fi
 
 # whatsNew (the API field behind TestFlight's "What to Test") has a 4000-CHARACTER
 # ASC limit; warn but proceed (the API would
