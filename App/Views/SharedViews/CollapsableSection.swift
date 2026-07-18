@@ -40,25 +40,24 @@ struct CollapsableSection<Label, Accessory, Content>: View where Label: View, Ac
     var body: some View {
         Section(
             header: HStack {
-                Button(action: toggle) {
-                    HStack {
-                        label
-                        Text(verbatim: "· \(count)")
-                            .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
-                        Image(systemName: collapsed ? "chevron.down" : "chevron.up")
-                            .opacity(collapsible ? 1 : 0)
+                if collapsible {
+                    Button(action: toggle) {
+                        headerRow(withChevron: true)
                     }
-                    .contentShape(Rectangle())
-                    .frame(minHeight: 44)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(collapsed ? "Expand" : "Collapse") \(sectionName), \(entryCountLabel)")
+                } else {
+                    // Empty section: a disabled button would dim the label and
+                    // announce a dead "Expand" affordance — render plain instead.
+                    headerRow(withChevron: false)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(sectionName), no entries")
                 }
-                .disabled(!collapsible)
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(collapsed ? "Expand" : "Collapse") \(sectionName), \(count) entries")
 
                 Spacer()
 
                 accessory
+                    .buttonStyle(.plain)
             }
         ) {
             if !collapsed {
@@ -72,6 +71,28 @@ struct CollapsableSection<Label, Accessory, Content>: View where Label: View, Ac
     @State private var collapsed: Bool
     private var collapsible: Bool
     private let onCollapsedChange: ((Bool) -> Void)?
+
+    private func headerRow(withChevron: Bool) -> some View {
+        HStack {
+            label
+            Text(verbatim: "· \(count)")
+                .font(DOSTypography.caption)
+                .foregroundStyle(AmberTheme.amberDark)
+            if withChevron {
+                Image(systemName: collapsed ? "chevron.down" : "chevron.up")
+            }
+        }
+        // frame BEFORE contentShape so the 44pt tap target is hittable,
+        // not just visual padding.
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
+    }
+
+    /// Localized pluralized count ("1 Entry" / "12 Entries") for VoiceOver —
+    /// same keys the Lists teasers used.
+    private var entryCountLabel: String {
+        count.pluralizeLocalization(singular: "%@ Entry", plural: "%@ Entries")
+    }
 
     private func toggle() {
         let newCollapsed = !collapsed
