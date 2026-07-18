@@ -85,7 +85,7 @@ enum InsulinBatchBuilder {
 ### Task 5: CHANGELOG + full verification
 
 - [x] `CHANGELOG.md` `[Unreleased]` → `### Added`: `- Add Insulin sheet can stage multiple entries (e.g. correction + snack bolus) and log them with one CONFIRM; the IOB stacking warning accounts for staged entries`
-- [x] Full suite: `xcodebuild test -project DOSBTS.xcodeproj -scheme DOSBTSApp -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' -configuration Debug 2>&1 | grep -E "TEST (SUCCEEDED|FAILED)" | tail` → SUCCEEDED (simulator substituted per worker assignment; see IMPLEMENTATION_NOTES.md)
+- [x] Full suite: `xcodebuild test -project DOSBTS.xcodeproj -scheme DOSBTSApp -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.5' -configuration Debug 2>&1 | grep -E "TEST (SUCCEEDED|FAILED)" | tail` → SUCCEEDED (simulator substituted per worker assignment; see PR #108 → Implementation notes)
 - [x] Both targets build (app + `DOSBTSWidget` scheme).
 
 ## Verification (end-to-end, simulator + VirtualConnection)

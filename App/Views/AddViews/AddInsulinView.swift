@@ -19,6 +19,12 @@ struct AddInsulinView: View {
     // staged-IOB rules this view delegates to.
     @State private var staged: [InsulinDelivery] = []
     @State private var showDiscardConfirm = false
+    // Reentrancy guard: a rapid double-tap on CONFIRM during the dismiss
+    // animation would dispatch the batch twice — and because the current-form
+    // entry gets a fresh UUID per commitSet evaluation, the second dispatch
+    // would create a genuine duplicate dose record that batch-UNDO couldn't
+    // fully remove. First tap wins; everything after is a no-op.
+    @State private var didConfirm = false
 
     var addCallback: (_ deliveries: [InsulinDelivery]) -> Void
 
@@ -127,7 +133,10 @@ struct AddInsulinView: View {
                 }
             }
             .confirmationDialog(
-                "Discard \(staged.count) staged entries?",
+                staged.count.pluralizeLocalization(
+                    singular: "Discard %@ staged entry?",
+                    plural: "Discard %@ staged entries?"
+                ),
                 isPresented: $showDiscardConfirm,
                 titleVisibility: .visible
             ) {
@@ -273,6 +282,7 @@ struct AddInsulinView: View {
                     .foregroundStyle(AmberTheme.amberDark)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Remove staged \(entry.units.asInsulinUnits()) \(entry.type.localizedDescription)")
         }
         .dosCard(.stat, padding: DOSSpacing.sm)
     }
@@ -281,15 +291,18 @@ struct AddInsulinView: View {
 
     private func stageCurrentEntry() {
         guard let u = units, u > 0 else { return }
-        let endsTime = insulinType == .basal ? ends : starts
-        staged.append(InsulinDelivery(id: UUID(), starts: starts, ends: endsTime, units: u, type: insulinType))
+        // Shared basal-ends rule lives in makeEntry — same helper commitSet
+        // uses, so the staging and commit paths can't drift apart.
+        staged.append(InsulinBatchBuilder.makeEntry(units: u, type: insulinType, starts: starts, ends: ends))
         // Clear units only — type and time selections persist for the next entry.
         units = nil
     }
 
     private func confirm() {
+        guard !didConfirm else { return }
         let deliveries = commitSet
         guard !deliveries.isEmpty else { return }
+        didConfirm = true
         addCallback(deliveries)
         dismiss()
     }
