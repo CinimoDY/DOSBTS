@@ -74,10 +74,18 @@ struct CollapsableSection<Label, Accessory, Content>: View where Label: View, Ac
 
     private func headerRow(withChevron: Bool) -> some View {
         HStack {
+            // The label is the section's identity — it must never lose the
+            // header's width fight. Without the priority + line limit, an
+            // over-budget row (big count + chevron + date pager) squeezes the
+            // label to ~1 character and wraps it letter-by-letter ("C/G" with
+            // the "M" clipped, Build 132 dogfood report).
             label
+                .lineLimit(1)
+                .layoutPriority(1)
             Text(verbatim: "· \(count)")
                 .font(DOSTypography.caption)
                 .foregroundStyle(AmberTheme.amberDark)
+                .fixedSize()
             if withChevron {
                 Image(systemName: collapsed ? "chevron.down" : "chevron.up")
             }

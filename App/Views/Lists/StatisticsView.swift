@@ -26,7 +26,12 @@ struct SelectedDatePager: View {
                 }
             }
             .monospacedDigit()
-            .padding(.horizontal)
+            // Section headers run tight (label + count + chevron + this pager,
+            // whose bound arrows reserve space even at opacity 0): degrade by
+            // scaling the date slightly, never by wrapping it to two lines.
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
+            .padding(.horizontal, 8)
             .onTapGesture {
                 store.dispatch(.setSelectedDate(selectedDate: nil))
             }

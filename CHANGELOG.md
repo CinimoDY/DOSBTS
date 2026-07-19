@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Log tab category labels no longer collapse into vertical/cut-off letters ("CG") when the header row runs out of width — the label always keeps its full width; the date pager scales down slightly instead of wrapping — DMNC-1437
+
 ## [Build 132] — 2026-07-18
 
 ### Added
