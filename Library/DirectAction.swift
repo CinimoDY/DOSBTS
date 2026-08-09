@@ -27,11 +27,13 @@ enum DirectAction {
     case addExerciseEntry(exerciseEntryValues: [ExerciseEntry])
     case addFavoriteFoodValues(favoriteFoodValues: [FavoriteFood])
     case addMealEntry(mealEntryValues: [MealEntry])
+    case addJournalNote(journalNoteValues: [JournalNote])
     case addTreatmentEvent(treatmentEvent: TreatmentEvent)
     case deleteFavoriteFood(favoriteFood: FavoriteFood)
     case deleteExerciseEntry(exerciseEntry: ExerciseEntry)
     case deleteInsulinDelivery(insulinDelivery: InsulinDelivery)
     case deleteMealEntry(mealEntry: MealEntry)
+    case deleteJournalNote(journalNote: JournalNote)
     case deleteCalibration(calibration: CustomCalibration)
     case deleteLogs
     case deleteSensorError(error: SensorError)
@@ -45,6 +47,7 @@ enum DirectAction {
     case loadExerciseEntryValues
     case loadFavoriteFoodValues
     case loadMealEntryValues
+    case loadJournalNoteValues
     case loadRecentMealEntries
     case logFavoriteFood(favoriteFood: FavoriteFood)
     case loadInsulinDeliveryValues
@@ -88,6 +91,7 @@ enum DirectAction {
     case setHeartRateSeries(heartRateSeries: [(Date, Double)])
     case setHealthImportExcludedSources(excludedSources: [String])
     case setMealEntryValues(mealEntryValues: [MealEntry])
+    case setJournalNoteValues(journalNoteValues: [JournalNote])
     case setRecentMealEntries(recentMealEntries: [MealEntry])
     case setInsulinDeliveryValues(insulinDeliveryValues: [InsulinDelivery])
     case setMinSelectedDate(minSelectedDate: Date)

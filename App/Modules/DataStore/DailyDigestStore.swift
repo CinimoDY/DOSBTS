@@ -257,7 +257,13 @@ extension DataStore {
                         .order(Column(ExerciseEntry.Columns.startTime.name))
                         .fetchAll(db)
 
-                    promise(.success(DailyDigestEvents(meals: meals, insulin: insulin, exercise: exercise)))
+                    let notes = try JournalNote
+                        .filter(Column(JournalNote.Columns.timestamp.name) >= startOfDay)
+                        .filter(Column(JournalNote.Columns.timestamp.name) < endOfDay)
+                        .order(Column(JournalNote.Columns.timestamp.name))
+                        .fetchAll(db)
+
+                    promise(.success(DailyDigestEvents(meals: meals, insulin: insulin, exercise: exercise, notes: notes)))
                 } catch {
                     promise(.failure(.withError(error)))
                 }

@@ -308,3 +308,24 @@ extension DailyDigest: FetchableRecord, PersistableRecord {
         case generatedAt
     }
 }
+
+// MARK: - JournalNote + FetchableRecord, PersistableRecord
+
+extension JournalNote: FetchableRecord, PersistableRecord {
+    static let databaseUUIDEncodingStrategy = DatabaseUUIDEncodingStrategy.uppercaseString
+
+    static var Table: String {
+        "JournalNote"
+    }
+
+    enum Columns: String, ColumnExpression {
+        case id
+        case timestamp
+        case text
+        case tag
+    }
+}
+
+// MARK: - JournalNoteTag + DatabaseValueConvertible
+
+extension JournalNoteTag: DatabaseValueConvertible {}

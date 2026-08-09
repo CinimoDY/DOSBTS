@@ -9,6 +9,7 @@ import SwiftUI
 
 struct DigestView: View {
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var sheets: SheetCoordinator
 
     @State private var selectedDate: Date = Date()
     @State private var hasAppeared: Bool = false
@@ -77,6 +78,20 @@ struct DigestView: View {
                     .foregroundStyle(isToday ? AmberTheme.borderFaint : AmberTheme.amberDark)
             }
             .disabled(isToday)
+
+            // Second capture surface for journal notes. Lives in the date bar
+            // rather than the timeline header so it stays reachable on a day
+            // with no digest data. Presents through the app's single
+            // presentation root — never a local .sheet (R8a).
+            Button {
+                sheets.present(.journalNote)
+            } label: {
+                Image(systemName: "square.and.pencil")
+                    .font(DOSTypography.body)
+                    .foregroundStyle(AmberTheme.amber)
+                    .accessibilityLabel("Add note")
+            }
+            .padding(.leading, DOSSpacing.md)
         }
         .padding(.vertical, DOSSpacing.sm)
     }
@@ -514,6 +529,16 @@ private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
             timeString: timeFormatter.string(from: ex.startTime),
             label: "\(ex.activityType) \(Int(ex.durationMinutes))min",
             color: AmberTheme.cgaGreen
+        ))
+    }
+
+    for note in events.notes {
+        let tag = note.tag.map { "[\($0.localizedDescription)] " } ?? ""
+        items.append(TimelineItem(
+            timestamp: note.timestamp,
+            timeString: timeFormatter.string(from: note.timestamp),
+            label: "\(tag)\(note.text)",
+            color: AmberTheme.amberLight
         ))
     }
 

@@ -221,6 +221,7 @@ private func createSimulatorAppStore() -> DirectStore {
         foodCorrectionStoreMiddleware(),
         exerciseEntryStoreMiddleware(),
         treatmentEventStoreMiddleware(),
+        journalNoteStoreMiddleware(),
         treatmentCycleMiddleware(),
         tightControlStreakMiddleware(),
         // Cross-middleware: .addMealEntry also handled above by mealEntryStoreMiddleware + favoriteFoodStoreMiddleware
@@ -275,6 +276,7 @@ private func createAppStore() -> DirectStore {
         foodCorrectionStoreMiddleware(),
         exerciseEntryStoreMiddleware(),
         treatmentEventStoreMiddleware(),
+        journalNoteStoreMiddleware(),
         treatmentCycleMiddleware(),
         tightControlStreakMiddleware(),
         // Cross-middleware: .addMealEntry also handled above by mealEntryStoreMiddleware + favoriteFoodStoreMiddleware

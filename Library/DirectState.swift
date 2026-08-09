@@ -58,6 +58,7 @@ protocol DirectState {
     var favoriteFoodValues: [FavoriteFood] { get set }
     var recentMealEntries: [MealEntry] { get set }
     var mealEntryValues: [MealEntry] { get set }
+    var journalNoteValues: [JournalNote] { get set }
     var latestBloodGlucose: BloodGlucose? { get set }
     var latestInsulinDelivery: InsulinDelivery? { get set }
     var latestSensorGlucose: SensorGlucose? { get set }

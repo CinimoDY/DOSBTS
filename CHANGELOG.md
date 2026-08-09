@@ -7,6 +7,12 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Journal notes: log free text with an optional SICK / STRESSED / SLUGGISH / OTHER tag, from the Log tab or the Daily Digest screen. Notes appear in the Log tab's NOTES section (swipe to delete) and on the Digest timeline, and — with AI Daily Insights consent on — are sent as context so the insight can explain a day in your own words — DMNC-1485
+
+### Changed
+- AI Daily Insights consent copy now states that the text of your journal notes is sent along with glucose, meals, insulin, and exercise — DMNC-1485
+
 ## [Build 133] — 2026-07-19
 
 ### Fixed

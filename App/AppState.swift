@@ -179,6 +179,9 @@ struct AppState: DirectState {
     var recentFoodCorrections: [FoodCorrection] = []
     var recentMealEntries: [MealEntry] = []
     var mealEntryValues: [MealEntry] = []
+    // GRDB-backed: loaded by journalNoteStoreMiddleware, never persisted to
+    // UserDefaults (the 3-file pattern — CLAUDE.md "Adding New State Properties").
+    var journalNoteValues: [JournalNote] = []
     var connectionError: String?
     var connectionErrorTimestamp: Date?
     var connectionInfos: [SensorConnectionInfo] = []

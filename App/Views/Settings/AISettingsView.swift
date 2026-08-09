@@ -119,7 +119,7 @@ struct AISettingsView: View {
                     )) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("AI Daily Insights")
-                            Text("Sends glucose readings, meals, insulin, and exercise data to generate daily summaries")
+                            Text("Sends glucose readings, meals, insulin, exercise, and the text of your journal notes to generate daily summaries")
                                 .font(DOSTypography.caption)
                                 .foregroundStyle(AmberTheme.amber)
                         }

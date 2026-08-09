@@ -26,6 +26,10 @@ struct ListsView: View {
 
                 MealEntryListView()
 
+                // Ungated, unlike the BloodGlucose section above
+                // (DirectConfig.bloodGlucoseInput is false).
+                JournalNoteListView()
+
                 Section {
                     NavigationLink {
                         FoodImpactView()
@@ -61,6 +65,15 @@ struct ListsView: View {
                             Image(systemName: "plus")
                                 .accessibilityLabel("Add blood glucose")
                         }
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        sheets.present(.journalNote)
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                            .accessibilityLabel("Add note")
                     }
                 }
             }

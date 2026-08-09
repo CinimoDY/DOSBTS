@@ -248,6 +248,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setMealEntryValues(mealEntryValues: let mealEntryValues):
         state.mealEntryValues = mealEntryValues
 
+    case .setJournalNoteValues(journalNoteValues: let journalNoteValues):
+        state.journalNoteValues = journalNoteValues
+
     case .setSensorGlucoseValues(glucoseValues: let glucoseValues):
         state.sensorGlucoseValues = glucoseValues
         
