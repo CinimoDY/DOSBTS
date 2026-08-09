@@ -521,6 +521,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setIOBDeliveries(deliveries: let deliveries):
         state.iobDeliveries = deliveries
 
+    // MARK: Food History Search (DMNC-1484)
+    case .setMealHistoryResults(results: let results):
+        state.mealHistoryResults = results
+
     // MARK: Ratio Lab
     case .setRatioEvidence(evidence: let evidence):
         state.ratioEvidence = evidence

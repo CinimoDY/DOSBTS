@@ -24,6 +24,85 @@ struct HypoFilteredEntryModel: Equatable {
     }
 }
 
+/// Pure "in-memory recents + DB search hits → displayed rows" mapping for the
+/// food entry sheet's RECENT section (DMNC-1484).
+///
+/// The search box used to filter only `state.recentMealEntries`, so any food
+/// older than the recents cap was unreachable by any means. A query of at least
+/// `minQueryLength` characters now also hits the database; this model merges the
+/// two sources and — critically — rejects results belonging to a *stale* query.
+///
+/// Stale rejection is load-bearing: `Store.dispatch` fires each middleware
+/// publisher and never cancels in-flight work, so typing `ap` then `app` can
+/// land the slower `ap` result last and paint the wrong rows. Every result
+/// payload carries the query it answered (`MealHistoryResults.query`); anything
+/// that doesn't match the current normalized query is ignored and the view stays
+/// in its searching state.
+///
+/// Search is deliberately live in BOTH the normal and the hypo-filtered sheet:
+/// the RECENT section is already identical in both modes, and suppressing search
+/// during a treatment cycle would produce "No matches" for a food that
+/// demonstrably exists — exactly the dead end this change exists to remove.
+struct FoodHistorySearchModel: Equatable {
+    /// Rows to render in the RECENT section, in display order.
+    let rows: [MealEntry]
+    /// A search is in flight: the query is long enough, but no result answering
+    /// it has landed yet. `rows` still holds the in-memory matches meanwhile.
+    let isSearching: Bool
+
+    /// Same threshold as the ASK AI row, so history search and ASK AI appear
+    /// together rather than out of phase.
+    static let minQueryLength = 3
+    /// Mirrors the ASK AI clamp.
+    static let maxQueryLength = 500
+
+    /// Trim + clamp. The dispatch site and the staleness comparison MUST both go
+    /// through this, or an over-long query could never match its own result and
+    /// the sheet would search forever.
+    static func normalizedQuery(_ raw: String) -> String {
+        String(raw.trimmingCharacters(in: .whitespacesAndNewlines).prefix(maxQueryLength))
+    }
+
+    static func make(
+        query: String,
+        recents: [MealEntry],
+        results: MealHistoryResults?
+    ) -> FoodHistorySearchModel {
+        let normalized = normalizedQuery(query)
+
+        guard !normalized.isEmpty else {
+            return FoodHistorySearchModel(rows: recents, isSearching: false)
+        }
+
+        let local = recents.filter {
+            $0.mealDescription.localizedCaseInsensitiveContains(normalized)
+        }
+
+        // Below the threshold the in-memory filter is the whole answer — no DB
+        // round-trip, so nothing to wait for.
+        guard normalized.count >= minQueryLength else {
+            return FoodHistorySearchModel(rows: local, isSearching: false)
+        }
+
+        guard let results, results.query == normalized else {
+            return FoodHistorySearchModel(rows: local, isSearching: true)
+        }
+
+        // Recents win over DB duplicates: they are the same food and the recent
+        // row is the fresher one. Dedupe on the name, case-insensitively.
+        var seen = Set(local.map { $0.mealDescription.lowercased() })
+        var merged = local
+        for entry in results.entries {
+            let key = entry.mealDescription.lowercased()
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            merged.append(entry)
+        }
+
+        return FoodHistorySearchModel(rows: merged, isSearching: false)
+    }
+}
+
 struct UnifiedFoodEntryView: View {
     @EnvironmentObject var store: DirectStore
     @EnvironmentObject var addedHighlighter: AddedEntryHighlighter
@@ -38,6 +117,7 @@ struct UnifiedFoodEntryView: View {
     @StateObject private var toast = LoggedMealToastController()
     @State private var relogMeal: MealEntry?
     @State private var askAINavigating = false
+    @State private var searchDebounceTask: DispatchWorkItem?
 
     private var displayedFavorites: [FavoriteFood] {
         if filterToHypoTreatments {
@@ -53,9 +133,19 @@ struct UnifiedFoodEntryView: View {
         )
     }
 
+    private var searchModel: FoodHistorySearchModel {
+        FoodHistorySearchModel.make(
+            query: searchText,
+            recents: store.state.recentMealEntries,
+            results: store.state.mealHistoryResults
+        )
+    }
+
     var body: some View {
         // Resolve the structural model once per render (it filters favourites).
         let model = entryModel
+        // Same for the search model — it filters + merges two collections.
+        let search = searchModel
         // NavigationStack, not NavigationView: navigationDestination modifiers
         // (relog + ASK AI) are silently ignored inside NavigationView.
         return NavigationStack {
@@ -80,7 +170,7 @@ struct UnifiedFoodEntryView: View {
                     actionsSection
                 }
 
-                recentsSection
+                recentsSection(search)
 
                 if model.showsEscapeRow {
                     escapeSection
@@ -97,6 +187,11 @@ struct UnifiedFoodEntryView: View {
                 withAnimation(AnimationTokens.easeStandard) {
                     scrollProxy.scrollTo(id, anchor: .center)
                 }
+            }
+            // Reaching past the in-memory recents into the full history
+            // (DMNC-1484). Debounced so a burst of keystrokes costs one query.
+            .onChange(of: searchText) { _, newValue in
+                debounceHistorySearch(newValue)
             }
             .dosNavigationTitle(filterToHypoTreatments ? "Hypo Treatment" : "Log Meal")
             .toolbar {
@@ -144,6 +239,14 @@ struct UnifiedFoodEntryView: View {
         .onAppear {
             store.dispatch(.loadFavoriteFoodValues)
             store.dispatch(.loadRecentMealEntries)
+        }
+        // Attached to the NavigationStack, NOT the List: pushing a destination
+        // (relog plate / ASK AI) tears the List down, and clearing results there
+        // would leave a stale query searching forever when the user pops back.
+        .onDisappear {
+            searchDebounceTask?.cancel()
+            searchDebounceTask = nil
+            clearHistoryResults()
         }
     }
 
@@ -229,20 +332,22 @@ struct UnifiedFoodEntryView: View {
     // MARK: - Recents Section
 
     @ViewBuilder
-    private var recentsSection: some View {
+    private func recentsSection(_ search: FoodHistorySearchModel) -> some View {
         Section {
-            if filteredRecents.isEmpty {
+            if search.rows.isEmpty {
                 if searchText.isEmpty {
                     Text("Log your first meal to see recents here")
                         .font(DOSTypography.bodySmall)
                         .foregroundStyle(AmberTheme.amber)
+                } else if search.isSearching {
+                    searchingRow
                 } else {
                     Text("No matches for \"\(searchText)\"")
                         .font(DOSTypography.bodySmall)
                         .foregroundStyle(AmberTheme.amber)
                 }
             } else {
-                ForEach(filteredRecents) { meal in
+                ForEach(search.rows) { meal in
                     // Tap stages, hold insta-logs. No context menu — it can't
                     // coexist with the hold recognizer (DMNC-796 KTD-3). The
                     // swipe affordance hangs off the hold wrapper, not inside
@@ -264,9 +369,25 @@ struct UnifiedFoodEntryView: View {
                         .tint(AmberTheme.amber)
                     }
                 }
+
+                // In-memory matches are already on screen; the history query is
+                // still running and may append older foods below them.
+                if search.isSearching {
+                    searchingRow
+                }
             }
         } header: {
             Text("RECENT").dosHeader()
+        }
+    }
+
+    /// FiguresLoadingView, never a system spinner (StyleGuard rule 6).
+    private var searchingRow: some View {
+        HStack(spacing: DOSSpacing.xs) {
+            FiguresLoadingView.inline
+            Text("Searching history...")
+                .font(DOSTypography.bodySmall)
+                .foregroundStyle(AmberTheme.amberDark)
         }
     }
 
@@ -407,8 +528,10 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
-    // MARK: - Filtering (local, no Redux dispatch)
+    // MARK: - Filtering
 
+    /// Favourites stay a purely local filter — the favourites list is small and
+    /// fully in memory, so there is nothing further back to reach for.
     private var filteredFavorites: [FavoriteFood] {
         let base = filterToHypoTreatments ? displayedFavorites : store.state.favoriteFoodValues
         guard !searchText.isEmpty else { return base }
@@ -417,11 +540,38 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
-    private var filteredRecents: [MealEntry] {
-        guard !searchText.isEmpty else { return store.state.recentMealEntries }
-        return store.state.recentMealEntries.filter {
-            $0.mealDescription.localizedCaseInsensitiveContains(searchText)
+    // Recents are NO LONGER a purely local filter: past `minQueryLength`
+    // characters the query also goes to the database via `.searchMealHistory`
+    // and the two sources are merged by `FoodHistorySearchModel` (DMNC-1484).
+
+    /// Debounced history search. Copies ChartView's proven `DispatchWorkItem`
+    /// shape (`App/Views/Overview/ChartView.swift`): cancel the pending task on
+    /// every keystroke, re-arm, fire once typing settles. 250ms suits a DB
+    /// round-trip — ChartView's 100ms is tuned for local chart math.
+    private func debounceHistorySearch(_ raw: String) {
+        searchDebounceTask?.cancel()
+        searchDebounceTask = nil
+
+        let query = FoodHistorySearchModel.normalizedQuery(raw)
+        guard query.count >= FoodHistorySearchModel.minQueryLength else {
+            // Back under the threshold (including a cleared field): the
+            // in-memory filter is authoritative again, so drop any result set
+            // rather than let it resurface behind a shorter query.
+            clearHistoryResults()
+            return
         }
+
+        // Capture the store itself, not the view struct, so the work item holds
+        // exactly what it needs.
+        let target = store
+        let task = DispatchWorkItem { target.dispatch(.searchMealHistory(query: query)) }
+        searchDebounceTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(250), execute: task)
+    }
+
+    private func clearHistoryResults() {
+        guard store.state.mealHistoryResults != nil else { return }
+        store.dispatch(.setMealHistoryResults(results: nil))
     }
 
     // MARK: - Actions

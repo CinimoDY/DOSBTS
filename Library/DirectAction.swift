@@ -224,6 +224,13 @@ enum DirectAction {
     case setAIConsentDailyDigest(enabled: Bool)
     case setDailyDigestReminderTime(hour: Int?, minute: Int?)
 
+    // MARK: Food History Search (DMNC-1484)
+    /// Debounced, on-demand DB search over the full meal history. Deliberately
+    /// has NO reducer case — falling through `default:` is what lets the view
+    /// treat "results don't answer my query yet" as the loading state.
+    case searchMealHistory(query: String)
+    case setMealHistoryResults(results: MealHistoryResults?)
+
     // MARK: Ratio Lab
     case loadRatioEvidence
     case setRatioEvidence(evidence: RatioEvidence?)

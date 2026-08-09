@@ -84,6 +84,35 @@ func favoriteFoodStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 DirectAction.setRecentMealEntries(recentMealEntries: recentMealEntries)
             }.eraseToAnyPublisher()
 
+        case .searchMealHistory(query: let query):
+            // Silently drops when not .active, with NO .setAppState(.active)
+            // re-trigger: this is an on-demand load driven by the user typing in
+            // the food entry sheet, which can only happen once ContentView has
+            // set .active. Re-running the last query on foreground would also be
+            // wrong — the sheet may not even be open any more.
+            guard state.appState == .active else {
+                break
+            }
+
+            // Normalize identically to the view's dispatch so the echoed query
+            // matches what the view compares against (the operation is
+            // idempotent — the view already normalized it).
+            let normalized = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
+
+            // On a GRDB read error `searchMealEntries` emits `.failure`, which the
+            // Store logs but never re-dispatches — so `.setMealHistoryResults`
+            // would never land and the view (which treats "no result for my
+            // query" as loading) would spin forever. Fall back to an empty result
+            // set FOR THIS QUERY so the sheet shows its "no matches" state.
+            return DataStore.shared.searchMealEntries(matching: normalized, limit: 50)
+                .map { DirectAction.setMealHistoryResults(results: MealHistoryResults(query: normalized, entries: $0)) }
+                .catch { error -> Just<DirectAction> in
+                    DirectLog.error("Food history search failed: \(error)")
+                    return Just(.setMealHistoryResults(results: MealHistoryResults(query: normalized, entries: [])))
+                }
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
+
         case .setAppState(appState: let appState):
             guard appState == .active else {
                 return Empty().eraseToAnyPublisher()
@@ -330,6 +359,9 @@ private extension DataStore {
                     do {
                         let db = try asyncDB.get()
 
+                        // LIMIT applies AFTER the name-dedupe subquery, so raising it
+                        // is monotone: 50 distinct foods instead of 20, same dedupe
+                        // semantics (DMNC-1484).
                         let result = try MealEntry.fetchAll(db, sql: """
                             SELECT m.*
                             FROM \(MealEntry.Table) m
@@ -340,13 +372,81 @@ private extension DataStore {
                                 LIMIT 1
                             )
                             ORDER BY m.timestamp DESC
-                            LIMIT 20
+                            LIMIT 50
                         """)
 
                         promise(.success(result))
                     } catch {
                         promise(.failure(.withError(error)))
                     }
+                }
+            }
+        }
+    }
+
+    /// Full-history food search (DMNC-1484). `getRecentMealEntries()` only ever
+    /// returns the newest N distinct foods; anything older was unreachable from
+    /// the sheet's search box. This reaches the whole `MealEntry` table (which is
+    /// never pruned) with the same name-dedupe, newest-wins semantics.
+    ///
+    /// NO writes inside the `asyncRead` — GRDB deadlock rule applies.
+    func searchMealEntries(matching query: String, limit: Int) -> Future<[MealEntry], DirectError> {
+        return Future { promise in
+            // `guard let`, NOT `if let`: the `if let` form used above never
+            // fulfils the promise when `dbQueue` is nil, which would strand the
+            // caller's publisher and leave the UI in its loading state forever.
+            guard let dbQueue = self.dbQueue else {
+                promise(.success([]))
+                return
+            }
+
+            let trimmed = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
+            guard !trimmed.isEmpty else {
+                promise(.success([]))
+                return
+            }
+
+            // The query text is BOUND, never interpolated. `%` and `_` are LIKE
+            // wildcards, so a literal one in the user's text has to be escaped
+            // (and the escape character itself escaped first) — otherwise typing
+            // "100%" or "hot_dog" silently widens the match.
+            let escaped = trimmed
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "%", with: "\\%")
+                .replacingOccurrences(of: "_", with: "\\_")
+            let pattern = "%\(escaped)%"
+
+            dbQueue.asyncRead { asyncDB in
+                do {
+                    let db = try asyncDB.get()
+
+                    // CONTAINS, not prefix — deliberate. The
+                    // MealEntry_description_timestamp index only accelerates
+                    // `LIKE 'q%'`, so a leading `%` forces a scan. `MealEntry` is
+                    // personal-scale (one row per logged meal), and narrowing to
+                    // prefix-only would silently contradict the in-memory filter
+                    // (`localizedCaseInsensitiveContains`) the user already knows.
+                    // Don't "optimize" this into a prefix match.
+                    //
+                    // SQLite's default LIKE is case-insensitive for ASCII, which
+                    // matches the recents filter closely enough for search.
+                    let result = try MealEntry.fetchAll(db, sql: """
+                        SELECT m.*
+                        FROM \(MealEntry.Table) m
+                        WHERE m.mealDescription LIKE ? ESCAPE '\\'
+                          AND m.id = (
+                            SELECT m2.id FROM \(MealEntry.Table) m2
+                            WHERE m2.mealDescription = m.mealDescription COLLATE NOCASE
+                            ORDER BY m2.timestamp DESC
+                            LIMIT 1
+                          )
+                        ORDER BY m.timestamp DESC
+                        LIMIT ?
+                    """, arguments: [pattern, limit])
+
+                    promise(.success(result))
+                } catch {
+                    promise(.failure(.withError(error)))
                 }
             }
         }
