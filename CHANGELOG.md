@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Voice input: tap SPEAK in the Log Meal sheet and say what you ate — "200 ml oat milk and a banana" — and watch the words appear as you talk. Nothing is sent anywhere until you tap ASK AI, so a misheard food name costs a keystroke instead of an AI call. The same mic sits on the AI staging plate's CLARIFY field and on journal notes. Transcription happens entirely on your device and works in airplane mode; speech is never recorded or uploaded — DMNC-1486, PR #NN
+
 ## [Build 134] — 2026-08-09
 
 ### Added

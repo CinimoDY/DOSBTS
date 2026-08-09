@@ -14,7 +14,7 @@ Reference for long-term DOSBTS food logging direction. Maps the evolution from m
 
 ### DOSBTS Status
 - Photo analysis: DONE (Claude Haiku, staging plate)
-- Voice side-car: IN PROGRESS (Wispr Flow + NL text parsing, DMNC-558)
+- Voice side-car: IN PROGRESS (in-app on-device dictation, DMNC-1486; NL text parsing DMNC-558 shipped)
 - Confidence heatmap on photo: FUTURE (aspirational, not yet planned)
 
 ## 2. Agentic UX: The Proactive Partner
@@ -76,7 +76,7 @@ Instead of a static list, overlay data on the photo:
 | Photo analysis | DMNC-427 | Done |
 | Editable AI results (staging plate) | DMNC-553 | Done |
 | NL text parsing | DMNC-558 | Planned |
-| Voice via Wispr | DMNC-558 | Planned (external tool) |
+| Voice (in-app, on-device) | DMNC-1486 | In progress (supersedes the canceled Wispr/external plan, DMNC-559) |
 | Conversational follow-up | DMNC-560 | Backlog |
 | Barcode scanning | DMNC-561 | Backlog |
 | Portion presets | DMNC-562 | Backlog |
