@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftUI
 import Testing
 @testable import DOSBTSApp
 
@@ -107,5 +108,61 @@ struct InTimeCompactTests {
     @Test("sub-hour lifetime shows minutes only")
     func subHourShowsMinutes() {
         #expect(18.inTimeCompact == "18min")
+    }
+}
+
+// MARK: - InsulinType marker color mapping (Digest/Overview parity, DMNC-1481)
+
+@Suite("InsulinType marker color mapping")
+struct InsulinTypeMarkerColorTests {
+
+    @Test("mealBolus resolves to the bolus marker color (amber)")
+    func mealBolusColor() {
+        #expect(InsulinType.mealBolus.markerType.color == AmberTheme.amber)
+    }
+
+    @Test("snackBolus resolves to the bolus marker color (amber)")
+    func snackBolusColor() {
+        #expect(InsulinType.snackBolus.markerType.color == AmberTheme.amber)
+    }
+
+    @Test("correctionBolus resolves to the correction marker color (amberLight)")
+    func correctionBolusColor() {
+        #expect(InsulinType.correctionBolus.markerType.color == AmberTheme.amberLight)
+    }
+
+    @Test("basal resolves to the basal marker color (amberDark)")
+    func basalColor() {
+        #expect(InsulinType.basal.markerType.color == AmberTheme.amberDark)
+    }
+}
+
+// MARK: - EventMarkerType color distinctness (regression guard for the cyclic-permutation bug, DMNC-1481)
+
+@Suite("EventMarkerType color distinctness")
+struct EventMarkerTypeColorDistinctnessTests {
+
+    @Test("meal color is the canonical cgaGreen")
+    func mealColorIsCanonical() {
+        #expect(EventMarkerType.meal.color == AmberTheme.cgaGreen)
+    }
+
+    @Test("exercise color is the canonical cgaCyan")
+    func exerciseColorIsCanonical() {
+        #expect(EventMarkerType.exercise.color == AmberTheme.cgaCyan)
+    }
+
+    @Test("meal, insulin, and exercise colors are pairwise distinct")
+    func crossCategoryColorsAreDistinct() {
+        #expect(EventMarkerType.meal.color != EventMarkerType.exercise.color)
+        #expect(EventMarkerType.meal.color != EventMarkerType.bolus.color)
+        #expect(EventMarkerType.exercise.color != EventMarkerType.bolus.color)
+    }
+
+    @Test("bolus, correction, and basal insulin sub-type colors are pairwise distinct")
+    func insulinSubtypeColorsAreDistinct() {
+        #expect(EventMarkerType.bolus.color != EventMarkerType.correction.color)
+        #expect(EventMarkerType.bolus.color != EventMarkerType.basal.color)
+        #expect(EventMarkerType.correction.color != EventMarkerType.basal.color)
     }
 }

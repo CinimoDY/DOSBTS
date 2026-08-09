@@ -5,11 +5,23 @@
 
 import SwiftUI
 
+/// Publishes the trailing action chip's own rendered width so the centered
+/// label can reserve exactly that much room (see `SensorLineView.body`).
+/// `max` (not last-wins) so a transient 0 from a disappearing chip cannot
+/// collapse the reservation mid-transition.
+private struct ChipWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct SensorLineView: View {
     @EnvironmentObject var store: DirectStore
     @State private var disconnectChipRevealed: Bool = false
     @State private var showingDisconnectAlert: Bool = false
     @State private var showingConnectDialog: Bool = false
+    @State private var measuredChipWidth: CGFloat = 0
 
     var body: some View {
         // Status (dot + "CONNECTED · 3d 2h LEFT") is centered; the action
@@ -19,19 +31,29 @@ struct SensorLineView: View {
         // next to a chip) is applied ONLY when a chip is actually shown —
         // reserving it in the common chip-less connected state wasted ~172pt and
         // forced the label to truncate, hiding the days/hours. minimumScaleFactor
-        // is a final safety net so magnitude is never dropped.
+        // is a final safety net so magnitude is never dropped. The reservation
+        // width itself is measured, not hard-coded: the trailing chip publishes
+        // its own rendered width via ChipWidthKey, so the label reserves exactly
+        // what the chip needs at any Dynamic Type size instead of a constant
+        // that silently drifts out of sync with the chip's actual content.
         ZStack {
             dotAndLabel
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .minimumScaleFactor(0.85)
-                .padding(.horizontal, reservesChipWidth ? 86 : DOSSpacing.md)
+                .padding(.horizontal, reservesChipWidth ? max(measuredChipWidth, DOSSpacing.md) : DOSSpacing.md)
 
             HStack {
                 Spacer()
                 trailingContent
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(key: ChipWidthKey.self, value: geo.size.width)
+                        }
+                    )
             }
         }
+        .onPreferenceChange(ChipWidthKey.self) { measuredChipWidth = $0 }
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.xs)
         .contentShape(Rectangle())
@@ -106,6 +128,7 @@ struct SensorLineView: View {
                     Text("DISCONNECT")
                         .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
+                        .fixedSize()
                         .padding(.horizontal, DOSSpacing.sm)
                         .padding(.vertical, 3)
                         .overlay(
@@ -122,6 +145,7 @@ struct SensorLineView: View {
                 Text("CONNECT")
                     .font(DOSTypography.caption)
                     .foregroundStyle(AmberTheme.amber)
+                    .fixedSize()
                     .padding(.horizontal, DOSSpacing.sm)
                     .padding(.vertical, 3)
                     .overlay(
@@ -133,6 +157,7 @@ struct SensorLineView: View {
             Text("SET UP")
                 .font(DOSTypography.caption)
                 .foregroundStyle(AmberTheme.amberDark)
+                .fixedSize()
                 .padding(.horizontal, DOSSpacing.sm)
                 .padding(.vertical, 3)
                 .overlay(

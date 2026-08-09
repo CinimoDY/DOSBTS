@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Sensor status line: the trailing chip (DISCONNECT/CONNECT/SET UP) no longer overlaps long sensor labels — the label's reserved width is now measured from the chip's actual rendered size instead of a hard-coded constant that didn't match any chip — DMNC-1481, PR #NN
+- Daily Digest timeline event colours now match the Overview event marker lane (meal green, insulin amber/light/dark by sub-type, exercise cyan) instead of a mismatched, cyclically-permuted set — DMNC-1481, PR #NN
+
 ## [Build 133] — 2026-07-19
 
 ### Fixed
