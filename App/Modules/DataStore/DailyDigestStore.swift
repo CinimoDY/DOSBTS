@@ -257,7 +257,27 @@ extension DataStore {
                         .order(Column(ExerciseEntry.Columns.startTime.name))
                         .fetchAll(db)
 
-                    promise(.success(DailyDigestEvents(meals: meals, insulin: insulin, exercise: exercise)))
+                    // Notes degrade to none rather than failing the whole read.
+                    // A tag value outside the four enum cases, or a missing
+                    // table on some upgrade path, would otherwise throw out of
+                    // the shared `do` and render the entire digest timeline
+                    // empty — meals, insulin and exercise included.
+                    var notes: [JournalNote] = []
+                    do {
+                        notes = try JournalNote
+                            .filter(Column(JournalNote.Columns.timestamp.name) >= startOfDay)
+                            .filter(Column(JournalNote.Columns.timestamp.name) < endOfDay)
+                            // `id` breaks the tie: JournalNote rounds its
+                            // timestamp to the minute, so timestamp alone
+                            // leaves same-minute notes in undefined order and
+                            // the prompt's 5-note cap non-deterministic.
+                            .order(Column(JournalNote.Columns.timestamp.name), Column(JournalNote.Columns.id.name))
+                            .fetchAll(db)
+                    } catch {
+                        DirectLog.error("DailyDigestStore: journal note fetch failed, digest degrades to no notes — \(error)")
+                    }
+
+                    promise(.success(DailyDigestEvents(meals: meals, insulin: insulin, exercise: exercise, notes: notes)))
                 } catch {
                     promise(.failure(.withError(error)))
                 }

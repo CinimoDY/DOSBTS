@@ -9,6 +9,7 @@ import SwiftUI
 
 struct DigestView: View {
     @EnvironmentObject var store: DirectStore
+    @EnvironmentObject var sheets: SheetCoordinator
 
     @State private var selectedDate: Date = Date()
     @State private var hasAppeared: Bool = false
@@ -77,6 +78,20 @@ struct DigestView: View {
                     .foregroundStyle(isToday ? AmberTheme.borderFaint : AmberTheme.amberDark)
             }
             .disabled(isToday)
+
+            // Second capture surface for journal notes. Lives in the date bar
+            // rather than the timeline header so it stays reachable on a day
+            // with no digest data. Presents through the app's single
+            // presentation root — never a local .sheet (R8a).
+            Button {
+                sheets.present(.journalNote)
+            } label: {
+                Image(systemName: "square.and.pencil")
+                    .font(DOSTypography.body)
+                    .foregroundStyle(AmberTheme.amber)
+                    .accessibilityLabel("Add note")
+            }
+            .padding(.leading, DOSSpacing.md)
         }
         .padding(.vertical, DOSSpacing.sm)
     }
@@ -157,7 +172,7 @@ struct DigestView: View {
                     // Pre-structured-format insights render as before.
                     AIInsightContent(text: insight)
                 }
-            } else if !store.state.aiConsentDailyDigest {
+            } else if !store.state.aiConsentDailyDigestV2 {
                 Text("ENABLE AI INSIGHTS IN SETTINGS")
                     .font(DOSTypography.caption)
                     .foregroundStyle(AmberTheme.amber)
@@ -481,6 +496,18 @@ private struct TimelineItem: Identifiable {
     let timeString: String
     let label: String
     let color: Color
+
+    /// Journal notes are the one timeline row with no marker-lane counterpart —
+    /// `EventMarkerType` deliberately has no `.note` case (adding one ripples
+    /// into ChartView, EventMarkerLaneView, EntryGroupListOverlay and the
+    /// chip-row invariant tests; out of scope for DMNC-1485). So notes get one
+    /// named role here rather than a bare token at the call site, and
+    /// `DigestColorRoutingGuardTests` still catches any *event* row that tries
+    /// to diverge from `EventMarkerType.color` again.
+    ///
+    /// Shares amberLight with `.correction` insulin — acceptable because notes
+    /// carry a `[TAG]` prefix and prose, so the two rows never read alike.
+    static let noteColor = AmberTheme.amberLight
 }
 
 private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
@@ -514,6 +541,16 @@ private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
             timeString: timeFormatter.string(from: ex.startTime),
             label: "\(ex.activityType) \(Int(ex.durationMinutes))min",
             color: EventMarkerType.exercise.color
+        ))
+    }
+
+    for note in events.notes {
+        let tag = note.tag.map { "[\($0.localizedDescription)] " } ?? ""
+        items.append(TimelineItem(
+            timestamp: note.timestamp,
+            timeString: timeFormatter.string(from: note.timestamp),
+            label: "\(tag)\(note.text)",
+            color: TimelineItem.noteColor
         ))
     }
 

@@ -65,4 +65,8 @@ struct DailyDigestEvents {
     let meals: [MealEntry]
     let insulin: [InsulinDelivery]
     let exercise: [ExerciseEntry]
+    /// `var` with a default rather than `let` so it lands in the memberwise
+    /// initializer as an optional argument — the empty-events construction
+    /// sites keep compiling unchanged.
+    var notes: [JournalNote] = []
 }

@@ -62,7 +62,12 @@ private enum Keys: String {
     case hasSeenBGRelocationHint = "libre-direct.settings.has-seen-bg-relocation-hint"
     case appOpenCount = "libre-direct.settings.app-open-count"
     case appOpenCountFirstRecordedAt = "libre-direct.settings.app-open-count-first-recorded-at"
+    /// Superseded by `aiConsentDailyDigestV2` (DMNC-1485). Deliberately still
+    /// declared and still holding its old value: nothing reads it any more, but
+    /// leaving it untouched means a rollback to a pre-journal-notes build finds
+    /// the user's original consent intact.
     case aiConsentDailyDigest = "libre-direct.settings.ai-consent-daily-digest"
+    case aiConsentDailyDigestV2 = "libre-direct.settings.ai-consent-daily-digest-v2"
     case claudeAPIKeyValid = "libre-direct.settings.claude-api-key-valid"
     case thumbCalibrationMM = "libre-direct.settings.thumb-calibration-mm"
     case servingPresets = "libre-direct.settings.serving-presets"
@@ -875,12 +880,31 @@ extension UserDefaults {
         }
     }
 
+    /// Legacy accessor for the pre-journal-notes consent. Intentionally unread
+    /// by app code — see `aiConsentDailyDigestV2`.
     var aiConsentDailyDigest: Bool {
         get {
             return bool(forKey: Keys.aiConsentDailyDigest.rawValue)
         }
         set {
             set(newValue, forKey: Keys.aiConsentDailyDigest.rawValue)
+        }
+    }
+
+    /// AI Daily Insights consent, version 2 (DMNC-1485).
+    ///
+    /// V1 asked to send "glucose readings, meals, insulin, and exercise data".
+    /// Journal notes are free text the user writes about their life — illness,
+    /// stress, sleep — and sending that to a third-party API is materially more
+    /// than what V1 described. The old value is deliberately NOT migrated: a new
+    /// key defaults to `false`, so everyone who consented under the old copy is
+    /// asked once, against the new copy, before a single note leaves the device.
+    var aiConsentDailyDigestV2: Bool {
+        get {
+            return bool(forKey: Keys.aiConsentDailyDigestV2.rawValue)
+        }
+        set {
+            set(newValue, forKey: Keys.aiConsentDailyDigestV2.rawValue)
         }
     }
 

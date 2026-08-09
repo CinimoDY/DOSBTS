@@ -56,6 +56,16 @@ struct RootSheetContent: View {
                 loggedEntryToast.stage(.bloodGlucose(glucose))
             }
 
+        case .journalNote:
+            // No loggedEntryToast stage: notes have no undo case (deliberately
+            // out of scope for V1 — see docs/plans/2026-08-09-journal-notes-v1-plan.md).
+            AddJournalNoteView { timestamp, text, tag in
+                let note = JournalNote(id: UUID(), timestamp: timestamp, text: text, tag: tag)
+                store.dispatch(.addJournalNote(journalNoteValues: [note]))
+                addedHighlighter.flash(note.id)
+                DirectNotifications.shared.hapticNotification(.success)
+            }
+
         case .treatmentModal(let alarmFiredAt):
             TreatmentModalView(
                 alarmFiredAt: alarmFiredAt,

@@ -97,7 +97,12 @@ struct AISettingsView: View {
             }
         }
 
-        if store.state.aiConsentFoodPhoto || store.state.aiConsentDailyDigest {
+        // `claudeAPIKeyValid` is in this gate because of the DMNC-1485 consent
+        // bump: a user who had only Daily Insights consent now reads as
+        // unconsented, and gating solely on consent would hide the very toggle
+        // they need to re-affirm with. Anyone who ever used the digest AI has a
+        // validated key.
+        if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto || store.state.aiConsentDailyDigestV2 {
             Section(
                 content: {
                     if store.state.aiConsentFoodPhoto {
@@ -114,12 +119,12 @@ struct AISettingsView: View {
                     }
 
                     Toggle(isOn: Binding(
-                        get: { store.state.aiConsentDailyDigest },
-                        set: { store.dispatch(.setAIConsentDailyDigest(enabled: $0)) }
+                        get: { store.state.aiConsentDailyDigestV2 },
+                        set: { store.dispatch(.setAIConsentDailyDigestV2(enabled: $0)) }
                     )) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("AI Daily Insights")
-                            Text("Sends glucose readings, meals, insulin, and exercise data to generate daily summaries")
+                            Text("Sends glucose readings, meals, insulin, exercise, and the text of your journal notes to generate daily summaries")
                                 .font(DOSTypography.caption)
                                 .foregroundStyle(AmberTheme.amber)
                         }

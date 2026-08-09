@@ -248,6 +248,9 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setMealEntryValues(mealEntryValues: let mealEntryValues):
         state.mealEntryValues = mealEntryValues
 
+    case .setJournalNoteValues(journalNoteValues: let journalNoteValues):
+        state.journalNoteValues = journalNoteValues
+
     case .setSensorGlucoseValues(glucoseValues: let glucoseValues):
         state.sensorGlucoseValues = glucoseValues
         
@@ -561,8 +564,8 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setDailyDigestEvents(events: let events):
         state.dailyDigestEvents = events
 
-    case .setAIConsentDailyDigest(enabled: let enabled):
-        state.aiConsentDailyDigest = enabled
+    case .setAIConsentDailyDigestV2(enabled: let enabled):
+        state.aiConsentDailyDigestV2 = enabled
 
     case .setDailyDigestReminderTime(hour: let hour, minute: let minute):
         state.dailyDigestReminderHour = hour

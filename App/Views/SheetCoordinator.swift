@@ -19,6 +19,7 @@ enum ActiveSheet: Identifiable {
     case insulin
     case meal
     case bloodGlucose
+    case journalNote
     case treatmentModal(alarmFiredAt: Date)
     case filteredFoodEntry
     case treatmentRecheck(glucoseValue: Int)
@@ -34,6 +35,10 @@ enum ActiveSheet: Identifiable {
         case .insulin: return "insulin"
         case .meal: return "meal"
         case .bloodGlucose: return "bloodGlucose"
+        // Constant id: the Log tab and the Digest screen both present this
+        // case, so a second request while it is up is a no-op rather than a
+        // duplicate sheet.
+        case .journalNote: return "journalNote"
         case .treatmentModal: return "treatmentModal"
         case .filteredFoodEntry: return "filteredFoodEntry"
         case .treatmentRecheck: return "treatmentRecheck"

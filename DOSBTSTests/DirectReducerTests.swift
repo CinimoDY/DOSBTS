@@ -521,14 +521,14 @@ struct DailyDigestStateTests {
         #expect(state.dailyDigestInsightLoading == false)
     }
 
-    @Test("setAIConsentDailyDigest toggles consent")
+    @Test("setAIConsentDailyDigestV2 toggles consent")
     func toggleConsent() {
         var state: DirectState = makeState()
-        reduce(&state, .setAIConsentDailyDigest(enabled: true))
-        #expect(state.aiConsentDailyDigest == true)
+        reduce(&state, .setAIConsentDailyDigestV2(enabled: true))
+        #expect(state.aiConsentDailyDigestV2 == true)
 
-        reduce(&state, .setAIConsentDailyDigest(enabled: false))
-        #expect(state.aiConsentDailyDigest == false)
+        reduce(&state, .setAIConsentDailyDigestV2(enabled: false))
+        #expect(state.aiConsentDailyDigestV2 == false)
     }
 }
 
