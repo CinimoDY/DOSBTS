@@ -5,55 +5,45 @@
 
 import SwiftUI
 
-/// Publishes the trailing action chip's own rendered width so the centered
-/// label can reserve exactly that much room (see `SensorLineView.body`).
-/// `max` (not last-wins) so a transient 0 from a disappearing chip cannot
-/// collapse the reservation mid-transition.
-private struct ChipWidthKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
 struct SensorLineView: View {
     @EnvironmentObject var store: DirectStore
     @State private var disconnectChipRevealed: Bool = false
     @State private var showingDisconnectAlert: Bool = false
     @State private var showingConnectDialog: Bool = false
-    @State private var measuredChipWidth: CGFloat = 0
 
     var body: some View {
-        // Status (dot + "CONNECTED · 3d 2h LEFT") is centered; the action
-        // chips (CONNECT / disconnect) keep the trailing edge. The label uses
-        // the compact remaining-time format (days+hours, no minutes) so it fits.
-        // The chip-width reservation (which keeps the label optically centered
-        // next to a chip) is applied ONLY when a chip is actually shown —
-        // reserving it in the common chip-less connected state wasted ~172pt and
-        // forced the label to truncate, hiding the days/hours. minimumScaleFactor
-        // is a final safety net so magnitude is never dropped. The reservation
-        // width itself is measured, not hard-coded: the trailing chip publishes
-        // its own rendered width via ChipWidthKey, so the label reserves exactly
-        // what the chip needs at any Dynamic Type size instead of a constant
-        // that silently drifts out of sync with the chip's actual content.
-        ZStack {
+        // Status (dot + "CONNECTED · 3d 2h LEFT") fills the space next to the
+        // trailing action chip (CONNECT / disconnect / SET UP); the label uses
+        // the compact remaining-time format (days+hours, no minutes) so it
+        // fits. minimumScaleFactor is a final safety net so magnitude is never
+        // dropped.
+        //
+        // The label is deliberately NOT centered on the row's true midpoint
+        // while a chip is showing — only its own remaining space is centered
+        // (frame(maxWidth: .infinity) below claims everything left after the
+        // chip, then centers the label within that). Centering on the true
+        // midpoint would mean reserving the chip's width on the leading side
+        // too (nothing is there to avoid, but the reservation would still cost
+        // the space) — doubling the cost from ~1x the chip's width to ~2x, and
+        // on SE-class widths that's enough to force the days/hours into
+        // mid-truncation with a chip revealed, which is exactly what this
+        // layout exists to prevent. A few points of off-center is the traded
+        // cost for keeping the full label legible.
+        //
+        // There's no separate "does a chip need space" flag to keep in sync
+        // with `trailingContent`'s own switch: it's placed directly in the
+        // row below and reserves exactly what it renders, including
+        // EmptyView's zero width — a chip added to a new state later is
+        // automatically accounted for, nothing to forget.
+        HStack(spacing: 0) {
             dotAndLabel
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .minimumScaleFactor(0.85)
-                .padding(.horizontal, reservesChipWidth ? max(measuredChipWidth, DOSSpacing.md) : DOSSpacing.md)
-
-            HStack {
-                Spacer()
-                trailingContent
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(key: ChipWidthKey.self, value: geo.size.width)
-                        }
-                    )
-            }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.trailing, DOSSpacing.xs)
+            trailingContent
         }
-        .onPreferenceChange(ChipWidthKey.self) { measuredChipWidth = $0 }
         .padding(.horizontal, DOSSpacing.md)
         .padding(.vertical, DOSSpacing.xs)
         .contentShape(Rectangle())
@@ -221,16 +211,6 @@ struct SensorLineView: View {
         case .disconnected, .noSensor: return AmberTheme.amberDark
         case .error, .bluetoothOff: return AmberTheme.cgaRed
         case .unknown: return AmberTheme.amberDark
-        }
-    }
-
-    /// Whether `trailingContent` renders a chip for the current state. The
-    /// centered label only needs to reserve chip width when one is present.
-    private var reservesChipWidth: Bool {
-        switch currentState {
-        case .connected: return disconnectChipRevealed
-        case .disconnected, .noSensor: return true
-        case .error, .bluetoothOff, .transient, .unknown: return false
         }
     }
 
