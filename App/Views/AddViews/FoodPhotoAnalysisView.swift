@@ -159,6 +159,15 @@ struct FoodPhotoAnalysisView: View {
         stagedItems.reduce(0) { $0 + $1.carbsG } * portionMultiplier
     }
 
+    /// Recognition bias for the CLARIFY mic: the foods already on the plate are
+    /// exactly the nouns a clarification is most likely to name ("the OAT MILK
+    /// was a big glass"). Cheap, and it needs no store access.
+    private var followUpContextualStrings: [String] {
+        stagedItems.map(\.name)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
     // Whether the portion picker should show (single-item barcode result with known serving)
     private var showPortionPicker: Bool {
         guard stagedItems.count == 1, let base = stagedItems.first?.baseServingG else { return false }
@@ -518,6 +527,13 @@ struct FoodPhotoAnalysisView: View {
                                 }
                                 .foregroundStyle(AmberTheme.amber)
                                 .disabled(followUpText.trimmingCharacters(in: .whitespacesAndNewlines).count < 2)
+                            }
+
+                            // Voice clarification (DMNC-1486, option C). Fills the
+                            // field only — SEND stays the single dispatch, with the
+                            // 3-round / 4000-char caps untouched.
+                            DictationControl(contextualStrings: followUpContextualStrings) { transcript in
+                                followUpText = transcript
                             }
                         }
                     },

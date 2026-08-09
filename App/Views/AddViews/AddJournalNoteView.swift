@@ -26,6 +26,12 @@ struct AddJournalNoteView: View {
                         .lineLimit(3 ... 6)
                         .focused($textFocus)
 
+                    // Voice capture (DMNC-1486). Journal notes are free prose, so
+                    // there is no vocabulary worth biasing recognition toward.
+                    DictationControl(contextualStrings: []) { transcript in
+                        applyDictation(transcript)
+                    }
+
                     DatePicker(
                         "Time",
                         selection: $timestamp,
@@ -103,7 +109,39 @@ struct AddJournalNoteView: View {
     @State private var text: String = ""
     @State private var tag: JournalNoteTag?
 
+    /// The note text as it stood before the current dictation was appended, so a
+    /// re-spoken or edited transcript replaces its own tail instead of stacking.
+    @State private var dictationBase: String?
+    /// What we last wrote into `text`. If it no longer matches, the user typed in
+    /// between and `dictationBase` is stale — the typing wins.
+    @State private var lastDictationWrite: String?
+
     private var trimmedText: String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Append, never replace: the user may type first and then dictate more.
+    /// `DictationControl` holds exactly one transcript and re-emits it on every
+    /// edit, so the appended tail is rewritten in place rather than duplicated.
+    private func applyDictation(_ transcript: String) {
+        if lastDictationWrite != text {
+            dictationBase = nil
+        }
+        let base = dictationBase ?? text
+
+        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            // CLEAR: put the note back the way the user left it.
+            text = base
+            dictationBase = nil
+            lastDictationWrite = base
+            return
+        }
+
+        let needsSeparator = !base.isEmpty && !(base.last?.isWhitespace ?? false)
+        let combined = base + (needsSeparator ? " " : "") + trimmed
+        text = combined
+        dictationBase = base
+        lastDictationWrite = combined
     }
 }
