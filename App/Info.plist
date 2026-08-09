@@ -55,6 +55,10 @@
 	<string>Access to Apple Health is required if glucose data should be exported.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Access to Apple Health is required if glucose data should be exported.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>DOSBTS uses the microphone only while you are dictating a meal or a note. Speech is transcribed on your device and is not recorded or uploaded.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>DOSBTS transcribes what you dictate on your device, so you can log a meal or a note by speaking instead of typing. Speech is not recorded or uploaded.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
