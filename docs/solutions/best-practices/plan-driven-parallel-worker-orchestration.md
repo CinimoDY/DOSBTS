@@ -76,7 +76,13 @@ Then merge in most-isolated-first order (fewest shared files first; the Build 13
 
 1. Check out the branch, merge `main` into it, resolve conflicts locally.
 2. **`CHANGELOG.md` `[Unreleased]` conflicts EVERY time** — this is mechanical, not alarming: keep all entries from both sides, grouped under Added/Changed/Fixed. (The reactive per-conflict playbook lives in [parallel-worktree changelog collisions](../workflow-issues/parallel-worktree-devjournal-changelog-collisions.md).)
-3. **`project.pbxproj` usually auto-merges** when both branches registered new test files — but auto-merge of a plist-shaped file must be verified: run `plutil -lint` on it before trusting the result.
+3. **`project.pbxproj` needs two checks, not one.** `plutil -lint` verifies plist *syntax* and is necessary but **not sufficient** — it reports `OK` on a project containing duplicate Xcode object IDs. That case is real whenever two plans each tell their worker to take "the next free id pair": both take the same one, and resolving the resulting conflict the reflexive keep-both way yields two `PBXBuildFile`/`PBXFileReference` objects sharing an ID. Xcode then resolves both to a single file and **silently drops the other test file from the target — the suite loses those tests while the build stays green.** Always follow `plutil -lint` with:
+
+   ```bash
+   xcodebuild -project DOSBTS.xcodeproj -list 2>&1 | grep -i "malformed\|multiple groups"   # must be empty
+   ```
+
+   Prevention is cheaper: allocate a *distinct* id pair per plan at plan-writing time, and state in each plan which pair the siblings hold.
 4. **If two branches share Swift files, build the combined branch before merging** — a textually clean merge can still be semantically broken.
 5. Squash-merge the PR, move to the next branch.
 
@@ -95,6 +101,10 @@ After the train: remove the worktrees and force-delete the squash-merged local b
 - **A worker stops itself "awaiting a build notification" that will never fire.** Subagents sometimes park on an event that has no delivery mechanism in their harness. Nudge the worker to run verification in the foreground and to not stop until the PR exists.
 - **Newly-added agent-definition files are not dispatchable in an already-running session** — the agent registry loads at startup. Fall back to a generic agent with an explicit model override and the full executor protocol inlined in the prompt; the behavior is equivalent.
 - **Back-to-back squash merges race GitHub's mergeability computation.** Poll the PR's merge state or sleep briefly between merges rather than hammering the merge button.
+- **Simulator partitioning isolates `xcodebuild test`, but NOT UI automation.** Simulator.app hosts every booted device in one process, so OS-level synthetic input (`cliclick`, AppleScript `System Events`) cannot be scoped to one UDID — a worker driving "its" simulator can land clicks in a sibling's window. Assign per-worker UDIDs for test runs, and treat interactive verification as either single-threaded or a human step. Related: macOS Accessibility TCC blocks synthetic button events for the terminal host by default (mouse *moves* land, clicks return `System Events -25204`), so a worker may report "no tap tooling" even where the tools nominally exist.
+- **Plan errors surface as worker deviations — verify the pushback, don't overrule it.** In the 2026-08-09 run four of the orchestrator's plan claims were wrong (a `GeometryReader` snippet that would have measured the wrong view; an assertion that `Font.system(size:)` scales with Dynamic Type, which it does not; an assertion that a defaulted `let` participates in a struct's memberwise init, which it does not; and a "this pattern can't be hit while inactive" claim that was true for the cited precedent but false for the timer-driven copy). Each was caught by the worker, and each would have shipped a real bug if the worker had followed the plan literally. Budget review time for reading deviation notes as *findings about the plan*, and re-verify the claim yourself before insisting.
+- **Full-suite runs go flaky under parallel load.** With three workers plus reviewers saturating the machine, a timing-sensitive test (here `AppGroupMiddlewareDispatchTests/startupSeedsKeys()`, which writes an App Group suite) failed once and passed on three other runs of the same commit. Re-run before concluding a branch caused it, and tell workers which tests are known-flaky so they don't chase ghosts.
+- **Pipe a verification command and you throw away its exit code.** `xcodebuild test … | tail -25` reports `tail`'s status, not the build's, and discards the `** TEST SUCCEEDED/FAILED **` summary line. Redirect the whole log to a file and grep it.
 
 ## Why This Matters
 

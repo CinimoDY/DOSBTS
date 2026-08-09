@@ -243,3 +243,38 @@ struct StyleGuardTests {
         #expect(hits.isEmpty, "Section headers must render through .dosHeader():\n\(Self.report(hits))")
     }
 }
+
+// MARK: - Digest timeline colour-routing guard (DMNC-1481)
+
+/// Narrow, single-file regression guard — deliberately NOT one of the numbered
+/// rules above (those are documented in docs/design-system.md → "Enforcement";
+/// this one isn't, since it pins one historical bug in one file rather than a
+/// general design-system convention). DigestView's timeline colours must route
+/// through EventMarkerType.color (the canonical source the Overview marker lane
+/// also reads from), never a raw AmberTheme token, or the two surfaces can
+/// silently drift out of colour-sync again exactly as they did before this fix.
+/// Scoped to this one file, not App/Views broadly, because `color: AmberTheme.foo`
+/// is completely legitimate everywhere else in the app — DigestView.swift itself
+/// uses it two lines away from the guarded code for an unrelated glow effect.
+/// Anchored to end-of-line so it matches the bare `color: AmberTheme.cgaCyan`
+/// shape a reverted fix would reintroduce, without matching a chained call like
+/// `color: AmberTheme.cgaGreen.opacity(...)`.
+@Suite("Digest timeline colour-routing guard")
+struct DigestColorRoutingGuardTests {
+    @Test("DigestView timeline colours route through EventMarkerType, not a raw AmberTheme token")
+    func noRawAmberThemeInTimelineColors() throws {
+        let path = "App/Views/DigestView.swift"
+        let url = StyleGuardTests.repoRoot.appendingPathComponent(path)
+        let regex = try NSRegularExpression(pattern: #"color:\s*AmberTheme\.\w+\s*$"#)
+
+        var hits: [StyleGuardTests.Hit] = []
+        let lines = try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+        for (index, line) in lines.enumerated() where !StyleGuardTests.isCommentLine(line) {
+            let range = NSRange(line.startIndex..<line.endIndex, in: line)
+            if regex.firstMatch(in: line, range: range) != nil {
+                hits.append(StyleGuardTests.Hit(file: path, line: index + 1, text: line.trimmingCharacters(in: .whitespaces)))
+            }
+        }
+        #expect(hits.isEmpty, "Route DigestView timeline colours through EventMarkerType.color, not a raw AmberTheme token:\n\(StyleGuardTests.report(hits))")
+    }
+}

@@ -8,11 +8,16 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Added
-- Journal notes: log free text with an optional SICK / STRESSED / SLUGGISH / OTHER tag, from the Log tab or the Daily Digest screen. Notes appear in the Log tab's NOTES section (swipe to delete) and on the Digest timeline, and — with AI Daily Insights consent on — are sent as context so the insight can explain a day in your own words — DMNC-1485
+- Journal notes: log free text with an optional SICK / STRESSED / SLUGGISH / OTHER tag, from the Log tab or the Daily Digest screen. Notes appear in the Log tab's NOTES section (swipe to delete) and on the Digest timeline, and — with AI Daily Insights consent on — are sent as context so the insight can explain a day in your own words — DMNC-1485, PR #114
 
 ### Changed
-- AI Daily Insights consent copy now states that the text of your journal notes is sent along with glucose, meals, insulin, and exercise — DMNC-1485
-- AI Daily Insights consent has to be granted once more, because journal-note text is more personal than the data the old consent described. The toggle is in Settings → Integrations → AI, and nothing is sent until you turn it back on — DMNC-1485
+- Food search in the Log Meal sheet now searches your whole meal history, not just the recents already on screen — type 3+ characters and foods logged months ago come back, ready to tap (stage) or hold (log). The RECENT list itself also grows from 20 to 50 foods — DMNC-1484, PR #113
+- AI Daily Insights consent copy now states that the text of your journal notes is sent along with glucose, meals, insulin, and exercise — DMNC-1485, PR #114
+- AI Daily Insights consent has to be granted once more, because journal-note text is more personal than the data the old consent described. The toggle is in Settings → Integrations → AI, and nothing is sent until you turn it back on — DMNC-1485, PR #114
+
+### Fixed
+- Sensor status line: the DISCONNECT/CONNECT/SET UP button no longer overlaps the connection status text, including on longer labels like a fresh sensor's multi-day remaining time — DMNC-1481, PR #112
+- Daily Digest timeline entries (meals, insulin, exercise) now show the same colours as the Overview chart instead of a different, mismatched set — DMNC-1481, PR #112
 
 ## [Build 133] — 2026-07-19
 
