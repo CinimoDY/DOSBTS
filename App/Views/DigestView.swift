@@ -495,7 +495,7 @@ private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
             timestamp: meal.timestamp,
             timeString: timeFormatter.string(from: meal.timestamp),
             label: "\(meal.mealDescription) \(carbs)",
-            color: AmberTheme.amber
+            color: EventMarkerType.meal.color
         ))
     }
 
@@ -504,7 +504,7 @@ private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
             timestamp: ins.starts,
             timeString: timeFormatter.string(from: ins.starts),
             label: "\(String(format: "%.1f", ins.units))U \(ins.type.description)",
-            color: AmberTheme.cgaCyan
+            color: ins.type.markerType.color
         ))
     }
 
@@ -513,7 +513,7 @@ private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
             timestamp: ex.startTime,
             timeString: timeFormatter.string(from: ex.startTime),
             label: "\(ex.activityType) \(Int(ex.durationMinutes))min",
-            color: AmberTheme.cgaGreen
+            color: EventMarkerType.exercise.color
         ))
     }
 

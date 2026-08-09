@@ -7,6 +7,10 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Sensor status line: the DISCONNECT/CONNECT/SET UP button no longer overlaps the connection status text, including on longer labels like a fresh sensor's multi-day remaining time — DMNC-1481, PR #112
+- Daily Digest timeline entries (meals, insulin, exercise) now show the same colours as the Overview chart instead of a different, mismatched set — DMNC-1481, PR #112
+
 ## [Build 133] — 2026-07-19
 
 ### Fixed
