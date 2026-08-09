@@ -150,6 +150,9 @@ struct UnifiedFoodEntryView: View {
     @State private var relogMeal: MealEntry?
     @State private var askAINavigating = false
     @State private var searchDebounceTask: DispatchWorkItem?
+    /// Bumped to force the mic down before SCAN/PHOTO push — `AVCaptureSession`
+    /// and `AVAudioEngine` must never run at the same time (DMNC-1486 R1).
+    @State private var dictationStopToken = 0
 
     private var displayedFavorites: [FavoriteFood] {
         if filterToHypoTreatments {
@@ -491,6 +494,17 @@ struct UnifiedFoodEntryView: View {
     @ViewBuilder
     private var actionsSection: some View {
         Section {
+            // Voice (DMNC-1486). One more row, not a special guest: the
+            // transcript lands in `searchText`, which is what makes the ASK AI
+            // row below appear at >= 3 chars. There is deliberately no second
+            // dispatch path — spoken and typed input are identical downstream.
+            DictationControl(
+                contextualStrings: foodContextualStrings,
+                stopToken: dictationStopToken
+            ) { transcript in
+                searchText = transcript
+            }
+
             manualEntryLink(icon: "keyboard", title: "MANUAL")
 
             // SCAN — always available (OFF is free, no API key needed)
@@ -508,6 +522,10 @@ struct UnifiedFoodEntryView: View {
                 }
                 .foregroundStyle(AmberTheme.amber)
             }
+            // Additive, so the link still activates normally. The scanner starts
+            // its AVCaptureSession during the push — possibly before this List's
+            // onDisappear lands — so the mic has to come down first, not after.
+            .simultaneousGesture(TapGesture().onEnded { dictationStopToken += 1 })
 
             if store.state.claudeAPIKeyValid || store.state.aiConsentFoodPhoto {
                 NavigationLink {
@@ -522,6 +540,7 @@ struct UnifiedFoodEntryView: View {
                     }
                     .foregroundStyle(AmberTheme.amber)
                 }
+                .simultaneousGesture(TapGesture().onEnded { dictationStopToken += 1 })
 
                 // NL text parsing — appears when search text >= 3 chars
                 if searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 3 {
@@ -575,6 +594,35 @@ struct UnifiedFoodEntryView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Recognition bias
+
+    /// The single biggest quality lever in voice input (DMNC-1486 D5/R3).
+    ///
+    /// `SFSpeechRecognizer.contextualStrings` takes ~100 short phrases and
+    /// weights them during decoding, so seeding it with the foods THIS user
+    /// actually logs is what makes "Dextro Energy" and German food nouns come
+    /// back spelled right instead of phonetically mangled. Keyboard dictation
+    /// cannot do this at all — it is the reason an in-app mic exists.
+    ///
+    /// Favourites first (the foods worth one tap are the foods most likely to be
+    /// spoken), then recents newest-first. Deduped with `lowercased()`, which
+    /// folds non-ASCII — the SQL `LIKE`/`NOCASE` trap from DMNC-1484 applies to
+    /// case folding generally, not just to search.
+    private var foodContextualStrings: [String] {
+        let candidates = store.state.favoriteFoodValues.map(\.mealDescription)
+            + store.state.recentMealEntries.map(\.mealDescription)
+
+        var seen = Set<String>()
+        var phrases: [String] = []
+        for candidate in candidates {
+            let trimmed = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, seen.insert(trimmed.lowercased()).inserted else { continue }
+            phrases.append(trimmed)
+            if phrases.count == 100 { break }
+        }
+        return phrases
     }
 
     // MARK: - Filtering
