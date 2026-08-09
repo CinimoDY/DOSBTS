@@ -124,7 +124,7 @@ struct AppState: DirectState {
         self.hasSeenBGRelocationHint = defaults.hasSeenBGRelocationHint
         self.appOpenCount = defaults.appOpenCount
         self.appOpenCountFirstRecordedAt = defaults.appOpenCountFirstRecordedAt
-        self.aiConsentDailyDigest = defaults.aiConsentDailyDigest
+        self.aiConsentDailyDigestV2 = defaults.aiConsentDailyDigestV2
         self.dailyDigestReminderHour = defaults.dailyDigestReminderHour
         self.dailyDigestReminderMinute = defaults.dailyDigestReminderMinute
         self.claudeAPIKeyValid = defaults.claudeAPIKeyValid
@@ -316,7 +316,8 @@ struct AppState: DirectState {
     var dailyDigestLoading: Bool = false
     var dailyDigestInsightLoading: Bool = false
     var dailyDigestEvents: DailyDigestEvents?
-    var aiConsentDailyDigest: Bool { didSet { defaults.aiConsentDailyDigest = aiConsentDailyDigest } }
+    // No migration from the V1 key by design — see UserDefaults.aiConsentDailyDigestV2.
+    var aiConsentDailyDigestV2: Bool { didSet { defaults.aiConsentDailyDigestV2 = aiConsentDailyDigestV2 } }
     var dailyDigestReminderHour: Int? { didSet { defaults.dailyDigestReminderHour = dailyDigestReminderHour } }
     var dailyDigestReminderMinute: Int? { didSet { defaults.dailyDigestReminderMinute = dailyDigestReminderMinute } }
 

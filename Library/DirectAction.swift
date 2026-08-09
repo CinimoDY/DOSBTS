@@ -225,7 +225,7 @@ enum DirectAction {
     case setDailyDigestInsight(date: Date, insight: String)
     case setDailyDigestInsightError
     case setDailyDigestEvents(events: DailyDigestEvents)
-    case setAIConsentDailyDigest(enabled: Bool)
+    case setAIConsentDailyDigestV2(enabled: Bool)
     case setDailyDigestReminderTime(hour: Int?, minute: Int?)
 
     // MARK: Ratio Lab

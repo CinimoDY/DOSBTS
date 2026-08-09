@@ -172,7 +172,7 @@ struct DigestView: View {
                     // Pre-structured-format insights render as before.
                     AIInsightContent(text: insight)
                 }
-            } else if !store.state.aiConsentDailyDigest {
+            } else if !store.state.aiConsentDailyDigestV2 {
                 Text("ENABLE AI INSIGHTS IN SETTINGS")
                     .font(DOSTypography.caption)
                     .foregroundStyle(AmberTheme.amber)

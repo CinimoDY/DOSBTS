@@ -151,7 +151,11 @@ protocol DirectState {
     /// schedule uses — see `nightStartHour`).
     var dailyDigestReminderHour: Int? { get set }
     var dailyDigestReminderMinute: Int? { get set }
-    var aiConsentDailyDigest: Bool { get set }
+    /// Versioned (DMNC-1485): journal-note text made the V1 consent copy
+    /// inaccurate, so the key was bumped rather than silently widened. The
+    /// legacy `libre-direct.settings.ai-consent-daily-digest` default is left
+    /// in place, unread, for rollback.
+    var aiConsentDailyDigestV2: Bool { get set }
 
     // MARK: Celebrations (DMNC-772)
     var showCelebrations: Bool { get set }

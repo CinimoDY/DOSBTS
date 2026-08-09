@@ -93,8 +93,15 @@ private func dailyDigestMiddleware(service: LazyService<ClaudeService>) -> Middl
                 return Empty().eraseToAnyPublisher()
             }
 
+            // `!dailyDigestInsightLoading` keeps a refresh that lands mid-flight
+            // from firing a second, concurrent paid generation — `aiInsight` is
+            // still nil until the first one returns, and the events array can
+            // now be refreshed independently (adding a journal note does it).
+            // The reducer runs before middlewares, so this reads the flag's
+            // current value.
             if digest.aiInsight == nil,
-               state.aiConsentDailyDigest,
+               !state.dailyDigestInsightLoading,
+               state.aiConsentDailyDigestV2,
                KeychainService.read(key: ClaudeService.keychainKey) != nil {
                 return Just(DirectAction.generateDailyDigestInsight(date: digest.date))
                     .setFailureType(to: DirectError.self)
@@ -104,7 +111,7 @@ private func dailyDigestMiddleware(service: LazyService<ClaudeService>) -> Middl
             return Empty().eraseToAnyPublisher()
 
         case .generateDailyDigestInsight(date: let date, force: let force):
-            guard state.aiConsentDailyDigest else {
+            guard state.aiConsentDailyDigestV2 else {
                 return Empty().eraseToAnyPublisher()
             }
 

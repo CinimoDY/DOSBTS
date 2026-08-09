@@ -102,7 +102,7 @@ struct SettingsConnectionsView: View {
     }
 
     private var aiStatus: ConnectionStatus {
-        let hasConsent = store.state.aiConsentFoodPhoto || store.state.aiConsentDailyDigest
+        let hasConsent = store.state.aiConsentFoodPhoto || store.state.aiConsentDailyDigestV2
         if hasConsent && store.state.claudeAPIKeyValid { return .active }
         if hasConsent && !store.state.claudeAPIKeyValid { return .error }
         return .inactive

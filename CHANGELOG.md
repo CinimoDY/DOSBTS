@@ -12,6 +12,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ### Changed
 - AI Daily Insights consent copy now states that the text of your journal notes is sent along with glucose, meals, insulin, and exercise — DMNC-1485
+- AI Daily Insights consent has to be granted once more, because journal-note text is more personal than the data the old consent described. The toggle is in Settings → Integrations → AI, and nothing is sent until you turn it back on — DMNC-1485
 
 ## [Build 133] — 2026-07-19
 
