@@ -56,9 +56,17 @@ struct FoodHistorySearchModel: Equatable {
     /// Mirrors the ASK AI clamp.
     static let maxQueryLength = 500
 
-    /// Trim + clamp. The dispatch site and the staleness comparison MUST both go
-    /// through this, or an over-long query could never match its own result and
-    /// the sheet would search forever.
+    /// Trim + clamp. The VIEW calls this exactly once per query — at dispatch
+    /// time and for the staleness comparison — and everything downstream echoes
+    /// the result verbatim.
+    ///
+    /// Deliberately NOT idempotent-safe to re-apply: `prefix(maxQueryLength)` can
+    /// leave trailing whitespace that a second `trimmingCharacters` would eat, so
+    /// re-normalizing an already-normalized query can shorten it. Anything that
+    /// re-normalized downstream would echo a key the view can never match, and
+    /// the sheet would search forever (typing more cannot recover it, since
+    /// appending does not change `prefix`). Pinned by
+    /// `normalizedQueryIsNotIdempotent`.
     static func normalizedQuery(_ raw: String) -> String {
         String(raw.trimmingCharacters(in: .whitespacesAndNewlines).prefix(maxQueryLength))
     }
@@ -84,22 +92,46 @@ struct FoodHistorySearchModel: Equatable {
             return FoodHistorySearchModel(rows: local, isSearching: false)
         }
 
-        guard let results, results.query == normalized else {
+        guard let results else {
             return FoodHistorySearchModel(rows: local, isSearching: true)
         }
 
-        // Recents win over DB duplicates: they are the same food and the recent
-        // row is the fresher one. Dedupe on the name, case-insensitively.
+        if results.query == normalized {
+            return FoodHistorySearchModel(rows: merge(local: local, hits: results.entries), isSearching: false)
+        }
+
+        // Narrowing a query ("app" → "appl"): a contains-hit set for the longer
+        // needle is a SUBSET of the shorter needle's, so the previous result can
+        // be re-filtered in Swift and kept on screen while the fresh read is in
+        // flight. Without this the rows collapse to the in-memory subset for
+        // 250ms and then regrow — a visible flinch on every keystroke.
+        // `isSearching` stays true because the old result was `limit`-capped and
+        // may be missing rows the narrower query would have reached.
+        if normalized.hasPrefix(results.query) {
+            let narrowed = results.entries.filter {
+                $0.mealDescription.localizedCaseInsensitiveContains(normalized)
+            }
+            return FoodHistorySearchModel(rows: merge(local: local, hits: narrowed), isSearching: true)
+        }
+
+        // Any other mismatch is a STALE result — an older, slower query landing
+        // late. Ignore it entirely and keep waiting.
+        return FoodHistorySearchModel(rows: local, isSearching: true)
+    }
+
+    /// Recents first, then DB hits that aren't already present. Recents win over
+    /// duplicates: same food, fresher row. Dedupe on name, case-insensitively
+    /// (`.lowercased()` folds non-ASCII too, unlike SQL's `COLLATE NOCASE`).
+    private static func merge(local: [MealEntry], hits: [MealEntry]) -> [MealEntry] {
         var seen = Set(local.map { $0.mealDescription.lowercased() })
         var merged = local
-        for entry in results.entries {
+        for entry in hits {
             let key = entry.mealDescription.lowercased()
             guard !seen.contains(key) else { continue }
             seen.insert(key)
             merged.append(entry)
         }
-
-        return FoodHistorySearchModel(rows: merged, isSearching: false)
+        return merged
     }
 }
 
@@ -239,6 +271,23 @@ struct UnifiedFoodEntryView: View {
         .onAppear {
             store.dispatch(.loadFavoriteFoodValues)
             store.dispatch(.loadRecentMealEntries)
+            // A result that landed AFTER the last onDisappear is still resident
+            // (the middleware publisher outlives the sheet), so a reopen with the
+            // same query would paint cached rows before the fresh read. Drop it,
+            // then re-arm if the field still holds a searchable query — on a
+            // fresh sheet `searchText` is "" and this is a no-op.
+            clearHistoryResults()
+            debounceHistorySearch(searchText)
+        }
+        // Re-arm after backgrounding. A debounce timer that fired while the scene
+        // was inactive was swallowed by the middleware's `.active` guard, and the
+        // middleware deliberately does not re-trigger on `.setAppState(.active)`
+        // — so without this the sheet spins forever: `searchText` is unchanged,
+        // so its `.onChange` never re-fires. Guarded on `isSearching` so a
+        // healthy, already-answered query doesn't re-query on every foreground.
+        .onChange(of: store.state.appState) { _, phase in
+            guard phase == .active, searchModel.isSearching else { return }
+            debounceHistorySearch(searchText)
         }
         // Attached to the NavigationStack, NOT the List: pushing a destination
         // (relog plate / ASK AI) tears the List down, and clearing results there

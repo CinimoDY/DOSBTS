@@ -85,30 +85,32 @@ func favoriteFoodStoreMiddleware() -> Middleware<DirectState, DirectAction> {
             }.eraseToAnyPublisher()
 
         case .searchMealHistory(query: let query):
-            // Silently drops when not .active, with NO .setAppState(.active)
-            // re-trigger: this is an on-demand load driven by the user typing in
-            // the food entry sheet, which can only happen once ContentView has
-            // set .active. Re-running the last query on foreground would also be
-            // wrong — the sheet may not even be open any more.
+            // Silently drops when not .active. There is deliberately no
+            // .setAppState(.active) re-trigger here — the view owns re-arming,
+            // because only it knows whether the sheet is still open and what the
+            // field currently holds (UnifiedFoodEntryView.onChange(of: appState)).
             guard state.appState == .active else {
                 break
             }
 
-            // Normalize identically to the view's dispatch so the echoed query
-            // matches what the view compares against (the operation is
-            // idempotent — the view already normalized it).
-            let normalized = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
-
+            // Echo `query` back EXACTLY as received — never a re-normalized copy.
+            // The view is the sole authority on what it is waiting for, and
+            // trim-then-clamp is NOT idempotent: when the 500th character lands
+            // inside a whitespace run, normalizing again yields a shorter string.
+            // The view would then never recognise its own result and would spin
+            // forever, unrecoverable by typing (appending cannot change
+            // `prefix(500)`). Pinned by `normalizedQueryIsNotIdempotent`.
+            //
             // On a GRDB read error `searchMealEntries` emits `.failure`, which the
             // Store logs but never re-dispatches — so `.setMealHistoryResults`
             // would never land and the view (which treats "no result for my
             // query" as loading) would spin forever. Fall back to an empty result
             // set FOR THIS QUERY so the sheet shows its "no matches" state.
-            return DataStore.shared.searchMealEntries(matching: normalized, limit: 50)
-                .map { DirectAction.setMealHistoryResults(results: MealHistoryResults(query: normalized, entries: $0)) }
+            return DataStore.shared.searchMealEntries(matching: query, limit: 50)
+                .map { DirectAction.setMealHistoryResults(results: MealHistoryResults(query: query, entries: $0)) }
                 .catch { error -> Just<DirectAction> in
                     DirectLog.error("Food history search failed: \(error)")
-                    return Just(.setMealHistoryResults(results: MealHistoryResults(query: normalized, entries: [])))
+                    return Just(.setMealHistoryResults(results: MealHistoryResults(query: query, entries: [])))
                 }
                 .setFailureType(to: DirectError.self)
                 .eraseToAnyPublisher()
@@ -389,6 +391,25 @@ private extension DataStore {
     /// the sheet's search box. This reaches the whole `MealEntry` table (which is
     /// never pruned) with the same name-dedupe, newest-wins semantics.
     ///
+    /// **Matching happens in SWIFT, not SQL, and that is deliberate.** SQLite's
+    /// `LIKE` (and `COLLATE NOCASE`) fold ASCII only, so `LIKE '%äpfel%'` does not
+    /// match "Äpfel mit Zimt" while the in-memory recents filter
+    /// (`localizedCaseInsensitiveContains`) does. Mixing the two produced a
+    /// nastier bug than a plain miss: a German food was findable while it sat
+    /// inside the recents cap and silently stopped being findable once it aged
+    /// out — the same query working, then not. Filtering here with the very same
+    /// `localizedCaseInsensitiveContains` call makes the two paths identical by
+    /// construction. **Do not "optimise" this back into a `LIKE`** — that
+    /// reintroduces the divergence (and the wildcard-escaping burden with it).
+    ///
+    /// Matching is CONTAINS, not prefix, for the same reason: the in-memory
+    /// filter is a contains filter. The plan already accepted a scan here on the
+    /// grounds that `MealEntry` is personal-scale (one row per logged meal).
+    ///
+    /// `limit` bounds *distinct foods returned*, applied after filtering — a
+    /// pre-filter `LIMIT` would put old foods back out of reach, which is the
+    /// entire bug this exists to fix.
+    ///
     /// NO writes inside the `asyncRead` — GRDB deadlock rule applies.
     func searchMealEntries(matching query: String, limit: Int) -> Future<[MealEntry], DirectError> {
         return Future { promise in
@@ -400,49 +421,46 @@ private extension DataStore {
                 return
             }
 
-            let trimmed = String(query.trimmingCharacters(in: .whitespacesAndNewlines).prefix(500))
-            guard !trimmed.isEmpty else {
+            // Local to matching only — the caller's exact string is what gets
+            // echoed back as the result key, never this one.
+            let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !needle.isEmpty else {
                 promise(.success([]))
                 return
             }
-
-            // The query text is BOUND, never interpolated. `%` and `_` are LIKE
-            // wildcards, so a literal one in the user's text has to be escaped
-            // (and the escape character itself escaped first) — otherwise typing
-            // "100%" or "hot_dog" silently widens the match.
-            let escaped = trimmed
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "%", with: "\\%")
-                .replacingOccurrences(of: "_", with: "\\_")
-            let pattern = "%\(escaped)%"
 
             dbQueue.asyncRead { asyncDB in
                 do {
                     let db = try asyncDB.get()
 
-                    // CONTAINS, not prefix — deliberate. The
-                    // MealEntry_description_timestamp index only accelerates
-                    // `LIKE 'q%'`, so a leading `%` forces a scan. `MealEntry` is
-                    // personal-scale (one row per logged meal), and narrowing to
-                    // prefix-only would silently contradict the in-memory filter
-                    // (`localizedCaseInsensitiveContains`) the user already knows.
-                    // Don't "optimize" this into a prefix match.
-                    //
-                    // SQLite's default LIKE is case-insensitive for ASCII, which
-                    // matches the recents filter closely enough for search.
-                    let result = try MealEntry.fetchAll(db, sql: """
+                    // One row per distinct food name, newest wins — the same
+                    // subquery the recents list uses, unfiltered and unbounded.
+                    let candidates = try MealEntry.fetchAll(db, sql: """
                         SELECT m.*
                         FROM \(MealEntry.Table) m
-                        WHERE m.mealDescription LIKE ? ESCAPE '\\'
-                          AND m.id = (
+                        WHERE m.id = (
                             SELECT m2.id FROM \(MealEntry.Table) m2
                             WHERE m2.mealDescription = m.mealDescription COLLATE NOCASE
                             ORDER BY m2.timestamp DESC
                             LIMIT 1
-                          )
+                        )
                         ORDER BY m.timestamp DESC
-                        LIMIT ?
-                    """, arguments: [pattern, limit])
+                    """)
+
+                    // Dedupe AGAIN in Swift before taking `limit`: `COLLATE NOCASE`
+                    // folds ASCII only, so "MÜSLI" and "Müsli" both survive the SQL
+                    // dedupe and would otherwise each burn a slot, yielding fewer
+                    // than `limit` genuinely distinct foods.
+                    var seen = Set<String>()
+                    var result: [MealEntry] = []
+
+                    for candidate in candidates
+                        where candidate.mealDescription.localizedCaseInsensitiveContains(needle)
+                    {
+                        guard seen.insert(candidate.mealDescription.lowercased()).inserted else { continue }
+                        result.append(candidate)
+                        if result.count == limit { break }
+                    }
 
                     promise(.success(result))
                 } catch {

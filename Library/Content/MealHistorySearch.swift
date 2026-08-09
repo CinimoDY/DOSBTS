@@ -17,10 +17,13 @@ import Foundation
 /// One answered food-history search: the normalized query that was asked, and
 /// the distinct meals that matched it (newest first, one row per food name).
 struct MealHistoryResults: Equatable {
-    /// The normalized (trimmed + clamped) query these entries answer.
-    /// Produced by `FoodHistorySearchModel.normalizedQuery(_:)` — the dispatch
-    /// site and the staleness check must both go through it or a query can
-    /// never match its own result.
+    /// The query these entries answer, byte-for-byte as the view dispatched it.
+    ///
+    /// The view normalizes ONCE (`FoodHistorySearchModel.normalizedQuery(_:)`)
+    /// and everything downstream echoes that string verbatim. Nothing else may
+    /// re-normalize: `normalizedQuery` is trim-then-clamp and therefore NOT
+    /// idempotent, so a second pass can return a shorter string that the view
+    /// would never match against — a permanently stuck spinner.
     let query: String
 
     /// Distinct meals matching `query`, newest first.
