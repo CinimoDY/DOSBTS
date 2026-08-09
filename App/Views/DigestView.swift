@@ -496,6 +496,18 @@ private struct TimelineItem: Identifiable {
     let timeString: String
     let label: String
     let color: Color
+
+    /// Journal notes are the one timeline row with no marker-lane counterpart —
+    /// `EventMarkerType` deliberately has no `.note` case (adding one ripples
+    /// into ChartView, EventMarkerLaneView, EntryGroupListOverlay and the
+    /// chip-row invariant tests; out of scope for DMNC-1485). So notes get one
+    /// named role here rather than a bare token at the call site, and
+    /// `DigestColorRoutingGuardTests` still catches any *event* row that tries
+    /// to diverge from `EventMarkerType.color` again.
+    ///
+    /// Shares amberLight with `.correction` insulin — acceptable because notes
+    /// carry a `[TAG]` prefix and prose, so the two rows never read alike.
+    static let noteColor = AmberTheme.amberLight
 }
 
 private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
@@ -538,7 +550,7 @@ private func buildTimelineItems(events: DailyDigestEvents) -> [TimelineItem] {
             timestamp: note.timestamp,
             timeString: timeFormatter.string(from: note.timestamp),
             label: "\(tag)\(note.text)",
-            color: AmberTheme.amberLight
+            color: TimelineItem.noteColor
         ))
     }
 
