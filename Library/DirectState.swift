@@ -133,6 +133,14 @@ protocol DirectState {
     var scoredMealEntryIds: Set<UUID> { get set }
     var scoredPersonalFoodValues: [PersonalFood] { get set }
 
+    // MARK: Food History Search (DMNC-1484)
+    /// Transient — loaded on demand while the user types in the food entry
+    /// sheet's search field. Not persisted. `nil` = no search result in hand
+    /// (either nothing searched yet, or the query is below the search
+    /// threshold). Carries its own query so a late-landing older result can be
+    /// rejected — see `MealHistoryResults`.
+    var mealHistoryResults: MealHistoryResults? { get set }
+
     // MARK: Ratio Lab
     /// Transient — loaded on demand when Ratio Lab screen opens. Not persisted.
     var ratioEvidence: RatioEvidence? { get set }

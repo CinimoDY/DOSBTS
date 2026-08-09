@@ -328,6 +328,9 @@ struct AppState: DirectState {
     var lastSeenBuild: Int { didSet { defaults.lastSeenBuild = lastSeenBuild } }
     var selectedSettingsCategory: SettingsCategory? // ephemeral nav state — not persisted
 
+    // MARK: Food History Search (DMNC-1484)
+    var mealHistoryResults: MealHistoryResults? // transient — loaded on demand, not persisted
+
     // MARK: Ratio Lab
     var ratioEvidence: RatioEvidence? // transient — loaded on demand, not persisted
     var confirmedICR: Double? { didSet { defaults.confirmedICR = confirmedICR } }

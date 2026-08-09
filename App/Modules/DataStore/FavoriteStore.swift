@@ -84,6 +84,37 @@ func favoriteFoodStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 DirectAction.setRecentMealEntries(recentMealEntries: recentMealEntries)
             }.eraseToAnyPublisher()
 
+        case .searchMealHistory(query: let query):
+            // Silently drops when not .active. There is deliberately no
+            // .setAppState(.active) re-trigger here — the view owns re-arming,
+            // because only it knows whether the sheet is still open and what the
+            // field currently holds (UnifiedFoodEntryView.onChange(of: appState)).
+            guard state.appState == .active else {
+                break
+            }
+
+            // Echo `query` back EXACTLY as received — never a re-normalized copy.
+            // The view is the sole authority on what it is waiting for, and
+            // trim-then-clamp is NOT idempotent: when the 500th character lands
+            // inside a whitespace run, normalizing again yields a shorter string.
+            // The view would then never recognise its own result and would spin
+            // forever, unrecoverable by typing (appending cannot change
+            // `prefix(500)`). Pinned by `normalizedQueryIsNotIdempotent`.
+            //
+            // On a GRDB read error `searchMealEntries` emits `.failure`, which the
+            // Store logs but never re-dispatches — so `.setMealHistoryResults`
+            // would never land and the view (which treats "no result for my
+            // query" as loading) would spin forever. Fall back to an empty result
+            // set FOR THIS QUERY so the sheet shows its "no matches" state.
+            return DataStore.shared.searchMealEntries(matching: query, limit: 50)
+                .map { DirectAction.setMealHistoryResults(results: MealHistoryResults(query: query, entries: $0)) }
+                .catch { error -> Just<DirectAction> in
+                    DirectLog.error("Food history search failed: \(error)")
+                    return Just(.setMealHistoryResults(results: MealHistoryResults(query: query, entries: [])))
+                }
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
+
         case .setAppState(appState: let appState):
             guard appState == .active else {
                 return Empty().eraseToAnyPublisher()
@@ -330,6 +361,9 @@ private extension DataStore {
                     do {
                         let db = try asyncDB.get()
 
+                        // LIMIT applies AFTER the name-dedupe subquery, so raising it
+                        // is monotone: 50 distinct foods instead of 20, same dedupe
+                        // semantics (DMNC-1484).
                         let result = try MealEntry.fetchAll(db, sql: """
                             SELECT m.*
                             FROM \(MealEntry.Table) m
@@ -340,13 +374,97 @@ private extension DataStore {
                                 LIMIT 1
                             )
                             ORDER BY m.timestamp DESC
-                            LIMIT 20
+                            LIMIT 50
                         """)
 
                         promise(.success(result))
                     } catch {
                         promise(.failure(.withError(error)))
                     }
+                }
+            }
+        }
+    }
+
+    /// Full-history food search (DMNC-1484). `getRecentMealEntries()` only ever
+    /// returns the newest N distinct foods; anything older was unreachable from
+    /// the sheet's search box. This reaches the whole `MealEntry` table (which is
+    /// never pruned) with the same name-dedupe, newest-wins semantics.
+    ///
+    /// **Matching happens in SWIFT, not SQL, and that is deliberate.** SQLite's
+    /// `LIKE` (and `COLLATE NOCASE`) fold ASCII only, so `LIKE '%äpfel%'` does not
+    /// match "Äpfel mit Zimt" while the in-memory recents filter
+    /// (`localizedCaseInsensitiveContains`) does. Mixing the two produced a
+    /// nastier bug than a plain miss: a German food was findable while it sat
+    /// inside the recents cap and silently stopped being findable once it aged
+    /// out — the same query working, then not. Filtering here with the very same
+    /// `localizedCaseInsensitiveContains` call makes the two paths identical by
+    /// construction. **Do not "optimise" this back into a `LIKE`** — that
+    /// reintroduces the divergence (and the wildcard-escaping burden with it).
+    ///
+    /// Matching is CONTAINS, not prefix, for the same reason: the in-memory
+    /// filter is a contains filter. The plan already accepted a scan here on the
+    /// grounds that `MealEntry` is personal-scale (one row per logged meal).
+    ///
+    /// `limit` bounds *distinct foods returned*, applied after filtering — a
+    /// pre-filter `LIMIT` would put old foods back out of reach, which is the
+    /// entire bug this exists to fix.
+    ///
+    /// NO writes inside the `asyncRead` — GRDB deadlock rule applies.
+    func searchMealEntries(matching query: String, limit: Int) -> Future<[MealEntry], DirectError> {
+        return Future { promise in
+            // `guard let`, NOT `if let`: the `if let` form used above never
+            // fulfils the promise when `dbQueue` is nil, which would strand the
+            // caller's publisher and leave the UI in its loading state forever.
+            guard let dbQueue = self.dbQueue else {
+                promise(.success([]))
+                return
+            }
+
+            // Local to matching only — the caller's exact string is what gets
+            // echoed back as the result key, never this one.
+            let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !needle.isEmpty else {
+                promise(.success([]))
+                return
+            }
+
+            dbQueue.asyncRead { asyncDB in
+                do {
+                    let db = try asyncDB.get()
+
+                    // One row per distinct food name, newest wins — the same
+                    // subquery the recents list uses, unfiltered and unbounded.
+                    let candidates = try MealEntry.fetchAll(db, sql: """
+                        SELECT m.*
+                        FROM \(MealEntry.Table) m
+                        WHERE m.id = (
+                            SELECT m2.id FROM \(MealEntry.Table) m2
+                            WHERE m2.mealDescription = m.mealDescription COLLATE NOCASE
+                            ORDER BY m2.timestamp DESC
+                            LIMIT 1
+                        )
+                        ORDER BY m.timestamp DESC
+                    """)
+
+                    // Dedupe AGAIN in Swift before taking `limit`: `COLLATE NOCASE`
+                    // folds ASCII only, so "MÜSLI" and "Müsli" both survive the SQL
+                    // dedupe and would otherwise each burn a slot, yielding fewer
+                    // than `limit` genuinely distinct foods.
+                    var seen = Set<String>()
+                    var result: [MealEntry] = []
+
+                    for candidate in candidates
+                        where candidate.mealDescription.localizedCaseInsensitiveContains(needle)
+                    {
+                        guard seen.insert(candidate.mealDescription.lowercased()).inserted else { continue }
+                        result.append(candidate)
+                        if result.count == limit { break }
+                    }
+
+                    promise(.success(result))
+                } catch {
+                    promise(.failure(.withError(error)))
                 }
             }
         }

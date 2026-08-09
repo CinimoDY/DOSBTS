@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Food search in the Log Meal sheet now searches your whole meal history, not just the recents already on screen — type 3+ characters and foods logged months ago come back, ready to tap (stage) or hold (log). The RECENT list itself also grows from 20 to 50 foods — DMNC-1484, PR #113
+
 ### Fixed
 - Sensor status line: the DISCONNECT/CONNECT/SET UP button no longer overlaps the connection status text, including on longer labels like a fresh sensor's multi-day remaining time — DMNC-1481, PR #112
 - Daily Digest timeline entries (meals, insulin, exercise) now show the same colours as the Overview chart instead of a different, mismatched set — DMNC-1481, PR #112
