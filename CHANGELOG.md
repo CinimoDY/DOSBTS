@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Fixed
+- Log Meal sheet: tapping a QUICK item no longer scrolls the list down to the newly logged entry, so the chips stay under your thumb and you can log several items in a row without scrolling back up
+
 ## [Build 135] — 2026-08-09
 
 ### Added
