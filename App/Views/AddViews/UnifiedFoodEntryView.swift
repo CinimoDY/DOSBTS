@@ -153,6 +153,13 @@ struct UnifiedFoodEntryView: View {
     /// Bumped to force the mic down before SCAN/PHOTO push — `AVCaptureSession`
     /// and `AVAudioEngine` must never run at the same time (DMNC-1486 R1).
     @State private var dictationStopToken = 0
+    /// Entry logged straight from a QUICK chip. The chips sit ABOVE the RECENT
+    /// list, so the follow-the-new-entry scroll below would push them off screen
+    /// and force a scroll back up before the next tap — the exact opposite of
+    /// what QUICK is for (log several items in a row). Chip logs park their id
+    /// here and the follow skips it; every other path (staging plate, recents
+    /// hold-to-log, photo analysis) still follows as before.
+    @State private var quickLoggedID: UUID?
 
     private var displayedFavorites: [FavoriteFood] {
         if filterToHypoTreatments {
@@ -218,6 +225,7 @@ struct UnifiedFoodEntryView: View {
             // where the meal landed.
             .onChange(of: store.state.recentMealEntries) { _, recents in
                 guard let id = addedHighlighter.highlightedID,
+                      id != quickLoggedID,
                       recents.contains(where: { $0.id == id }) else { return }
                 withAnimation(AnimationTokens.easeStandard) {
                     scrollProxy.scrollTo(id, anchor: .center)
@@ -680,6 +688,9 @@ struct UnifiedFoodEntryView: View {
         DirectNotifications.shared.hapticNotification(.success)
         toast.show(mealEntry)
         addedHighlighter.flash(mealEntry.id)
+        // Stay put: the chip the user just tapped must still be under their
+        // thumb for the next one.
+        quickLoggedID = mealEntry.id
     }
 
     private func stageFavorite(_ favorite: FavoriteFood) {
