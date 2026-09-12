@@ -58,6 +58,9 @@ struct LabChartInputs: Equatable {
     let iobDeliveries: [InsulinDelivery]
     let exercise: [ExerciseEntry]
     let heartRate: [HeartRateSample]
+    /// Journal notes are context for a fact, never a series: the Black Box card
+    /// states the tag that was standing when a hypo started.
+    let journalNotes: [JournalNote]
     let glucoseUnit: GlucoseUnit
     let alarmLow: Int
     let alarmHigh: Int
@@ -78,6 +81,7 @@ struct LabChartInputs: Equatable {
         self.iobDeliveries = state.iobDeliveries
         self.exercise = state.exerciseEntryValues
         self.heartRate = state.heartRateSeries.map { HeartRateSample(time: $0.0, bpm: $0.1) }
+        self.journalNotes = state.journalNoteValues
         self.glucoseUnit = state.glucoseUnit
         self.alarmLow = state.alarmLow
         self.alarmHigh = state.alarmHigh
@@ -106,6 +110,7 @@ struct LabChartInputs: Equatable {
         iobDeliveries: [InsulinDelivery],
         exercise: [ExerciseEntry],
         heartRate: [HeartRateSample],
+        journalNotes: [JournalNote] = [],
         glucoseUnit: GlucoseUnit,
         alarmLow: Int,
         alarmHigh: Int,
@@ -123,6 +128,7 @@ struct LabChartInputs: Equatable {
         self.iobDeliveries = iobDeliveries
         self.exercise = exercise
         self.heartRate = heartRate
+        self.journalNotes = journalNotes
         self.glucoseUnit = glucoseUnit
         self.alarmLow = alarmLow
         self.alarmHigh = alarmHigh
@@ -229,6 +235,12 @@ struct LabChartSeries {
     var meals: [MealDatapoint]
     var exercise: [ExerciseDatapoint]
     var heartRate: [HeartRateSample]
+    /// The cited facts for this window, ranked. Computed HERE — in the one pure
+    /// builder — so the pins, the sheet line, the cards and the accessibility
+    /// descriptor are all reading the same numbers. Empty unless the tab asked
+    /// for `.factPins`.
+    var facts: [ChartFact] = []
+    var sheet: ChartFeatureSheet?
 
     var readingCount: Int { glucose.count }
 
@@ -389,6 +401,11 @@ enum LabChartSeriesBuilder {
         let insulinDoses = inputs.insulin.map {
             LabInsulinDose(id: $0.id.uuidString, starts: $0.starts, units: $0.units, type: $0.type)
         }
+        let iob = iobSamples(inputs, from: domainStart, to: domainEnd)
+
+        // Only the tab that draws pins pays for the detectors.
+        let wantsFacts = inputs.overlays.contains(.factPins)
+        let window = DateInterval(start: domainStart, end: max(domainStart, domainEnd))
 
         return LabChartSeries(
             domainStart: domainStart,
@@ -399,10 +416,32 @@ enum LabChartSeriesBuilder {
             bloodGlucose: bloodGlucose,
             insulin: insulin,
             insulinDoses: insulinDoses,
-            iob: iobSamples(inputs, from: domainStart, to: domainEnd),
+            iob: iob,
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },
-            heartRate: inputs.heartRate.sorted { $0.time < $1.time }
+            heartRate: inputs.heartRate.sorted { $0.time < $1.time },
+            facts: wantsFacts
+                ? ChartHighlights.facts(
+                    readings: inputs.sensorGlucose,
+                    deliveries: inputs.insulin,
+                    meals: inputs.meals,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes,
+                    iob: iob,
+                    heartRate: inputs.heartRate,
+                    now: now
+                )
+                : [],
+            sheet: wantsFacts
+                ? ChartHighlights.sheet(
+                    readings: inputs.sensorGlucose,
+                    meals: inputs.meals,
+                    deliveries: inputs.insulin,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes,
+                    window: window
+                )
+                : nil
         )
     }
 

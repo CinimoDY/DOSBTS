@@ -519,3 +519,306 @@ struct ChartHighlightsTests {
         #expect(LabCaption.text(for: sheet.items(), unit: .mgdL) == "1H · n=0 · MEDIAN — · P95 — · 0 HYPO · 0 MEALS · 0 CLEAN")
     }
 }
+
+// MARK: - Fact pins
+
+@Suite("Fact pins")
+struct LabFactPinTests {
+    private func fact(_ minutes: Int, severity: Int = 1) -> ChartFact {
+        ChartFact(
+            id: "fact-\(minutes)",
+            kind: .mealResponse,
+            anchor: at(minutes),
+            end: nil,
+            title: [.observation(label: "MEAL", value: nil, n: 1)],
+            lines: [],
+            severity: severity
+        )
+    }
+
+    @Test("pins are numbered in the order the facts are ranked, not in time order")
+    func numbersFollowRanking() {
+        let pins = LabFactPins.layout([fact(600), fact(0), fact(300)])
+        #expect(pins.map(\.index) == [1, 2, 3])
+        #expect(pins.map(\.fact.anchor) == [at(600), at(0), at(300)])
+    }
+
+    @Test("pins far apart are not nudged")
+    func noShiftWhenSpread() {
+        let pins = LabFactPins.layout([fact(0), fact(60), fact(120)])
+        #expect(pins.allSatisfy { $0.labelShift == 0 })
+    }
+
+    @Test("two pins inside the crowding window are nudged apart, symmetrically")
+    func shiftsWhenCrowded() {
+        let pins = LabFactPins.layout([fact(0), fact(10)])
+        let shifts = pins.sorted { $0.fact.anchor < $1.fact.anchor }.map(\.labelShift)
+        #expect(shifts == [-LabFactPins.shiftStep / 2, LabFactPins.shiftStep / 2])
+    }
+
+    @Test("a crowd of three spreads around its centre")
+    func shiftsThree() {
+        let pins = LabFactPins.layout([fact(0), fact(5), fact(10)])
+        let shifts = pins.sorted { $0.fact.anchor < $1.fact.anchor }.map(\.labelShift)
+        #expect(shifts == [-LabFactPins.shiftStep, 0, LabFactPins.shiftStep])
+    }
+
+    @Test("a hypo pin is red, everything else amber")
+    func hypoPinIsRed() {
+        let hypo = ChartFact(
+            id: "hypo-x",
+            kind: .hypoOnset,
+            anchor: at(0),
+            end: at(50),
+            title: [],
+            lines: [],
+            severity: 3
+        )
+        #expect(LabFactPins.isOnsetRule(hypo))
+        #expect(LabFactPins.isOnsetRule(fact(0)) == false)
+    }
+}
+
+// MARK: - Placing a cursor from a card
+
+@Suite("Lab cursor placement")
+struct LabCursorPlacementTests {
+    @Test("placing a cursor replaces whatever was standing")
+    func placeReplaces() {
+        var cursors = LabCursorState()
+        cursors.apply(selection: at(0), minRange: 300)
+        cursors.apply(selection: nil, minRange: 300)
+        cursors.apply(selection: at(60), minRange: 300) // promotes to a range
+        cursors.apply(selection: nil, minRange: 300)
+        #expect(cursors.range != nil)
+
+        cursors.place(at: at(120))
+        #expect(cursors.range == nil)
+        #expect(cursors.cursor == at(120))
+    }
+
+    @Test("a press after a placed cursor still measures from it")
+    func placedCursorMeasures() {
+        var cursors = LabCursorState()
+        cursors.place(at: at(0))
+        cursors.apply(selection: at(60), minRange: 300)
+        cursors.apply(selection: nil, minRange: 300)
+        #expect(cursors.range == at(0) ... at(60))
+    }
+}
+
+// MARK: - Accessibility summary
+
+@Suite("Lab chart accessibility")
+struct LabChartAccessibilityTests {
+    private func sheet(readings: Int) -> ChartFeatureSheet {
+        ChartHighlights.sheet(
+            readings: run(from: 0, to: (readings - 1) * 5, value: 120),
+            meals: [],
+            deliveries: [],
+            exercise: [],
+            notes: [],
+            window: DateInterval(start: at(0), end: at(24 * 60))
+        )
+    }
+
+    @Test("the chart announces the feature sheet, then how many facts it cites")
+    func summaryReadsTheSheet() {
+        let summary = LabChartAccessibility.summary(sheet: sheet(readings: 5), facts: [], unit: .mgdL)
+        #expect(summary.hasPrefix("Lab chart. 24H · n=5 · MEDIAN 120"))
+        #expect(summary.hasSuffix("No cited facts."))
+    }
+
+    @Test("one fact is announced in the singular")
+    func summaryCountsFacts() {
+        let fact = ChartFact(
+            id: "hypo-x",
+            kind: .hypoOnset,
+            anchor: at(0),
+            end: at(50),
+            title: [.observation(label: "BLACK BOX", value: nil, n: 1)],
+            lines: [],
+            severity: 3
+        )
+        let summary = LabChartAccessibility.summary(sheet: sheet(readings: 5), facts: [fact], unit: .mgdL)
+        #expect(summary.hasSuffix("1 cited fact."))
+
+        let two = LabChartAccessibility.summary(sheet: sheet(readings: 5), facts: [fact, fact], unit: .mgdL)
+        #expect(two.hasSuffix("2 cited facts."))
+    }
+
+    @Test("an empty window says so rather than announcing an empty sheet")
+    func summaryWithoutASheet() {
+        #expect(LabChartAccessibility.summary(sheet: nil, facts: [], unit: .mgdL) == "Lab chart. No readings to plot.")
+    }
+}
+
+// MARK: - Source guards
+
+@Suite("Chart Lab fact copy guards")
+struct ChartLabFactsCopyGuardTests {
+    // #filePath → .../DOSBTSTests/ChartLabFactsTests.swift → repo root two levels up.
+    private static let repoRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+
+    /// Everything the lab prints, plus the figure type itself.
+    private static let scopes = ["App/Views/Overview/Lab", "Library/Content/LabFigure.swift"]
+
+    private static func swiftFiles() -> [URL] {
+        var files: [URL] = []
+        for scope in scopes {
+            let url = repoRoot.appendingPathComponent(scope)
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { continue }
+            if isDirectory.boolValue {
+                guard let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: nil) else { continue }
+                for case let file as URL in enumerator where file.pathExtension == "swift" {
+                    files.append(file)
+                }
+            } else if url.pathExtension == "swift" {
+                files.append(url)
+            }
+        }
+        return files
+    }
+
+    private static func relativePath(of url: URL) -> String {
+        let base = repoRoot.path.hasSuffix("/") ? repoRoot.path : repoRoot.path + "/"
+        return url.path.hasPrefix(base) ? String(url.path.dropFirst(base.count)) : url.path
+    }
+
+    private static func isCommentLine(_ line: String) -> Bool {
+        line.trimmingCharacters(in: .whitespaces).hasPrefix("//")
+    }
+
+    /// The STATIC text of a literal: interpolations are cut out.
+    ///
+    /// `"stack-\(dose.id)"` is an identity string, not copy — the reader never
+    /// sees the word `dose`, and an identifier is not a claim. What a user reads
+    /// is what stays after the `\(…)` spans are removed, so that is what the
+    /// copy rules are applied to. A real violation (`"Take \(units)U now"`)
+    /// still trips on its static half.
+    private static func staticText(of literal: String) -> String {
+        var result = ""
+        var index = literal.startIndex
+        while index < literal.endIndex {
+            if literal[index] == "\\", literal.index(after: index) < literal.endIndex,
+               literal[literal.index(after: index)] == "(" {
+                var depth = 0
+                var scan = literal.index(index, offsetBy: 2)
+                while scan < literal.endIndex {
+                    if literal[scan] == "(" { depth += 1 }
+                    if literal[scan] == ")" {
+                        if depth == 0 { break }
+                        depth -= 1
+                    }
+                    scan = literal.index(after: scan)
+                }
+                index = scan < literal.endIndex ? literal.index(after: scan) : literal.endIndex
+                continue
+            }
+            result.append(literal[index])
+            index = literal.index(after: index)
+        }
+        return result
+    }
+
+    /// String literals on a line, contents only.
+    private static func literals(in line: String) throws -> [String] {
+        let regex = try NSRegularExpression(pattern: "\"((?:[^\"\\\\]|\\\\.)*)\"")
+        let range = NSRange(line.startIndex ..< line.endIndex, in: line)
+        return regex.matches(in: line, range: range).compactMap { match in
+            guard let captured = Range(match.range(at: 1), in: line) else { return nil }
+            return String(line[captured])
+        }
+    }
+
+    @Test("the lab scans a non-empty set of sources — the guards below are not vacuous")
+    func scopeResolves() {
+        #expect(Self.swiftFiles().count >= 5)
+    }
+
+    /// Imperatives. `dose` is banned as a word; the standing safety footer is
+    /// the one sanctioned use and is exempted by exact text.
+    private static let bannedCopy = [
+        "\\btake\\b", "\\binject", "\\bdose\\b", "units to", "you should", "bolus now", "correct with"
+    ]
+
+    @Test("no dosing language in anything the lab prints")
+    func rule_noDosingLanguageInFactCopy() throws {
+        let exempt: Set<String> = ["LAB · EXPERIMENTAL · NOT DOSE ADVICE"]
+        let regexes = try Self.bannedCopy.map { try NSRegularExpression(pattern: $0, options: .caseInsensitive) }
+
+        var hits: [String] = []
+        for file in Self.swiftFiles() {
+            let contents = try String(contentsOf: file, encoding: .utf8)
+            for (index, line) in contents.components(separatedBy: "\n").enumerated() where !Self.isCommentLine(line) {
+                for literal in try Self.literals(in: line) where !exempt.contains(literal) {
+                    let copy = Self.staticText(of: literal)
+                    let range = NSRange(copy.startIndex ..< copy.endIndex, in: copy)
+                    for regex in regexes where regex.firstMatch(in: copy, range: range) != nil {
+                        hits.append("\(Self.relativePath(of: file)):\(index + 1): \"\(literal)\"")
+                    }
+                }
+            }
+        }
+
+        #expect(hits.isEmpty, "Dosing language in lab copy:\n\(hits.joined(separator: "\n"))")
+    }
+
+    @Test("the scan still bites — an imperative trips it, an interpolated identifier does not")
+    func rule_scanDetectsRealCopy() throws {
+        let regexes = try Self.bannedCopy.map { try NSRegularExpression(pattern: $0, options: .caseInsensitive) }
+
+        func trips(_ literal: String) -> Bool {
+            let copy = Self.staticText(of: literal)
+            let range = NSRange(copy.startIndex ..< copy.endIndex, in: copy)
+            return regexes.contains { $0.firstMatch(in: copy, range: range) != nil }
+        }
+
+        // Real copy, caught — including around an interpolation.
+        #expect(trips("Take \\(units)U now"))
+        #expect(trips("You should correct with 2U"))
+        // Identity strings and honest facts, not caught.
+        #expect(trips("stack-\\(dose.id.uuidString)") == false)
+        #expect(trips("LAST BOLUS T-4h10") == false)
+        #expect(trips("STACKED BOLUS") == false)
+    }
+
+    @Test("every LabFigure in the lab is constructed with its sample size")
+    func rule_everyFigureShipsWithN() throws {
+        var hits: [String] = []
+
+        for file in Self.swiftFiles() {
+            let contents = try String(contentsOf: file, encoding: .utf8)
+            let code = contents
+                .components(separatedBy: "\n")
+                .filter { !Self.isCommentLine($0) }
+                .joined(separator: "\n")
+
+            var search = code.startIndex
+            while let found = code.range(of: "LabFigure(", range: search ..< code.endIndex) {
+                var depth = 0
+                var index = found.upperBound
+                var closed = code.endIndex
+                while index < code.endIndex {
+                    let character = code[index]
+                    if character == "(" { depth += 1 }
+                    if character == ")" {
+                        if depth == 0 { closed = index; break }
+                        depth -= 1
+                    }
+                    index = code.index(after: index)
+                }
+                let arguments = String(code[found.upperBound ..< closed])
+                if !arguments.contains("n:") {
+                    hits.append("\(Self.relativePath(of: file)): LabFigure(\(arguments.prefix(60))…)")
+                }
+                search = closed == code.endIndex ? code.endIndex : code.index(after: closed)
+            }
+        }
+
+        #expect(hits.isEmpty, "LabFigure built without its n:\n\(hits.joined(separator: "\n"))")
+    }
+}

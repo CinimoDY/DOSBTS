@@ -69,6 +69,17 @@ struct LabCursorState: Equatable {
         sessionActive = false
     }
 
+    /// Put the cursor somewhere without a gesture — how a tapped fact card
+    /// moves the instrument to what it is talking about. Whatever was standing
+    /// is replaced (a range from an earlier measurement would otherwise survive
+    /// under the new cursor), and the next press measures from here.
+    mutating func place(at date: Date) {
+        cursor = date
+        range = nil
+        anchor = nil
+        sessionActive = false
+    }
+
     // MARK: Private
 
     /// A while B is being dragged.
