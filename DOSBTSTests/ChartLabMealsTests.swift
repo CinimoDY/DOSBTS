@@ -300,3 +300,538 @@ struct MealOverlayDeltaParityTests {
         #expect(mealImpactDeltaColor(delta: 60) == AmberTheme.cgaRed)
     }
 }
+
+// MARK: - Carb-sized meal symbols
+
+@Suite("Chart Lab meal sizing")
+struct ChartLabSizingTests {
+    @Test("an unrecorded carb count draws at the floor")
+    func nilCarbsIsFloor() {
+        #expect(ChartLabSizing.mealSymbolSize(carbs: nil) == 40)
+        #expect(ChartLabSizing.mealSymbolSize(carbs: 0) == 40)
+    }
+
+    @Test("area is linear in carbs — 10 g lands at 76 pt²")
+    func linearInArea() {
+        #expect(ChartLabSizing.mealSymbolSize(carbs: 10) == 76)
+    }
+
+    @Test("the ceiling is 100 g / 400 pt², and a bigger plate does not grow past it")
+    func ceiling() {
+        #expect(ChartLabSizing.mealSymbolSize(carbs: 100) == 400)
+        #expect(ChartLabSizing.mealSymbolSize(carbs: 250) == 400)
+    }
+}
+
+// MARK: - Meal response builder
+
+@Suite("Meal response builder")
+struct MealResponseBuilderTests {
+    /// A clean 60 g meal: baseline 100 at −5, peak 154 at +50, back to 110 at
+    /// +120. Paired 5 U meal bolus, nothing else logged.
+    private func cleanFixture() -> (meals: [MealEntry], readings: [SensorGlucose], doses: [InsulinDelivery]) {
+        var readings = [reading(-15, 98), reading(-10, 99), reading(-5, 100)]
+        // 0 → 50 rising to 154, 50 → 120 falling back to 110.
+        for step in 0 ... 10 {
+            let minute = Double(step) * 5
+            readings.append(reading(minute, 100 + Int((54.0 * Double(step) / 10.0).rounded())))
+        }
+        for step in 1 ... 13 {
+            let minute = 50 + Double(step) * 5
+            readings.append(reading(minute, 154 - Int((44.0 * Double(step) / 13.0).rounded())))
+        }
+        return ([meal(0, carbs: 60)], readings, [bolus(0, units: 5)])
+    }
+
+    @Test("a clean 60 g meal with +54 is not excluded")
+    func cleanMealIsNotExcluded() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built.count == 1)
+        #expect(built[0].exclusion == nil)
+        #expect(built[0].summary.delta == 54)
+        #expect(built[0].pairedBolusUnits == 5)
+        #expect(built[0].confounders.isClean)
+    }
+
+    @Test("the ribbon clamps its right edge at the domain end")
+    func clampsAtDomainEnd() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(30),
+            now: at(300)
+        )
+        #expect(built.count == 1)
+        #expect(built[0].windowEnd == at(30))
+    }
+
+    @Test("only an in-progress window carries a dotted stub")
+    func stubOnlyWhileInProgress() {
+        let fixture = cleanFixture()
+
+        let live = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(38)
+        )
+        #expect(live[0].summary.isInProgress)
+        #expect(live[0].windowEnd == at(38))
+        #expect(live[0].stubEnd == at(120))
+
+        let done = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(done[0].stubEnd == nil)
+    }
+
+    @Test("no paired bolus excludes as NO BOLUS")
+    func noBolusExclusion() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: [],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built[0].exclusion == .noBolus)
+        #expect(built[0].ribbonLabel(glucoseUnit: .mgdL) == "NO BOLUS")
+    }
+
+    @Test("10 g with a bolus excludes as SMALL MEAL")
+    func smallMealExclusion() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: [meal(0, carbs: 10)],
+            readings: fixture.readings,
+            deliveries: [bolus(0, units: 1)],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built[0].exclusion == .smallMeal)
+        #expect(built[0].ribbonLabel(glucoseUnit: .mgdL) == "SMALL MEAL")
+    }
+
+    @Test("a correction bolus in the window excludes as confounded, tagged CORR")
+    func correctionConfounder() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses + [bolus(45, units: 2, type: .correctionBolus)],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built[0].exclusion == .confounded)
+        #expect(built[0].confounders.hasCorrectionBolus)
+        #expect(built[0].ribbonLabel(glucoseUnit: .mgdL) == "CORR")
+    }
+
+    @Test("overlapping exercise excludes as confounded, tagged EXERCISE")
+    func exerciseConfounder() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [workout(from: 30, to: 60)],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built[0].exclusion == .confounded)
+        #expect(built[0].ribbonLabel(glucoseUnit: .mgdL) == "EXERCISE")
+    }
+
+    @Test("a hypo inside the window excludes as HYPO, ahead of the return-to-baseline check")
+    func hypoExclusion() {
+        var readings = [reading(-5, 100)]
+        for step in 0 ... 24 {
+            let minute = Double(step) * 5
+            readings.append(reading(minute, step >= 12 ? 62 : 120))
+        }
+        let built = buildMealResponses(
+            meals: [meal(0, carbs: 60)],
+            readings: readings,
+            deliveries: [bolus(0, units: 5)],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built[0].exclusion == .hypoInWindow)
+        #expect(built[0].ribbonLabel(glucoseUnit: .mgdL) == "HYPO")
+    }
+
+    @Test("a completed window that ends 54 above baseline excludes as ENDED +54")
+    func didNotReturnExclusion() {
+        var readings = [reading(-5, 100)]
+        for step in 0 ... 24 {
+            let minute = Double(step) * 5
+            readings.append(reading(minute, 100 + Int((54.0 * min(Double(step), 12.0) / 12.0).rounded())))
+        }
+        let built = buildMealResponses(
+            meals: [meal(0, carbs: 60)],
+            readings: readings,
+            deliveries: [bolus(0, units: 5)],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )
+        #expect(built[0].exclusion == .didNotReturnToBaseline(deltaMgDL: 54))
+        #expect(built[0].ribbonLabel(glucoseUnit: .mgdL) == "ENDED +54")
+    }
+
+    @Test("an in-progress window is never judged on where it ended")
+    func inProgressIsNotJudgedOnEnd() {
+        var readings = [reading(-5, 100)]
+        for step in 0 ... 7 {
+            readings.append(reading(Double(step) * 5, 100 + step * 8))
+        }
+        let built = buildMealResponses(
+            meals: [meal(0, carbs: 60)],
+            readings: readings,
+            deliveries: [bolus(0, units: 5)],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(38)
+        )
+        #expect(built[0].exclusion == nil)
+        #expect(built[0].summary.isInProgress)
+    }
+
+    @Test("meals outside the domain (plus the 2 h tail) are not built")
+    func outsideDomainIsSkipped() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: [meal(-600, carbs: 60), meal(0, carbs: 60), meal(400, carbs: 60)],
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-200),
+            domainEnd: at(240),
+            now: at(600)
+        )
+        #expect(built.count == 1)
+        #expect(built[0].mealTime == at(0))
+    }
+
+    @Test("a live ribbon reads elapsed minutes; a closed one reads its peak — both with n")
+    func ribbonLabelShapes() {
+        let fixture = cleanFixture()
+
+        let live = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(38)
+        )[0]
+        #expect(live.ribbonLabel(glucoseUnit: .mgdL).hasSuffix("RDG"))
+        #expect(live.ribbonLabel(glucoseUnit: .mgdL).contains("38 MIN"))
+
+        let done = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )[0]
+        #expect(done.ribbonLabel(glucoseUnit: .mgdL) == "+54 · PEAK 50m · 24 RDG")
+    }
+
+    @Test("the bracket is a pairing, never a ratio — and it converts nothing")
+    func bracketLabel() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )[0]
+        #expect(built.bracketLabel == "60g ⟷ 5U")
+
+        let unpaired = buildMealResponses(
+            meals: [meal(0, carbs: 10)],
+            readings: fixture.readings,
+            deliveries: [],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )[0]
+        #expect(unpaired.bracketLabel == "10g")
+    }
+
+    @Test("mmol/L converts the label's glucose, not its grams or units")
+    func mmolLabels() {
+        let fixture = cleanFixture()
+        let built = buildMealResponses(
+            meals: fixture.meals,
+            readings: fixture.readings,
+            deliveries: fixture.doses,
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(240),
+            now: at(300)
+        )[0]
+        let label = built.ribbonLabel(glucoseUnit: .mmolL)
+        #expect(label.contains("PEAK 50m"))
+        #expect(label.contains("24 RDG"))
+        #expect(label.contains("54") == false, "a mg/dL delta must not leak into an mmol/L label")
+        #expect(built.bracketLabel == "60g ⟷ 5U")
+    }
+}
+
+// MARK: - Residual detector
+
+@Suite("Residual detector")
+struct ResidualDetectorTests {
+    /// Flat 100 for two hours, a +45 ramp over an hour, then flat.
+    private func rampFixture(rampStart: Double = 0) -> [SensorGlucose] {
+        var readings: [SensorGlucose] = []
+        var minute = rampStart - 120
+        while minute < rampStart {
+            readings.append(reading(minute, 100))
+            minute += 5
+        }
+        for step in 0 ... 12 {
+            readings.append(reading(rampStart + Double(step) * 5, 100 + Int((45.0 * Double(step) / 12.0).rounded())))
+        }
+        minute = rampStart + 65
+        while minute <= rampStart + 180 {
+            readings.append(reading(minute, 145))
+            minute += 5
+        }
+        return readings
+    }
+
+    @Test("a +45 rise with nothing logged is one residual, carrying its n")
+    func unexplainedRise() {
+        let segments = ResidualDetector.detect(readings: rampFixture(), anchors: [], regimes: [])
+        #expect(segments.count == 1)
+        #expect(segments[0].deltaMgDL >= 40)
+        #expect(segments[0].n >= 4)
+        #expect(segments[0].start < segments[0].end)
+    }
+
+    @Test("a meal 20 minutes before the rise explains it away")
+    func anchoredRiseIsNotResidual() {
+        let segments = ResidualDetector.detect(
+            readings: rampFixture(),
+            anchors: [at(-20)],
+            regimes: []
+        )
+        #expect(segments.isEmpty)
+    }
+
+    @Test("a compression-style 30 mg/dL step inside the candidate is rejected as noise")
+    func noiseGuard() {
+        var readings: [SensorGlucose] = []
+        for step in 0 ... 3 { readings.append(reading(Double(step) * 5, 100)) }
+        readings.append(reading(20, 130))   // the 30-point jump
+        readings.append(reading(25, 135))
+        readings.append(reading(30, 140))
+        readings.append(reading(35, 145))
+        for step in 8 ... 20 { readings.append(reading(Double(step) * 5, 145)) }
+
+        #expect(ResidualDetector.detect(readings: readings, anchors: [], regimes: []).isEmpty)
+    }
+
+    @Test("overlapping candidates merge into one segment; distant ones stay apart")
+    func mergesOverlapping() {
+        let first = rampFixture(rampStart: 0)
+        var second: [SensorGlucose] = []
+        for step in 0 ... 12 {
+            second.append(reading(600 + Double(step) * 5, 145 - Int((45.0 * Double(step) / 12.0).rounded())))
+        }
+        var tail: [SensorGlucose] = []
+        var minute = 665.0
+        while minute <= 800 {
+            tail.append(reading(minute, 100))
+            minute += 5
+        }
+
+        let segments = ResidualDetector.detect(
+            readings: first + second + tail,
+            anchors: [],
+            regimes: []
+        )
+        #expect(segments.count == 2)
+        #expect(segments[0].end < segments[1].start)
+    }
+
+    @Test("a regime band covering the excursion is an explanation, so no residual")
+    func regimeSuppresses() {
+        let band = RegimeBand(
+            id: "fixture",
+            tag: .stressed,
+            start: at(-90),
+            end: at(90),
+            isOpen: false
+        )
+        #expect(ResidualDetector.detect(readings: rampFixture(), anchors: [], regimes: [band]).isEmpty)
+    }
+
+    @Test("too few readings is not a residual, however big the swing")
+    func tooFewReadings() {
+        let readings = [reading(0, 100), reading(30, 150), reading(60, 155)]
+        #expect(ResidualDetector.detect(readings: readings, anchors: [], regimes: []).isEmpty)
+    }
+}
+
+// MARK: - Regime deriver
+
+@Suite("Regime deriver")
+struct RegimeDeriverTests {
+    private let dayEnd = at(600)
+
+    @Test("STRESSED opens a four-hour band")
+    func stressedIsFourHours() {
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .stressed)], now: at(60), dayEnd: dayEnd)
+        #expect(bands.count == 1)
+        #expect(bands[0].start == at(0))
+        #expect(bands[0].end == at(240))
+        #expect(bands[0].isOpen)
+    }
+
+    @Test("SICK with no later note runs 24 h and stays open")
+    func sickRunsADay() {
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .sick)], now: at(60), dayEnd: dayEnd)
+        #expect(bands.count == 1)
+        #expect(bands[0].end == at(24 * 60))
+        #expect(bands[0].isOpen)
+    }
+
+    @Test("SLUGGISH runs to the end of the day")
+    func sluggishRunsToDayEnd() {
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .sluggish)], now: at(60), dayEnd: dayEnd)
+        #expect(bands[0].end == dayEnd)
+    }
+
+    @Test("OTHER is a note, not a regime")
+    func otherYieldsNoBand() {
+        #expect(RegimeDeriver.derive(notes: [note(0, tag: .other)], now: at(60), dayEnd: dayEnd).isEmpty)
+    }
+
+    @Test("an untagged note is a note, not a regime")
+    func untaggedYieldsNoBand() {
+        #expect(RegimeDeriver.derive(notes: [note(0, tag: nil)], now: at(60), dayEnd: dayEnd).isEmpty)
+    }
+
+    @Test("a later tagged note closes the earlier band early")
+    func laterTaggedNoteCloses() {
+        let bands = RegimeDeriver.derive(
+            notes: [note(0, tag: .stressed), note(90, tag: .sick)],
+            now: at(120),
+            dayEnd: dayEnd
+        )
+        #expect(bands.count == 2)
+        #expect(bands[0].end == at(90))
+        #expect(bands[0].isOpen == false)
+        #expect(bands[1].start == at(90))
+        #expect(bands[1].isOpen)
+    }
+
+    @Test("BACK TO NORMAL closes the band without opening one")
+    func backToNormalCloses() {
+        let bands = RegimeDeriver.derive(
+            notes: [note(0, tag: .stressed), note(75, tag: nil, text: "BACK TO NORMAL")],
+            now: at(120),
+            dayEnd: dayEnd
+        )
+        #expect(bands.count == 1)
+        #expect(bands[0].end == at(75))
+        #expect(bands[0].isOpen == false)
+    }
+
+    @Test("notes arrive in any order and still derive in time order")
+    func unsortedNotes() {
+        let bands = RegimeDeriver.derive(
+            notes: [note(90, tag: .sick), note(0, tag: .stressed)],
+            now: at(120),
+            dayEnd: dayEnd
+        )
+        #expect(bands.count == 2)
+        #expect(bands[0].tag == .stressed)
+        #expect(bands[1].tag == .sick)
+    }
+
+    @Test("the band's label names its tag and its hours, never a prescription")
+    func bandLabel() {
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .stressed)], now: at(60), dayEnd: dayEnd)
+        let label = bands[0].label
+        #expect(label.hasPrefix("STRESSED "))
+        #expect(label.contains("→"))
+    }
+}
+
+// MARK: - Regime prompt
+
+@Suite("Regime prompt")
+struct RegimePromptTests {
+    private func stressedBand(open: Bool = true) -> RegimeBand {
+        RegimeBand(id: "b", tag: .stressed, start: at(0), end: at(240), isOpen: open)
+    }
+
+    @Test("nothing is asked before the band's last half hour")
+    func quietEarly() {
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(120)) == nil)
+    }
+
+    @Test("the prompt appears 30 minutes before the default end")
+    func showsNearTheEnd() {
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(210))?.tag == .stressed)
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(260))?.tag == .stressed)
+    }
+
+    @Test("a band the user already closed is never asked about")
+    func closedBandIsNotAsked() {
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand(open: false)], now: at(260)) == nil)
+    }
+
+    @Test("with several open bands the most recent one is asked about")
+    func mostRecentWins() {
+        let older = RegimeBand(id: "a", tag: .sick, start: at(-600), end: at(840), isOpen: true)
+        let newer = stressedBand()
+        #expect(RegimePrompt.shouldShow(bands: [older, newer], now: at(260))?.tag == .stressed)
+    }
+}

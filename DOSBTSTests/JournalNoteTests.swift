@@ -577,7 +577,7 @@ struct JournalNoteSheetTests {
     @Test("journalNote presents when idle")
     func presentsWhenIdle() {
         let c = SheetCoordinator()
-        c.present(.journalNote)
+        c.present(.journalNote(prefill: nil))
         #expect(c.activeSheet?.id == "journalNote")
         #expect(c.pendingSheet == nil)
     }
@@ -585,8 +585,8 @@ struct JournalNoteSheetTests {
     @Test("a second journalNote present is a no-op — the id is constant")
     func duplicateNoOps() {
         let c = SheetCoordinator()
-        c.present(.journalNote)
-        c.present(.journalNote)
+        c.present(.journalNote(prefill: nil))
+        c.present(.journalNote(prefill: nil))
         #expect(c.activeSheet?.id == "journalNote")
         #expect(c.pendingSheet == nil)
     }
@@ -595,7 +595,7 @@ struct JournalNoteSheetTests {
     func pendsWhenBusy() {
         let c = SheetCoordinator()
         c.present(.meal)
-        c.present(.journalNote)
+        c.present(.journalNote(prefill: nil))
         #expect(c.activeSheet?.id == "meal")
         #expect(c.pendingSheet?.id == "journalNote")
 
