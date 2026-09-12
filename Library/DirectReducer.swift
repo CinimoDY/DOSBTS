@@ -540,6 +540,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setMealHistoryResults(results: let results):
         state.mealHistoryResults = results
 
+    // MARK: Chart Lab window (DMNC-1506)
+    case .setLabWindow(snapshot: let snapshot):
+        state.labWindow = snapshot
+
     // MARK: Ratio Lab
     case .setRatioEvidence(evidence: let evidence):
         state.ratioEvidence = evidence
