@@ -749,3 +749,101 @@ struct SweepViewHelperTests {
         #expect(wide.contains(0))
     }
 }
+
+// MARK: - Sweep density
+
+@Suite("Sweep density")
+struct SweepDensityTests {
+
+    @Test("a dense cloud thins so the median and the wash stay readable")
+    func densityOpacity() {
+        let base = 0.55
+        // At the artboard's density the sweeps keep their designed weight.
+        #expect(SweepChartMath.densityOpacity(count: 23, base: base) > 0.45)
+        #expect(SweepChartMath.densityOpacity(count: 1, base: base) == base)
+        // A 90-day cloud fades, but never to nothing.
+        let dense = SweepChartMath.densityOpacity(count: 120, base: base)
+        #expect(dense < 0.3)
+        #expect(dense >= SweepChartMath.minSweepOpacity)
+        // Monotone in the count.
+        #expect(SweepChartMath.densityOpacity(count: 40, base: base) < SweepChartMath.densityOpacity(count: 20, base: base))
+        #expect(SweepChartMath.densityOpacity(count: 0, base: base) == base)
+    }
+}
+
+// MARK: - Windowing
+
+@Suite("Sweep windowing")
+struct SweepWindowingTests {
+
+    @Test("readings outside a meal's own window never reach its sweep")
+    func slicingIsExact() {
+        // A 3-day reading series with three meals in it. Each meal's sweep must
+        // be identical to the sweep it gets from a series containing only its own
+        // neighbourhood — i.e. the builder must window, not scan.
+        var allReadings: [SensorGlucose] = []
+        var allMeals: [MealEntry] = []
+        for daysAgo in [2, 3, 4] {
+            let time = mealTime(daysAgo: daysAgo)
+            allMeals.append(makeMeal(at: time, carbs: 60))
+            allReadings += readings(anchor: time, from: -60, to: 400, baseValue: 100) { minute in
+                minute <= 0 ? 0 : max(0, 60 - abs(minute - 60))
+            }
+        }
+
+        let together = SweepStatistics.build(
+            meals: allMeals, readings: allReadings, deliveries: [], exercise: [],
+            now: fixedNow, calendar: testCalendar
+        )
+
+        for meal in allMeals {
+            let alone = SweepStatistics.build(
+                meals: [meal],
+                readings: readings(anchor: meal.timestamp, from: -60, to: 400, baseValue: 100) { minute in
+                    minute <= 0 ? 0 : max(0, 60 - abs(minute - 60))
+                },
+                deliveries: [], exercise: [], now: fixedNow, calendar: testCalendar
+            )
+            let joint = together.first(where: { $0.id == meal.id })
+            #expect(joint?.points == alone.first?.points)
+            #expect(joint?.delta == alone.first?.delta)
+            #expect(joint?.baseline == alone.first?.baseline)
+            #expect(joint?.n == alone.first?.n)
+        }
+    }
+
+    @Test("a 90-day set of meals over a 5-minute series builds without scanning it per meal")
+    func buildsLargeFixtureQuickly() {
+        // 270 meals over 90 days against ~26 000 readings — the real shape of a
+        // 90 d window. A per-meal full scan is O(meals × steps × readings) and
+        // takes tens of seconds; a windowed build is milliseconds. The assertion
+        // is deliberately loose (a debug simulator is slow) but a regression to
+        // the scanning version misses it by two orders of magnitude.
+        var allReadings: [SensorGlucose] = []
+        var allMeals: [MealEntry] = []
+        let start = fixedNow.addingTimeInterval(-90 * 24 * 3600)
+        var t = start
+        var value = 100
+        while t <= fixedNow {
+            value = 100 + Int((t.timeIntervalSince(start) / 600).truncatingRemainder(dividingBy: 80))
+            allReadings.append(SensorGlucose(timestamp: t, rawGlucoseValue: value, intGlucoseValue: value))
+            t = t.addingTimeInterval(300)
+        }
+        for day in 0..<90 {
+            for hour in [8, 13, 19] {
+                let when = start.addingTimeInterval(Double(day) * 24 * 3600 + Double(hour) * 3600)
+                allMeals.append(makeMeal(at: when, carbs: 60))
+            }
+        }
+
+        let began = Date()
+        let sweeps = SweepStatistics.build(
+            meals: allMeals, readings: allReadings, deliveries: [], exercise: [],
+            now: fixedNow, calendar: testCalendar
+        )
+        let elapsed = Date().timeIntervalSince(began)
+
+        #expect(sweeps.count == 270)
+        #expect(elapsed < 3.0, "SweepStatistics.build took \(elapsed)s for 270 meals over \(allReadings.count) readings")
+    }
+}

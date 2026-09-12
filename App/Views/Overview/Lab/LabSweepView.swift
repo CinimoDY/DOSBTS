@@ -93,11 +93,18 @@ struct LabSweepView: View {
 
     private var glucoseUnit: GlucoseUnit { store.state.glucoseUnit }
 
+    /// Blank while the first load is in flight — `N=0 SWEEPS` next to a loading
+    /// pulse reads as a finding, and it is not one.
+    private var countCaption: String {
+        guard store.state.labSweeps != nil else { return "" }
+        return SweepLapsFormatter.countCaption(total: model.totalCount, clean: model.cleanCount)
+    }
+
     // MARK: Caption
 
     private var captionRow: some View {
         HStack {
-            Text(SweepLapsFormatter.countCaption(total: model.totalCount, clean: model.cleanCount))
+            Text(countCaption)
                 .foregroundStyle(AmberTheme.amber)
             Spacer()
             Text(SweepLapsFormatter.axisCaption(glucoseUnit: glucoseUnit))
@@ -225,6 +232,8 @@ struct LabSweepView: View {
                     Text(model.medianCaption)
                         .font(DOSTypography.micro)
                         .foregroundStyle(AmberTheme.amber)
+                        .padding(.horizontal, DOSSpacing.xxs)
+                        .background(AmberTheme.dosBlack)
                 }
             }
 
@@ -258,6 +267,8 @@ struct LabSweepView: View {
                     Text(model.todayCaption)
                         .font(DOSTypography.micro)
                         .foregroundStyle(AmberTheme.amberLight)
+                        .padding(.horizontal, DOSSpacing.xxs)
+                        .background(AmberTheme.dosBlack)
                 }
             }
         }
@@ -269,7 +280,13 @@ struct LabSweepView: View {
             AxisMarks(values: model.xTicks) { value in
                 AxisGridLine()
                     .foregroundStyle(AmberTheme.borderSubtle)
-                AxisValueLabel {
+                // `.disabled`: the +4h label sits under the trailing y-axis gutter
+                // and `.automatic` silently DROPS it — the axis then stops saying
+                // where the window ends.
+                AxisValueLabel(
+                    anchor: value.index == model.xTicks.count - 1 ? .topTrailing : .top,
+                    collisionResolution: .disabled
+                ) {
                     Text(xLabel(value.as(Int.self)))
                         .font(DOSTypography.micro)
                         .foregroundStyle(AmberTheme.amber)
@@ -335,13 +352,23 @@ struct LabSweepView: View {
                     .minimumScaleFactor(0.6)
 
                 if twinsExpanded {
-                    ForEach(model.twins) { twin in
-                        Text(SweepLapsFormatter.twinRow(twin, glucoseUnit: glucoseUnit))
-                            .font(DOSTypography.micro)
-                            .foregroundStyle(AmberTheme.textFaint)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
+                    // Bounded and scrollable: five expanded rows pushed the page
+                    // past its height and sank the persistent bottom bar
+                    // (docs/solutions/ui-bugs/swiftui-vstack-overflow-sinks-safeareainset).
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 1) {
+                            ForEach(model.twins) { twin in
+                                Text(SweepLapsFormatter.twinRow(twin, glucoseUnit: glucoseUnit))
+                                    .font(DOSTypography.micro)
+                                    .foregroundStyle(AmberTheme.textFaint)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
                     }
+                    .frame(maxHeight: LabSweepConfig.twinListMaxHeight)
+                    .scrollBounceBehavior(.basedOnSize)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -519,7 +546,7 @@ private struct SweepRenderModel {
             SweepLine(
                 id: sweep.id,
                 points: plotPoints(sweep.points, glucoseUnit),
-                color: tierColor(ageDays: sweep.ageDays),
+                color: tierColor(ageDays: sweep.ageDays, count: completed.count),
                 dashed: !sweep.isClean
             )
         }
@@ -581,15 +608,19 @@ private struct SweepRenderModel {
         glucoseUnit == .mmolL ? mgdl.toMmolL() : mgdl.toDouble()
     }
 
-    /// The age fade the legend promises: `— OLDER · FAINTER`.
-    private static func tierColor(ageDays: Int) -> Color {
+    /// The age fade the legend promises: `— OLDER · FAINTER`, thinned as a whole
+    /// once the cloud is dense enough to swallow the median and the wash.
+    private static func tierColor(ageDays: Int, count: Int) -> Color {
         if ageDays <= LabSweepConfig.recentAgeDays {
-            return AmberTheme.amber.opacity(LabSweepConfig.recentOpacity)
+            return AmberTheme.amber.opacity(
+                SweepChartMath.densityOpacity(count: count, base: LabSweepConfig.recentOpacity)
+            )
         }
+        let fade = SweepChartMath.densityOpacity(count: count, base: 1)
         if ageDays <= LabSweepConfig.middleAgeDays {
-            return AmberTheme.amberDark
+            return AmberTheme.amberDark.opacity(fade)
         }
-        return AmberTheme.textFaint
+        return AmberTheme.textFaint.opacity(fade)
     }
 }
 
@@ -610,5 +641,7 @@ private enum LabSweepConfig {
     static let recentAgeDays = 10
     static let middleAgeDays = 20
     static let bandOpacity: Double = 0.14
+    /// The expanded twin list's ceiling — four rows, the fifth scrolls.
+    static let twinListMaxHeight: CGFloat = 60
     static let recentOpacity: Double = 0.55
 }

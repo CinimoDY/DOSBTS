@@ -189,6 +189,11 @@ enum SweepStatistics {
         let baselineSeconds = TimeInterval(baselineWindowMinutes * 60)
         let today = calendar.startOfDay(for: now)
 
+        // The widest reach any one meal has into the series: 30 min of lead-in (plus
+        // the nearest-reading tolerance) before it, four hours (plus tolerance) after.
+        let leadSeconds = Double(abs(windowStartMinutes)) * 60 + nearestToleranceSeconds
+        let trailSeconds = Double(windowEndMinutes) * 60 + nearestToleranceSeconds
+
         return meals
             .sorted { $0.timestamp > $1.timestamp }
             .map { meal in
@@ -199,10 +204,18 @@ enum SweepStatistics {
                 // `computeMealOverlayDelta` does the same with `Date()`.
                 let windowEnd = isInProgress ? now : confounderEnd
 
-                let baseline = sortedReadings.last {
+                // Window the series ONCE per meal by binary search. Filtering the
+                // whole array per meal — and, worse, once per 5-minute grid point —
+                // is O(meals × steps × readings): 270 meals over a 90-day 5-minute
+                // series is ~390 M comparisons and took 15-20 s on the simulator.
+                let low = lowerBound(sortedReadings, mealTime.addingTimeInterval(-leadSeconds))
+                let high = lowerBound(sortedReadings, mealTime.addingTimeInterval(trailSeconds + 1))
+                let nearby = sortedReadings[low..<high]
+
+                let baseline = nearby.last {
                     $0.timestamp >= mealTime.addingTimeInterval(-baselineSeconds) && $0.timestamp < mealTime
                 }
-                let windowReadings = sortedReadings.filter {
+                let windowReadings = nearby.filter {
                     $0.timestamp >= mealTime && $0.timestamp <= windowEnd
                 }
                 let reference = baseline?.glucoseValue ?? windowReadings.first?.glucoseValue
@@ -218,7 +231,7 @@ enum SweepStatistics {
                     samplePoints(
                         mealTime: mealTime,
                         reference: $0,
-                        readings: sortedReadings,
+                        readings: nearby,
                         limit: isInProgress ? now : nil
                     )
                 } ?? []
@@ -330,7 +343,7 @@ enum SweepStatistics {
     private static func samplePoints(
         mealTime: Date,
         reference: Int,
-        readings: [SensorGlucose],
+        readings: ArraySlice<SensorGlucose>,
         limit: Date?
     ) -> [SweepPoint] {
         var points: [SweepPoint] = []
@@ -346,6 +359,21 @@ enum SweepStatistics {
             points.append(SweepPoint(minute: minute, delta: nearest.glucoseValue - reference))
         }
         return points
+    }
+
+    /// Index of the first reading at or after `date` in a time-ascending array.
+    private static func lowerBound(_ readings: [SensorGlucose], _ date: Date) -> Int {
+        var low = 0
+        var high = readings.count
+        while low < high {
+            let mid = low + (high - low) / 2
+            if readings[mid].timestamp < date {
+                low = mid + 1
+            } else {
+                high = mid
+            }
+        }
+        return low
     }
 
     /// `detectMealConfounders` (MealOverlayLogic.swift:78-103), restated — see the
@@ -379,6 +407,26 @@ enum SweepChartMath {
     ///
     /// Every plotted series feeds this — the sweeps, the p25–p75 band, the median
     /// and today's trace — so there is exactly one y scale.
+    /// The floor a sweep's alpha may never fall below — a drawn sweep must stay a
+    /// drawn sweep.
+    static let minSweepOpacity: Double = 0.12
+    /// The density the artboard was drawn at (23 sweeps); at or below it, sweeps
+    /// keep their designed weight.
+    static let referenceSweepCount = 20
+
+    /// Thin the individual sweeps as the cloud gets denser, so the median line and
+    /// the p25–p75 wash stay visible underneath.
+    ///
+    /// At the artboard's ~23 sweeps this is essentially a no-op; at the 120-sweep
+    /// cap it roughly halves the per-sweep alpha. Without it a 90-day window is a
+    /// solid amber blob and the two aggregate marks — the ones that carry the
+    /// teaching — disappear into it.
+    static func densityOpacity(count: Int, base: Double) -> Double {
+        guard count > referenceSweepCount else { return base }
+        let scaled = base * (Double(referenceSweepCount) / Double(count)).squareRoot()
+        return Swift.max(minSweepOpacity, Swift.min(base, scaled))
+    }
+
     /// Axis ticks across the domain, 20 mg/dL apart and stepping coarser rather
     /// than crowding the plot once the domain grows past the artboard's range.
     static func yTicksMgdl(domain: ClosedRange<Int>) -> [Int] {
