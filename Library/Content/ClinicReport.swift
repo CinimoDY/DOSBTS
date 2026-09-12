@@ -142,21 +142,37 @@ enum ClinicReportBuilder {
     /// Count of hypo episodes: maximal runs of low readings (< `hypoThresholdMgDL`) spanning
     /// ≥ `hypoMinDurationMinutes`; consecutive lows more than `hypoSeparationMinutes` apart start
     /// a new episode (a return to range shorter than that does not split one).
+    ///
+    /// Exactly `hypoEpisodeIntervals(from:).count` — the count and the bounds can never
+    /// disagree about what an episode is.
     static func hypoEpisodes(from readings: [SensorGlucose]) -> Int {
+        hypoEpisodeIntervals(from: readings).count
+    }
+
+    /// The same walk as `hypoEpisodes(from:)`, but KEEPING each qualifying episode's
+    /// bounds instead of discarding them. The Chart Lab's Black Box card is anchored on
+    /// the onset (`start`) and labelled with the duration, so the boundaries the counter
+    /// threw away are the whole fact.
+    ///
+    /// `start` is the first low reading of the run and `end` the last one — both are real
+    /// reading timestamps, never interpolated, so an anchor always has a reading under it.
+    static func hypoEpisodeIntervals(from readings: [SensorGlucose]) -> [DateInterval] {
         let lows = readings
             .filter { $0.glucoseValue < hypoThresholdMgDL }
             .map { $0.timestamp }
             .sorted()
-        guard let firstLow = lows.first else { return 0 }
+        guard let firstLow = lows.first else { return [] }
 
-        var episodes = 0
+        var intervals: [DateInterval] = []
         var episodeStart = firstLow
         var previousLow = firstLow
         let minDuration = Double(hypoMinDurationMinutes * 60)
         let separation = Double(hypoSeparationMinutes * 60)
 
         func closeEpisode(end: Date) {
-            if end.timeIntervalSince(episodeStart) >= minDuration { episodes += 1 }
+            if end.timeIntervalSince(episodeStart) >= minDuration {
+                intervals.append(DateInterval(start: episodeStart, end: end))
+            }
         }
 
         for low in lows.dropFirst() {
@@ -167,7 +183,7 @@ enum ClinicReportBuilder {
             previousLow = low
         }
         closeEpisode(end: previousLow)
-        return episodes
+        return intervals
     }
 
     // MARK: Statistics helper
