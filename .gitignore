@@ -97,3 +97,6 @@ GlucoseDirectOverride.xcconfig
 # Compound Engineering local (machine-specific) config
 .compound-engineering/*.local.yaml
 .devjournal/sessions/*/L3-raw/
+
+# compound-engineering prototype runs (ce-prototype)
+.context/compound-engineering/

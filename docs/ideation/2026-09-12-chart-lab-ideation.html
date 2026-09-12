@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ideation: Chart Lab — making the whole system tangible</title>
+<style>
+  :root{--bg:#0a0a0a;--bg2:#111;--ink:#e6d9c3;--muted:#b08d5a;--amber:#ffb000;--amber-dark:#9a5700;--amber-light:#fdca9f;--green:#55ff55;--red:#ff5555;--cyan:#55ffff;--border:#3a2a10;--border-soft:#241a0a;--mono:"SF Mono",Menlo,Consolas,"DejaVu Sans Mono",ui-monospace,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.55}
+  .page{max-width:920px;margin-inline:auto;padding:32px 20px 64px}
+  p,li,dd{max-width:72ch}
+  h1,h2,h3{color:var(--amber);font-weight:700;letter-spacing:.02em;margin:0 0 .4em}
+  h1{font-size:26px;line-height:1.2}h2{font-size:18px;margin-top:2.2em;text-transform:uppercase;letter-spacing:.12em;border-bottom:1px solid var(--border);padding-bottom:.3em}h3{font-size:16px;margin-top:0}
+  .eyebrow{color:var(--amber-dark);font-size:11px;text-transform:uppercase;letter-spacing:.2em;margin-bottom:.6em}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:12px;margin:10px 0 18px}
+  .meta b{color:var(--amber)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0 22px}
+  .stat{border:1px solid var(--border);background:var(--bg2);padding:10px 12px}
+  .stat .n{font-size:22px;color:var(--amber);font-weight:700}.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+  nav.toc{border:1px solid var(--border);padding:10px 14px;margin:18px 0 10px;background:var(--bg2)}
+  nav.toc a,ul.jump a{color:var(--amber-light);text-decoration:none}nav.toc a:hover,ul.jump a:hover{text-decoration:underline}
+  nav.toc ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 22px}
+  ul.jump{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:4px}
+  ul.jump li::before{content:"▸ ";color:var(--amber-dark)}
+  .card{border:1px solid var(--border);background:var(--bg2);padding:18px 18px 14px;margin:0 0 18px}
+  .card header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .idchip{display:inline-block;border:1px solid var(--amber);color:var(--amber);padding:1px 8px;font-size:12px;letter-spacing:.1em}
+  .chip{display:inline-block;padding:1px 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--border-soft);background:#161006;color:var(--amber-light)}
+  .chip.ax{color:var(--cyan);border-color:#0d3a3a;background:#061414}
+  .chip.hi{color:var(--green);border-color:#0e3a0e;background:#061406}.chip.med{color:var(--amber);border-color:#3a2a0a;background:#160f04}.chip.lo{color:var(--red);border-color:#3a0e0e;background:#140606}
+  dl{margin:10px 0 0;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px}
+  dt{color:var(--amber-dark);font-size:11px;text-transform:uppercase;letter-spacing:.14em;padding-top:2px}
+  dd{margin:0}
+  dd code,p code,td code{color:var(--amber-light);font-size:12.5px}
+  .basis span.tag{color:var(--cyan);font-size:11px;letter-spacing:.1em;margin-right:4px}
+  figure{margin:14px 0 6px;border:1px solid var(--border-soft);padding:8px;background:#0d0d0d;overflow-x:auto}
+  figcaption{color:var(--muted);font-size:11px;margin-top:4px}
+  svg text{font-family:var(--mono);paint-order:stroke fill;stroke:#0d0d0d;stroke-width:3px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;margin-top:10px}
+  th,td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top}
+  th{color:var(--amber-dark);font-size:11px;text-transform:uppercase;letter-spacing:.12em;background:var(--bg2)}
+  .wide{overflow-x:auto}
+  .ground ul{padding-left:18px}.ground li{margin:3px 0}
+  footer.composition-signal{margin-top:40px;border-top:1px solid var(--border);padding-top:10px;color:var(--muted);font-size:11px}
+  strong{color:inherit}
+  a{color:var(--amber-light)}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">Ideation · DOSBTS Chart Lab</div>
+  <h1>Chart Lab — making the whole system tangible</h1>
+  <div class="meta">
+    <span>date <b><time datetime="2026-09-12">2026-09-12</time></b></span>
+    <span>topic <b>chart-lab</b></span>
+    <span>mode <b>repo-grounded</b></span>
+    <span>tracking <b><a href="https://linear.app/lizomorf/issue/DMNC-1500">DMNC-1500</a></b></span>
+  </div>
+  <p><span style="color:var(--amber-dark)">focus</span> — ideas for visualizing the whole diabetes system (glucose, insulin, carbs, exercise, stress/journal tags, sleep, steps) on iPhone in a way that is engaging and professional, close to Apple Health standards, in DOS amber, with interactive Swift Charts and integrated AI (including "tell AI what to build" custom visualizations).</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">48</div><div class="l">raw ideas · 6 frames</div></div>
+    <div class="stat"><div class="n">29</div><div class="l">after dedupe + 3 syntheses</div></div>
+    <div class="stat"><div class="n">7</div><div class="l">survivors</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">topic axes · all covered</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">fresh-context critics</div></div>
+  </div>
+
+  <nav class="toc"><ul>
+    <li><a href="#grounding-context">Grounding Context</a></li>
+    <li><a href="#topic-axes">Topic Axes</a></li>
+    <li><a href="#ranked-ideas">Ranked Ideas</a></li>
+    <li><a href="#rejection-summary">Rejection Summary</a></li>
+  </ul></nav>
+
+  <section id="grounding-context" class="ground">
+    <h2>Grounding Context</h2>
+    <h3>Codebase Context</h3>
+    <ul>
+      <li><strong>Mounting point.</strong> <code>ReportType</code> (3 shipping cases) drives the top selector row, the zoom row's exhaustive switch and <code>ChartView.body</code>; adding a case lights a tab. Decided: lab tabs render on a <em>new native</em> <code>LabChartView</code> (scrollable axes, visible-domain zoom, hour snapping, <code>chartXSelection</code> scrub); the shipping chart body gets one added switch arm and nothing else; the marker lane is hidden on lab tabs; everything sits behind an off-by-default <code>showChartLab</code> setting.</li>
+      <li><strong>Data windows today.</strong> One day max (selected day or last 24 h) for the chart; notes and heart rate load the exact calendar day, meals/insulin/exercise a day or 24 h, IOB an independent DIA lookback — four sources, three window rules. Multi-day reads exist only on the clinic-report path: <code>ClinicReportBuilder.hourlyPatterns</code> (median/p25/p75 × 24 h, unit-tested, no on-screen consumer) and <code>getClinicReportData(days:)</code> (one <code>asyncRead</code>, 14/30/90 d).</li>
+      <li><strong>Unused seams.</strong> <code>mealSeries</code> + <code>MealDatapoint.carbs</code> computed every render, rendered nowhere; <code>computeMealOverlayDelta</code> / <code>mealImpactDeltaColor</code> (tested, used only in the tap sheet); <code>detectMealConfounders</code>; Ratio Lab's meal-exclusion taxonomy; <code>hypoEpisodes</code> computes episode boundaries and throws them away; the shipping chart's <code>onEnded</code> clears every selection unconditionally on release and its tap branch is a no-op.</li>
+      <li><strong>Life factors.</strong> Journal notes carry SICK / STRESSED / SLUGGISH / OTHER tags plus free text (timestamps only, no end, no edit path); exercise entries have start/end; hourly heart rate is read from HealthKit and drawn as a magenta line projected onto the glucose axis; sleep and steps are not read yet (two added read types on an existing HealthKit authorisation).</li>
+      <li><strong>AI today.</strong> Claude Haiku for food analysis and the Daily Digest; structured output already enforced via <code>output_config</code> JSON schema; <code>sanitizeUserText</code> escapes prompt-injection characters; <code>DigestInsight.parse</code> is a lenient first-brace/last-brace scan the chart grammar must not inherit; consent copy currently says readings are sent.</li>
+      <li><strong>Design system &amp; safety.</strong> DOS amber tokens only; no glow inside <code>Chart{}</code>; <code>.dosCard</code>/<code>.dosHeader</code> chrome; ten StyleGuard source-scan rules. Ratio Lab's discipline governs every derived number: no dosing language, every figure ships with its N, two fixed disclaimers.</li>
+      <li><strong>Past learnings that bite here.</strong> Chart height from GeometryReader, never UIScreen; branch heights pinned or layouts jump; native chrome fights DOS theming; user text escaped before any prompt; reuse <code>IOBCalculator</code>, never re-derive decay; reactive precompute belongs in middleware; every secondary fetch must cover the primary window; loading publishers must be total.</li>
+      <li><strong>External context.</strong> AGP (Clarity 5.0, LibreView) is glucose-only and clock-locked; Loop/Trio show IOB/COB as numbers, never as predicted-vs-actual curves; Nightscout's amount-sized dots are well-loved; Clarity/LibreView users complain about no tap-to-inspect and no arbitrary-window scrub; Apple Health pairs a period picker with a scrub lollipop and narrated Highlights; NL2VIS systems (LIDA, Data Formulator, Vega-Lite, Draco) keep the LLM emitting a validated spec; Whoop/Oura users prize contributing-factor breakdowns; F1 telemetry, Strava form curves, DAW timelines and flight recorders are the working analogies for "one cursor across many tracks" and "the gap between curves is the signal".</li>
+    </ul>
+  </section>
+
+  <section id="topic-axes">
+    <h2>Topic Axes</h2>
+    <ul>
+      <li><strong>1 · The event layer on the day chart</strong> — how meals, doses, exercise appear (size, shape, colour, labels) and how each connects to the glucose response that followed.</li>
+      <li><strong>2 · Patterns across days</strong> — recurring behaviours over weeks: percentile bands, day overlays, hourly heatmaps, splits by condition.</li>
+      <li><strong>3 · Life factors as data</strong> — stress, sickness, sluggishness, exercise, heart rate, sleep, steps, notes: how they enter and how they are drawn beside glucose.</li>
+      <li><strong>4 · Interaction and feel</strong> — Health-style scrub, periods, snapping, tap-to-inspect, haptics, motion, DOS amber craft; engaging yet professional.</li>
+      <li><strong>5 · AI in the loop</strong> — "explain this chart", "tell the AI what to build", consent and safety framing, narrated highlights.</li>
+    </ul>
+  </section>
+
+  <section id="ranked-ideas">
+    <h2>Ranked Ideas</h2>
+    <ul class="jump">
+      <li><a href="#i1">1. Instrument cursors — sticky scrub, A/B range, fixed readout, detached follow</a></li>
+      <li><a href="#i2">2. One whole-system window — continuous timeline, per-stream coverage, the night made whole</a></li>
+      <li><a href="#i3">3. The response kernel — one cause→effect primitive, with the graded live meal ribbon as its first instance</a></li>
+      <li><a href="#i4">4. Sweep &amp; Laps — the event-locked response overlay</a></li>
+      <li><a href="#i5">5. The pattern comes to the day — your own band under today, out-of-band flags, long-press drill</a></li>
+      <li><a href="#i6">6. The residual asks for the note — then notes become regimes</a></li>
+      <li><a href="#i7">7. Cited facts — offline highlights; the AI may only narrate what it can cite</a></li>
+    </ul>
+
+    <article class="card" id="i1">
+      <header><span class="idchip">1.</span><h3>Instrument cursors — sticky scrub, A/B range, fixed readout, detached follow</h3><span class="chip ax">axis 4 · interaction and feel</span></header>
+      <dl>
+        <dt>Description</dt><dd>The lab chart's gesture vocabulary, fixed once for every tab. One finger scrubs (<code>chartXSelection</code>) and the cursor <em>persists</em> after release. A long-press pins cursor A; a second scrub sets B; tapping a meal, dose or exercise mark pre-sets the range to its response window. A fixed-height monospace readout strip sits <em>below</em> the chart — never a floating card under the finger — and prints every track at the cursor or between the cursors: <code>A 12:04 → B 13:44 · Δt 1h40 · G 142→96 (−46) · MIN 94 MAX 148 · IN 3.0U · CARBS 0g · HR 71→96 · n=20</code>. An explicit <code>FOLLOW ●</code> state at the right edge: scrolling back detaches it (<code>◂ 3 NEW</code>) and new readings never move the visible domain until tapped. A light selection tick as the cursor crosses an event mark, a medium impact crossing the active alarm bounds, both night-mute gated. The same readout contract, applied to several stacked tracks with honest y-axes (glucose, IOB/COB, HR, steps, sleep stages), is how the factors wave draws streams that cannot be projected onto the glucose axis.</dd>
+        <dt>Axis</dt><dd>4 · Interaction and feel</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>ChartView.swift:577-586</code> — <code>.onEnded</code> sets <code>selectedSmoothSensorPoint = nil … selectedHeartRate = nil</code> unconditionally, then <code>guard wasTap else { return }</code> with nothing after it; <code>:120-131</code> — <code>.onChange(of: store.state.sensorGlucoseValues) { scrollToEnd(…) }</code> repeated for blood and insulin, <code>force: true</code> on zoom; <code>:551</code> — <code>DragGesture(minimumDistance: 0)</code>; <code>DirectNotifications.swift:28</code> — <code>hapticFeedback(_ feedbackStyle: … = .light)</code>. <span class="tag">external:</span> oscilloscope Δ-cursors; F1 delta bar; Apple Health's single-point lollipop (the gap: no range); DAW/log-tail follow mode; WWDC23 interval selection. <span class="tag">reasoned:</span> cause→effect is a relation between two moments, and a one-point tooltip structurally shows one side; the shipping chart treats every new reading as a reason to move the view and every lifted finger as a reason to forget the selection.</dd>
+        <dt>Rationale</dt><dd>This is the literal "Apple-Health-like" ask, and it is where Swift Charts' limits bite hardest: on a scrollable chart the built-in selection gesture is long-press-then-drag, the value/range bindings reset on release, and a two-step A/B is not the built-in range gesture. Prototyping the arbitration in week one means every later tab inherits a working contract instead of a broken one.</dd>
+        <dt>Downsides</dt><dd>Gesture arbitration (scroll vs long-press scrub vs A/B vs pinch) is real engineering, not styling; sticky state needs mirroring into local state; pinch zoom must co-set the scroll position or the view re-anchors. Vertical budget at phone height caps stacked tracks at about three by default.</dd>
+        <dt>Confidence</dt><dd><span class="chip hi">80%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip med">Medium</span></dd>
+      </dl>
+      <figure>
+        <svg viewBox="0 0 640 190" width="640" height="190" role="img" aria-label="Two cursors A and B on a glucose curve with a fixed readout strip below the chart">
+          <rect x="0" y="0" width="640" height="190" fill="#0d0d0d"/>
+          <path d="M20 110 C 80 100, 120 60, 170 70 S 260 130, 320 120 S 420 60, 480 80 S 580 120, 620 100" fill="none" stroke="#ffb000" stroke-width="2.5"/>
+          <rect x="170" y="20" width="150" height="120" fill="#ffb000" fill-opacity="0.06"/>
+          <line x1="170" y1="20" x2="170" y2="140" stroke="#fdca9f" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <line x1="320" y1="20" x2="320" y2="140" stroke="#fdca9f" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <circle cx="170" cy="70" r="5" fill="#0d0d0d" stroke="#fdca9f" stroke-width="2"/>
+          <circle cx="320" cy="120" r="5" fill="#0d0d0d" stroke="#fdca9f" stroke-width="2"/>
+          <text x="164" y="16" fill="#fdca9f" font-size="11">A 12:04</text>
+          <text x="314" y="16" fill="#fdca9f" font-size="11">B 13:44</text>
+          <rect x="560" y="26" width="60" height="16" fill="#161006" stroke="#3a2a10"/>
+          <text x="566" y="38" fill="#ffb000" font-size="10">FOLLOW ●</text>
+          <line x1="20" y1="140" x2="620" y2="140" stroke="#3a2a10"/>
+          <rect x="20" y="150" width="600" height="28" fill="#111" stroke="#3a2a10"/>
+          <text x="28" y="168" fill="#e6d9c3" font-size="11">Δt 1h40 · G 142→96 (−46) · MIN 94 MAX 148 · IN 3.0U · CARBS 0g · HR 71→96 · n=20</text>
+        </svg>
+        <figcaption>Illustrative: the A/B range as a measurement, with the readout fixed below the plot so the finger never covers what it reads.</figcaption>
+      </figure>
+    </article>
+
+    <article class="card" id="i2">
+      <header><span class="idchip">2.</span><h3>One whole-system window — continuous timeline, per-stream coverage, the night made whole</h3><span class="chip ax">axis 3 · life factors as data</span></header>
+      <dl>
+        <dt>Description</dt><dd>The lab chart scrolls one continuous 90-day timeline with a pinchable 24 h visible domain and midnight snap, so the day pager and <code>selectedDate</code> have no job on lab tabs. One action, <code>.loadLabWindow(interval, streams)</code>, handled by one middleware that fetches every stream for the same interval (GRDB glucose, meals, insulin, exercise, notes; HealthKit heart rate, sleep, steps), catches per-stream failures, and emits a snapshot carrying <em>coverage</em> per stream and a shared 60-second sample grid (glucose with an observed mask, IOB, COB, HR) so any cursor readout is an index lookup and derived lines are array arithmetic. Its visible face is a POST-style strip under every lab chart — <code>GLU 96% · INS 4 · MEAL 3 · EX — · HR ✓ · SLEEP n/a · NOTES 1</code> — where each cell is loaded, empty-in-window, or unavailable-tap-to-Settings. The first surface it makes possible is a NIGHT view, 20:00→10:00 straddling midnight: glucose, sleep stages as block sparklines, the evening dose's IOB tail and the last meal's ribbon carried across midnight, heart rate, and a header <code>IN BED 23:10 · ASLEEP 6H40 · AWAKE ×2</code>. A wake-anchored modal day becomes a toggle on the pattern tab later.</dd>
+        <dt>Axis</dt><dd>3 · Life factors as data (platform)</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>JournalNoteStore.swift:32-35</code> — <code>.setSelectedDate</code> → <code>Just(DirectAction.loadJournalNoteValues)</code>; <code>AppleHealthImport.swift:200-212</code> — <code>let date = state.selectedDate ?? Date()</code> → <code>fetchHourlyHeartRate(for: date)</code>; <code>ExerciseStore.swift:169-190</code> — 24 h fallback via <code>datetime('now', '-… hours')</code>; life-factors dossier — "Sleep &amp; Steps — Not Implemented … No HealthKit read permissions requested"; <code>ChartView.swift:900-916</code> — the 60 s IOB sampler lives inside the view; learnings <code>grdb-mismatched-fetch-windows-silent-zero-result</code> ("No crash, no assertion, no log output. The symptom only surfaces in the UI.") and <code>middleware-failure-swallowed-nil-as-loading-spins</code> ("Make the middleware's publisher total"). <span class="tag">external:</span> Apple Health period scrub; Oura/Whoop contributing factors. <span class="tag">reasoned:</span> the pager exists because the data window is a day; once the axis scrolls it is redundant and four sources with three window rules become a correctness bug. A person wakes to a number with no memory of the eight hours that produced it, and every current window cuts the night in half at 00:00.</dd>
+        <dt>Rationale</dt><dd>Every later idea sits on this: the sweep needs 90 days of meal-aligned glucose, regimes need cross-midnight bands, the factors wave needs one window contract for GRDB plus HealthKit, and the cursor readout needs O(1) lookups. Two documented silent-failure classes become an on-screen state in an idiom the aesthetic already owns.</dd>
+        <dt>Downsides</dt><dd>Swift Charts does not virtualise: a 90-day domain with tens of thousands of marks will not scroll unless data is windowed to the visible domain plus margin and drawn with iOS 18 vectorized plots. Largest single piece of platform work in the set; the grid must never fabricate values across sensor gaps. Lifting the IOB sampler out of the shipping view is a twin-code-path refactor that needs an explicit decision.</dd>
+        <dt>Confidence</dt><dd><span class="chip med">75%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip lo">High</span></dd>
+      </dl>
+    </article>
+
+    <article class="card" id="i3">
+      <header><span class="idchip">3.</span><h3>The response kernel — one cause→effect primitive, with the graded live meal ribbon as its first instance</h3><span class="chip ax">axis 1 · the event layer</span></header>
+      <dl>
+        <dt>Description</dt><dd>Lift the two-hour meal delta into an anchor-agnostic <code>ResponseWindow(anchor:, lead: 15 min, lag: 2 h, summary: .extremum(.max))</code> returning <code>ResponseSummary { baseline, extremum, delta, timeToExtremum, n, isLowConfidence, confounders }</code>. Meals use the max over 2 h; exercise the min over 3 h; a sleep interval the dawn rise; a stress regime a slope over its band — one ribbon renderer and one caption serve them all, and every ribbon ships with its N by construction. Its first instance on LAB: MEALS: the moment a carb-sized mark lands on the curve, a ribbon grows rightward under the readings, stepping through the existing green/amber/red tiers as the running delta crosses 30 and 60 mg/dL, with a <code>+47 · 38 MIN · 7 RDG</code> readout and the unelapsed remainder as a dotted stub; at window close it hardens. Meals Ratio Lab would exclude are hatched and dimmed with the exclusion tag as the label (<code>NO BOLUS</code>, <code>STACKED</code>, <code>CORR</code>, <code>HYPO</code>), and the bolus Ratio Lab already pairs to the meal is joined by a thin bracket <code>45g ⟷ 4U</code> — a pairing, never a ratio.</dd>
+        <dt>Axis</dt><dd>1 · The event layer on the day chart</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>MealOverlayLogic.swift:35</code> — <code>let windowEnd = isInProgress ? Date() : meal.timestamp.addingTimeInterval(2 * 60 * 60)</code>; <code>:46</code> — <code>let baselineStart = meal.timestamp.addingTimeInterval(-15 * 60)</code>; <code>:64</code> — <code>let isLowConfidence = readings.count &lt; 4</code>; <code>detectMealConfounders</code> hard-codes <code>2 * 60 * 60</code> three times; <code>:5-6</code> — "Free-function helpers extracted from ChartView … without a store dependency"; <code>RatioEstimator.swift:52</code> — "Sum of meal/snack boluses within ±15 min of <code>meal.timestamp</code> (correction boluses excluded)."; <code>:80-81</code> — "the exclusion reason <em>is</em> the lesson."; event-layer dossier — "Meal impacts computed retroactively (at +2h window close), not real-time" and "Confounders … only shown in tap sheet, not on the chip itself". <span class="tag">external:</span> Nightscout amount-sized dots; Strava form curves; F1 per-corner delta. <span class="tag">reasoned:</span> meal rise, exercise fall, dawn rise and tag drift are the same computation with different parameters; writing the ribbon as the kernel's first instance costs one parameter struct, while writing it as a meal feature means the factors wave copies the function. And the two hours after a meal are exactly when a person looks at the chart; a score that speaks only after the window closes is silent at the moment of curiosity.</dd>
+        <dt>Rationale</dt><dd>Dom's two first pains — meal size and cause→effect — on the surface he already looks at, with the confounder logic and Ratio Lab's grading reused rather than re-invented. The kernel is the cause→effect primitive for every factor and makes "every number ships with its N" true structurally.</dd>
+        <dt>Downsides</dt><dd>Stacked meals need an overlap rule (hatch or offset); the exclusion tags need the Ratio Lab evidence read, not day state; a regime "drift" is a slope, not an extremum, so the kernel needs a second summary mode from day one.</dd>
+        <dt>Confidence</dt><dd><span class="chip hi">90%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip hi">Low–Medium</span></dd>
+      </dl>
+      <figure>
+        <svg viewBox="0 0 640 170" width="640" height="170" role="img" aria-label="A meal mark on the curve, a two-hour ribbon that grows and changes tier, and a hardened ribbon with a confounder tag">
+          <rect x="0" y="0" width="640" height="170" fill="#0d0d0d"/>
+          <rect x="60" y="30" width="170" height="100" fill="#55ff55" fill-opacity="0.10"/>
+          <rect x="230" y="30" width="60" height="100" fill="#ffb000" fill-opacity="0.10"/>
+          <rect x="290" y="30" width="90" height="100" fill="none" stroke="#9a5700" stroke-dasharray="4 3"/>
+          <path d="M20 120 C 50 118, 60 110, 60 108 S 120 60, 170 62 S 250 95, 290 100 S 350 110, 380 112" fill="none" stroke="#ffb000" stroke-width="2.5"/>
+          <circle cx="60" cy="108" r="12" fill="#55ff55" fill-opacity="0.45" stroke="#55ff55"/>
+          <text x="48" y="150" fill="#55ff55" font-size="11">45g</text>
+          <text x="68" y="150" fill="#9a5700" font-size="11">⟷ 4U</text>
+          <text x="240" y="24" fill="#ffb000" font-size="11">+47 · 38 MIN · 7 RDG</text>
+          <text x="300" y="70" fill="#9a5700" font-size="10">… to +2h</text>
+          <rect x="430" y="30" width="180" height="100" fill="#ff5555" fill-opacity="0.08"/>
+          <path d="M430 30 L610 130 M430 60 L560 130 M470 30 L610 100 M510 30 L610 70" stroke="#ff5555" stroke-opacity="0.35"/>
+          <path d="M400 118 S 440 116, 460 112 S 520 70, 560 66 S 600 80, 620 84" fill="none" stroke="#ffb000" stroke-width="2.5"/>
+          <circle cx="430" cy="115" r="9" fill="#55ff55" fill-opacity="0.35" stroke="#55ff55"/>
+          <text x="470" y="24" fill="#ff5555" font-size="11">STACKED · +68</text>
+        </svg>
+        <figcaption>Illustrative: a live ribbon stepping green→amber as the delta grows (left); a hardened ribbon that names its confounder instead of blaming the plate (right).</figcaption>
+      </figure>
+    </article>
+
+    <article class="card" id="i4">
+      <header><span class="idchip">4.</span><h3>Sweep &amp; Laps — the event-locked response overlay</h3><span class="chip ax">axis 2 · patterns across days</span></header>
+      <dl>
+        <dt>Description</dt><dd>A lab mode where the x-axis is minutes since the anchor (−30 … +240) and y is the change from the −15 min baseline — the oscilloscope's trigger and the F1 lap overlay. Two entrances. <em>Sweep</em>: every meal in the 7/30/90-day window is one sweep aligned at t=0, brightness stepping down with age through the amber tiers (opacity, never glow), the median sweep bright, p25–p75 per five-minute relative bin, chips by carb bucket (≤15 / 16–45 / 46–80 / &gt;80 g), time-of-day and CLEAN ONLY, caption <code>N=23 SWEEPS · 14 CLEAN</code>. <em>Laps</em>: tap a meal mark on the day chart and its three to five most similar past meals (same carb bucket ±25 %, same time of day ±90 min, clean only, found from the whole meal table) ghost behind today's trace, readout <code>TODAY +62 · TWINS MEDIAN +41 (n=4)</code>, with a <code>WHY THESE</code> row. The same <code>[ResponseSummary]</code> read renders two more ways as sub-modes: a shot-chart grid (carb bucket × 4-hour block, cells tinted by median delta with N, block glyphs) and an outcome ledger (one monospace row per event, sortable by effect). Bridge from idea 1: after measuring any interval by hand, <code>SWEEP THIS</code> overlays every event of the same kind with that lead/lag. Demo mode: a clip-mask replay plays all laps from t=0 together.</dd>
+        <dt>Axis</dt><dd>2 · Patterns across days</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>MealImpact.swift:10-40</code> — persisted per meal: <code>baselineGlucose: Int?</code>, <code>peakGlucose: Int</code>, <code>deltaMgDL: Int</code>, <code>timeToPeakMinutes: Int</code>, <code>isClean: Bool</code>; <code>MealOverlayLogic.swift</code> — <code>var isClean: Bool { !hasCorrectionBolus &amp;&amp; !hasExercise &amp;&amp; !hasStackedMeal }</code>; <code>ClinicReport.swift</code> — <code>static func percentile(_ sortedValues: [Int], _ p: Double) -&gt; Int</code> "Linear-interpolation percentile (type-7 / numpy default)"; <code>RatioEstimator.swift:82-110</code> — <code>MealExclusionReason</code>; <code>PersonalFood.swift:17,46</code> — <code>observationCount</code>, <code>avgDeltaMgDL</code>; CLAUDE.md — the meal search reaches the whole <code>MealEntry</code> table. <span class="tag">external:</span> Tektronix digital-phosphor persistence; stimulus-locked ERP averaging (Luck); F1 telemetry overlays; Goldsberry's hexbin shot charts; research CGM papers plot post-prandial overlays, no consumer app does. <span class="tag">reasoned:</span> AGP answers "what does 15:00 look like", never "what does a 60 g meal do to <em>me</em>"; meals do not recur at the same minute, so a clock-locked modal day washes out event structure — locking to the event is the only way to average it.</dd>
+        <dt>Rationale</dt><dd>The highest-novelty, highest-value answer in the set to "no cause and effect" and "can't see meal size": meal size becomes a dimension, the stable shape of the user's own absorption emerges, and the strays are the confounded meals. It redefines the patterns wave as two modal views — clock-locked and event-locked — and gives the COB model a place to be drawn against observed sweeps before it ever touches the day chart.</dd>
+        <dt>Downsides</dt><dd>A relative-minutes axis is numeric, so this is its own chart, not an overlay on the Date-axis day chart. Persisted meal impacts stop at 30 days, so 90-day sweeps recompute through the kernel over a new "glucose ±4 h around N anchors" read. Twin search is a similarity query with real edge cases. Sparse cells in the grid need honest gating.</dd>
+        <dt>Confidence</dt><dd><span class="chip hi">80%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip med">Medium</span></dd>
+      </dl>
+      <figure>
+        <svg viewBox="0 0 640 180" width="640" height="180" role="img" aria-label="Left: clock-locked day overlay where meals at different times blur. Right: event-locked sweep where all meals align at t equals zero and a median emerges">
+          <rect x="0" y="0" width="640" height="180" fill="#0d0d0d"/>
+          <text x="20" y="20" fill="#9a5700" font-size="11">CLOCK-LOCKED (AGP)</text>
+          <path d="M20 120 C 60 118, 80 70, 110 75 S 170 120, 200 118 S 250 80, 290 90" fill="none" stroke="#9a5700" stroke-width="1.5" stroke-opacity="0.6"/>
+          <path d="M20 125 C 70 124, 120 122, 150 80 S 210 70, 240 110 S 280 122, 290 120" fill="none" stroke="#9a5700" stroke-width="1.5" stroke-opacity="0.6"/>
+          <path d="M20 118 C 40 116, 60 90, 80 92 S 140 124, 200 90 S 260 70, 290 100" fill="none" stroke="#9a5700" stroke-width="1.5" stroke-opacity="0.6"/>
+          <text x="20" y="160" fill="#9a5700" font-size="10">06:00</text><text x="250" y="160" fill="#9a5700" font-size="10">22:00</text>
+          <line x1="320" y1="10" x2="320" y2="170" stroke="#3a2a10"/>
+          <text x="340" y="20" fill="#55ffff" font-size="11">EVENT-LOCKED (SWEEP)</text>
+          <line x1="380" y1="30" x2="380" y2="150" stroke="#fdca9f" stroke-dasharray="3 3"/>
+          <text x="370" y="164" fill="#fdca9f" font-size="10">t=0</text>
+          <path d="M340 120 L380 118 C 420 100, 460 60, 500 70 S 580 118, 620 122" fill="none" stroke="#9a5700" stroke-width="1.5" stroke-opacity="0.5"/>
+          <path d="M340 122 L380 120 C 430 110, 470 75, 510 80 S 590 120, 620 124" fill="none" stroke="#9a5700" stroke-width="1.5" stroke-opacity="0.5"/>
+          <path d="M340 119 L380 117 C 410 95, 450 50, 490 62 S 570 112, 620 118" fill="none" stroke="#9a5700" stroke-width="1.5" stroke-opacity="0.5"/>
+          <path d="M340 120 L380 118 C 420 104, 460 62, 500 71 S 580 116, 620 121" fill="none" stroke="#ffb000" stroke-width="2.5"/>
+          <text x="440" y="46" fill="#ffb000" font-size="10">MEDIAN · N=23</text>
+          <text x="600" y="164" fill="#fdca9f" font-size="10">+4h</text>
+        </svg>
+        <figcaption>Illustrative: meals eaten at different clock times blur in a modal day; aligned at t=0 the user's own absorption shape emerges.</figcaption>
+      </figure>
+    </article>
+
+    <article class="card" id="i5">
+      <header><span class="idchip">5.</span><h3>The pattern comes to the day — your own band under today, out-of-band flags, long-press drill</h3><span class="chip ax">axis 2 · patterns across days</span></header>
+      <dl>
+        <dt>Description</dt><dd>Instead of a tab the user switches to, the lab day chart draws the last 30 days' p25–p75 (then p5–p95) hourly band as a faint ghost behind today's curve, so every excursion is read against "your usual for this hour". Hours where today leaves the band get a DOS tick on the axis and a one-line card <code>15:00 · +38 VS USUAL · n=27 DAYS</code>; the band's widest or highest hours carry a <code>PATTERN HOUR</code> tag with their sample count. Long-press an excursion → <code>SAME HOUR · 14 D</code>: the ±2 h window around the cursor replayed as fourteen dim day-traces with today's in amber and a count line <code>9 OF 14 DAYS &gt; 180 HERE · n=612</code>. Optional RANK mode on the pattern tab plots today as a percentile of the user's own hour-of-day distribution. No tab switch, no AI, computed offline from the tested percentile function. When a regime band is open (idea 6), the ghost band can switch to the matching cohort — "your usual on STRESSED days" — with its own N.</dd>
+        <dt>Axis</dt><dd>2 · Patterns across days</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>ClinicReport.swift:117-119</code> — "24 hour-of-day buckets (median + P25/P75) … ALWAYS returns 24 entries (hour 0...23); empty hours get <code>nil</code> quantiles and 0 readings."; <code>:39-40</code> — "<code>readings</code> is that hour's sample count."; patterns dossier — "most of an AGP panel already in the repo, used by no on-screen view"; <code>ChartToolbar.swift:61-68</code> — <code>normaliseDaysIfNeeded</code> bumps a stale day chip to 30 d. <span class="tag">external:</span> Apple Health Highlights; AGP 5.0's modal day; Clarity/LibreView's "no tap-to-inspect, no arbitrary-window scrub". <span class="tag">reasoned:</span> an AGP tab answers "what is my pattern?"; the daily question is "is today unusual?", which needs band and day on one axis — and the band already carries per-hour N, so a flag is a comparison, not a model.</dd>
+        <dt>Rationale</dt><dd>The cheapest pattern win in the set: it turns the unused percentile function into a daily "is today unusual" on the surface the user already looks at, and it is the natural host for condition-aware bands later. It relieves "no pattern view" where the pain is actually felt.</dd>
+        <dt>Downsides</dt><dd>A p5–p95 wash on black behind an amber line muddies the hero trace unless the fill tokens are tuned; the drill needs 14 day-traces from the 30-day read; a rank y-axis is a separate chart, never an overlay.</dd>
+        <dt>Confidence</dt><dd><span class="chip hi">85%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip med">Medium</span></dd>
+      </dl>
+    </article>
+
+    <article class="card" id="i6">
+      <header><span class="idchip">6.</span><h3>The residual asks for the note — then notes become regimes</h3><span class="chip ax">axis 3 · life factors as data</span></header>
+      <dl>
+        <dt>Description</dt><dd>Two moves in sequence, density first, then duration. <em>Residual</em>: the lab flags each excursion as explained (a meal, dose, exercise, regime or note sits in its window) or not; an unexplained rise or fall — say +45 mg/dL across 14:00–15:30 with nothing logged — is drawn as a hatched amber segment with a <code>?</code> glyph, and tapping it opens the existing journal-note sheet with the time picker already set to the excursion start and the tag row focused. The detector only marks the absence of a logged cause; it never proposes one. <em>Regimes</em>: a SICK / STRESSED / SLUGGISH note opens a status effect — a translucent hatched band from its timestamp forward (per-tag defaults: SICK until the next note or 24 h, STRESSED 4 h, SLUGGISH rest of day; band edge draggable), closed by the next note, a one-tap <code>BACK TO NORMAL</code>, or the next wake, when the lab shows a one-tap <code>STILL SICK? Y/N</code> row. A HealthKit night under 6 h becomes a <code>SHORT SLEEP</code> band over the following day. Condition splits then use band membership (a day is SICK if ≥ 6 h under regime), so every split has a defensible N. Regimes are derived from notes, never stored as a new model.</dd>
+        <dt>Axis</dt><dd>3 · Life factors as data</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>AddJournalNoteView.swift:41</code> — "Context the numbers can't show — illness, stress, bad sleep. Backdate with the time picker."; <code>:35-39</code> — <code>DatePicker("Time", selection: $timestamp, displayedComponents: [.date, .hourAndMinute])</code>; <code>JournalNote.swift</code> — <code>self.timestamp = timestamp.toRounded(on: 1, .minute)</code> with no end field, "the tag exists so the digest prompt (and, later, a filter) can group notes without parsing prose", "V1 is add + delete only; there is no edit path"; <code>JournalNoteStore.swift:44-48</code> — notes re-fetched for the exact selected day; <code>ClaudeService.swift:328</code> — "NOTE lines are the user's own journal entries … Read them as data about the day (illness, stress, sleep)"; life-factors dossier — "Chart use: Notes (not visualized)". <span class="tag">external:</span> epidemiology's exposure windows; RPG status-effect timers; Oura Tags (day-level, with impact on readiness); Levels/Nutrisense "log what you ate" nudges on spikes. <span class="tag">reasoned:</span> tags are the only structured life-factor input and are entered from memory, so the excursions with no logged cause are exactly where stress and sickness live; and illness lasts days — a 14:32 timestamp cannot classify the week, so a condition split will otherwise silently invent a "day contains tag" rule nobody chose.</dd>
+        <dt>Rationale</dt><dd>This is how "stress level and other factors in life" become tangible rather than decorative: the residual raises tag density where it matters, the regime gives tags a duration and therefore membership, and together they make the condition-split statistics reachable within weeks instead of never. The user's own hypothesis about cause is drawn beside the effect — the loop the AI currently owns alone.</dd>
+        <dt>Downsides</dt><dd>Detector false positives (compression lows, sensor noise) would spam <code>?</code> marks without Δ, duration and no-anchor thresholds; the note sheet needs a prefill payload through the sheet coordinator; per-tag default durations are a semantics decision that leaks beyond the lab the moment the digest consumes bands.</dd>
+        <dt>Confidence</dt><dd><span class="chip med">70%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip med">Medium</span></dd>
+      </dl>
+    </article>
+
+    <article class="card" id="i7">
+      <header><span class="idchip">7.</span><h3>Cited facts — offline highlights; the AI may only narrate what it can cite</h3><span class="chip ax">axis 5 · AI in the loop</span></header>
+      <dl>
+        <dt>Description</dt><dd>A pure highlights engine runs the detectors the app already has over the visible window — hypo episodes (returned as intervals, not counts), meal deltas ≥ 60, two boluses within DIA, exercise-adjacent drops, tight-control runs, band exits, regime overlaps — and emits up to five ranked, id-carrying facts anchored to timestamps, plus a feature sheet: <code>WINDOW 14D N=3,912 · MEDIAN 08:00 142 · P95 19:00 251 · 3 HYPO EPISODES · SWEEPS 23 (14 CLEAN) · STRESSED 4 D</code>. Every figure is a value type that cannot be constructed without its N. The lab draws numbered amber pins on the curve with a staged-reveal card list beneath, readable offline with no consent. The flagship card is the flight-recorder readout at a hypo onset: <code>T-0 62 · IOB 1.8U · COB 0g · LAST BOLUS T-2h10 4U · EXERCISE T-1h05 45m WALK · HR 71→96 · TAG SLUGGISH</code>. <code>NARRATE</code> (optional, consented) sends only the fact list — never readings — and the AI answers either with three plain sentences or with a closed annotation grammar (<code>factId</code>, kind, start, end, a ≤ 40-character label, tone) enforced by the JSON-schema output the app already uses and a strict decoder; any annotation that fails to cite an existing fact is dropped. The same feature sheet is the chart's accessibility descriptor, so VoiceOver gets a real chart summary.</dd>
+        <dt>Axis</dt><dd>5 · AI in the loop</dd>
+        <dt>Basis</dt><dd class="basis"><span class="tag">direct:</span><code>ClinicReport.swift:145</code> — <code>static func hypoEpisodes(from readings: [SensorGlucose]) -&gt; Int</code> tracks <code>episodeStart</code> but <code>closeEpisode(end:)</code> only increments a count (boundaries computed and discarded); <code>MealOverlayLogic.swift</code> tiers and <code>isLowConfidence</code>; CLAUDE.md — <code>TightControlStreakDetector</code> is pure; <code>ClaudeService.swift:322-326</code> — "Be specific: times, values, doses. Never invent data not present in the input." / "Never give medical advice"; <code>ClaudeService.swift</code> — <code>"output_config": ["format": ["type": "json_schema", …]]</code>; <code>AISettingsView.swift</code> — current consent copy "Sends glucose readings, meals, insulin, exercise, and the text of your journal notes"; <code>DigestInsight.swift:54-56</code> — the first-brace/last-brace parse to avoid; <code>RatioLabView.swift:23-26</code> — "every number ships with N/spread". <span class="tag">external:</span> Apple Health Highlights (narrate without chat); LIDA's summarizer→infographer split; box-score commentary; BI-RADS structured reporting; METAR; WWDC21 Audio Graphs. <span class="tag">reasoned:</span> most of "explain this chart" is detection, which is deterministic and already written; sending features instead of samples shrinks both the privacy and the injection surface (tags are enums; no free text enters the prompt); if every annotation must cite a locally computed fact, a hallucinated cause is impossible by construction.</dd>
+        <dt>Rationale</dt><dd>It inverts the assumption that "explain this chart" is an AI feature: the explanation ships offline with no consent gate, the AI becomes optional polish, and one privacy posture — figures, never readings — holds for both builder and narrator. It is the integrated-AI ask without the consent tax, and it delivers a VoiceOver chart description as a by-product.</dd>
+        <dt>Downsides</dt><dd>Pin clutter and fact ranking are product problems; several detectors depend on ideas 5 and 6 landing first; a "no bare number outside the caption" source-scan test is brittle. A weaker variant — sending twelve glucose samples for an interval under the digest consent — was rejected for its privacy posture.</dd>
+        <dt>Confidence</dt><dd><span class="chip hi">80%</span></dd>
+        <dt>Complexity</dt><dd><span class="chip med">Medium–High</span></dd>
+      </dl>
+      <figure>
+        <svg viewBox="0 0 640 150" width="640" height="150" role="img" aria-label="Flow: readings stay on device, detectors produce facts with ids, cards render offline, the AI receives only the facts and returns narration citing fact ids">
+          <rect x="0" y="0" width="640" height="150" fill="#0d0d0d"/>
+          <rect x="16" y="40" width="130" height="60" fill="#111" stroke="#3a2a10"/>
+          <text x="30" y="66" fill="#e6d9c3" font-size="11">READINGS</text>
+          <text x="30" y="84" fill="#9a5700" font-size="10">never leave</text>
+          <line x1="146" y1="70" x2="186" y2="70" stroke="#ffb000" marker-end="url(#a)"/>
+          <rect x="190" y="40" width="130" height="60" fill="#111" stroke="#3a2a10"/>
+          <text x="204" y="66" fill="#e6d9c3" font-size="11">DETECTORS</text>
+          <text x="204" y="84" fill="#9a5700" font-size="10">pure · offline</text>
+          <line x1="320" y1="70" x2="360" y2="70" stroke="#ffb000" marker-end="url(#a)"/>
+          <rect x="364" y="40" width="130" height="60" fill="#111" stroke="#55ffff"/>
+          <text x="378" y="66" fill="#55ffff" font-size="11">FACTS + N</text>
+          <text x="378" y="84" fill="#9a5700" font-size="10">factId · anchor</text>
+          <line x1="429" y1="100" x2="429" y2="122" stroke="#ffb000" marker-end="url(#a)"/>
+          <text x="440" y="118" fill="#e6d9c3" font-size="10">CARDS · PINS · VOICEOVER (offline)</text>
+          <line x1="494" y1="70" x2="534" y2="70" stroke="#ffb000" stroke-dasharray="4 3" marker-end="url(#a)"/>
+          <rect x="538" y="40" width="90" height="60" fill="#111" stroke="#3a2a10"/>
+          <text x="552" y="66" fill="#e6d9c3" font-size="11">AI</text>
+          <text x="552" y="84" fill="#9a5700" font-size="10">cites factId</text>
+          <text x="500" y="30" fill="#9a5700" font-size="10">optional · consented</text>
+          <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#ffb000"/></marker></defs>
+        </svg>
+        <figcaption>Illustrative: readings stay on the device; only cited facts reach the model, and only citing annotations come back.</figcaption>
+      </figure>
+    </article>
+  </section>
+
+  <section id="rejection-summary">
+    <h2>Rejection Summary</h2>
+    <div class="wide"><table>
+      <thead><tr><th>#</th><th>Idea</th><th>Reason Rejected</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Spec-first lab — every tab is a spec, the form is the editor, the AI edits or fills, preview on a sample day (six frames converged on it)</td><td>Deferred by design, not rejected on merit: highest novelty in the set, but "wave 1 builds a language" is the one bet that can cost the first dogfoodable lab view. Decide the spec language at wave 5 against three real views; wave 1 lands the stream registry, chart-chrome tokens and the N-carrying figure type so the spec has something to describe. One cited "direct" quote was a paraphrase of a past learning and is treated as reasoned.</td></tr>
+        <tr><td>2</td><td><code>LabStream</code> registry · <code>LabChartChrome</code> tokens · <code>LabFigure</code> type</td><td>Absorbed as platform work under ideas 2, 1 and 7 — one small PR, not standalone product ideas. The chrome idea's cited theming learning is about tab bars, not charts; its basis is reasoned by analogy.</td></tr>
+        <tr><td>3</td><td><code>CohortSplitter</code> day-predicate engine</td><td>Absorbed into idea 6's payoff (condition-aware bands) and the patterns wave; N ≥ 5 tagged days is weeks away without the residual prompt and regimes first.</td></tr>
+        <tr><td>4</td><td>Shot Chart (carb bucket × time-of-day grid) · Outcome ledger (rows of causes with effects)</td><td>Absorbed as sub-modes of idea 4 — three renderings of one <code>[ResponseSummary]</code> read, not three features.</td></tr>
+        <tr><td>5</td><td>Residual Day — today as a percentile rank of your own distribution</td><td>Dominated by idea 5 for daily use; survives only as an optional RANK mode (a rank y-axis is its own chart).</td></tr>
+        <tr><td>6</td><td>Track Stack — stacked charts with honest axes, one cursor</td><td>Absorbed into ideas 1 and 2: it is the readout contract applied to N tracks, and the only honest way to draw sleep and steps; the overlays-vs-tracks call is made inside idea 1.</td></tr>
+        <tr><td>7</td><td>Wake-anchored modal day</td><td>Subsumed by idea 2's NIGHT view; keep as a pattern-tab toggle (clinicians expect clock-time AGP).</td></tr>
+        <tr><td>8</td><td>Factors as anomalies — HR, steps, sleep as deviation from own baseline</td><td>Split: the sleep delta is idea 3's dawn-rise instance; HR/steps deviation lanes belong to the factors wave on top of idea 1's track contract.</td></tr>
+        <tr><td>9</td><td>Press play — flight-recorder replay of the day</td><td>Deferred: a 60 Hz playhead inside <code>Chart{}</code> re-evaluates the whole body; the clip-mask replay over the sweep (idea 4's demo mode) is the cheap version of the same moment.</td></tr>
+        <tr><td>10</td><td>Radar Loop — scrub the AGP window across 90 days</td><td>Interesting motion, secondary to the stated pains; patterns-wave polish once the 90-day read is cached at platform level.</td></tr>
+        <tr><td>11</td><td>Teletype Week — copyable monospaced text mode</td><td>Meeting test borderline: deferred until Dom answers whether he would paste one to his care team.</td></tr>
+        <tr><td>12</td><td>Model-vs-observed absorption ribbon (COB shows where it was wrong)</td><td>Wave-2 material: strong idea, but the copy rule that keeps it a teaching aid ("absorbed faster than the 3 h bucket", never "you under-dosed") must be fixed before any ribbon ships; carried into the COB plan.</td></tr>
+        <tr><td>13</td><td>Measure once, sweep all similar (synthesis)</td><td>Folded into idea 4 as its bridge from idea 1.</td></tr>
+        <tr><td>14</td><td>Explain THIS interval — send ≤ 12 samples under the digest consent</td><td>Weaker privacy posture than idea 7 for the same need; rejected.</td></tr>
+      </tbody>
+    </table></div>
+    <p style="color:var(--muted);font-size:12px;margin-top:10px">Verification notes: every load-bearing repo quote was checked in the tree at <code>3a288d3d</code>. Two "direct" attributions to past-learning docs were paraphrases and are treated as reasoned; one line pointer (the BPM-on-glucose-axis comment) lives at <code>ChartView.swift:718-719</code>, not 713-714; the patterns evidence dossier carries a stale <code>ClinicReport.swift:372</code> pointer (the file has 188 lines). No candidate re-litigates a settled decision or proposes dosing language.</p>
+  </section>
+
+  <footer class="composition-signal">Composed 2026-09-12 by ce-ideate (run 5394910c) from the Chart Lab planning session — grounding: <code>docs/plans/2026-09-11-chart-lab-exploration-dossier.md</code>, <code>docs/plans/2026-09-11-chart-lab-fable-kickoff.md</code>, DMNC-1500, six ideation frames, one basis verifier, one novelty/feasibility critic.</footer>
+</div>
+</body>
+</html>
