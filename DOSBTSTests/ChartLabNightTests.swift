@@ -518,6 +518,38 @@ struct LabCoverageStripTests {
         #expect(glucose?.tone == .loaded)
     }
 
+    @Test("the 4-hour lead cannot inflate glucose coverage")
+    func leadDoesNotInflateCoverage() {
+        let interval = NightFixture.interval
+        // 161 readings inside the window, plus a 4-hour lead's worth before it.
+        var readings = (0 ..< 161).map { index in
+            SensorGlucose(
+                timestamp: interval.start.addingTimeInterval(TimeInterval(index * 5 * 60)),
+                rawGlucoseValue: 110,
+                intGlucoseValue: 110
+            )
+        }
+        readings += (1 ... 48).map { index in
+            SensorGlucose(
+                timestamp: interval.start.addingTimeInterval(TimeInterval(-index * 5 * 60)),
+                rawGlucoseValue: 110,
+                intGlucoseValue: 110
+            )
+        }
+
+        let snapshot = LabWindowSnapshot.assemble(
+            raw: LabWindowRaw(readings: readings, bloodGlucose: [], meals: [], deliveries: [], iobDeliveries: [], exercise: [], notes: []),
+            interval: interval,
+            heartRate: [], sleep: [],
+            heartRateAvailability: .available, sleepAvailability: .available
+        )
+
+        #expect(snapshot.readings.count == 209)
+        #expect(snapshot.readingsInWindow.count == 161)
+        let cells = LabCoverage.cells(snapshot: snapshot, sensorIntervalMinutes: 5)
+        #expect(cells.first { $0.stream == .glucose }?.value == "96%", "the lead must not be counted as coverage")
+    }
+
     @Test("coverage never reads over 100%")
     func glucosePercentClamped() {
         let cells = LabCoverage.cells(snapshot: Self.snapshot(readingCount: 200), sensorIntervalMinutes: 5)

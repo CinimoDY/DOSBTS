@@ -140,6 +140,82 @@ nonsensical `sensorInterval` should read `100%`. It should not — `sensorInterv
 **1 minute**, so clamping to `max(1, …)` is the honest floor and 100 readings across a 14-hour
 window of once-a-minute slots is `12%`. The test now pins that, for `0` and for a negative.
 
+### 13. An empty night used to be a dead end — found on the simulator, fixed in the platform
+
+Paging back to a night with no readings rendered my own `NO READINGS THIS NIGHT` card **instead
+of** `LabChartView` — and `LabDayPager` lives inside `LabChartView`. So the `<` / `>` controls
+vanished along with the chart and the user was **stranded on the empty night with no way back**.
+
+Found by actually pressing `<` on the simulator; no test would have caught it, because the bug
+was in which view was mounted, not in what any of them computed.
+
+**Fixed in the platform, not in my tab:** `LabChartView.plotArea` now distinguishes the two
+meanings of "no rows". A *day* chart with an empty series is still loading from the store, so it
+pulses. A **windowed** chart knows its domain up front, so an empty series is a fact about that
+window — it renders the empty state, keeps the pager mounted, and names the window it found
+nothing in (`n=0 · 20:00 → 10:00`). `LabNightView` now has ONE content branch.
+
+This is a latent bug for any later lab tab that adopts the window path, which is why it is fixed
+at the seam rather than worked around in `LabNightView`.
+
+### 14. Three small on-simulator legibility fixes
+
+- **In-plot labels get a scrim** (`AmberTheme.scrimHeavy`, 2.5 pt horizontal) — the hypo label
+  rendered *under* the glucose trace (`T-0 7…`). The prototype does the same thing with
+  `paint-order: stroke fill`, and `LabChartView`'s basal-bar annotation already does it with a
+  fill. The hypo mark also gained 10 pt of annotation spacing to clear the trace outright.
+- **The day pager said "24 hours" on a 14-hour window.** `LabDayPager` now takes a `windowDate`
+  and shows the night's date (`12.09.2026`) when the chart is windowed.
+- **A wider plot inset on the windowed path only** (22 pt vs P0's 10). It does NOT fix P0's
+  edge-hour-label elision (see below) but it does stop the ribbon's `+65 · 25 RDG` annotation
+  being clipped at the left edge.
+
+### 15. P0's edge hour labels are still elided — NOT fixed, deliberately
+
+The first and last hour labels (`20` and `10` — the two numbers that *name* this window) are
+dropped by Charts because they are centred on ticks at the plot boundary. P0 documented this
+("Left for P1+ to decide") and the plan's errata says not to fix it inside my arm. I widened the
+plot inset, which did **not** change it: Charts elides the label rather than clipping it, so the
+fix has to come from anchoring the first/last label differently, which moves every label.
+
+**Orchestrator: this is the one visible gap against artboard 2.** The window's bounds are not
+lost to the user — the day pager names the date and the empty state names the hours — but the
+axis does not read `8p … 10a` end to end. Worth its own follow-up across all lab tabs.
+
+## On-simulator verification
+
+Fixture seeded into the app's own GRDB file (`GlucoseDirect.sqlite`): 174 readings at a
+5-minute cadence spanning 2026-09-11 18:50 → 2026-09-12 10:00 local with a deliberate 40-minute
+sensor gap at 03:55, an 80 g dinner at **19:05 — before the window opens**, a 7 U meal bolus at
+22:20, and a journal note at 22:45. `sensorInterval` set to 5 to match the fixture.
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Lab on → `LAB: NIGHT` shows 20:00 → 10:00 with the `00:00` rule and 2-hourly hour labels | **PASS** — labels `22 00 02 04 06 08`, midnight rule + `00:00` label, whole window visible without scrolling. **Except** the two EDGE labels (`20`, `10`) — see deviation 15 |
+| 2 | HealthKit sleep prompt → header / strip | **PARTIAL** — the deny/never-asked branch is verified: header `SLEEP —`, strip `SLEEP n/a` + `HR n/a` underlined. The **grant** branch (header `IN BED … · ASLEEP … · AWAKE ×N`, sleep band, awake gaps, stage lane, `SLEEP ✓`) is **NOT verified on-device** — see "Needs a human" below |
+| 3 | 7 U bolus at 22:20 shows its IOB tail decaying across midnight; 19:05 dinner's ribbon starts before the window's left edge | **PASS** — IOB area runs from 22:20 to ~04:00 straight through midnight; ribbon is clamped to the left edge and labelled `+65 · 25 RDG` |
+| 4 | HR dashed line present when Apple Health HR exists; `HR —` otherwise | **PARTIAL** — `HR n/a` (never asked) verified. The line-present branch needs HealthKit data |
+| 5 | POST strip reads real coverage per stream | **PASS** — `GLU 95%` (160 in-window readings ÷ 168 expected at 5 min — matches by hand), `INS 1`, `MEAL 1`, `EX —`, `HR n/a`, `SLEEP n/a`, `STEPS n/a`, `NOTES 1` |
+| 6 | `<` / `>` moves the night by a day and reloads; kill + relaunch on NIGHT restores it | **PASS** — `<` moved 12.09 → 11.09 and reloaded; the empty night renders `NO READINGS TO PLOT · n=0 · 20:00 → 10:00` and **keeps its pager** (`>` present) — that last part only after the fix in deviation 13. Kill + relaunch came straight back to `LAB: NIGHT` |
+| 7 | GLUCOSE tab unchanged; lab off → nothing lab renders | **PASS** — GLUCOSE keeps its pager, marker area and 3h/6h/12h/24h chips (so the NIGHT-only chip removal is correctly scoped). With `show-chart-lab` off **and a stranded `labNight` selection persisted**, the app normalises to GLUCOSE and the row is back to three tabs |
+| 8 | Airplane mode: everything still renders | **PASS by inspection** — `grep -rn "URLSession\|URLRequest\|dataTask"` over `App/Modules/ChartLab/`, `LabWindowStore.swift`, `LabWindow.swift`, `NightSummary.swift` and `App/Views/Overview/Lab/` returns nothing. GRDB and HealthKit are both local; every screenshot above was taken with the sensor `DISCONNECTED` |
+
+### Needs a human (or a device with real Health data)
+
+- **The sleep-present branch (steps 2 and 4).** Seeding a sleep sample needs the simulator's
+  Health app, and its "+" button sits in a screen region where another agent's Simulator window
+  was intercepting synthetic clicks — three sibling lab branches were running their own
+  simulators on this desktop at the time. I could not seed it reliably, so I am **not** claiming
+  it passed.
+  The maths behind it is pinned instead: `NightSummaryTests` runs the plan's exact fixture (in
+  bed 23:10, asleep 23:20, two awake gaps, wake 05:50) and asserts `asleepMinutes == 360`,
+  `awakeCount == 2` and `riseByWake.n == 79`, and `NightContextTests` pins the band, the gaps and
+  the hypo mark. What is unverified is the *rendering* of those into the band, the awake
+  rectangles and the stage lane.
+  **Quickest human check:** with Apple Health import ON in DOSBTS, add a Sleep sample covering
+  last night in the Health app, then open `LAB: NIGHT`.
+- **Detent haptics** remain device-only, as P0 recorded.
+
 ## Design notes the orchestrator may want to challenge
 
 - **`.setSelectedDate` reload lives in the middleware**, per the plan, guarded on

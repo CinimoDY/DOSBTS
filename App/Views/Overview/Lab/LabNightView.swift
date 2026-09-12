@@ -90,7 +90,7 @@ struct LabNightView: View {
               let atWake = summary.glucoseAtWake,
               let rise = summary.riseByWake
         else {
-            return "NIGHT GLUCOSE — · n=\(snapshot?.readings.count ?? 0)"
+            return "NIGHT GLUCOSE — · n=\(snapshot?.readingsInWindow.count ?? 0)"
         }
 
         let arrow = rise.value > 0 ? "↑" : (rise.value < 0 ? "↓" : "→")
@@ -103,11 +103,10 @@ struct LabNightView: View {
     @ViewBuilder
     private var content: some View {
         if let snapshot {
-            if snapshot.readings.isEmpty {
-                emptyWindow(snapshot)
-            } else {
-                loadedWindow(snapshot)
-            }
+            // One branch, readings or not: `LabChartView` renders its own empty
+            // state for a window it found nothing in, and keeps the day pager
+            // mounted — which is the only way back off an empty night.
+            loadedWindow(snapshot)
         } else {
             VStack {
                 Spacer()
@@ -145,30 +144,6 @@ struct LabNightView: View {
             LabLegendItem(glyph: "╌╌", label: "HR", color: AmberTheme.cgaMagenta),
             LabLegendItem(glyph: "POST", label: "COVERAGE PER STREAM", color: AmberTheme.amberLight),
         ])
-    }
-
-    @ViewBuilder
-    private func emptyWindow(_ snapshot: LabWindowSnapshot) -> some View {
-        VStack {
-            Spacer()
-            VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
-                Text("NO READINGS THIS NIGHT")
-                    .font(DOSTypography.bodySmall)
-                    .foregroundStyle(AmberTheme.cgaCyan)
-                Text("n=0 · \(snapshot.interval.start.toLocalTime()) → \(snapshot.interval.end.toLocalTime())")
-                    .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .dosCard(.info)
-            .padding(.horizontal, DOSSpacing.sm)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-        LabCoverageStrip(snapshot: snapshot)
-
-        modeRow
     }
 
     /// `NIGHT · DAY · WK`. V1 ships NIGHT; the other two are dimmed rather than

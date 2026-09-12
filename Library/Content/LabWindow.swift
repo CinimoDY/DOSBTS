@@ -214,6 +214,14 @@ struct LabWindowSnapshot: Equatable {
     let sleep: [SleepSample]
     let status: [LabStream: LabStreamStatus]
 
+    /// Readings inside the window itself, with the 4-hour lead dropped. Every
+    /// coverage number and every "is this night empty" decision counts THESE:
+    /// the lead exists so a meal's baseline and an IOB tail can be computed,
+    /// not so the night can claim more readings than it has.
+    var readingsInWindow: [SensorGlucose] {
+        readings.filter { $0.timestamp >= interval.start && $0.timestamp <= interval.end }
+    }
+
     /// The span the returned rows actually cover, per stream. Absent for a
     /// stream with no rows. Compared against the requested interval, this is
     /// what catches a secondary fetch whose window is narrower than the primary
@@ -372,7 +380,7 @@ enum LabCoverage {
     ) -> String {
         switch stream {
         case .glucose:
-            return "\(glucosePercent(readings: snapshot.readings.count, interval: snapshot.interval, sensorIntervalMinutes: sensorIntervalMinutes))%"
+            return "\(glucosePercent(readings: snapshot.readingsInWindow.count, interval: snapshot.interval, sensorIntervalMinutes: sensorIntervalMinutes))%"
         case .insulin:
             return "\(snapshot.deliveries.count)"
         case .meals:

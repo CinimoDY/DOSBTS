@@ -88,6 +88,7 @@ enum LabOverlayMarks {
                     .font(DOSTypography.micro)
                     .foregroundStyle(AmberTheme.amber)
                     .monospacedDigit()
+                    .labelHalo()
             }
         }
 
@@ -105,6 +106,7 @@ enum LabOverlayMarks {
                         .font(DOSTypography.micro)
                         .foregroundStyle(AmberTheme.amberDark)
                         .monospacedDigit()
+                        .labelHalo()
                 }
         }
 
@@ -117,15 +119,19 @@ enum LabOverlayMarks {
             .symbolSize(0)
             .annotation(
                 position: .bottom,
+                spacing: 10,
                 overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
             ) {
                 Text(hypo.label)
                     .font(DOSTypography.micro)
                     .foregroundStyle(AmberTheme.cgaRed)
                     .monospacedDigit()
+                    .labelHalo()
             }
         }
     }
+
+    // MARK: - Label halo
 
     /// "This overlay draws nothing yet." Charts exposes no public
     /// `EmptyChartContent`, so an empty `ForEach` is the cheapest legal no-op.
@@ -133,5 +139,19 @@ enum LabOverlayMarks {
         ForEach([Int](), id: \.self) { _ in
             RuleMark(y: .value("", 0))
         }
+    }
+}
+
+// MARK: - In-plot label legibility
+
+private extension View {
+    /// A scrim behind an in-plot annotation, so a label sitting on top of the
+    /// glucose trace stays readable. The prototype does this with
+    /// `paint-order: stroke fill` and a black stroke; the basal-bar annotation
+    /// in `LabChartView` already does it with a fill. Never a glow — shadows
+    /// inside a `Chart{}` are a documented performance trap.
+    func labelHalo() -> some View {
+        padding(.horizontal, 2.5)
+            .background(AmberTheme.scrimHeavy)
     }
 }

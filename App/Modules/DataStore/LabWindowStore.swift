@@ -45,14 +45,19 @@ extension DataStore {
                     let lead = windowStart.addingTimeInterval(-leadHours * 3600)
                     let iobStart = windowStart.addingTimeInterval(-Double(iobLookbackMinutes) * 60)
 
+                    // Readings get the lead too: a meal logged at 19:05 needs
+                    // its PRE-meal baseline to compute an honest response delta,
+                    // and that reading is before the window. Charts clips the
+                    // extra to the domain, and `readingsInWindow` is what every
+                    // coverage number counts, so the lead cannot inflate `GLU %`.
                     let readings = try SensorGlucose
-                        .filter(Column(SensorGlucose.Columns.timestamp.name) >= windowStart)
+                        .filter(Column(SensorGlucose.Columns.timestamp.name) >= lead)
                         .filter(Column(SensorGlucose.Columns.timestamp.name) <= windowEnd)
                         .order(Column(SensorGlucose.Columns.timestamp.name))
                         .fetchAll(db)
 
                     let bloodGlucose = try BloodGlucose
-                        .filter(Column(BloodGlucose.Columns.timestamp.name) >= windowStart)
+                        .filter(Column(BloodGlucose.Columns.timestamp.name) >= lead)
                         .filter(Column(BloodGlucose.Columns.timestamp.name) <= windowEnd)
                         .order(Column(BloodGlucose.Columns.timestamp.name))
                         .fetchAll(db)
