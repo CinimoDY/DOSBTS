@@ -272,6 +272,15 @@ enum SweepStatistics {
         Array(sweeps.prefix(maxDrawnSweeps))
     }
 
+    /// The meal the LAPS card compares — the newest one that actually has a trace.
+    ///
+    /// Falling straight to `sweeps.first` would blank the card for the few minutes
+    /// between logging a meal and the first reading landing after it; the newest
+    /// *drawable* sweep is what the user can see on the chart.
+    static func lapsSubject(_ sweeps: [MealSweep]) -> MealSweep? {
+        sweeps.first(where: { !$0.points.isEmpty }) ?? sweeps.first
+    }
+
     // MARK: Bins
 
     /// The p25/p50/p75 envelope, one entry per 5-minute offset that at least one
@@ -370,6 +379,16 @@ enum SweepChartMath {
     ///
     /// Every plotted series feeds this — the sweeps, the p25–p75 band, the median
     /// and today's trace — so there is exactly one y scale.
+    /// Axis ticks across the domain, 20 mg/dL apart and stepping coarser rather
+    /// than crowding the plot once the domain grows past the artboard's range.
+    static func yTicksMgdl(domain: ClosedRange<Int>) -> [Int] {
+        let span = domain.upperBound - domain.lowerBound
+        let base = 20
+        var step = base
+        while step > 0, span / step > 6 { step += base }
+        return Array(stride(from: domain.lowerBound, through: domain.upperBound, by: step))
+    }
+
     static func yDomainMgdl(deltas: [Int]) -> ClosedRange<Int> {
         let step = 20.0
         let maxDelta = Double(deltas.max() ?? 0)
@@ -495,6 +514,26 @@ enum SweepLapsFormatter {
             return value >= 0 ? "+\(text)" : text
         }
         return mgdl >= 0 ? "+\(mgdl)" : "\(mgdl)"
+    }
+
+    /// One expanded twin: `3D AGO · 78g · +38 (52 MIN) · CLEAN`. The tag is the
+    /// lesson — a twin earns its place by being clean.
+    static func twinRow(_ sweep: MealSweep, glucoseUnit: GlucoseUnit) -> String {
+        var parts: [String] = [sweep.ageDays <= 0 ? "TODAY" : "\(sweep.ageDays)D AGO"]
+
+        if let carbs = sweep.carbs, carbs > 0 {
+            parts.append(carbsLabel(carbs))
+        }
+        if let delta = sweep.delta {
+            var response = signedDelta(delta, glucoseUnit: glucoseUnit)
+            if let peak = sweep.peakMinutes {
+                response += " (\(peak) MIN)"
+            }
+            parts.append(response)
+        }
+        parts.append(sweep.isClean ? "CLEAN" : "CONFOUNDED")
+
+        return parts.joined(separator: " · ")
     }
 
     /// The axis caption: `Δ mg/dL from −15 min`, unit-aware.

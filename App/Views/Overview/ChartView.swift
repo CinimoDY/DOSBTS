@@ -26,7 +26,7 @@ struct ChartView: View {
                 StatisticsReportView()
             case .labMeals: LabMealsView()
             case .labNight: LabPlaceholderView(tab: .labNight)
-            case .labSweep: LabPlaceholderView(tab: .labSweep)
+            case .labSweep: LabSweepView()
             case .labPatterns: LabPlaceholderView(tab: .labPatterns)
             }
         }

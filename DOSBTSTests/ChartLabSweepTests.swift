@@ -708,3 +708,44 @@ struct LabSweepEvidenceTests {
         #expect(drawn.last?.ageDays == SweepStatistics.maxDrawnSweeps)
     }
 }
+
+// MARK: - Sweep chart + LAPS view helpers
+
+@Suite("Sweep view helpers")
+struct SweepViewHelperTests {
+
+    @Test("the LAPS subject is the newest sweep that actually has a trace")
+    func lapsSubject() {
+        let drawable = makeSweep(
+            mealTime: mealTime(daysAgo: 1), carbs: 60,
+            points: [SweepPoint(minute: 0, delta: 0), SweepPoint(minute: 5, delta: 12)]
+        )
+        let justLogged = makeSweep(mealTime: mealTime(daysAgo: 0), carbs: 60, points: [])
+
+        // A meal logged seconds ago has no readings yet — it must not blank the card.
+        #expect(SweepStatistics.lapsSubject([justLogged, drawable])?.id == drawable.id)
+        #expect(SweepStatistics.lapsSubject([justLogged])?.id == justLogged.id)
+        #expect(SweepStatistics.lapsSubject([]) == nil)
+    }
+
+    @Test("a twin row states its age, size, response and why it qualified")
+    func twinRow() {
+        let twin = makeSweep(
+            mealTime: mealTime(daysAgo: 3), carbs: 78, ageDays: 3,
+            delta: 38, peakMinutes: 52
+        )
+        #expect(
+            SweepLapsFormatter.twinRow(twin, glucoseUnit: .mgdL) == "3D AGO · 78g · +38 (52 MIN) · CLEAN"
+        )
+    }
+
+    @Test("the y axis ticks span the domain without crowding the plot")
+    func yTicks() {
+        #expect(SweepChartMath.yTicksMgdl(domain: -20...100) == [-20, 0, 20, 40, 60, 80, 100])
+        // A wide domain steps coarser rather than printing fifteen labels.
+        let wide = SweepChartMath.yTicksMgdl(domain: -60...240)
+        #expect(wide.count <= 8)
+        #expect(wide.first == -60)
+        #expect(wide.contains(0))
+    }
+}
