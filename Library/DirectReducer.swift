@@ -491,7 +491,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
 
     // MARK: View State Persistence (DMNC-1293)
     case .setSelectedReportType(reportType: let reportType):
-        state.selectedReportType = reportType
+        // The Chart Lab gate is the single authority: a lab tab can never be
+        // selected while the lab is off, whichever surface dispatches it
+        // (P1-P5 add dispatch sites).
+        state.selectedReportType = (reportType.isLab && !state.showChartLab) ? .glucose : reportType
 
     case .setListSectionExpanded(sectionName: let sectionName, isExpanded: let isExpanded):
         state.listSectionExpanded[sectionName] = isExpanded

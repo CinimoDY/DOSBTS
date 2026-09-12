@@ -11,6 +11,10 @@
 //  Deliberately NOT a copy of ChartView: no marker lane, no content-width zoom,
 //  no prediction line, no raw-trace toggle. The shipping chart body is untouched.
 //
+//  The interaction logic lives in `LabCursorState` / `LabChartMath` / `LabDetent`
+//  so it is pinned by tests rather than only by eye; this file forwards events in
+//  and renders what comes back.
+//
 //  Nothing in the lab is dosing advice.
 //
 
@@ -27,6 +31,9 @@ struct LabChartView: View {
     /// Mark-sets this lab tab layers on. P0 ships every arm empty.
     let overlays: Set<ChartLabOverlay>
 
+    /// Hoisted so the tab's legend can say what the nub says.
+    @Binding var followStatus: LabFollowStatus
+
     var body: some View {
         VStack(spacing: 0) {
             LabDayPager()
@@ -34,15 +41,26 @@ struct LabChartView: View {
             unitRow
 
             GeometryReader { geo in
-                plotArea(height: chartHeight(available: geo.size.height))
+                plotArea(height: LabChartMath.chartHeight(
+                    available: geo.size.height,
+                    minimum: Config.minHeight,
+                    maximum: Config.maxHeight
+                ))
+                .onAppear { plotWidth = geo.size.width }
+                .onChange(of: geo.size.width) { plotWidth = geo.size.width }
             }
+            // The chart can compress, but never past its floor — otherwise a
+            // short available height (treatment banner mounted) eats into the
+            // readout strip instead (swiftui-vstack-overflow-sinks-safeareainset).
+            .frame(minHeight: Config.minHeight)
 
             LabReadoutStrip(
                 series: series,
-                cursor: stickyCursor,
-                range: stickyRange,
+                cursor: cursors.cursor,
+                range: cursors.range,
                 glucoseUnit: store.state.glucoseUnit,
-                height: Config.readoutHeight
+                pinnedHeight: Config.readoutHeight,
+                onClear: { cursors.clear() }
             )
             .padding(.horizontal, DOSSpacing.sm)
             .padding(.top, DOSSpacing.xs)
@@ -50,6 +68,13 @@ struct LabChartView: View {
         .onAppear { rebuild() }
         .onChange(of: inputs) { rebuild() }
         .onChange(of: store.state.chartZoomLevel) { reanchorAfterZoom() }
+        .onChange(of: store.state.selectedDate) {
+            // Another day's numbers under a cursor the user placed on this one
+            // would read as `n=0 · G —` with nothing visible to explain it.
+            cursors.clear()
+            lastDetentKey = nil
+            followStatus = .following
+        }
     }
 
     // MARK: Private
@@ -70,41 +95,37 @@ struct LabChartView: View {
         static let cursorStyle: StrokeStyle = .init(lineWidth: 1, dash: [3, 3])
         static let axisStyle: StrokeStyle = .init(lineWidth: 0.3, dash: [2, 3])
         static let tickStyle: StrokeStyle = .init(lineWidth: 4)
-        /// Mirrors ChartView.Config.zoomLevels (:614-619).
-        static let labelEvery: [Int: Int] = [3: 1, 6: 2, 12: 3, 24: 4]
         static let visibleHoursFallback = 3
         /// A cursor within this of an event is "on" it, for the detent tick.
         static let detentWindow: TimeInterval = 2 * 60
-        /// Two presses closer than this are a re-scrub, not an A→B range.
-        static let minRangeSeconds: TimeInterval = 5 * 60
+        /// Two presses closer together than this ON SCREEN are a re-scrub, not
+        /// an A→B measurement.
+        static let minRangePoints: CGFloat = 12
         /// Follow is "on" while the leading edge is within a minute of the end.
         static let followSlack: TimeInterval = 60
         /// Shorter than this, with no movement, is a tap (clear) — not a scrub.
         static let tapMaxDuration: TimeInterval = 0.35
+        static let tapMaxDistance: CGFloat = 10
         static let plotSideInset: CGFloat = 10
     }
 
     @State private var series: LabChartSeries = .empty
-    /// `chartXSelection(value:)` — resets to nil on release.
+    /// `chartXSelection(value:)` — non-nil while the finger is down, nil on release.
     @State private var liveSelection: Date? = nil
     /// What actually renders: survives the release.
-    @State private var stickyCursor: Date? = nil
-    @State private var liveRange: ClosedRange<Date>? = nil
-    @State private var stickyRange: ClosedRange<Date>? = nil
-    /// True while one press-and-drag is in flight, so a continuing drag moves
-    /// the current cursor instead of opening a new range.
-    @State private var selectionSessionActive = false
-    /// The A end while B is being dragged.
-    @State private var rangeAnchor: Date? = nil
+    @State private var cursors = LabCursorState()
 
     @State private var scrollPosition: Date = Date()
-    @State private var isFollowing = true
-    @State private var unseenReadings = 0
+    /// The newest reading time at the moment the chart was last caught up.
+    @State private var lastSeenReadingTime: Date? = nil
     @State private var lastDetentKey: String? = nil
     /// When the current press began, so a tap can be told from a scrub.
     @State private var pressStartedAt: Date? = nil
+    @State private var plotWidth: CGFloat = 0
 
-    private let calculationQueue = DispatchQueue(label: "dosbts.lab-chart-calculation", qos: .utility)
+    /// `static` so rebuilds serialise on ONE queue: a `let` on a `View` struct
+    /// allocates a fresh queue for every instance SwiftUI makes.
+    private static let calculationQueue = DispatchQueue(label: "dosbts.lab-chart-calculation", qos: .utility)
 
     // MARK: Layout
 
@@ -121,7 +142,13 @@ struct LabChartView: View {
 
     @ViewBuilder
     private func plotArea(height: CGFloat) -> some View {
-        if series.isEmpty || series.domainStart >= series.domainEnd {
+        if series.domainStart >= series.domainEnd {
+            // A day with one reading (or none at all) has no domain to plot. A
+            // loading pulse here would spin forever.
+            emptyState
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
+        } else if series.isEmpty {
             VStack {
                 Spacer()
                 FiguresLoadingView.inline
@@ -133,7 +160,7 @@ struct LabChartView: View {
             chart
                 .frame(height: height)
                 .overlay(alignment: .topTrailing) {
-                    if !isFollowing, unseenReadings > 0 {
+                    if followStatus.unseen > 0 {
                         followNub
                     }
                 }
@@ -141,10 +168,22 @@ struct LabChartView: View {
         }
     }
 
-    /// Derives from the space actually available — never from `UIScreen`
-    /// (swiftui-vstack-overflow-sinks-safeareainset).
-    private func chartHeight(available: CGFloat) -> CGFloat {
-        max(Config.minHeight, min(Config.maxHeight, available))
+    private var emptyState: some View {
+        VStack {
+            Spacer()
+            VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
+                Text("NO READINGS TO PLOT")
+                    .font(DOSTypography.bodySmall)
+                    .foregroundStyle(AmberTheme.cgaCyan)
+                Text("n=\(series.readingCount) · a day needs two readings before it has a shape")
+                    .font(DOSTypography.caption)
+                    .foregroundStyle(AmberTheme.amberDark)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dosCard(.info)
+            .padding(.horizontal, DOSSpacing.sm)
+            Spacer()
+        }
     }
 
     // MARK: Chart
@@ -299,7 +338,7 @@ struct LabChartView: View {
             }
 
             // MARK: Instrument cursors
-            if let range = stickyRange {
+            if let range = cursors.range {
                 RectangleMark(
                     xStart: .value("A", range.lowerBound),
                     xEnd: .value("B", range.upperBound),
@@ -312,7 +351,7 @@ struct LabChartView: View {
                 cursorRule(at: range.upperBound, label: "B \(range.upperBound.toLocalTime())")
                 cursorPoint(at: range.lowerBound)
                 cursorPoint(at: range.upperBound)
-            } else if let cursor = stickyCursor {
+            } else if let cursor = cursors.cursor {
                 cursorRule(at: cursor, label: cursor.toLocalTime())
                 cursorPoint(at: cursor)
             }
@@ -323,8 +362,10 @@ struct LabChartView: View {
         .chartXVisibleDomain(length: visibleDuration)
         .chartScrollPosition(x: $scrollPosition)
         .chartScrollTargetBehavior(.valueAligned(matching: DateComponents(minute: 0)))
+        // ONLY the value selection. A range binding here would be dead wiring
+        // that fights the two-press promotion below — A→B is built from two
+        // sticky presses, which is also the interaction the spec describes.
         .chartXSelection(value: $liveSelection)
-        .chartXSelection(range: $liveRange)
         .chartXAxis {
             AxisMarks(values: .stride(by: .hour, count: labelEvery)) { _ in
                 AxisGridLine(stroke: Config.axisStyle)
@@ -358,36 +399,51 @@ struct LabChartView: View {
         // IS the scrub gesture) deliberately does not.
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    if pressStartedAt == nil { pressStartedAt = Date() }
+                .onChanged { value in
+                    // The first event of a gesture carries no translation. Keying
+                    // off it means a gesture the scroll view CANCELS (no .onEnded,
+                    // so no reset) cannot strand a stale timestamp and kill
+                    // tap-to-clear until the next completed gesture.
+                    if value.translation == .zero || pressStartedAt == nil {
+                        pressStartedAt = value.time
+                    }
                 }
                 .onEnded { value in
-                    let held = pressStartedAt.map { Date().timeIntervalSince($0) } ?? 0
+                    let held = value.time.timeIntervalSince(pressStartedAt ?? value.time)
                     pressStartedAt = nil
-                    let moved = abs(value.translation.width) > 10 || abs(value.translation.height) > 10
-                    if !moved, held < Config.tapMaxDuration {
-                        clearCursors()
+
+                    if LabChartMath.isClearTap(
+                        held: held,
+                        translation: value.translation,
+                        maxDuration: Config.tapMaxDuration,
+                        maxDistance: Config.tapMaxDistance
+                    ) {
+                        cursors.clear()
                     }
                 }
         )
-        .onChange(of: liveSelection) { handleLiveSelection() }
-        .onChange(of: liveRange) { handleLiveRange() }
+        .onChange(of: liveSelection) {
+            cursors.apply(selection: liveSelection, minRange: minRangeSeconds)
+        }
         .onChange(of: scrollPosition) { updateFollowState() }
-        .onChange(of: stickyCursor) { fireDetentIfNeeded() }
+        .onChange(of: cursors.cursor) { fireDetentIfNeeded() }
     }
 
     private var followNub: some View {
         Button(action: jumpToNow) {
-            Text("◂ \(unseenReadings) NEW")
+            Text("◂ \(followStatus.unseen) NEW")
                 .font(DOSTypography.micro)
                 .foregroundStyle(AmberTheme.amber)
                 .dosCard(.toast, padding: DOSSpacing.xxs)
+                // INSIDE the label: outside the Button it is a transparent hole
+                // that swallows the tap and hands it to the clear gesture.
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(minWidth: 44, minHeight: 44)
         .padding(.trailing, DOSSpacing.lg)
         .padding(.top, DOSSpacing.xxs)
-        .accessibilityLabel("Scroll to now, \(unseenReadings) new readings")
+        .accessibilityLabel("Scroll to now, \(followStatus.unseen) new readings")
     }
 
     @ChartContentBuilder
@@ -430,9 +486,7 @@ struct LabChartView: View {
     }
 
     private var visibleHours: Int {
-        Config.labelEvery[store.state.chartZoomLevel] == nil
-            ? Config.visibleHoursFallback
-            : store.state.chartZoomLevel
+        LabChartMath.visibleHours(zoomLevel: store.state.chartZoomLevel, fallback: Config.visibleHoursFallback)
     }
 
     private var visibleDuration: TimeInterval {
@@ -440,7 +494,16 @@ struct LabChartView: View {
     }
 
     private var labelEvery: Int {
-        Config.labelEvery[visibleHours] ?? 1
+        LabChartMath.labelEvery(visibleHours: visibleHours)
+    }
+
+    /// 12 pt of plot, whatever that is worth in time at this zoom.
+    private var minRangeSeconds: TimeInterval {
+        LabChartMath.minRangeSeconds(
+            visibleDuration: visibleDuration,
+            plotWidth: plotWidth - 2 * Config.plotSideInset,
+            points: Config.minRangePoints
+        )
     }
 
     private var yAxisSteps: Double {
@@ -448,15 +511,16 @@ struct LabChartView: View {
     }
 
     /// Floor of the y domain's top, as the shipping chart forces it with an
-    /// invisible rule mark (:701-707). The domain grows past it when a reading
-    /// does, so an explicit scale can never clip a hyper.
+    /// invisible rule mark (:701-707).
     private var chartMinimum: Double {
         store.state.glucoseUnit == .mmolL ? 18 : 300
     }
 
     private var yMax: Double {
-        let plotted = series.glucose.map(\.value) + series.bloodGlucose.map(\.value)
-        return max(chartMinimum, (plotted.max() ?? 0).rounded(.up))
+        LabChartMath.yMax(
+            floor: chartMinimum,
+            plotted: series.glucose.map(\.value) + series.bloodGlucose.map(\.value)
+        )
     }
 
     private var alarmLow: Double {
@@ -478,7 +542,11 @@ struct LabChartView: View {
     }
 
     private var followEdge: Date {
-        max(series.domainStart, series.domainEnd.addingTimeInterval(-visibleDuration))
+        LabChartMath.followEdge(
+            domainStart: series.domainStart,
+            domainEnd: series.domainEnd,
+            visibleDuration: visibleDuration
+        )
     }
 
     // MARK: Series rebuild
@@ -489,108 +557,74 @@ struct LabChartView: View {
         guard store.state.appState == .active else { return }
 
         let snapshot = inputs
-        let previousCount = series.readingCount
-        let following = isFollowing
+        let wasFollowing = followStatus.isFollowing
+        let seen = lastSeenReadingTime
         let visible = visibleDuration
 
-        calculationQueue.async {
+        Self.calculationQueue.async {
             let built = LabChartSeriesBuilder.build(snapshot)
 
             DispatchQueue.main.async {
                 self.series = built
 
-                if following {
-                    self.scrollPosition = max(
-                        built.domainStart,
-                        built.domainEnd.addingTimeInterval(-visible)
+                if wasFollowing {
+                    self.scrollPosition = LabChartMath.followEdge(
+                        domainStart: built.domainStart,
+                        domainEnd: built.domainEnd,
+                        visibleDuration: visible
                     )
+                    self.markCaughtUp()
                 } else {
-                    self.unseenReadings += max(0, built.readingCount - previousCount)
+                    // By timestamp, never by array length — the store's window rolls.
+                    self.followStatus = .detached(unseen: LabChartMath.unseenCount(
+                        readingTimes: built.glucose.map(\.time),
+                        newerThan: seen
+                    ))
                 }
             }
         }
     }
 
     /// Changing `chartXVisibleDomain` re-anchors the scroll unless the position
-    /// is co-set, so the leading edge is re-asserted after the new length lands.
+    /// is co-set, so the leading edge is re-asserted after the new length lands —
+    /// and the follow state is recomputed, because re-asserting an equal value
+    /// fires no `.onChange`.
     private func reanchorAfterZoom() {
-        let edge = isFollowing ? followEdge : scrollPosition
+        let edge = followStatus.isFollowing ? followEdge : scrollPosition
         DispatchQueue.main.async {
             self.scrollPosition = edge
+            self.updateFollowState()
         }
     }
 
     private func updateFollowState() {
-        isFollowing = scrollPosition >= series.domainEnd
-            .addingTimeInterval(-visibleDuration - Config.followSlack)
+        let following = LabChartMath.isFollowing(
+            scrollPosition: scrollPosition,
+            domainEnd: series.domainEnd,
+            visibleDuration: visibleDuration,
+            slack: Config.followSlack
+        )
 
-        if isFollowing {
-            unseenReadings = 0
+        if following {
+            markCaughtUp()
+        } else if followStatus.isFollowing {
+            followStatus = .detached(unseen: 0)
+            lastSeenReadingTime = series.glucose.last?.time
         }
+    }
+
+    /// The newest reading is in view: nothing is unseen, and this is the mark
+    /// everything later counts against.
+    private func markCaughtUp() {
+        followStatus = .following
+        lastSeenReadingTime = series.glucose.last?.time
     }
 
     private func jumpToNow() {
         withAnimation(AnimationTokens.snappy) {
             scrollPosition = followEdge
         }
-        isFollowing = true
-        unseenReadings = 0
-    }
-
-    // MARK: Cursor arbitration
-
-    /// Scroll is a plain drag (native). Scrub is press-and-drag: the built-in
-    /// selection gesture on a scrollable chart. Its binding resets to nil on
-    /// release, so the sticky copy is what renders — and the NEXT press promotes
-    /// the standing cursor to A and the new position to B.
-    private func handleLiveSelection() {
-        guard let date = liveSelection else {
-            selectionSessionActive = false
-            return
-        }
-
-        if selectionSessionActive {
-            if rangeAnchor != nil {
-                extendRange(to: date)
-            } else {
-                stickyCursor = date
-            }
-            return
-        }
-
-        selectionSessionActive = true
-
-        if let anchor = stickyCursor,
-           stickyRange == nil,
-           abs(date.timeIntervalSince(anchor)) >= Config.minRangeSeconds {
-            rangeAnchor = anchor
-            extendRange(to: date)
-        } else {
-            rangeAnchor = nil
-            stickyRange = nil
-            stickyCursor = date
-        }
-    }
-
-    /// The built-in range gesture, when the platform hands it to us.
-    private func handleLiveRange() {
-        guard let range = liveRange else { return }
-        stickyCursor = nil
-        rangeAnchor = range.lowerBound
-        stickyRange = range
-    }
-
-    private func extendRange(to date: Date) {
-        guard let anchor = rangeAnchor else { return }
-        stickyCursor = nil
-        stickyRange = min(anchor, date)...max(anchor, date)
-    }
-
-    private func clearCursors() {
-        stickyCursor = nil
-        stickyRange = nil
-        rangeAnchor = nil
-        lastDetentKey = nil
+        markCaughtUp()
     }
 
     // MARK: Detents
@@ -599,36 +633,29 @@ struct LabChartView: View {
     /// alarm bound. Silent through the night profile, mirroring the celebration
     /// toast's night gate.
     private func fireDetentIfNeeded() {
-        guard let cursor = stickyCursor else {
+        guard let cursor = cursors.cursor else {
             lastDetentKey = nil
             return
         }
 
-        let key = detentKey(at: cursor)
-        guard key != lastDetentKey else { return }
+        let key = series.detentKey(
+            at: cursor,
+            alarmLow: alarmLow,
+            alarmHigh: alarmHigh,
+            window: Config.detentWindow
+        )
+        let feedback = LabDetent.feedback(
+            newKey: key,
+            previousKey: lastDetentKey,
+            isNight: store.state.activeAlarmProfile == .night
+        )
         lastDetentKey = key
 
-        guard let key, store.state.activeAlarmProfile != .night else { return }
-
-        let isBound = key == "low" || key == "high"
-        DirectNotifications.shared.hapticFeedback(isBound ? .medium : .light)
-    }
-
-    private func detentKey(at date: Date) -> String? {
-        if let meal = series.meals.first(where: { abs($0.time.timeIntervalSince(date)) <= Config.detentWindow }) {
-            return "meal-\(meal.id)"
+        switch feedback {
+        case .light: DirectNotifications.shared.hapticFeedback(.light)
+        case .medium: DirectNotifications.shared.hapticFeedback(.medium)
+        case nil: break
         }
-        if let dose = series.insulin.first(where: { abs($0.starts.timeIntervalSince(date)) <= Config.detentWindow }) {
-            return "insulin-\(dose.id)"
-        }
-        if let exercise = series.exercise.first(where: { abs($0.startTime.timeIntervalSince(date)) <= Config.detentWindow }) {
-            return "exercise-\(exercise.id)"
-        }
-        if let reading = series.nearestGlucose(at: date) {
-            if reading.value <= alarmLow { return "low" }
-            if reading.value >= alarmHigh { return "high" }
-        }
-        return nil
     }
 }
 
@@ -701,23 +728,42 @@ private struct LabReadoutStrip: View {
     let cursor: Date?
     let range: ClosedRange<Date>?
     let glucoseUnit: GlucoseUnit
-    let height: CGFloat
+    /// ONE height for all three states — never per branch.
+    let pinnedHeight: CGFloat
+    let onClear: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            if let range {
-                rangeContent(range)
-            } else if let cursor {
-                cursorContent(cursor)
-            } else {
-                Text("TOUCH & HOLD TO MEASURE · DRAG TO SCROLL")
-                    .font(DOSTypography.label)
-                    .foregroundStyle(AmberTheme.textFaint)
+        HStack(spacing: DOSSpacing.xs) {
+            VStack(alignment: .leading, spacing: 3) {
+                if let range {
+                    rangeContent(range)
+                } else if let cursor {
+                    cursorContent(cursor)
+                } else {
+                    Text("TOUCH & HOLD TO MEASURE · DRAG TO SCROLL")
+                        .font(DOSTypography.label)
+                        .foregroundStyle(AmberTheme.textFaint)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            if cursor != nil || range != nil {
+                // The escape hatch: always reachable, even if a gesture is
+                // mid-flight and the tap-to-clear is momentarily unavailable.
+                Button(action: onClear) {
+                    Text(verbatim: "×")
+                        .font(DOSTypography.mono(size: 17, weight: .bold))
+                        .foregroundStyle(AmberTheme.amberDark)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear measurement")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .dosCard(.toast, padding: DOSSpacing.xs)
-        .frame(height: height)
+        .frame(height: pinnedHeight)
         .accessibilityElement(children: .combine)
     }
 
@@ -743,6 +789,8 @@ private struct LabReadoutStrip: View {
         .font(DOSTypography.label)
         .foregroundStyle(AmberTheme.amber)
         .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
 
         HStack(spacing: DOSSpacing.sm) {
             if let meal, let carbs = meal.carbs {
@@ -755,6 +803,8 @@ private struct LabReadoutStrip: View {
         .font(DOSTypography.label)
         .foregroundStyle(AmberTheme.amber)
         .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
     }
 
     // MARK: Range state
@@ -772,6 +822,9 @@ private struct LabReadoutStrip: View {
         }
         .font(DOSTypography.label)
         .monospacedDigit()
+        // 12-hour locales render `A 11:11 AM → B 12:29 PM`.
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
 
         HStack(spacing: DOSSpacing.sm) {
             if let first = summary.first, let last = summary.last {

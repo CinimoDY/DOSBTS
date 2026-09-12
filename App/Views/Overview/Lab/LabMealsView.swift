@@ -10,13 +10,20 @@
 import SwiftUI
 
 struct LabMealsView: View {
+    /// Owned here so the legend and the chart's `◂ N NEW` nub can never disagree
+    /// about whether the view is pinned to the newest reading.
+    @State private var followStatus: LabFollowStatus = .following
+
     var body: some View {
         VStack(spacing: 0) {
-            LabChartView(overlays: ReportType.labMeals.labOverlays)
+            LabChartView(
+                overlays: ReportType.labMeals.labOverlays,
+                followStatus: $followStatus
+            )
 
             LabLegendRow(items: [
                 LabLegendItem(glyph: "A→B", label: "MEASURES", color: AmberTheme.amberLight),
-                LabLegendItem(glyph: "●", label: "FOLLOW", color: AmberTheme.amber)
+                LabLegendItem.follow(followStatus)
             ])
 
             LabFooter()

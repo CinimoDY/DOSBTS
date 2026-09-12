@@ -156,6 +156,15 @@ struct AppState: DirectState {
         self.confirmedICR = defaults.confirmedICR
         self.selectedReportType = defaults.selectedReportType
         self.listSectionExpanded = defaults.listSectionExpanded
+
+        // Both keys are restored independently, so a lab tab persisted by a
+        // build where the gate was on would outlive the gate being turned off.
+        // The reducer prevents that at dispatch time; this closes the same hole
+        // at launch, for any future second writer of `showChartLab`.
+        if !showChartLab, selectedReportType.isLab {
+            selectedReportType = .glucose
+            defaults.selectedReportType = .glucose
+        }
     }
 
     // MARK: Internal

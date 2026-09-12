@@ -22,6 +22,21 @@ struct HeartRateSample: Equatable {
     let bpm: Double
 }
 
+// MARK: - LabInsulinDose
+
+/// An insulin delivery at its TRUE time.
+///
+/// `InsulinDatapoint` deliberately clamps `starts`/`ends` into the chart domain
+/// so an out-of-domain basal bar still draws inside the plot — which means it
+/// lies about when a dose happened. Summaries and detents read this instead, or
+/// a sensor gap piles every earlier bolus onto the domain's first minute.
+struct LabInsulinDose: Equatable {
+    let id: String
+    let starts: Date
+    let units: Double
+    let type: InsulinType
+}
+
 // MARK: - IOBSample
 
 struct IOBSample: Equatable {
@@ -68,11 +83,16 @@ struct LabChartInputs: Equatable {
         self.alarmHigh = state.alarmHigh
         self.bolusPreset = state.bolusInsulinPreset
         self.basalDIAMinutes = state.basalDIAMinutes
-        self.showSmoothed = DirectConfig.showSmoothedGlucose && state.showSmoothedGlucose
+        let showSmoothed = DirectConfig.showSmoothedGlucose && state.showSmoothedGlucose
+        self.showSmoothed = showSmoothed
         // `state.smoothThreshold` is `Date() - n`, i.e. a different value on every
         // read. Floored to the minute it can still move an equality check, but at
-        // most once a minute instead of on every render.
-        self.smoothThreshold = state.smoothThreshold.toRounded(on: 1, .minute)
+        // most once a minute instead of on every render — and when smoothing is
+        // off it is not read at all, so a fixed sentinel keeps those users off the
+        // once-a-minute rebuild entirely.
+        self.smoothThreshold = showSmoothed
+            ? state.smoothThreshold.toRounded(on: 1, .minute)
+            : Date(timeIntervalSince1970: 0)
         self.selectedDate = state.selectedDate
         self.overlays = overlays
     }
@@ -155,7 +175,10 @@ struct LabChartSeries {
     /// Minute-rounded keys, first wins (mirrors ChartView.swift:829-833).
     var glucoseByMinute: [Date: GlucoseDatapoint]
     var bloodGlucose: [GlucoseDatapoint]
+    /// Clamped to the domain — for DRAWING only.
     var insulin: [InsulinDatapoint]
+    /// Unclamped — for every number and every detent.
+    var insulinDoses: [LabInsulinDose]
     var iob: [IOBSample]
     var meals: [MealDatapoint]
     var exercise: [ExerciseDatapoint]
@@ -176,6 +199,7 @@ struct LabChartSeries {
             glucoseByMinute: [:],
             bloodGlucose: [],
             insulin: [],
+            insulinDoses: [],
             iob: [],
             meals: [],
             exercise: [],
@@ -207,6 +231,26 @@ struct LabChartSeries {
         })?.total
     }
 
+    /// What the cursor is sitting on, or nil for open ground. Event ids beat
+    /// alarm bounds: crossing a meal you logged is more informative than
+    /// crossing a threshold you set.
+    func detentKey(at date: Date, alarmLow: Double, alarmHigh: Double, window: TimeInterval) -> String? {
+        if let meal = meals.first(where: { abs($0.time.timeIntervalSince(date)) <= window }) {
+            return "meal-\(meal.id)"
+        }
+        if let dose = insulinDoses.first(where: { abs($0.starts.timeIntervalSince(date)) <= window }) {
+            return "insulin-\(dose.id)"
+        }
+        if let exercise = exercise.first(where: { abs($0.startTime.timeIntervalSince(date)) <= window }) {
+            return "exercise-\(exercise.id)"
+        }
+        if let reading = nearestGlucose(at: date) {
+            if reading.value <= alarmLow { return LabDetent.lowKey }
+            if reading.value >= alarmHigh { return LabDetent.highKey }
+        }
+        return nil
+    }
+
     /// Aggregate for the A/B readout — every number carries its `n`.
     func summary(over range: ClosedRange<Date>) -> LabRangeSummary {
         let inside = glucose.filter { range.contains($0.time) }
@@ -215,9 +259,9 @@ struct LabChartSeries {
             .filter { range.contains($0.time) }
             .compactMap(\.carbs)
             .reduce(0, +)
-        let units = insulin
+        let units = insulinDoses
             .filter { range.contains($0.starts) && $0.type != .basal }
-            .map(\.value)
+            .map(\.units)
             .reduce(0, +)
         let heartRates = heartRate.filter { range.contains($0.time) }
 
@@ -296,6 +340,9 @@ enum LabChartSeriesBuilder {
             }
 
         let insulin = inputs.insulin.map { $0.toDatapoint(minDate: domainStart, maxDate: domainEnd) }
+        let insulinDoses = inputs.insulin.map {
+            LabInsulinDose(id: $0.id.uuidString, starts: $0.starts, units: $0.units, type: $0.type)
+        }
 
         return LabChartSeries(
             domainStart: domainStart,
@@ -305,6 +352,7 @@ enum LabChartSeriesBuilder {
             glucoseByMinute: glucoseByMinute,
             bloodGlucose: bloodGlucose,
             insulin: insulin,
+            insulinDoses: insulinDoses,
             iob: iobSamples(inputs, from: domainStart, to: domainEnd),
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },

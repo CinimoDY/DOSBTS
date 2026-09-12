@@ -381,3 +381,418 @@ struct LabChartSeriesBuilderTests {
         #expect(value > 9.5 && value < 10.5)
     }
 }
+
+// MARK: - Lab cursor state
+
+@Suite("Lab cursor state")
+struct LabCursorStateTests {
+    private static let base = Date(timeIntervalSince1970: 1_757_664_000)
+    private let minRange: TimeInterval = 5 * 60
+
+    private func at(_ minutes: Int) -> Date {
+        Self.base.addingTimeInterval(TimeInterval(minutes * 60))
+    }
+
+    @Test("a press sets a single cursor and the release keeps it")
+    func pressThenRelease() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        #expect(state.cursor == at(10))
+        #expect(state.range == nil)
+
+        state.apply(selection: nil, minRange: minRange)
+        #expect(state.cursor == at(10), "the sticky cursor must survive the release")
+    }
+
+    @Test("dragging inside one press moves the cursor instead of opening a range")
+    func dragMovesCursor() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        state.apply(selection: at(30), minRange: minRange)
+        #expect(state.cursor == at(30))
+        #expect(state.range == nil, "one press is one cursor, however far it travels")
+    }
+
+    @Test("a second press promotes the standing cursor to A and the new one to B")
+    func secondPressOpensRange() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+
+        state.apply(selection: at(40), minRange: minRange)
+        #expect(state.range == at(10)...at(40))
+        #expect(state.cursor == nil)
+    }
+
+    @Test("A and B order themselves, so measuring backwards works")
+    func rangeOrdersItself() {
+        var state = LabCursorState()
+        state.apply(selection: at(40), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+        state.apply(selection: at(10), minRange: minRange)
+        #expect(state.range == at(10)...at(40))
+    }
+
+    @Test("dragging the second press moves B")
+    func dragMovesB() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+        state.apply(selection: at(40), minRange: minRange)
+        state.apply(selection: at(70), minRange: minRange)
+        #expect(state.range == at(10)...at(70))
+    }
+
+    @Test("a third press starts over with a single cursor")
+    func thirdPressResets() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+        state.apply(selection: at(40), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+
+        state.apply(selection: at(80), minRange: minRange)
+        #expect(state.range == nil)
+        #expect(state.cursor == at(80))
+    }
+
+    @Test("a second press closer than minRange is a re-scrub, not a measurement")
+    func nearSecondPressIsRescrub() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+
+        state.apply(selection: at(12), minRange: minRange)
+        #expect(state.range == nil)
+        #expect(state.cursor == at(12))
+    }
+
+    @Test("clear empties both, and the next press starts fresh")
+    func clearResets() {
+        var state = LabCursorState()
+        state.apply(selection: at(10), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+        state.apply(selection: at(40), minRange: minRange)
+        state.apply(selection: nil, minRange: minRange)
+        #expect(state.range != nil)
+
+        state.clear()
+        #expect(state.cursor == nil)
+        #expect(state.range == nil)
+        #expect(state.isEmpty)
+
+        state.apply(selection: at(90), minRange: minRange)
+        #expect(state.cursor == at(90))
+        #expect(state.range == nil)
+    }
+}
+
+// MARK: - Lab chart math
+
+@Suite("Lab chart math")
+struct LabChartMathTests {
+    private static let base = Date(timeIntervalSince1970: 1_757_664_000)
+
+    private func at(_ minutes: Int) -> Date {
+        Self.base.addingTimeInterval(TimeInterval(minutes * 60))
+    }
+
+    @Test("chart height is clamped both ways")
+    func chartHeightClamps() {
+        #expect(LabChartMath.chartHeight(available: 500, minimum: 140, maximum: 310) == 310)
+        #expect(LabChartMath.chartHeight(available: 80, minimum: 140, maximum: 310) == 140)
+        #expect(LabChartMath.chartHeight(available: 220, minimum: 140, maximum: 310) == 220)
+    }
+
+    @Test("an unknown zoom level falls back, a known one passes through")
+    func visibleHoursFallback() {
+        #expect(LabChartMath.visibleHours(zoomLevel: 6, fallback: 3) == 6)
+        #expect(LabChartMath.visibleHours(zoomLevel: 24, fallback: 3) == 24)
+        #expect(LabChartMath.visibleHours(zoomLevel: 5, fallback: 3) == 3)
+        #expect(LabChartMath.visibleHours(zoomLevel: 0, fallback: 3) == 3)
+    }
+
+    @Test("hour labels thin out with the window, mirroring ChartView.Config.zoomLevels")
+    func labelEvery() {
+        #expect(LabChartMath.labelEvery(visibleHours: 3) == 1)
+        #expect(LabChartMath.labelEvery(visibleHours: 6) == 2)
+        #expect(LabChartMath.labelEvery(visibleHours: 12) == 3)
+        #expect(LabChartMath.labelEvery(visibleHours: 24) == 4)
+        #expect(LabChartMath.labelEvery(visibleHours: 7) == 1)
+    }
+
+    @Test("yMax is a floor the data can push past, never a ceiling that clips")
+    func yMaxFloor() {
+        #expect(LabChartMath.yMax(floor: 300, plotted: [80, 120, 260]) == 300)
+        #expect(LabChartMath.yMax(floor: 300, plotted: []) == 300)
+        // A hyper above the floor must stay visible — SensorGlucose clamps at 501.
+        #expect(LabChartMath.yMax(floor: 300, plotted: [80, 412.4]) == 413)
+        #expect(LabChartMath.yMax(floor: 18, plotted: [4.2, 22.7]) == 23)
+    }
+
+    @Test("the follow edge is the leading edge, clamped to the domain start")
+    func followEdge() {
+        #expect(LabChartMath.followEdge(domainStart: at(0), domainEnd: at(600), visibleDuration: 3600) == at(540))
+        // A domain shorter than the window cannot scroll behind its own start.
+        #expect(LabChartMath.followEdge(domainStart: at(0), domainEnd: at(30), visibleDuration: 3600) == at(0))
+    }
+
+    @Test("follow is on while the newest reading is in view")
+    func isFollowing() {
+        let end = at(600)
+        #expect(LabChartMath.isFollowing(scrollPosition: at(540), domainEnd: end, visibleDuration: 3600, slack: 60))
+        #expect(LabChartMath.isFollowing(scrollPosition: at(539), domainEnd: end, visibleDuration: 3600, slack: 60))
+        #expect(!LabChartMath.isFollowing(scrollPosition: at(400), domainEnd: end, visibleDuration: 3600, slack: 60))
+    }
+
+    // The bug this pins: the store hands the chart a ROLLING 24 h window
+    // (SensorGlucoseStore.swift:328, `datetime('now','-24 hours')`), so in steady
+    // state one reading enters as one ages out and an array-length delta is 0
+    // forever — the nub would never appear. Count by timestamp instead.
+    @Test("unseen readings are counted by timestamp, not by array length")
+    func unseenSurvivesTheRollingWindow() {
+        let before = [at(0), at(5), at(10), at(15)]
+        let after = [at(5), at(10), at(15), at(20)]   // one in, one out — same count
+
+        let newestSeen = before.last
+        #expect(before.count == after.count, "the fixture must roll, not grow")
+        #expect(LabChartMath.unseenCount(readingTimes: after, newerThan: newestSeen) == 1)
+    }
+
+    @Test("unseen counts every reading past the mark, and none before it")
+    func unseenCounting() {
+        let times = [at(0), at(5), at(10), at(15)]
+        #expect(LabChartMath.unseenCount(readingTimes: times, newerThan: at(5)) == 2)
+        #expect(LabChartMath.unseenCount(readingTimes: times, newerThan: at(15)) == 0)
+        #expect(LabChartMath.unseenCount(readingTimes: times, newerThan: nil) == 0, "no mark yet means nothing is unseen")
+    }
+
+    @Test("the A→B minimum is a screen distance, not a fixed duration")
+    func minRangeIsScreenDistance() {
+        // 12 pt of a 300 pt plot showing 3 h == 432 s; the same 12 pt of a 24 h
+        // window is eight times longer in time.
+        let threeHours = LabChartMath.minRangeSeconds(visibleDuration: 3 * 3600, plotWidth: 300, points: 12)
+        let twentyFour = LabChartMath.minRangeSeconds(visibleDuration: 24 * 3600, plotWidth: 300, points: 12)
+        #expect(abs(threeHours - 432) < 0.5)
+        #expect(abs(twentyFour - threeHours * 8) < 1)
+        // Degenerate width must not divide by zero.
+        #expect(LabChartMath.minRangeSeconds(visibleDuration: 3600, plotWidth: 0, points: 12) > 0)
+    }
+
+    @Test("a clear tap is short and still; a scrub press is neither")
+    func clearTapDiscrimination() {
+        #expect(LabChartMath.isClearTap(held: 0.1, translation: .zero, maxDuration: 0.35, maxDistance: 10))
+        #expect(!LabChartMath.isClearTap(held: 0.8, translation: .zero, maxDuration: 0.35, maxDistance: 10))
+        #expect(!LabChartMath.isClearTap(held: 0.1, translation: CGSize(width: 40, height: 0), maxDuration: 0.35, maxDistance: 10))
+        #expect(!LabChartMath.isClearTap(held: 0.1, translation: CGSize(width: 0, height: 40), maxDuration: 0.35, maxDistance: 10))
+    }
+}
+
+// MARK: - Lab detents
+
+@Suite("Lab detents")
+struct LabDetentTests {
+    @Test("a repeated key is silent; a changed key ticks")
+    func onlyFiresOnChange() {
+        #expect(LabDetent.feedback(newKey: "meal-1", previousKey: nil, isNight: false) == .light)
+        #expect(LabDetent.feedback(newKey: "meal-1", previousKey: "meal-1", isNight: false) == nil)
+        #expect(LabDetent.feedback(newKey: nil, previousKey: "meal-1", isNight: false) == nil)
+    }
+
+    @Test("alarm bounds tick harder than events")
+    func boundsAreMedium() {
+        #expect(LabDetent.feedback(newKey: "low", previousKey: nil, isNight: false) == .medium)
+        #expect(LabDetent.feedback(newKey: "high", previousKey: nil, isNight: false) == .medium)
+        #expect(LabDetent.feedback(newKey: "insulin-7", previousKey: nil, isNight: false) == .light)
+    }
+
+    @Test("the night profile silences every detent")
+    func nightGate() {
+        #expect(LabDetent.feedback(newKey: "meal-1", previousKey: nil, isNight: true) == nil)
+        #expect(LabDetent.feedback(newKey: "low", previousKey: nil, isNight: true) == nil)
+    }
+}
+
+// MARK: - Lab follow status
+
+@Suite("Lab follow status")
+struct LabFollowStatusTests {
+    @Test("following carries no unseen count")
+    func following() {
+        #expect(LabFollowStatus.following.isFollowing)
+        #expect(LabFollowStatus.following.unseen == 0)
+    }
+
+    @Test("detached carries its own n")
+    func detached() {
+        let status = LabFollowStatus.detached(unseen: 3)
+        #expect(!status.isFollowing)
+        #expect(status.unseen == 3)
+    }
+}
+
+// MARK: - Unclamped insulin (sensor-gap regression)
+
+@Suite("Lab series, unclamped insulin")
+struct LabInsulinClampTests {
+    private static let base = Date(timeIntervalSince1970: 1_757_664_000)
+
+    private func reading(_ minutesFromBase: Int, _ value: Int) -> SensorGlucose {
+        SensorGlucose(
+            timestamp: Self.base.addingTimeInterval(TimeInterval(minutesFromBase * 60)),
+            rawGlucoseValue: value,
+            intGlucoseValue: value
+        )
+    }
+
+    private func dose(_ minutesFromBase: Int, _ units: Double, _ type: InsulinType) -> InsulinDelivery {
+        let at = Self.base.addingTimeInterval(TimeInterval(minutesFromBase * 60))
+        return InsulinDelivery(starts: at, ends: at, units: units, type: type)
+    }
+
+    /// A sensor gap: two deliveries are hours older than the first reading, so
+    /// `InsulinDelivery.toDatapoint(minDate:maxDate:)` CLAMPS their `starts` to
+    /// `domainStart`. Reading the summary off the clamped datapoints piled them
+    /// all onto the domain's first minute.
+    private func gapSeries() -> LabChartSeries {
+        LabChartSeriesBuilder.build(
+            LabChartInputs(
+                sensorGlucose: [reading(0, 100), reading(60, 140)],
+                bloodGlucose: [],
+                meals: [],
+                insulin: [dose(-240, 9, .mealBolus), dose(-180, 5, .correctionBolus), dose(20, 4, .correctionBolus)],
+                iobDeliveries: [],
+                exercise: [],
+                heartRate: [],
+                glucoseUnit: .mgdL,
+                alarmLow: 80,
+                alarmHigh: 180,
+                bolusPreset: .rapidActing,
+                basalDIAMinutes: 24 * 60,
+                showSmoothed: false,
+                smoothThreshold: Self.base,
+                selectedDate: Self.base,
+                overlays: []
+            )
+        )
+    }
+
+    @Test("doses from before the domain never land in an A→B total")
+    func clampedDosesStayOutOfTheSummary() {
+        let series = gapSeries()
+        let firstHalf = series.summary(over: Self.base...Self.base.addingTimeInterval(30 * 60))
+        #expect(firstHalf.insulinUnits == 4, "only the in-window 4 U correction counts")
+
+        let wholeDomain = series.summary(over: Self.base...Self.base.addingTimeInterval(60 * 60))
+        #expect(wholeDomain.insulinUnits == 4, "the two pre-domain doses are not in the domain either")
+    }
+
+    @Test("a clamped dose does not invent a detent at the domain start")
+    func clampedDosesStayOutOfTheDetents() {
+        let series = gapSeries()
+        #expect(series.detentKey(at: Self.base, alarmLow: 80, alarmHigh: 180, window: 2 * 60) == nil)
+    }
+
+    @Test("the real dose still detents at its own time")
+    func realDoseStillDetents() {
+        let series = gapSeries()
+        let key = series.detentKey(
+            at: Self.base.addingTimeInterval(20 * 60),
+            alarmLow: 80,
+            alarmHigh: 180,
+            window: 2 * 60
+        )
+        #expect(key?.hasPrefix("insulin-") == true)
+    }
+
+    @Test("the basal bars still draw against the clamped domain")
+    func basalBarsKeepTheirClamp() {
+        let series = gapSeries()
+        // The drawing datapoints are deliberately still clamped — that is what
+        // keeps an out-of-domain basal bar inside the plot.
+        #expect(series.insulin.allSatisfy { $0.starts >= series.domainStart })
+        #expect(series.insulinDoses.contains { $0.starts < series.domainStart })
+    }
+}
+
+// MARK: - Chart Lab gate coherence
+
+@Suite("Chart Lab gate coherence")
+struct ChartLabGateTests {
+    @Test("turning the lab off persists the reset, not just the in-memory value")
+    func offResetPersists() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+
+        reduce(&state, .setShowChartLab(enabled: true))
+        reduce(&state, .setSelectedReportType(reportType: .labMeals))
+        #expect(defaults.selectedReportType == .labMeals)
+
+        reduce(&state, .setShowChartLab(enabled: false))
+        #expect(defaults.selectedReportType == .glucose, "a relaunch must not restore a tab the row no longer shows")
+        #expect(defaults.showChartLab == false)
+    }
+
+    @Test("a lab report type cannot be selected while the gate is off")
+    func labSelectionRefusedWhileGateOff() {
+        var state: DirectState = makeState()
+        reduce(&state, .setSelectedReportType(reportType: .labMeals))
+        #expect(state.selectedReportType == .glucose)
+
+        reduce(&state, .setShowChartLab(enabled: true))
+        reduce(&state, .setSelectedReportType(reportType: .labNight))
+        #expect(state.selectedReportType == .labNight)
+    }
+
+    @Test("launch normalises a lab selection stranded by a gate that is off")
+    func initNormalisesStrandedSelection() {
+        let defaults = makeTestDefaults()
+        defaults.selectedReportType = .labMeals
+        defaults.showChartLab = false
+
+        let state = AppState(defaults: defaults)
+        #expect(state.selectedReportType == .glucose)
+        #expect(defaults.selectedReportType == .glucose, "the stranded key is cleared, not just masked")
+    }
+
+    @Test("launch leaves a lab selection alone while the gate is on")
+    func initKeepsValidLabSelection() {
+        let defaults = makeTestDefaults()
+        defaults.selectedReportType = .labSweep
+        defaults.showChartLab = true
+
+        let state = AppState(defaults: defaults)
+        #expect(state.selectedReportType == .labSweep)
+    }
+}
+
+// MARK: - Readout height source pin
+
+@Suite("Lab readout height")
+struct LabReadoutHeightTests {
+    // #filePath → …/DOSBTSTests/ChartLabTests.swift → repo root two levels up.
+    private static var labChartViewSource: String {
+        get throws {
+            let root = URL(fileURLWithPath: #filePath)
+                .deletingLastPathComponent()
+                .deletingLastPathComponent()
+            return try String(
+                contentsOf: root.appendingPathComponent("App/Views/Overview/Lab/LabChartView.swift"),
+                encoding: .utf8
+            )
+        }
+    }
+
+    /// The readout must never change height between its three states
+    /// (swiftui-viewbuilder-branch-height-mismatch). Structurally that means ONE
+    /// height, applied outside the branches — a per-branch `.frame(height:)`
+    /// would reintroduce the jump this pins against.
+    @Test("the pinned height is applied once, outside the state branches")
+    func heightAppliedOnceOutsideTheBranches() throws {
+        let source = try Self.labChartViewSource
+        #expect(source.contains("pinnedHeight: Config.readoutHeight"), "the strip is handed the pinned constant")
+
+        let applications = source.components(separatedBy: ".frame(height: pinnedHeight)").count - 1
+        #expect(applications == 1, "found \(applications) pinned-height applications; the readout must apply exactly one, outside its branches")
+    }
+}

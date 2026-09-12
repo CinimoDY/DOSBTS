@@ -24,6 +24,20 @@ struct LabLegendItem: Identifiable {
         self.label = label
         self.color = color
     }
+
+    /// The legend half of the FOLLOW story — the `◂ N NEW` nub is the other.
+    static func follow(_ status: LabFollowStatus) -> LabLegendItem {
+        switch status {
+        case .following:
+            return LabLegendItem(glyph: "●", label: "FOLLOW", color: AmberTheme.amber)
+        case .detached(let unseen):
+            return LabLegendItem(
+                glyph: "○",
+                label: unseen > 0 ? "FOLLOW OFF · \(unseen) NEW" : "FOLLOW OFF",
+                color: AmberTheme.amberDark
+            )
+        }
+    }
 }
 
 // MARK: - LabLegendRow
