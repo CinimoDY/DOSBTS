@@ -79,6 +79,9 @@ struct LabChartView: View {
         static let minRangeSeconds: TimeInterval = 5 * 60
         /// Follow is "on" while the leading edge is within a minute of the end.
         static let followSlack: TimeInterval = 60
+        /// Shorter than this, with no movement, is a tap (clear) — not a scrub.
+        static let tapMaxDuration: TimeInterval = 0.35
+        static let plotSideInset: CGFloat = 10
     }
 
     @State private var series: LabChartSeries = .empty
@@ -98,6 +101,8 @@ struct LabChartView: View {
     @State private var isFollowing = true
     @State private var unseenReadings = 0
     @State private var lastDetentKey: String? = nil
+    /// When the current press began, so a tap can be told from a scrub.
+    @State private var pressStartedAt: Date? = nil
 
     private let calculationQueue = DispatchQueue(label: "dosbts.lab-chart-calculation", qos: .utility)
 
@@ -111,6 +116,7 @@ struct LabChartView: View {
                 .foregroundStyle(AmberTheme.amberMuted)
         }
         .padding(.horizontal, DOSSpacing.xs)
+        .padding(.bottom, DOSSpacing.xxs)
     }
 
     @ViewBuilder
@@ -126,6 +132,11 @@ struct LabChartView: View {
         } else {
             chart
                 .frame(height: height)
+                .overlay(alignment: .topTrailing) {
+                    if !isFollowing, unseenReadings > 0 {
+                        followNub
+                    }
+                }
                 .accessibilityLabel("Lab chart")
         }
     }
@@ -335,28 +346,34 @@ struct LabChartView: View {
             }
         }
         .chartLegend(.hidden)
-        .chartOverlay { _ in
-            overlayChrome
+        // A little horizontal room so the edge hour labels are not clipped by
+        // the chart frame. No TOP inset: the chart's height budget is fixed, so
+        // insetting the plot downwards pushes the x-axis labels out of frame —
+        // the cursor labels get their headroom from `overflowResolution` instead.
+        .chartPlotStyle { plotArea in
+            plotArea.padding(.horizontal, Config.plotSideInset)
         }
+        // Simultaneous, so it never starves the scroll or the selection gesture.
+        // A quick tap on empty plot clears the cursors; a press-and-hold (which
+        // IS the scrub gesture) deliberately does not.
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if pressStartedAt == nil { pressStartedAt = Date() }
+                }
+                .onEnded { value in
+                    let held = pressStartedAt.map { Date().timeIntervalSince($0) } ?? 0
+                    pressStartedAt = nil
+                    let moved = abs(value.translation.width) > 10 || abs(value.translation.height) > 10
+                    if !moved, held < Config.tapMaxDuration {
+                        clearCursors()
+                    }
+                }
+        )
         .onChange(of: liveSelection) { handleLiveSelection() }
         .onChange(of: liveRange) { handleLiveRange() }
         .onChange(of: scrollPosition) { updateFollowState() }
         .onChange(of: stickyCursor) { fireDetentIfNeeded() }
-    }
-
-    /// Tap-to-clear plus the FOLLOW nub. The tap only claims taps, so the
-    /// press-and-drag selection gesture and the scroll gesture still reach the plot.
-    private var overlayChrome: some View {
-        ZStack(alignment: .topTrailing) {
-            Rectangle()
-                .fill(.clear)
-                .contentShape(Rectangle())
-                .onTapGesture { clearCursors() }
-
-            if !isFollowing, unseenReadings > 0 {
-                followNub
-            }
-        }
     }
 
     private var followNub: some View {
@@ -368,7 +385,8 @@ struct LabChartView: View {
         }
         .buttonStyle(.plain)
         .frame(minWidth: 44, minHeight: 44)
-        .padding(.trailing, DOSSpacing.md)
+        .padding(.trailing, DOSSpacing.lg)
+        .padding(.top, DOSSpacing.xxs)
         .accessibilityLabel("Scroll to now, \(unseenReadings) new readings")
     }
 
@@ -379,7 +397,7 @@ struct LabChartView: View {
             .lineStyle(Config.cursorStyle)
             .annotation(
                 position: .top,
-                overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
             ) {
                 Text(label)
                     .font(DOSTypography.microLabel)
@@ -476,10 +494,7 @@ struct LabChartView: View {
         let visible = visibleDuration
 
         calculationQueue.async {
-            let started = Date()
             let built = LabChartSeriesBuilder.build(snapshot)
-            // TEMP (P0 measurement) — removed before merge.
-            DirectLog.info("LabChartSeriesBuilder.build: \(Int(Date().timeIntervalSince(started) * 1000))ms, \(built.readingCount) readings, \(built.iob.count) iob samples")
 
             DispatchQueue.main.async {
                 self.series = built
@@ -722,7 +737,7 @@ private struct LabReadoutStrip: View {
                 Text("G \(formatted(reading.value))")
             }
             if let iob, iob >= 0.05 {
-                Text("IOB \(iob.asInsulin())U")
+                Text("IOB \(formatUnits(iob))")
             }
         }
         .font(DOSTypography.label)
@@ -774,7 +789,7 @@ private struct LabReadoutStrip: View {
                     .foregroundStyle(AmberTheme.amber)
             }
             if summary.insulinUnits > 0 {
-                Text("IN \(summary.insulinUnits.asInsulin())U")
+                Text("IN \(formatUnits(summary.insulinUnits))")
                     .foregroundStyle(AmberTheme.amber)
             }
             if summary.carbsGrams > 0 {
@@ -800,6 +815,12 @@ private struct LabReadoutStrip: View {
             ? GlucoseFormatters.mmolLFormatter
             : GlucoseFormatters.mgdLFormatter
         return formatter.string(from: value as NSNumber) ?? "—"
+    }
+
+    /// Same shape as the hero's IOB label (GlucoseView.swift:240-242), so the
+    /// lab and the hero never disagree on how many units they are showing.
+    private func formatUnits(_ value: Double) -> String {
+        String(format: "%.1fU", value)
     }
 
     private func signed(_ value: Double) -> String {
