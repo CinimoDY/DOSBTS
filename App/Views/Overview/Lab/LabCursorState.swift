@@ -118,8 +118,13 @@ enum LabChartMath {
         zoomLabelEvery[zoomLevel] == nil ? fallback : zoomLevel
     }
 
+    /// Hour-label stride. The four zoom chips have hand-picked values; an
+    /// unmapped span (the lab's whole-night window is 14 h) falls back to
+    /// "about seven labels across the plot", which is what the chips work out
+    /// to and what fits at phone width.
     static func labelEvery(visibleHours: Int) -> Int {
-        zoomLabelEvery[visibleHours] ?? 1
+        if let mapped = zoomLabelEvery[visibleHours] { return mapped }
+        return max(1, Int((Double(visibleHours) / 7.0).rounded(.up)))
     }
 
     /// The y domain's top is a FLOOR the data can push past — never a ceiling.

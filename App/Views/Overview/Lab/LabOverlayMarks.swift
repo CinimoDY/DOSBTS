@@ -24,11 +24,106 @@ enum LabOverlayMarks {
         case .regimeBands:
             noMarks // P2 fills this arm — regime bands.
         case .nightContext:
-            noMarks // P1 fills this arm — sleep stages, HR, cross-midnight ribbon.
+            nightContext(series: series, yMax: yMax)
         case .ghostBand:
             noMarks // P4 fills this arm — the personal 30-day band.
         case .factPins:
             noMarks // P5 fills this arm — fact pins.
+        }
+    }
+
+    // MARK: - P1 — night context (DMNC-1506)
+
+    /// What the night adds UNDER the trace: the sleep band with its awake gaps
+    /// carved out, the carried-in meal-response ribbons, the midnight rule, and
+    /// the night's first low.
+    ///
+    /// Heart rate is deliberately NOT here — `LabChartView` already draws it,
+    /// gated by `series.showsHeartRate`, which the window path forces on. Two
+    /// draws would mean two lines.
+    ///
+    /// No glow anywhere: shadows inside a `Chart{}` are a documented
+    /// performance trap.
+    @ChartContentBuilder
+    private static func nightContext(series: LabChartSeries, yMax: Double) -> some ChartContent {
+        let context = series.nightContext
+
+        // Time asleep, as a wash the trace reads through.
+        if let band = context.sleepBand {
+            RectangleMark(
+                xStart: .value("Asleep", band.start),
+                xEnd: .value("Wake", band.end),
+                yStart: .value("Bottom", 0),
+                yEnd: .value("Top", yMax)
+            )
+            .foregroundStyle(AmberTheme.cgaCyan.opacity(0.05))
+        }
+
+        // Awakenings, carved back out of it.
+        ForEach(context.awakeGaps, id: \.start) { gap in
+            RectangleMark(
+                xStart: .value("Awake", gap.start),
+                xEnd: .value("Asleep again", gap.end),
+                yStart: .value("Bottom", 0),
+                yEnd: .value("Top", yMax)
+            )
+            .foregroundStyle(AmberTheme.cgaCyan.opacity(0.25))
+        }
+
+        // The evening meal's two-hour response, carried across the left edge.
+        ForEach(series.mealRibbons) { ribbon in
+            RectangleMark(
+                xStart: .value("Meal", ribbon.start),
+                xEnd: .value("Response end", ribbon.end),
+                yStart: .value("Bottom", 0),
+                yEnd: .value("Top", yMax)
+            )
+            .foregroundStyle(AmberTheme.amber.opacity(0.1))
+            .annotation(
+                position: .top,
+                alignment: .leading,
+                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+            ) {
+                Text(ribbon.label)
+                    .font(DOSTypography.micro)
+                    .foregroundStyle(AmberTheme.amber)
+                    .monospacedDigit()
+            }
+        }
+
+        // The date boundary no shipping window can show.
+        if let midnight = context.midnight {
+            RuleMark(x: .value("Midnight", midnight))
+                .foregroundStyle(AmberTheme.amberDark)
+                .lineStyle(StrokeStyle(lineWidth: 1))
+                .annotation(
+                    position: .bottom,
+                    alignment: .leading,
+                    overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+                ) {
+                    Text(verbatim: "00:00")
+                        .font(DOSTypography.micro)
+                        .foregroundStyle(AmberTheme.amberDark)
+                        .monospacedDigit()
+                }
+        }
+
+        // The night's first low, labelled with the value itself.
+        if let hypo = context.hypo {
+            PointMark(
+                x: .value("Time", hypo.time),
+                y: .value("Glucose", hypo.value)
+            )
+            .symbolSize(0)
+            .annotation(
+                position: .bottom,
+                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+            ) {
+                Text(hypo.label)
+                    .font(DOSTypography.micro)
+                    .foregroundStyle(AmberTheme.cgaRed)
+                    .monospacedDigit()
+            }
         }
     }
 

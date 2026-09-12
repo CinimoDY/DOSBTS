@@ -34,6 +34,12 @@ struct LabChartView: View {
     /// Hoisted so the tab's legend can say what the nub says.
     @Binding var followStatus: LabFollowStatus
 
+    /// The whole-system window path (DMNC-1506). When set, the chart draws THIS
+    /// snapshot over its own interval instead of the store's day window, and the
+    /// visible domain is the whole window — a night is a thing you look at, not
+    /// a thing you scroll through.
+    var windowInputs: LabChartInputs? = nil
+
     var body: some View {
         VStack(spacing: 0) {
             LabDayPager()
@@ -308,7 +314,9 @@ struct LabChartView: View {
             }
 
             // MARK: Heart rate
-            if store.state.showHeartRateOverlay {
+            // Gated by the SERIES, not the setting, so the night window can
+            // force it on without drawing a second line from the overlay arm.
+            if series.showsHeartRate {
                 ForEach(series.heartRate.indices, id: \.self) { index in
                     let point = series.heartRate[index]
                     LineMark(
@@ -478,7 +486,12 @@ struct LabChartView: View {
     // MARK: Derived values
 
     private var inputs: LabChartInputs {
-        LabChartInputs(state: store.state, overlays: overlays)
+        windowInputs ?? LabChartInputs(state: store.state, overlays: overlays)
+    }
+
+    /// A fixed window shows all of itself; the day chart shows a zoom chip's worth.
+    private var isWindowed: Bool {
+        windowInputs?.domainOverride != nil
     }
 
     private var sortedOverlays: [ChartLabOverlay] {
@@ -490,11 +503,14 @@ struct LabChartView: View {
     }
 
     private var visibleDuration: TimeInterval {
-        TimeInterval(visibleHours * 3600)
+        if isWindowed {
+            return max(3600, series.domainEnd.timeIntervalSince(series.domainStart))
+        }
+        return TimeInterval(visibleHours * 3600)
     }
 
     private var labelEvery: Int {
-        LabChartMath.labelEvery(visibleHours: visibleHours)
+        LabChartMath.labelEvery(visibleHours: Int((visibleDuration / 3600).rounded()))
     }
 
     /// 12 pt of plot, whatever that is worth in time at this zoom.
