@@ -519,6 +519,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
             state.selectedReportType = .glucose
         }
 
+    // MARK: LAB: SWEEP (DMNC-1503)
+    case .setLabSweeps(evidence: let evidence):
+        state.labSweeps = evidence
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     case .setMarkerLanePosition(position: let position):
         state.markerLanePosition = position

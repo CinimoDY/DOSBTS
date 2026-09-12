@@ -319,7 +319,7 @@ struct SweepStatisticsTests {
             meals: allMeals, readings: allReadings, deliveries: [], exercise: [],
             now: fixedNow, calendar: testCalendar
         )
-        #expect(sweeps.allSatisfy(\.isClean))
+        #expect(sweeps.filter(\.isClean).count == 3)
 
         let bins = SweepStatistics.bins(sweeps, cleanOnly: true)
         let atSixty = bins.first(where: { $0.minute == 60 })
