@@ -28,42 +28,28 @@ struct MealOverlayDelta {
     let isLowConfidence: Bool
 }
 
+/// A thin wrapper over `ResponseKernel` since DMNC-1501 — the arithmetic it used
+/// to carry inline now lives in `Library/Content/ResponseWindow.swift` so the
+/// Chart Lab's meal ribbons, and later exercise and sleep, all read the same
+/// cause→effect window. The numbers are unchanged: `MealOverlayDeltaParityTests`
+/// runs the pre-refactor algorithm as an oracle against this function.
 func computeMealOverlayDelta(
     meal: MealEntry,
     isInProgress: Bool,
     sensorGlucoseValues: [SensorGlucose]
 ) -> MealOverlayDelta {
-    let windowEnd = isInProgress ? Date() : meal.timestamp.addingTimeInterval(2 * 60 * 60)
+    // The old `windowEnd`, expressed as the kernel's `now`: the kernel closes
+    // the window at `min(anchor + 2 h, now)`, which for an honestly-computed
+    // `isInProgress` is exactly the same instant.
+    let now = isInProgress ? Date() : meal.timestamp.addingTimeInterval(ResponseKernel.mealLagSeconds)
 
-    let readings = sensorGlucoseValues.filter { glucose in
-        glucose.timestamp >= meal.timestamp && glucose.timestamp <= windowEnd
-    }
+    let summary = ResponseKernel.summarize(
+        .meal(at: meal.timestamp),
+        readings: sensorGlucoseValues,
+        now: now
+    )
 
-    guard !readings.isEmpty else {
-        return MealOverlayDelta(delta: nil, isLowConfidence: false)
-    }
-
-    let baselineStart = meal.timestamp.addingTimeInterval(-15 * 60)
-    let baseline = sensorGlucoseValues
-        .filter { $0.timestamp >= baselineStart && $0.timestamp < meal.timestamp }
-        .last
-
-    let referenceGlucose: Int
-    if let baseline {
-        referenceGlucose = baseline.glucoseValue
-    } else if let first = readings.first {
-        referenceGlucose = first.glucoseValue
-    } else {
-        return MealOverlayDelta(delta: nil, isLowConfidence: false)
-    }
-
-    guard let peak = readings.max(by: { $0.glucoseValue < $1.glucoseValue }) else {
-        return MealOverlayDelta(delta: nil, isLowConfidence: false)
-    }
-    let delta = peak.glucoseValue - referenceGlucose
-    let isLowConfidence = readings.count < 4
-
-    return MealOverlayDelta(delta: delta, isLowConfidence: isLowConfidence)
+    return MealOverlayDelta(delta: summary.delta, isLowConfidence: summary.isLowConfidence)
 }
 
 // MARK: - Confounders
