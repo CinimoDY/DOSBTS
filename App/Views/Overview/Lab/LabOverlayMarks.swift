@@ -74,6 +74,7 @@ enum LabOverlayMarks {
                             )
                             .monospacedDigit()
                             .lineLimit(1)
+                            .fixedSize()
                             .padding(.horizontal, 2)
                             .background(AmberTheme.dosBlack.opacity(0.6))
                     }
@@ -98,9 +99,14 @@ enum LabOverlayMarks {
                 yEnd: .value("Top", yMax)
             )
             .foregroundStyle(ribbonFill(response))
+            // `position: .top` with BOTH axes fitted, never `.overlay`: an
+            // overlay annotation is laid out inside the mark's own width, so a
+            // label longer than its two-hour ribbon truncates to `+47 · 39 MI…`
+            // — and `n` is the part that would vanish.
             .annotation(
-                position: .overlay,
-                alignment: .topLeading,
+                position: .top,
+                alignment: .leading,
+                spacing: 0,
                 overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
             ) {
                 Text(response.ribbonLabel(glucoseUnit: series.glucoseUnit))
@@ -108,6 +114,7 @@ enum LabOverlayMarks {
                     .foregroundStyle(ribbonInk(response))
                     .monospacedDigit()
                     .lineLimit(1)
+                    .fixedSize()
                     .padding(.horizontal, 2)
                     .background(AmberTheme.dosBlack.opacity(0.75))
                     // Overlapping windows stack their labels instead of
@@ -149,15 +156,19 @@ enum LabOverlayMarks {
                 yEnd: .value("Top", yMax)
             )
             .foregroundStyle(AmberTheme.amber.opacity(0.05))
-            .annotation(
-                position: .overlay,
-                alignment: .center,
-                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
-            ) {
-                // A view, not a `.chartOverlay` hit-test: an overlay rectangle
-                // claims the whole plot and swallows scroll and selection
-                // (the P0 learning). This claims only its own 44 pt.
-                LabResidualMarker(segment: residual, glucoseUnit: series.glucoseUnit)
+            // A MARK, not a control. Views inside a scrollable Chart's
+            // annotations never receive taps — the scroll and selection
+            // gestures consume them (proven on the simulator: neither a
+            // `Button` nor an `.onTapGesture` here ever fired). The affordance
+            // is `LabResidualPromptRow`, a sibling BELOW the chart that claims
+            // only its own frame, so nothing in here has to win a gesture.
+            .annotation(position: .overlay, alignment: .center) {
+                Text(verbatim: "?")
+                    .font(DOSTypography.mono(size: 13, weight: .bold))
+                    .foregroundStyle(AmberTheme.amber)
+                    .frame(width: 22, height: 22)
+                    .background(AmberTheme.scrimHeavy)
+                    .allowsHitTesting(false)
             }
         }
     }
@@ -178,9 +189,13 @@ enum LabOverlayMarks {
                 yEnd: .value("Top", yMax)
             )
             .foregroundStyle(AmberTheme.surfaceTint)
+            // Same reason as the ribbon labels: an overlay annotation is
+            // clipped to the mark, and a band that starts off-screen would show
+            // `ESSED 14→18`.
             .annotation(
-                position: .overlay,
-                alignment: .top,
+                position: .top,
+                alignment: .center,
+                spacing: 0,
                 overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
             ) {
                 Text(band.label)
@@ -188,6 +203,7 @@ enum LabOverlayMarks {
                     .foregroundStyle(AmberTheme.amberLight)
                     .monospacedDigit()
                     .lineLimit(1)
+                    .fixedSize()
                     .padding(.horizontal, 3)
                     .padding(.vertical, 1)
                     .background(AmberTheme.scrimHeavy)
@@ -202,9 +218,13 @@ enum LabOverlayMarks {
     private enum Config {
         /// The prototype's stagger between overlapping ribbon labels.
         static let labelRowHeight: CGFloat = 12
-        /// The exercise strip owns the top 5 % of the plot; a regime label sits
-        /// below it rather than fighting it.
-        static let regimeLabelDrop: CGFloat = 16
+        /// How many rows the ribbon labels cycle through before wrapping.
+        static let labelRows: CGFloat = 4
+        // The plot's top band is shared: ribbon labels take the first four
+        // rows, then the regime label. Stacking them explicitly is what stops
+        // `STRESSED 14→18` printing over `NO BOLUS`, which is exactly what
+        // happened on the first simulator pass.
+        static let regimeLabelDrop: CGFloat = labelRowHeight * labelRows + 4
         static let stubStyle: StrokeStyle = .init(lineWidth: 1, dash: [3, 3])
     }
 
@@ -228,51 +248,5 @@ enum LabOverlayMarks {
         ForEach([Int](), id: \.self) { _ in
             RuleMark(y: .value("", 0))
         }
-    }
-}
-
-// MARK: - LabResidualMarker
-
-/// The `?` and its caption. Its own view so it can reach the app's ONE
-/// presentation root from inside the chart — no callback is threaded through
-/// `LabOverlayMarks`, which stays a pure function of the series, and no second
-/// `.sheet` is created (nested sheets are banned).
-private struct LabResidualMarker: View {
-    @EnvironmentObject var sheets: SheetCoordinator
-
-    let segment: ResidualSegment
-    let glucoseUnit: GlucoseUnit
-
-    var body: some View {
-        Button {
-            DirectNotifications.shared.hapticFeedback()
-            // The note opens at the excursion's START — the moment the user is
-            // being asked to remember, not the moment they tapped.
-            sheets.present(.journalNote(prefill: JournalNotePrefill(
-                timestamp: segment.start,
-                tag: nil
-            )))
-        } label: {
-            VStack(spacing: DOSSpacing.xxs) {
-                Text(ResidualDetector.label(for: segment, glucoseUnit: glucoseUnit))
-                    .font(DOSTypography.micro)
-                    .foregroundStyle(AmberTheme.amber)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .dosCard(.toast, padding: DOSSpacing.xxs)
-
-                Text(verbatim: "?")
-                    .font(DOSTypography.mono(size: 13, weight: .bold))
-                    .foregroundStyle(AmberTheme.amber)
-                    .frame(width: 22, height: 22)
-                    .background(AmberTheme.scrimHeavy)
-            }
-            // INSIDE the label: outside the Button this is a transparent hole
-            // that falls through to the chart's gestures (the P0 nub learning).
-            .frame(minWidth: 44, minHeight: 44)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Unexplained excursion, tap to add a note")
     }
 }

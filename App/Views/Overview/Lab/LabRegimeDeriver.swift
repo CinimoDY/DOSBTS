@@ -80,12 +80,18 @@ enum RegimeDeriver {
                 later.tag != nil || isCloseMarker(later)
             }
 
-            if let closer, closer.timestamp < defaultEnd {
+            if let closer {
                 return RegimeBand(
                     id: note.id.uuidString,
                     tag: tag,
                     start: note.timestamp,
-                    end: closer.timestamp,
+                    // A closer NEVER extends a band — the default is the longest
+                    // it can honestly claim — but it always closes it, even when
+                    // it lands after the default end. That is the normal case:
+                    // `STILL <TAG>?` is asked at the default end, so the answer
+                    // arrives after it, and a `< defaultEnd` guard would drop
+                    // every answer the user ever gives and ask again forever.
+                    end: min(defaultEnd, closer.timestamp),
                     isOpen: false
                 )
             }

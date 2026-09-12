@@ -783,6 +783,21 @@ struct RegimeDeriverTests {
         #expect(bands[0].isOpen == false)
     }
 
+    @Test("a close marker AFTER the default end still closes the band, without extending it")
+    func closerAfterDefaultEndStillCloses() {
+        // The exact shape the `STILL <TAG>?` row produces: the row is shown at
+        // the default end, so the answer necessarily lands after it.
+        let bands = RegimeDeriver.derive(
+            notes: [note(0, tag: .stressed), note(283, tag: nil, text: "BACK TO NORMAL")],
+            now: at(283),
+            dayEnd: dayEnd
+        )
+        #expect(bands.count == 1)
+        #expect(bands[0].end == at(240), "a late answer must not extend the band past its default")
+        #expect(bands[0].isOpen == false)
+        #expect(RegimePrompt.shouldShow(bands: bands, now: at(283)) == nil, "and the row must go away")
+    }
+
     @Test("notes arrive in any order and still derive in time order")
     func unsortedNotes() {
         let bands = RegimeDeriver.derive(
@@ -852,37 +867,34 @@ struct RibbonLabelLaneTests {
         )[0]
     }
 
-    @Test("windows that do not overlap all share the first row")
-    func noOverlapStaysOnOneRow() {
-        let lanes = MealResponseDatapoint.labelLanes([response(0), response(180), response(360)])
-        #expect(Set(lanes.values) == [0])
-    }
-
-    @Test("overlapping windows step down a row each")
-    func overlapStepsDown() {
+    @Test("consecutive meals never share a row — the LABEL collides, not the window")
+    func consecutiveMealsStepDown() {
+        // Four hours apart: the windows do not overlap at all, but at 24 h zoom
+        // a ~110 pt label over a ~30 pt ribbon still prints over its neighbour.
         let first = response(0)
-        let second = response(30)
-        let third = response(60)
+        let second = response(240)
+        let third = response(480)
         let lanes = MealResponseDatapoint.labelLanes([first, second, third])
         #expect(lanes[first.id] == 0)
         #expect(lanes[second.id] == 1)
         #expect(lanes[third.id] == 2)
     }
 
-    @Test("a row is reused as soon as its window has closed")
-    func rowsAreRecycled() {
-        let first = response(0)
-        let second = response(30)
-        let afterFirstCloses = response(125)
-        let lanes = MealResponseDatapoint.labelLanes([first, second, afterFirstCloses])
-        #expect(lanes[afterFirstCloses.id] == 0)
+    @Test("rows are assigned in TIME order, whatever order the meals arrive in")
+    func assignedInTimeOrder() {
+        let later = response(240)
+        let earlier = response(0)
+        let lanes = MealResponseDatapoint.labelLanes([later, earlier])
+        #expect(lanes[earlier.id] == 0)
+        #expect(lanes[later.id] == 1)
     }
 
-    @Test("more simultaneous windows than rows never exceeds the row budget")
+    @Test("the rows cycle, so the budget is never exceeded")
     func staysInsideTheRowBudget() {
         let responses = (0 ..< 6).map { response(Double($0) * 10) }
         let lanes = MealResponseDatapoint.labelLanes(responses)
         #expect(lanes.count == 6)
         #expect(lanes.values.allSatisfy { $0 >= 0 && $0 < 4 })
+        #expect(lanes[responses[4].id] == 0, "the fifth meal wraps back to the first row")
     }
 }

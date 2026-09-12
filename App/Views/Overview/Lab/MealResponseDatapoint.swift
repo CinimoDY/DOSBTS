@@ -79,33 +79,20 @@ struct MealResponseDatapoint: Identifiable, Equatable {
         carbs != nil && pairedBolusUnits > 0
     }
 
-    /// Which stagger row each ribbon's label takes, so two windows that overlap
-    /// on the x axis do not print their labels on top of each other.
+    /// Which stagger row each ribbon's label takes, in time order, cycling
+    /// through `maxLanes` rows — the prototype's four 12-pt rows.
     ///
-    /// Classic interval-lane packing: the lowest row whose previous occupant has
-    /// already ended. Pure and id-keyed so the marks function stays a function
-    /// of the series — and so the rule is pinned by a test rather than by eye.
+    /// Round-robin rather than interval packing ON PURPOSE. What collides is the
+    /// LABEL, not the window: a label is ~110 pt wide while a two-hour ribbon is
+    /// ~30 pt at 24 h zoom, so two meals four hours apart still print over each
+    /// other. The marks function has no plot width to measure against, and
+    /// cycling guarantees that any four consecutive meals — far more than a real
+    /// day has in view at once — are on four different rows at every zoom.
     static func labelLanes(_ responses: [MealResponseDatapoint], maxLanes: Int = 4) -> [String: Int] {
-        var laneEnds: [Date] = []
         var lanes: [String: Int] = [:]
 
-        for response in responses.sorted(by: { $0.mealTime < $1.mealTime }) {
-            let occupiedUntil = response.stubEnd ?? response.windowEnd
-
-            if let free = laneEnds.indices.first(where: { laneEnds[$0] <= response.mealTime }) {
-                laneEnds[free] = occupiedUntil
-                lanes[response.id] = free
-            } else if laneEnds.count < maxLanes {
-                laneEnds.append(occupiedUntil)
-                lanes[response.id] = laneEnds.count - 1
-            } else {
-                // More simultaneous windows than rows: reuse the one that frees
-                // up soonest. Tight, but still readable — and four meals inside
-                // one two-hour window is already the interesting story.
-                let earliest = laneEnds.indices.min { laneEnds[$0] < laneEnds[$1] } ?? 0
-                laneEnds[earliest] = occupiedUntil
-                lanes[response.id] = earliest
-            }
+        for (index, response) in responses.sorted(by: { $0.mealTime < $1.mealTime }).enumerated() {
+            lanes[response.id] = index % max(1, maxLanes)
         }
 
         return lanes

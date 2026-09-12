@@ -24,6 +24,10 @@ struct LabMealsView: View {
                 followStatus: $followStatus
             )
 
+            if let residual = residuals.last {
+                residualPrompt(residual)
+            }
+
             if let band = openRegime {
                 regimePrompt(band)
             }
@@ -47,8 +51,15 @@ struct LabMealsView: View {
 
             LabFooter()
         }
-        .onAppear { now = Date() }
+        .onAppear {
+            now = Date()
+            refreshResiduals()
+        }
         .onReceive(clock) { now = $0 }
+        .onChange(of: store.state.sensorGlucoseValues) { refreshResiduals() }
+        .onChange(of: store.state.journalNoteValues) { refreshResiduals() }
+        .onChange(of: store.state.mealEntryValues) { refreshResiduals() }
+        .onChange(of: store.state.insulinDeliveryValues) { refreshResiduals() }
     }
 
     // MARK: Private
@@ -62,7 +73,73 @@ struct LabMealsView: View {
     /// because the rule it feeds has a 30-minute lead.
     @State private var now: Date = .init()
 
+    /// Memoised so the detector runs when the data moves, not on every body
+    /// evaluation.
+    @State private var residuals: [ResidualSegment] = []
+
     private let clock = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
+
+    private var dayEnd: Date {
+        Calendar.current
+            .startOfDay(for: store.state.selectedDate ?? now)
+            .addingTimeInterval(24 * 60 * 60)
+    }
+
+    /// The same pure detector the chart's `?` marks come from, over the same
+    /// anchors — so the row and the chart can never disagree about what is
+    /// unexplained.
+    private func refreshResiduals() {
+        let bands = RegimeDeriver.derive(
+            notes: store.state.journalNoteValues,
+            now: Date(),
+            dayEnd: dayEnd
+        )
+        residuals = ResidualDetector.detect(
+            readings: store.state.sensorGlucoseValues,
+            anchors: store.state.mealEntryValues.map(\.timestamp)
+                + store.state.insulinDeliveryValues.map(\.starts)
+                + store.state.exerciseEntryValues.map(\.startTime)
+                + store.state.exerciseEntryValues.map(\.endTime)
+                + store.state.journalNoteValues.map(\.timestamp),
+            regimes: bands
+        )
+    }
+
+    /// The residual's affordance. It lives HERE rather than on the chart's `?`
+    /// because a view inside a scrollable `Chart` annotation never receives a
+    /// tap — the scroll and selection gestures consume it. This row claims only
+    /// its own frame, so it has no gesture to lose.
+    private func residualPrompt(_ segment: ResidualSegment) -> some View {
+        Button {
+            // The note opens at the excursion's START — the moment the user is
+            // being asked to remember, not the moment they tapped.
+            sheets.present(.journalNote(prefill: JournalNotePrefill(
+                timestamp: segment.start,
+                tag: nil
+            )))
+            DirectNotifications.shared.hapticFeedback()
+        } label: {
+            HStack(spacing: DOSSpacing.xs) {
+                Text(verbatim: "?")
+                    .font(DOSTypography.mono(size: 13, weight: .bold))
+                    .foregroundStyle(AmberTheme.amber)
+                Text(ResidualDetector.label(for: segment, glucoseUnit: store.state.glucoseUnit))
+                    .font(DOSTypography.micro)
+                    .foregroundStyle(AmberTheme.amber)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Spacer()
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+            .dosCard(.toast, padding: DOSSpacing.xs)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, DOSSpacing.sm)
+        .padding(.top, DOSSpacing.xs)
+        .accessibilityLabel("Unexplained excursion, tap to add a note")
+    }
 
     /// Derived, never stored: the same pure deriver the chart's bands come from.
     private var openRegime: RegimeBand? {
@@ -70,9 +147,7 @@ struct LabMealsView: View {
             bands: RegimeDeriver.derive(
                 notes: store.state.journalNoteValues,
                 now: now,
-                dayEnd: Calendar.current
-                    .startOfDay(for: store.state.selectedDate ?? now)
-                    .addingTimeInterval(24 * 60 * 60)
+                dayEnd: dayEnd
             ),
             now: now
         )
