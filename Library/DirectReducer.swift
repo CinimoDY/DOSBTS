@@ -507,6 +507,15 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setShowHeartRateOverlay(enabled: let enabled):
         state.showHeartRateOverlay = enabled
 
+    // MARK: Chart Lab (DMNC-1500)
+    case .setShowChartLab(enabled: let enabled):
+        state.showChartLab = enabled
+        // Turning the lab off must not strand a persisted lab selection —
+        // the row would hide the tab the chart is still rendering.
+        if !enabled, state.selectedReportType.isLab {
+            state.selectedReportType = .glucose
+        }
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     case .setMarkerLanePosition(position: let position):
         state.markerLanePosition = position

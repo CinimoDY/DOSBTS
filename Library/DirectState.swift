@@ -121,6 +121,11 @@ protocol DirectState {
     // MARK: Heart Rate Overlay (DMNC-848)
     var showHeartRateOverlay: Bool { get set }
 
+    // MARK: Chart Lab (DMNC-1500)
+    /// Gates the experimental LAB report-type tabs on the Overview. Off by
+    /// default; nothing in the lab is dosing advice.
+    var showChartLab: Bool { get set }
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     var markerLanePosition: MarkerLanePosition { get set }
 

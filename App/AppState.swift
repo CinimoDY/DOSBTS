@@ -143,6 +143,7 @@ struct AppState: DirectState {
         self.showPredictiveLowAlarm = defaults.showPredictiveLowAlarm
         self.showMissedBolusNudge = defaults.showMissedBolusNudge
         self.showHeartRateOverlay = defaults.showHeartRateOverlay
+        self.showChartLab = defaults.showChartLab
         self.markerLanePosition = defaults.markerLanePosition
         self.bolusInsulinPreset = defaults.bolusInsulinPreset
         self.basalDIAMinutes = defaults.basalDIAMinutes
@@ -298,6 +299,9 @@ struct AppState: DirectState {
 
     // MARK: Heart Rate Overlay (DMNC-848)
     var showHeartRateOverlay: Bool { didSet { defaults.showHeartRateOverlay = showHeartRateOverlay } }
+
+    // MARK: Chart Lab (DMNC-1500)
+    var showChartLab: Bool { didSet { defaults.showChartLab = showChartLab } }
 
     // MARK: Marker Lane Position (DMNC-848 D7)
     var markerLanePosition: MarkerLanePosition { didSet { defaults.markerLanePosition = markerLanePosition } }

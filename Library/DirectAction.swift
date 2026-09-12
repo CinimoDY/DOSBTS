@@ -203,6 +203,9 @@ enum DirectAction {
     // MARK: Heart Rate Overlay (DMNC-848)
     case setShowHeartRateOverlay(enabled: Bool)
 
+    // MARK: Chart Lab (DMNC-1500)
+    case setShowChartLab(enabled: Bool)
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     case setMarkerLanePosition(position: MarkerLanePosition)
 
