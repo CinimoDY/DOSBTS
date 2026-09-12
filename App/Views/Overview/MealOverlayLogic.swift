@@ -54,7 +54,7 @@ func computeMealOverlayDelta(
 
 // MARK: - Confounders
 
-struct MealConfounders {
+struct MealConfounders: Equatable {
     let hasCorrectionBolus: Bool
     let hasExercise: Bool
     let hasStackedMeal: Bool

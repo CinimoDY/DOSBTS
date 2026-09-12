@@ -24,6 +24,28 @@ enum ChartLabOverlay: Hashable, CaseIterable {
     }
 }
 
+// MARK: - ChartLabSizing
+
+/// Sizes the lab's data-driven symbols. Pure, so the mapping is pinned by a
+/// test rather than by eye.
+enum ChartLabSizing {
+    /// `symbolSize` is an AREA in pt², so carbs map linearly into area — that is
+    /// what makes two dots look like "twice as much", rather than mapping to a
+    /// radius (which would make a 60 g plate look four times a 15 g one).
+    static let mealSymbolMinArea: Double = 40
+    static let mealSymbolMaxArea: Double = 400
+    /// Above this the dot stops growing: a 300 g outlier must not shrink a whole
+    /// day of ordinary meals into identical specks.
+    static let mealSymbolCarbCeiling: Double = 100
+
+    static func mealSymbolSize(carbs: Double?) -> Double {
+        guard let carbs, carbs > 0 else { return mealSymbolMinArea }
+        let clamped = min(carbs, mealSymbolCarbCeiling)
+        let span = mealSymbolMaxArea - mealSymbolMinArea
+        return mealSymbolMinArea + span * (clamped / mealSymbolCarbCeiling)
+    }
+}
+
 extension ReportType {
     /// Mark-sets a lab tab layers onto the lab chart. Empty for shipping tabs.
     var labOverlays: Set<ChartLabOverlay> {
