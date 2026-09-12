@@ -19,6 +19,19 @@
 - **Transient-state template:** `ratioEvidence` (3-file) + `RatioLabMiddleware.swift:30-50` (`.catch` → fallback, `.setFailureType`); register in BOTH `App.swift` arrays. `DaysZoom.allDays = 9999` (`ChartToolbar.swift:142`) — cap the sweep read at 90 days.
 - **Design system:** age tiers are alphas on `AmberTheme.amber` / `amberDark` / `textFaint` (the last two are pre-blended tiers); today = `amberLight`; no glow in `Chart{}`; `DOSTypography.caption` for axis labels.
 
+## Errata from P0 (read before touching the lab chart — PR #117 proved these)
+
+- **`EmptyChartContent` does not exist.** An empty `LabOverlayMarks` arm is `LabOverlayMarks.noMarks` (an empty `ForEach([Int](), id: \.self) { … }`); `Optional: ChartContent` makes a bare `if let` arm legal.
+- **Never hit-test the whole plot from `.chartOverlay`.** A `Rectangle().contentShape(...)` there swallows every touch and kills both scrolling and the built-in selection. Use `.simultaneousGesture(...)` on the chart (P0's tap-to-clear measures press duration < 0.35 s and movement < 10 pt) or put tappable things in `.annotation` views / `.overlay(alignment:)` siblings that only claim their own frame.
+- **Gesture vocabulary already taken by P0:** plain drag = scroll; press ~0.5 s then drag = scrub; a second press > 5 min away promotes the standing cursor to A and sets B; quick tap clears. A long-press for a drill (P4) **must not** compete with the scrub — use a chip/toggle or a two-finger gesture and say which in the notes.
+- **`chartScrollPosition(x:)` binds the LEADING edge**; "scroll to now" is `max(domainStart, domainEnd − visibleDuration)`; a zoom-chip change needs P0's `reanchorAfterZoom()`.
+- **The y domain is a floor, not a fixed ceiling:** `max(chartMinimum, plotted.max().rounded(.up))` — readings above 300 are not clipped. Any overlay that adds y values must feed the same floor computation (extend it; do not add a second `.chartYScale`).
+- **Annotations at the plot top use `overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))`** — `y: .disabled` draws above the plot and is clipped.
+- **Units:** datapoint values are already in the display unit — format with `GlucoseFormatters.mgdLFormatter / .mmolLFormatter`, never `Int.asGlucose` on a converted value; insulin uses the `GlucoseView.formatIOB` shape (`"%.1fU"`), not `Double.asInsulin()` (2-decimal, locale comma).
+- **Counts come from `LabChartSeries.glucose`** (flat, deduplicated) — `glucoseSegments` duplicate boundary points and would inflate `n`.
+- **`LabChartInputs.smoothThreshold` is floored to the minute** so `Equatable` inputs do not churn every render; any field you add must be render-stable the same way (no raw `Date()`).
+- `chartHeight(available:)` does not subtract the readout strip (it is a sibling of the `GeometryReader`); edge hour labels can clip when the snapped edge lands on a tick — known nit, do not "fix" it inside your arm.
+
 ## Global constraints
 
 Kickoff constraints verbatim (StyleGuard; explicit `.chartXScale`/`.chartYScale` — mandatory here, both numeric; UserDefaults-isolated tests; pbxproj IDs + lint + list check; no `dbQueue.write` in `asyncRead`). Plus: every caption carries N (`N=23 SWEEPS · 14 CLEAN`, `(n=4)`); the LAPS card is descriptive only; performance — cap the drawn sweeps at 120 (newest first) and prefer iOS 18 vectorized `LinePlot` over `ForEach` of `LineMark`s if scrolling the chips drops frames (measure; note the choice); no changelog entry; the lab is off by default.
