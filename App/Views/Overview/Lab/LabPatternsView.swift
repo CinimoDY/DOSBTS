@@ -81,6 +81,12 @@ struct LabPatternsView: View {
 
     private var glucoseUnit: GlucoseUnit { store.state.glucoseUnit }
 
+    /// The drill reaches 14 days back, or as far as the loaded band if that is
+    /// shorter (the 7d chip loads seven days, and nothing may promise more).
+    private var drillWindowDays: Int {
+        PatternCopy.drillWindowDays(lookbackDays: lookbackDays)
+    }
+
     /// The hour the user is holding, if any — nil once they dismiss its card.
     private var heldHour: Int? {
         guard let cursorDate, cursorDate != dismissedDrill else { return nil }
@@ -118,7 +124,8 @@ struct LabPatternsView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                Text(heldHour.map { PatternCopy.heldHint(hour: $0) } ?? PatternCopy.holdHint)
+                Text(heldHour.map { PatternCopy.heldHint(hour: $0, days: drillWindowDays) }
+                    ?? PatternCopy.holdHint(days: drillWindowDays))
                     .font(DOSTypography.label)
                     .foregroundStyle(AmberTheme.amberLight)
 
@@ -253,6 +260,6 @@ struct LabPatternsView: View {
         let key = drillIdentity
         guard key != drillKey else { return }
         drillKey = key
-        drill = PatternAnalysis.drill(hour: hour, readings: evidence.readings)
+        drill = PatternAnalysis.drill(hour: hour, readings: evidence.readings, days: drillWindowDays)
     }
 }

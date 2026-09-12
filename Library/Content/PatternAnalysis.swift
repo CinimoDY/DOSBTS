@@ -439,15 +439,25 @@ enum PatternBandBuilder {
 /// Every sentence `LAB: PATTERNS` puts on screen, in one pure place — so the
 /// "carries its n, never prescribes" rule is a property a test can check.
 enum PatternCopy {
-    static let holdHint = "HOLD AN HOUR → SAME HOUR · \(PatternAnalysis.drillDays) D"
     static let keepWearing = "n<\(PatternAnalysis.minDaysForBand) DAYS · KEEP WEARING"
+
+    /// The drill can only reach as far back as the loaded evidence: with the 7d
+    /// chip selected there are seven days in hand, and promising "14 D" would be
+    /// a claim the data cannot honour (caught on-simulator).
+    static func drillWindowDays(lookbackDays: Int) -> Int {
+        min(PatternAnalysis.drillDays, max(lookbackDays, 1))
+    }
+
+    static func holdHint(days: Int) -> String {
+        "HOLD AN HOUR → SAME HOUR · \(days) D"
+    }
 
     static func bandChip(days: Int) -> String {
         "▒ YOUR \(days)-DAY BAND"
     }
 
-    static func heldHint(hour: Int) -> String {
-        "\(hourLabel(hour)) ±\(PatternAnalysis.drillHalfWidthMinutes / 60) H · LAST \(PatternAnalysis.drillDays) D"
+    static func heldHint(hour: Int, days: Int) -> String {
+        "\(hourLabel(hour)) ±\(PatternAnalysis.drillHalfWidthMinutes / 60) H · LAST \(days) D"
     }
 
     static func patternHourLabel(days: Int) -> String {

@@ -465,15 +465,25 @@ struct PatternCopyTests {
 
     @Test("the hold hint and the held header both name the ±2 h window")
     func hints() {
-        #expect(PatternCopy.holdHint == "HOLD AN HOUR → SAME HOUR · 14 D")
-        #expect(PatternCopy.heldHint(hour: 11) == "11:00 ±2 H · LAST 14 D")
+        #expect(PatternCopy.holdHint(days: 14) == "HOLD AN HOUR → SAME HOUR · 14 D")
+        #expect(PatternCopy.heldHint(hour: 11, days: 14) == "11:00 ±2 H · LAST 14 D")
+    }
+
+    @Test("the drill never promises more days than the loaded band can reach")
+    func drillWindowDays() {
+        #expect(PatternCopy.drillWindowDays(lookbackDays: 30) == 14)
+        #expect(PatternCopy.drillWindowDays(lookbackDays: 90) == 14)
+        #expect(PatternCopy.drillWindowDays(lookbackDays: 7) == 7)
+        #expect(PatternCopy.drillWindowDays(lookbackDays: 0) == 1)
+        #expect(PatternCopy.holdHint(days: PatternCopy.drillWindowDays(lookbackDays: 7))
+            == "HOLD AN HOUR → SAME HOUR · 7 D")
     }
 
     @Test("no copy in the lab ever tells anyone what to do")
     func noDosingLanguage() {
         let lines = [
-            PatternCopy.holdHint,
-            PatternCopy.heldHint(hour: 7),
+            PatternCopy.holdHint(days: 14),
+            PatternCopy.heldHint(hour: 7, days: 14),
             PatternCopy.keepWearing,
             PatternCopy.bandChip(days: 30),
             PatternCopy.outOfBandCard(hour: 11, deltaMgDL: 38, days: 27, glucoseUnit: .mgdL),
