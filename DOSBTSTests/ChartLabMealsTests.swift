@@ -835,3 +835,54 @@ struct RegimePromptTests {
         #expect(RegimePrompt.shouldShow(bands: [older, newer], now: at(260))?.tag == .stressed)
     }
 }
+
+// MARK: - Ribbon label stagger
+
+@Suite("Ribbon label lanes")
+struct RibbonLabelLaneTests {
+    private func response(_ minutes: Double, carbs: Double = 40) -> MealResponseDatapoint {
+        buildMealResponses(
+            meals: [meal(minutes, carbs: carbs)],
+            readings: [reading(minutes, 120)],
+            deliveries: [bolus(minutes, units: 4)],
+            exercise: [],
+            domainStart: at(-720),
+            domainEnd: at(720),
+            now: at(1200)
+        )[0]
+    }
+
+    @Test("windows that do not overlap all share the first row")
+    func noOverlapStaysOnOneRow() {
+        let lanes = MealResponseDatapoint.labelLanes([response(0), response(180), response(360)])
+        #expect(Set(lanes.values) == [0])
+    }
+
+    @Test("overlapping windows step down a row each")
+    func overlapStepsDown() {
+        let first = response(0)
+        let second = response(30)
+        let third = response(60)
+        let lanes = MealResponseDatapoint.labelLanes([first, second, third])
+        #expect(lanes[first.id] == 0)
+        #expect(lanes[second.id] == 1)
+        #expect(lanes[third.id] == 2)
+    }
+
+    @Test("a row is reused as soon as its window has closed")
+    func rowsAreRecycled() {
+        let first = response(0)
+        let second = response(30)
+        let afterFirstCloses = response(125)
+        let lanes = MealResponseDatapoint.labelLanes([first, second, afterFirstCloses])
+        #expect(lanes[afterFirstCloses.id] == 0)
+    }
+
+    @Test("more simultaneous windows than rows never exceeds the row budget")
+    func staysInsideTheRowBudget() {
+        let responses = (0 ..< 6).map { response(Double($0) * 10) }
+        let lanes = MealResponseDatapoint.labelLanes(responses)
+        #expect(lanes.count == 6)
+        #expect(lanes.values.allSatisfy { $0 >= 0 && $0 < 4 })
+    }
+}

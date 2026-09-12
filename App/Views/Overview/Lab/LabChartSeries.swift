@@ -67,6 +67,9 @@ struct LabChartInputs: Equatable {
     let showSmoothed: Bool
     let smoothThreshold: Date
     let selectedDate: Date?
+    /// Regimes are DERIVED from these at build time — there is no stored regime
+    /// model (DMNC-1501).
+    let journalNotes: [JournalNote]
     let overlays: Set<ChartLabOverlay>
 
     /// The ONLY place the lab reads `store.state` for series data.
@@ -94,6 +97,7 @@ struct LabChartInputs: Equatable {
             ? state.smoothThreshold.toRounded(on: 1, .minute)
             : Date(timeIntervalSince1970: 0)
         self.selectedDate = state.selectedDate
+        self.journalNotes = state.journalNoteValues
         self.overlays = overlays
     }
 
@@ -114,6 +118,7 @@ struct LabChartInputs: Equatable {
         showSmoothed: Bool,
         smoothThreshold: Date,
         selectedDate: Date?,
+        journalNotes: [JournalNote] = [],
         overlays: Set<ChartLabOverlay>
     ) {
         self.sensorGlucose = sensorGlucose
@@ -131,6 +136,7 @@ struct LabChartInputs: Equatable {
         self.showSmoothed = showSmoothed
         self.smoothThreshold = smoothThreshold
         self.selectedDate = selectedDate
+        self.journalNotes = journalNotes
         self.overlays = overlays
     }
 }
@@ -229,6 +235,16 @@ struct LabChartSeries {
     var meals: [MealDatapoint]
     var exercise: [ExerciseDatapoint]
     var heartRate: [HeartRateSample]
+    // MARK: P2 (DMNC-1501) — built only when the owning overlay is switched on.
+    /// One two-hour response window per drawable meal.
+    var mealResponses: [MealResponseDatapoint] = []
+    /// Excursions with nothing logged against them.
+    var residuals: [ResidualSegment] = []
+    /// Tagged-note bands. Derived every build; never stored.
+    var regimes: [RegimeBand] = []
+    /// The display unit the labels format in. Carried here so
+    /// `LabOverlayMarks` stays a pure function of the series.
+    var glucoseUnit: GlucoseUnit = .mgdL
 
     var readingCount: Int { glucose.count }
 
@@ -390,6 +406,52 @@ enum LabChartSeriesBuilder {
             LabInsulinDose(id: $0.id.uuidString, starts: $0.starts, units: $0.units, type: $0.type)
         }
 
+        // MARK: P2 overlays (DMNC-1501)
+        //
+        // Built only for the tabs that switched the overlay on, so a tab that
+        // draws none of this pays none of the cost. Regimes come before
+        // residuals: a regime IS an explanation, so it suppresses the `?`.
+
+        let wantsMealResponses = inputs.overlays.contains(.mealResponseRibbons)
+            || inputs.overlays.contains(.carbSizedMeals)
+        let wantsRegimes = inputs.overlays.contains(.regimeBands)
+        let wantsResiduals = inputs.overlays.contains(.residualMarks)
+
+        let mealResponses = wantsMealResponses
+            ? buildMealResponses(
+                meals: inputs.meals,
+                readings: inputs.sensorGlucose,
+                deliveries: inputs.insulin,
+                exercise: inputs.exercise,
+                domainStart: domainStart,
+                domainEnd: domainEnd,
+                now: now
+            )
+            : []
+
+        let regimes = (wantsRegimes || wantsResiduals)
+            ? RegimeDeriver.derive(
+                notes: inputs.journalNotes,
+                now: now,
+                dayEnd: Calendar.current.startOfDay(for: inputs.selectedDate ?? now)
+                    .addingTimeInterval(24 * 60 * 60)
+            )
+            : []
+
+        let residuals = wantsResiduals
+            ? ResidualDetector.detect(
+                readings: inputs.sensorGlucose,
+                // Everything a user can log is an anchor: if any of it is near
+                // the excursion, the excursion is not unexplained.
+                anchors: inputs.meals.map(\.timestamp)
+                    + inputs.insulin.map(\.starts)
+                    + inputs.exercise.map(\.startTime)
+                    + inputs.exercise.map(\.endTime)
+                    + inputs.journalNotes.map(\.timestamp),
+                regimes: regimes
+            )
+            : []
+
         return LabChartSeries(
             domainStart: domainStart,
             domainEnd: domainEnd,
@@ -402,7 +464,11 @@ enum LabChartSeriesBuilder {
             iob: iobSamples(inputs, from: domainStart, to: domainEnd),
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },
-            heartRate: inputs.heartRate.sorted { $0.time < $1.time }
+            heartRate: inputs.heartRate.sorted { $0.time < $1.time },
+            mealResponses: mealResponses,
+            residuals: residuals,
+            regimes: regimes,
+            glucoseUnit: inputs.glucoseUnit
         )
     }
 

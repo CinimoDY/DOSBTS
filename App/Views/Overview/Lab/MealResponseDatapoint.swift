@@ -79,6 +79,38 @@ struct MealResponseDatapoint: Identifiable, Equatable {
         carbs != nil && pairedBolusUnits > 0
     }
 
+    /// Which stagger row each ribbon's label takes, so two windows that overlap
+    /// on the x axis do not print their labels on top of each other.
+    ///
+    /// Classic interval-lane packing: the lowest row whose previous occupant has
+    /// already ended. Pure and id-keyed so the marks function stays a function
+    /// of the series — and so the rule is pinned by a test rather than by eye.
+    static func labelLanes(_ responses: [MealResponseDatapoint], maxLanes: Int = 4) -> [String: Int] {
+        var laneEnds: [Date] = []
+        var lanes: [String: Int] = [:]
+
+        for response in responses.sorted(by: { $0.mealTime < $1.mealTime }) {
+            let occupiedUntil = response.stubEnd ?? response.windowEnd
+
+            if let free = laneEnds.indices.first(where: { laneEnds[$0] <= response.mealTime }) {
+                laneEnds[free] = occupiedUntil
+                lanes[response.id] = free
+            } else if laneEnds.count < maxLanes {
+                laneEnds.append(occupiedUntil)
+                lanes[response.id] = laneEnds.count - 1
+            } else {
+                // More simultaneous windows than rows: reuse the one that frees
+                // up soonest. Tight, but still readable — and four meals inside
+                // one two-hour window is already the interesting story.
+                let earliest = laneEnds.indices.min { laneEnds[$0] < laneEnds[$1] } ?? 0
+                laneEnds[earliest] = occupiedUntil
+                lanes[response.id] = earliest
+            }
+        }
+
+        return lanes
+    }
+
     /// Whole units read `5U`, part units `4.5U`. Deliberately not
     /// `Double.asInsulin()` (2-decimal and locale-comma — it renders `5,00U`
     /// next to a hero that says `5.0U`, the P0 unit-formatting learning).
