@@ -427,7 +427,7 @@ enum LabChartSeriesBuilder {
                     meals: inputs.meals,
                     exercise: inputs.exercise,
                     notes: inputs.journalNotes,
-                    iob: iob,
+                    iob: onsetIOBSamples(inputs, from: domainStart),
                     heartRate: inputs.heartRate,
                     now: now
                 )
@@ -443,6 +443,45 @@ enum LabChartSeriesBuilder {
                 )
                 : nil
         )
+    }
+
+    /// IOB at each hypo onset, computed from the CHART's 24-hour delivery set
+    /// rather than from `state.iobDeliveries`.
+    ///
+    /// `getIOBDeliveries` is a `datetime('now', '-DIA minutes')` query: it holds
+    /// what is on board NOW, so `series.iob` is structurally zero at any instant
+    /// older than the DIA — and in a 24-hour window most hypos are. The Black
+    /// Box's IOB is the card's most load-bearing number, so it is computed at
+    /// the onset from the deliveries the chart already has.
+    ///
+    /// It is only stated when the delivery history behind it is COMPLETE — the
+    /// full DIA before the onset has to be inside the window, or an earlier dose
+    /// could be missing and the number would be an understatement. When it is
+    /// not, no sample is emitted and the card prints `IOB —`: the lab would
+    /// rather say nothing than say a number it cannot stand behind.
+    private static func onsetIOBSamples(_ inputs: LabChartInputs, from domainStart: Date) -> [IOBSample] {
+        let onsets = ClinicReportBuilder.hypoEpisodeIntervals(from: inputs.sensorGlucose).map(\.start)
+        guard !onsets.isEmpty, !inputs.insulin.isEmpty else { return [] }
+
+        let bolusModel = ExponentialInsulinModel.bolus(preset: inputs.bolusPreset)
+        let basalModel = ExponentialInsulinModel.basal(diaMinutes: inputs.basalDIAMinutes)
+        let coverage = TimeInterval(max(inputs.bolusPreset.diaMinutes, inputs.basalDIAMinutes) * 60)
+
+        return onsets.compactMap { onset in
+            guard onset.addingTimeInterval(-coverage) >= domainStart else { return nil }
+            let result = computeIOB(
+                deliveries: inputs.insulin,
+                bolusModel: bolusModel,
+                basalModel: basalModel,
+                at: onset
+            )
+            return IOBSample(
+                date: onset,
+                total: result.total,
+                mealSnack: result.mealSnackIOB,
+                corrBasal: result.correctionBasalIOB
+            )
+        }
     }
 
     /// 60 s sampling across the domain, inclusive of both ends — the cadence the

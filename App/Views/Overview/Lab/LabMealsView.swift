@@ -52,8 +52,12 @@ struct LabMealsView: View {
     // MARK: Private
 
     private enum Config {
-        /// Two cards plus the sheet line fit without scrolling; five scroll.
-        static let factsMaxHeight: CGFloat = 190
+        /// The cards' share of the tab. Measured on an iPhone 17: the chart sits
+        /// at its 140 pt floor and the legend + safety footer must still fit
+        /// under it, so the facts region is capped and scrolls rather than
+        /// pushing the footer off the bottom (the VStack overflow that sinks a
+        /// safeAreaInset — docs/solutions/ui-bugs).
+        static let factsMaxHeight: CGFloat = 120
     }
 
     /// Owned here so the legend and the chart's `◂ N NEW` nub can never disagree
