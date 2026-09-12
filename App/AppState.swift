@@ -143,6 +143,7 @@ struct AppState: DirectState {
         self.showPredictiveLowAlarm = defaults.showPredictiveLowAlarm
         self.showMissedBolusNudge = defaults.showMissedBolusNudge
         self.showHeartRateOverlay = defaults.showHeartRateOverlay
+        self.showChartLab = defaults.showChartLab
         self.markerLanePosition = defaults.markerLanePosition
         self.bolusInsulinPreset = defaults.bolusInsulinPreset
         self.basalDIAMinutes = defaults.basalDIAMinutes
@@ -155,6 +156,15 @@ struct AppState: DirectState {
         self.confirmedICR = defaults.confirmedICR
         self.selectedReportType = defaults.selectedReportType
         self.listSectionExpanded = defaults.listSectionExpanded
+
+        // Both keys are restored independently, so a lab tab persisted by a
+        // build where the gate was on would outlive the gate being turned off.
+        // The reducer prevents that at dispatch time; this closes the same hole
+        // at launch, for any future second writer of `showChartLab`.
+        if !showChartLab, selectedReportType.isLab {
+            selectedReportType = .glucose
+            defaults.selectedReportType = .glucose
+        }
     }
 
     // MARK: Internal
@@ -298,6 +308,9 @@ struct AppState: DirectState {
 
     // MARK: Heart Rate Overlay (DMNC-848)
     var showHeartRateOverlay: Bool { didSet { defaults.showHeartRateOverlay = showHeartRateOverlay } }
+
+    // MARK: Chart Lab (DMNC-1500)
+    var showChartLab: Bool { didSet { defaults.showChartLab = showChartLab } }
 
     // MARK: Marker Lane Position (DMNC-848 D7)
     var markerLanePosition: MarkerLanePosition { didSet { defaults.markerLanePosition = markerLanePosition } }

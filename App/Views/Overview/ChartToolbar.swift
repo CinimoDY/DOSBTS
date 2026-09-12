@@ -38,18 +38,31 @@ private struct ChartTabButton: View {
 
 // MARK: - ChartReportTypeRow
 
-/// Top selector: GLUCOSE · TIME IN RANGE · STATISTICS. Sits above the chart.
+/// Top selector: GLUCOSE · TIME IN RANGE · STATISTICS, plus the four LAB tabs
+/// when the Chart Lab is switched on (DMNC-1500). Sits above the chart.
 struct ChartReportTypeRow: View {
     @EnvironmentObject var store: DirectStore
 
     var body: some View {
-        HStack(spacing: DOSSpacing.md) {
-            ForEach(ReportType.allCases, id: \.self) { type in
-                ChartTabButton(
-                    label: type.label,
-                    isSelected: store.state.selectedReportType == type,
-                    action: { store.dispatch(.setSelectedReportType(reportType: type)) }
-                )
+        Group {
+            if store.state.showChartLab {
+                // Seven tabs overflow phone width, so the row scrolls and
+                // follows the selection. The shipping three-tab layout is
+                // untouched when the lab is off.
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        tabs.padding(.horizontal, DOSSpacing.sm)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .onAppear { proxy.scrollTo(store.state.selectedReportType, anchor: .center) }
+                    .onChange(of: store.state.selectedReportType) {
+                        withAnimation(AnimationTokens.snappy) {
+                            proxy.scrollTo(store.state.selectedReportType, anchor: .center)
+                        }
+                    }
+                }
+            } else {
+                tabs
             }
         }
         .padding(.vertical, DOSSpacing.xs)
@@ -58,11 +71,25 @@ struct ChartReportTypeRow: View {
         .onChange(of: store.state.selectedReportType) { normaliseDaysIfNeeded() }
     }
 
-    /// When the user switches to TIR or STATISTICS and the persisted `statisticsDays`
-    /// is not one of the day chips exposed by `ChartZoomRow`, bump it to `30d` so a
-    /// chip always reflects the active aggregation window.
+    private var tabs: some View {
+        HStack(spacing: DOSSpacing.md) {
+            ForEach(ReportType.visible(labEnabled: store.state.showChartLab), id: \.self) { type in
+                ChartTabButton(
+                    label: type.label,
+                    isSelected: store.state.selectedReportType == type,
+                    action: { store.dispatch(.setSelectedReportType(reportType: type)) }
+                )
+                .id(type)
+            }
+        }
+    }
+
+    /// When the user switches to a day-window report (TIR, STATISTICS, or the
+    /// multi-day lab tabs) and the persisted `statisticsDays` is not one of the
+    /// day chips exposed by `ChartZoomRow`, bump it to `30d` so a chip always
+    /// reflects the active aggregation window.
     private func normaliseDaysIfNeeded() {
-        guard store.state.selectedReportType != .glucose else { return }
+        guard store.state.selectedReportType.usesDayWindow else { return }
         let validDays: Set<Int> = Set(DaysZoom.allCases.map(\.days))
         guard !validDays.contains(store.state.statisticsDays) else { return }
         store.dispatch(.setStatisticsDays(days: 30))
@@ -81,9 +108,9 @@ struct ChartZoomRow: View {
     var body: some View {
         Group {
             switch store.state.selectedReportType {
-            case .glucose:
+            case .glucose, .labMeals, .labNight:
                 hoursRow
-            case .timeInRange, .statistics:
+            case .timeInRange, .statistics, .labSweep, .labPatterns:
                 daysRow
             }
         }

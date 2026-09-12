@@ -80,6 +80,7 @@ private enum Keys: String {
     case showPredictiveLowAlarm = "libre-direct.settings.show-predictive-low-alarm"
     case showMissedBolusNudge = "libre-direct.settings.show-missed-bolus-nudge"
     case showHeartRateOverlay = "libre-direct.settings.show-heart-rate-overlay"
+    case showChartLab = "libre-direct.settings.show-chart-lab"
     case markerLanePosition = "libre-direct.settings.marker-lane-position"
     case bolusInsulinPreset = "libre-direct.settings.bolus-insulin-preset"
     case basalDIAMinutes = "libre-direct.settings.basal-dia-minutes"
@@ -1105,6 +1106,16 @@ extension UserDefaults {
             return false
         }
         set { set(newValue, forKey: Keys.showHeartRateOverlay.rawValue) }
+    }
+
+    var showChartLab: Bool {
+        get {
+            if object(forKey: Keys.showChartLab.rawValue) != nil {
+                return bool(forKey: Keys.showChartLab.rawValue)
+            }
+            return false
+        }
+        set { set(newValue, forKey: Keys.showChartLab.rawValue) }
     }
 
     var markerLanePosition: MarkerLanePosition {

@@ -24,6 +24,10 @@ struct ChartView: View {
                 TimeInRangeReportView()
             case .statistics:
                 StatisticsReportView()
+            case .labMeals: LabMealsView()
+            case .labNight: LabPlaceholderView(tab: .labNight)
+            case .labSweep: LabPlaceholderView(tab: .labSweep)
+            case .labPatterns: LabPlaceholderView(tab: .labPatterns)
             }
         }
     }

@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Added
+- Settings → Glucose & Display → "Chart Lab" toggle (off by default): shows experimental LAB tabs beside GLUCOSE — a natively scrolling chart you can scrub, measure between two points, and scroll back through without new readings pulling the view away — DMNC-1500
+
 ## [Build 136] — 2026-09-02
 
 ### Fixed

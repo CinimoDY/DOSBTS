@@ -491,7 +491,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
 
     // MARK: View State Persistence (DMNC-1293)
     case .setSelectedReportType(reportType: let reportType):
-        state.selectedReportType = reportType
+        // The Chart Lab gate is the single authority: a lab tab can never be
+        // selected while the lab is off, whichever surface dispatches it
+        // (P1-P5 add dispatch sites).
+        state.selectedReportType = (reportType.isLab && !state.showChartLab) ? .glucose : reportType
 
     case .setListSectionExpanded(sectionName: let sectionName, isExpanded: let isExpanded):
         state.listSectionExpanded[sectionName] = isExpanded
@@ -506,6 +509,15 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     // MARK: Heart Rate Overlay (DMNC-848)
     case .setShowHeartRateOverlay(enabled: let enabled):
         state.showHeartRateOverlay = enabled
+
+    // MARK: Chart Lab (DMNC-1500)
+    case .setShowChartLab(enabled: let enabled):
+        state.showChartLab = enabled
+        // Turning the lab off must not strand a persisted lab selection —
+        // the row would hide the tab the chart is still rendering.
+        if !enabled, state.selectedReportType.isLab {
+            state.selectedReportType = .glucose
+        }
 
     // MARK: Marker Lane Position (DMNC-848 D7)
     case .setMarkerLanePosition(position: let position):

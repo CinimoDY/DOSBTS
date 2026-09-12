@@ -91,6 +91,14 @@ private struct DisplaySettingsSection: View {
                         .foregroundStyle(AmberTheme.amber)
                 }
                 .padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
+                    Toggle("Chart Lab", isOn: showChartLab).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+                    Text("Experimental chart views appear as LAB tabs beside GLUCOSE on the Overview. Off by default. Nothing in the lab is dosing advice.")
+                        .font(DOSTypography.caption)
+                        .foregroundStyle(AmberTheme.amber)
+                }
+                .padding(.vertical, 4)
             },
             header: {
                 Label("Display", systemImage: "display").dosHeader()
@@ -123,6 +131,13 @@ private struct DisplaySettingsSection: View {
         Binding(
             get: { store.state.markerLanePosition },
             set: { store.dispatch(.setMarkerLanePosition(position: $0)) }
+        )
+    }
+
+    private var showChartLab: Binding<Bool> {
+        Binding(
+            get: { store.state.showChartLab },
+            set: { store.dispatch(.setShowChartLab(enabled: $0)) }
         )
     }
 }
