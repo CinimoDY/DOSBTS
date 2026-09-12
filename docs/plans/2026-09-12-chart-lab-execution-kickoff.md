@@ -15,6 +15,7 @@
 | Decisions capsule | `.context/compound-engineering/ce-prototype/2026-09-12-chart-lab-directions/decisions.md` | what was decided, deferred, still open |
 | Orchestration best practice | `docs/solutions/best-practices/plan-driven-parallel-worker-orchestration.md` | plan → dispatch → review → merge train → integrate |
 | P0 worker plan (ready) | `docs/plans/2026-09-12-chart-lab-p0-lab-shell-plan.md` | dispatch first, alone |
+| P1–P5 worker plans (ready) | `docs/plans/2026-09-12-chart-lab-p1-night-window-plan.md` · `…-p2-meals-plan.md` · `…-p3-sweep-plan.md` · `…-p4-patterns-plan.md` · `…-p5-cited-facts-plan.md` | fan out in parallel after P0 merges; each re-verifies P0's real signatures on `main` first |
 
 Decisions already taken (do not re-litigate): native `LabChartView` (shipping `ChartView` body gets only switch arms); marker lane hidden on lab tabs; everything behind `showChartLab` (off by default); the AI never receives readings; no dosing language anywhere; every derived number ships with its N; offline-first rendering.
 
@@ -53,4 +54,4 @@ All five parallel PRs touch `CHANGELOG.md` (keep-both; only P0's toggle line is 
 
 ## Paste-in brief for the fresh controller session
 
-> Execute the DOSBTS Chart Lab per `docs/plans/2026-09-12-chart-lab-execution-kickoff.md`. Read that file, then the P0 plan it names, then `docs/ideation/2026-09-12-chart-lab-ideation.html` and the dossier. Write worker-executable plans for P1–P5 under `docs/plans/` (same standard as the P0 plan: verified `file:line` anchors, exact interfaces, test-first steps, named suites, a simulator script, the ID pair and UDID from the kickoff table, an explicit out-of-scope line), dispatch P0 first and alone, then fan out P1–P5, review, merge-train, run the full suite on `main`, bump and deploy to TestFlight. Do not orchestrate from a weak model.
+> Execute the DOSBTS Chart Lab per `docs/plans/2026-09-12-chart-lab-execution-kickoff.md`. Read that file, then the P0 plan it names, then `docs/ideation/2026-09-12-chart-lab-ideation.html` and the dossier. The P1–P5 plans already exist under `docs/plans/` (re-verify their lab-platform anchors against the merged P0 before dispatch); dispatch P0 first and alone, then fan out P1–P5, review, merge-train, run the full suite on `main`, bump and deploy to TestFlight. Do not orchestrate from a weak model.
