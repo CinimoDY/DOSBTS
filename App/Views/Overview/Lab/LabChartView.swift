@@ -776,35 +776,41 @@ private struct LabReadoutStrip: View {
         let meal = lastMeal(before: cursor)
         let heartRate = nearestHeartRate(at: cursor)
 
-        HStack(spacing: DOSSpacing.sm) {
-            Text(cursor.toLocalTime())
-                .foregroundStyle(AmberTheme.amberLight)
+        let cursorLine: AttributedString = {
+            var line = run(cursor.toLocalTime(), AmberTheme.amberLight)
             if let reading {
-                Text("G \(formatted(reading.value))")
+                line += separatorRun + run("G \(formatted(reading.value))", AmberTheme.amber)
             }
             if let iob, iob >= 0.05 {
-                Text("IOB \(formatUnits(iob))")
+                line += separatorRun + run("IOB \(formatUnits(iob))", AmberTheme.amber)
             }
-        }
-        .font(DOSTypography.label)
-        .foregroundStyle(AmberTheme.amber)
-        .monospacedDigit()
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
+            return line
+        }()
 
-        HStack(spacing: DOSSpacing.sm) {
+        Text(cursorLine)
+            .font(DOSTypography.label)
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+
+        let contextParts: [String] = {
+            var parts: [String] = []
             if let meal, let carbs = meal.carbs {
-                Text("MEAL \(Int(carbs))g (\(minutesAgoLabel(from: meal.time, to: cursor)))")
+                parts.append("MEAL \(Int(carbs))g (\(minutesAgoLabel(from: meal.time, to: cursor)))")
             }
             if let heartRate {
-                Text("HR \(Int(heartRate))")
+                parts.append("HR \(Int(heartRate))")
             }
+            return parts
+        }()
+
+        if !contextParts.isEmpty {
+            Text(contextParts.map { run($0, AmberTheme.amber) }.joinedWithSeparator(separatorRun))
+                .font(DOSTypography.label)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .font(DOSTypography.label)
-        .foregroundStyle(AmberTheme.amber)
-        .monospacedDigit()
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
     }
 
     // MARK: Range state
@@ -826,40 +832,43 @@ private struct LabReadoutStrip: View {
         .lineLimit(1)
         .minimumScaleFactor(0.8)
 
-        HStack(spacing: DOSSpacing.sm) {
-            if let first = summary.first, let last = summary.last {
-                HStack(spacing: 4) {
-                    Text("G \(formatted(first))→\(formatted(last))")
-                        .foregroundStyle(AmberTheme.amber)
-                    if let delta = summary.delta {
-                        Text("(\(signed(delta)))")
-                            .foregroundStyle(AmberTheme.amberLight)
-                    }
-                }
-            }
-            if let low = summary.min, let high = summary.max {
-                Text("MIN \(formatted(low)) · MAX \(formatted(high))")
-                    .foregroundStyle(AmberTheme.amber)
-            }
-            if summary.insulinUnits > 0 {
-                Text("IN \(formatUnits(summary.insulinUnits))")
-                    .foregroundStyle(AmberTheme.amber)
-            }
-            if summary.carbsGrams > 0 {
-                Text("CARBS \(Int(summary.carbsGrams))g")
-                    .foregroundStyle(AmberTheme.amber)
-            }
-            // Every derived number ships with its sample size.
-            Text("n=\(summary.readings)")
-                .foregroundStyle(AmberTheme.amberDark)
-        }
-        .font(DOSTypography.label)
-        .monospacedDigit()
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
+        Text(joined(summary.readoutSegments(format: formatted, units: formatUnits)))
+            .font(DOSTypography.label)
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
     }
 
     // MARK: Helpers
+
+    private func run(_ text: String, _ color: Color) -> AttributedString {
+        var run = AttributedString(text)
+        run.foregroundColor = color
+        return run
+    }
+
+    /// Whitespace, as the prototype separates its groups — a ` · ` between every
+    /// group cost 15 characters of a line that has to end with `n=`, and `n=`
+    /// is the one thing that must never be the part that truncates.
+    private var separatorRun: AttributedString {
+        run("  ", AmberTheme.borderStrong)
+    }
+
+    /// ONE attributed string, so the whole line scales together instead of each
+    /// run truncating on its own while a neighbour still has slack.
+    private func joined(_ segments: [LabReadoutSegment]) -> AttributedString {
+        segments
+            .map { run($0.text, color(for: $0.emphasis)) }
+            .joinedWithSeparator(separatorRun)
+    }
+
+    private func color(for emphasis: LabReadoutSegment.Emphasis) -> Color {
+        switch emphasis {
+        case .value: return AmberTheme.amber
+        case .delta: return AmberTheme.amberLight
+        case .sampleSize: return AmberTheme.amberDark
+        }
+    }
 
     /// Values arrive already in the display unit (the datapoint builders convert),
     /// so they are formatted — never converted — here.
@@ -874,10 +883,6 @@ private struct LabReadoutStrip: View {
     /// lab and the hero never disagree on how many units they are showing.
     private func formatUnits(_ value: Double) -> String {
         String(format: "%.1fU", value)
-    }
-
-    private func signed(_ value: Double) -> String {
-        (value > 0 ? "+" : "") + formatted(value)
     }
 
     private func durationLabel(_ range: ClosedRange<Date>) -> String {
@@ -903,5 +908,18 @@ private struct LabReadoutStrip: View {
             .filter { abs($0.time.timeIntervalSince(date)) <= 5 * 60 }
             .min { abs($0.time.timeIntervalSince(date)) < abs($1.time.timeIntervalSince(date)) }?
             .bpm
+    }
+}
+
+// MARK: - AttributedString joining
+
+private extension Array where Element == AttributedString {
+    func joinedWithSeparator(_ separator: AttributedString) -> AttributedString {
+        guard var result = first else { return AttributedString() }
+        for element in dropFirst() {
+            result += separator
+            result += element
+        }
+        return result
     }
 }

@@ -796,3 +796,54 @@ struct LabReadoutHeightTests {
         #expect(applications == 1, "found \(applications) pinned-height applications; the readout must apply exactly one, outside its branches")
     }
 }
+
+// MARK: - Readout segments
+
+@Suite("Lab readout segments")
+struct LabReadoutSegmentTests {
+    private func fmt(_ value: Double) -> String { String(Int(value)) }
+    private func units(_ value: Double) -> String { String(format: "%.1fU", value) }
+
+    private func summary(
+        first: Double? = 169, last: Double? = 201, min: Double? = 152, max: Double? = 206,
+        delta: Double? = 32, readings: Int = 20, carbs: Double = 60, insulin: Double = 5
+    ) -> LabRangeSummary {
+        LabRangeSummary(
+            first: first, last: last, min: min, max: max, delta: delta,
+            readings: readings, carbsGrams: carbs, insulinUnits: insulin,
+            heartRateFirst: nil, heartRateLast: nil
+        )
+    }
+
+    @Test("the A→B line reads value, delta, min/max, insulin, carbs, then n")
+    func fullLine() {
+        let segments = summary().readoutSegments(format: fmt, units: units)
+        #expect(segments.map(\.text) == [
+            "G 169→201", "(+32)", "MIN 152 · MAX 206", "IN 5.0U", "CARBS 60g", "n=20"
+        ])
+    }
+
+    @Test("n is always last, and always present")
+    func sampleSizeAlwaysLast() {
+        #expect(summary().readoutSegments(format: fmt, units: units).last?.text == "n=20")
+        #expect(summary().readoutSegments(format: fmt, units: units).last?.emphasis == .sampleSize)
+        // An empty window still says so rather than saying nothing.
+        #expect(LabRangeSummary.none.readoutSegments(format: fmt, units: units).map(\.text) == ["n=0"])
+    }
+
+    @Test("a window with no doses and no carbs omits them rather than printing zero")
+    func zeroesAreOmitted() {
+        let segments = summary(carbs: 0, insulin: 0).readoutSegments(format: fmt, units: units)
+        #expect(!segments.contains { $0.text.hasPrefix("IN ") })
+        #expect(!segments.contains { $0.text.hasPrefix("CARBS ") })
+    }
+
+    @Test("a falling range carries its own minus, a rising one a plus")
+    func deltaSign() {
+        let rising = summary(delta: 32).readoutSegments(format: fmt, units: units)
+        #expect(rising.contains { $0.text == "(+32)" && $0.emphasis == .delta })
+
+        let falling = summary(first: 201, last: 169, delta: -32).readoutSegments(format: fmt, units: units)
+        #expect(falling.contains { $0.text == "(-32)" })
+    }
+}

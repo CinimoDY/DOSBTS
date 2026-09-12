@@ -135,6 +135,20 @@ struct LabChartInputs: Equatable {
     }
 }
 
+// MARK: - LabReadoutSegment
+
+/// One run of the A→B readout line, with the role that decides its colour.
+struct LabReadoutSegment: Equatable {
+    enum Emphasis: Equatable {
+        case value
+        case delta
+        case sampleSize
+    }
+
+    let text: String
+    let emphasis: Emphasis
+}
+
 // MARK: - LabRangeSummary
 
 /// Aggregate behind the A→B readout. Every derived number ships with the sample
@@ -154,6 +168,38 @@ struct LabRangeSummary: Equatable {
     let insulinUnits: Double
     let heartRateFirst: Double?
     let heartRateLast: Double?
+
+    /// The A→B line, in reading order, with `n` always last.
+    ///
+    /// Pure and unit-agnostic (the caller supplies its own formatters) so the
+    /// line's CONTENT is pinned by tests, and so the view can render it as ONE
+    /// `Text`: an `HStack` of separate `Text`s truncates its children
+    /// individually under pressure (`G 6,2… · MA…`) instead of scaling the line
+    /// down as a whole.
+    func readoutSegments(format: (Double) -> String, units: (Double) -> String) -> [LabReadoutSegment] {
+        var segments: [LabReadoutSegment] = []
+
+        if let first, let last {
+            segments.append(LabReadoutSegment(text: "G \(format(first))→\(format(last))", emphasis: .value))
+            if let delta {
+                let sign = delta > 0 ? "+" : ""
+                segments.append(LabReadoutSegment(text: "(\(sign)\(format(delta)))", emphasis: .delta))
+            }
+        }
+        if let min, let max {
+            segments.append(LabReadoutSegment(text: "MIN \(format(min)) · MAX \(format(max))", emphasis: .value))
+        }
+        if insulinUnits > 0 {
+            segments.append(LabReadoutSegment(text: "IN \(units(insulinUnits))", emphasis: .value))
+        }
+        if carbsGrams > 0 {
+            segments.append(LabReadoutSegment(text: "CARBS \(Int(carbsGrams))g", emphasis: .value))
+        }
+        // Every derived number ships with its sample size — last, always.
+        segments.append(LabReadoutSegment(text: "n=\(readings)", emphasis: .sampleSize))
+
+        return segments
+    }
 
     static let none = LabRangeSummary(
         first: nil, last: nil, min: nil, max: nil, delta: nil,
