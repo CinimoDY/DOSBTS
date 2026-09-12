@@ -153,6 +153,11 @@ protocol DirectState {
     /// Persisted confirmed ICR (g/U) chosen by the user as their reference. nil = not set.
     var confirmedICR: Double? { get set }
 
+    // MARK: Chart Lab — LAB: PATTERNS (DMNC-1503)
+    /// Transient — the personal hourly band + its raw readings, loaded on
+    /// demand when `LAB: PATTERNS` appears. Not persisted; `nil` = loading.
+    var labPatterns: LabPatternEvidence? { get set }
+
     // MARK: Daily Digest
     var currentDailyDigest: DailyDigest? { get set }
     var dailyDigestLoading: Bool { get set }

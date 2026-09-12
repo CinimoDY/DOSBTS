@@ -68,6 +68,12 @@ struct LabChartInputs: Equatable {
     let smoothThreshold: Date
     let selectedDate: Date?
     let overlays: Set<ChartLabOverlay>
+    /// P4's personal hourly band (nil while it loads, or off this tab).
+    ///
+    /// Deliberately the 24 hourly rows and NOT `LabPatternEvidence` itself: the
+    /// evidence carries up to 90 days of raw readings, and this struct's
+    /// `Equatable` conformance is compared on every render.
+    let patternBand: PatternBandInput?
 
     /// The ONLY place the lab reads `store.state` for series data.
     init(state: DirectState, overlays: Set<ChartLabOverlay>) {
@@ -95,6 +101,9 @@ struct LabChartInputs: Equatable {
             : Date(timeIntervalSince1970: 0)
         self.selectedDate = state.selectedDate
         self.overlays = overlays
+        self.patternBand = overlays.contains(.ghostBand)
+            ? state.labPatterns.map { PatternBandInput(hourly: $0.hourly, days: $0.days) }
+            : nil
     }
 
     /// Memberwise init for tests and previews.
@@ -114,7 +123,8 @@ struct LabChartInputs: Equatable {
         showSmoothed: Bool,
         smoothThreshold: Date,
         selectedDate: Date?,
-        overlays: Set<ChartLabOverlay>
+        overlays: Set<ChartLabOverlay>,
+        patternBand: PatternBandInput? = nil
     ) {
         self.sensorGlucose = sensorGlucose
         self.bloodGlucose = bloodGlucose
@@ -132,6 +142,7 @@ struct LabChartInputs: Equatable {
         self.smoothThreshold = smoothThreshold
         self.selectedDate = selectedDate
         self.overlays = overlays
+        self.patternBand = patternBand
     }
 }
 
@@ -229,6 +240,9 @@ struct LabChartSeries {
     var meals: [MealDatapoint]
     var exercise: [ExerciseDatapoint]
     var heartRate: [HeartRateSample]
+    /// P4's ghost band, already positioned on this chart's domain and converted
+    /// to the display unit. nil on every other tab.
+    var patternBand: PatternBandLayer?
 
     var readingCount: Int { glucose.count }
 
@@ -249,7 +263,8 @@ struct LabChartSeries {
             iob: [],
             meals: [],
             exercise: [],
-            heartRate: []
+            heartRate: [],
+            patternBand: nil
         )
     }
 
@@ -402,7 +417,17 @@ enum LabChartSeriesBuilder {
             iob: iobSamples(inputs, from: domainStart, to: domainEnd),
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },
-            heartRate: inputs.heartRate.sorted { $0.time < $1.time }
+            heartRate: inputs.heartRate.sorted { $0.time < $1.time },
+            patternBand: inputs.patternBand.flatMap { band in
+                PatternBandBuilder.build(
+                    hourly: band.hourly,
+                    today: inputs.sensorGlucose,
+                    domainStart: domainStart,
+                    domainEnd: domainEnd,
+                    glucoseUnit: inputs.glucoseUnit,
+                    lookbackDays: band.days
+                )
+            }
         )
     }
 

@@ -547,6 +547,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setConfirmedICR(icr: let icr):
         state.confirmedICR = icr
 
+    // MARK: Chart Lab — LAB: PATTERNS (DMNC-1503)
+    case .setLabPatterns(evidence: let evidence):
+        state.labPatterns = evidence
+
     // MARK: Meal Impact
     case .setScoredMealEntryIds(scoredMealEntryIds: let ids):
         state.scoredMealEntryIds = ids

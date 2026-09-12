@@ -387,6 +387,9 @@ struct PatternBandBuilderTests {
         #expect(marker.deltaMgDL == 68)
         #expect(marker.todayValue == 218)
         #expect(marker.days == 27)
+        // The card's copy is built where the display unit is known, so the
+        // chart arm renders a string and decides nothing.
+        #expect(marker.cardText == "11:00 · +68 VS USUAL · n=27")
     }
 
     @Test("the layer carries the look-back it was built for")
