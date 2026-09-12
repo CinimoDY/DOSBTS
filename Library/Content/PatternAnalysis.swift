@@ -235,6 +235,12 @@ struct OutOfBandMarker: Equatable, Identifiable {
     /// that knows the display unit, and `LabOverlayMarks.marks(for:series:yMax:)`
     /// is a shared P0 signature that must stay as it is for the sibling arms.
     let cardText: String
+    /// Whether this marker gets the full card, or only its axis tick. A chart
+    /// annotation is about six hours wide at the 24 h zoom, so four flagged
+    /// hours would draw four overlapping cards over the trace they describe
+    /// (observed on-simulator). Every departure keeps its tick; the card goes
+    /// to the biggest ones that can be read (see `cardSpacingHours`).
+    let showsCard: Bool
 
     var id: Date { time }
 }
@@ -270,6 +276,10 @@ struct PatternBandInput: Equatable {
 // MARK: - PatternBandBuilder
 
 enum PatternBandBuilder {
+    /// Minimum separation between two out-of-band CARDS, in hours. Roughly the
+    /// width of one card at the widest zoom, so cards never overlap each other.
+    static let cardSpacingHours = 6
+
     /// Build the band across every calendar day the chart's domain touches.
     ///
     /// The band is the same 24-hour shape on each day, so a domain that spans
@@ -335,23 +345,25 @@ enum PatternBandBuilder {
             patternHourSpan(hour: hour.hour, days: days, domainStart: domainStart, domainEnd: domainEnd, calendar: calendar)
         }
 
-        let markers = PatternAnalysis.outOfBand(today: today, hourly: hourly, calendar: calendar)
-            .compactMap { hit -> OutOfBandMarker? in
-                guard let centre = calendar.date(byAdding: .minute, value: 30, to: hit.hourStart) else { return nil }
-                return OutOfBandMarker(
-                    time: centre,
+        let hits = PatternAnalysis.outOfBand(today: today, hourly: hourly, calendar: calendar)
+        let carded = cardedTimes(hits, calendar: calendar)
+        let markers = hits.compactMap { hit -> OutOfBandMarker? in
+            guard let centre = calendar.date(byAdding: .minute, value: 30, to: hit.hourStart) else { return nil }
+            return OutOfBandMarker(
+                time: centre,
+                hour: hit.hour,
+                deltaMgDL: hit.deltaVsUsual,
+                todayValue: display(hit.todayMedian, unit: glucoseUnit),
+                days: hit.days,
+                cardText: PatternCopy.outOfBandCard(
                     hour: hit.hour,
                     deltaMgDL: hit.deltaVsUsual,
-                    todayValue: display(hit.todayMedian, unit: glucoseUnit),
                     days: hit.days,
-                    cardText: PatternCopy.outOfBandCard(
-                        hour: hit.hour,
-                        deltaMgDL: hit.deltaVsUsual,
-                        days: hit.days,
-                        glucoseUnit: glucoseUnit
-                    )
-                )
-            }
+                    glucoseUnit: glucoseUnit
+                ),
+                showsCard: carded.contains(hit.hourStart)
+            )
+        }
 
         return PatternBandLayer(
             points: points,
@@ -363,6 +375,24 @@ enum PatternBandBuilder {
     }
 
     // MARK: Private
+
+    /// Biggest departure first, then anything at least `cardSpacingHours` from
+    /// an already-carded one. Deterministic (ties break on the earlier hour), so
+    /// the same day never renders two different sets of cards.
+    private static func cardedTimes(_ hits: [OutOfBandHour], calendar: Calendar) -> Set<Date> {
+        var kept: [Date] = []
+        let spacing = TimeInterval(cardSpacingHours * 3600)
+
+        for hit in hits.sorted(by: {
+            abs($0.deltaVsUsual) == abs($1.deltaVsUsual)
+                ? $0.hourStart < $1.hourStart
+                : abs($0.deltaVsUsual) > abs($1.deltaVsUsual)
+        }) {
+            let clashes = kept.contains { abs($0.timeIntervalSince(hit.hourStart)) < spacing }
+            if !clashes { kept.append(hit.hourStart) }
+        }
+        return Set(kept)
+    }
 
     private static func bandPoint(_ row: HourlyPattern, at time: Date, unit: GlucoseUnit) -> PatternBandPoint? {
         guard let median = row.median, let p25 = row.p25, let p75 = row.p75 else { return nil }

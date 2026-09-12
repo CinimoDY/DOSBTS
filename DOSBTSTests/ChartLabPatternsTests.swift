@@ -390,6 +390,26 @@ struct PatternBandBuilderTests {
         // The card's copy is built where the display unit is known, so the
         // chart arm renders a string and decides nothing.
         #expect(marker.cardText == "11:00 · +68 VS USUAL · n=27")
+        #expect(marker.showsCard)
+    }
+
+    @Test("clustered departures keep every tick but only the biggest card")
+    func cardSpacing() throws {
+        // 01:00 (+6), 02:00 (+7) and 11:00 (+68): the two adjacent small ones
+        // would draw two overlapping cards over the trace they describe.
+        let today = try flatHour(hour: 1, 187) + (try flatHour(hour: 2, 188)) + (try flatHour(hour: 11, 218))
+        let layer = try #require(build(hourly: hourly(), today: today, from: try date(hour: 0), to: try date(hour: 20)))
+
+        #expect(layer.outOfBand.count == 3) // every departure keeps its tick
+        #expect(layer.outOfBand.filter(\.showsCard).map(\.hour) == [2, 11]) // +7 beats +6 in its cluster
+        #expect(PatternBandBuilder.cardSpacingHours == 6)
+    }
+
+    @Test("departures spread across the day each keep their card")
+    func cardsWhenSpread() throws {
+        let today = try flatHour(hour: 2, 220) + (try flatHour(hour: 11, 218)) + (try flatHour(hour: 20, 90))
+        let layer = try #require(build(hourly: hourly(), today: today, from: try date(hour: 0), to: try date(hour: 23)))
+        #expect(layer.outOfBand.filter(\.showsCard).map(\.hour) == [2, 11, 20])
     }
 
     @Test("the layer carries the look-back it was built for")

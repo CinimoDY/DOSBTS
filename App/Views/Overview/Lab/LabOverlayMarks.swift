@@ -140,6 +140,8 @@ enum LabOverlayMarks {
             .lineStyle(GhostBand.tickStyle)
         }
 
+        // Every departure gets its dot; only the ones far enough apart to be
+        // read get the card (`PatternBandBuilder.cardSpacingHours`).
         ForEach(band.outOfBand) { marker in
             PointMark(
                 x: .value("Time", marker.time),
@@ -151,11 +153,13 @@ enum LabOverlayMarks {
                 position: .top,
                 overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
             ) {
-                Text(marker.cardText)
-                    .font(DOSTypography.micro)
-                    .foregroundStyle(AmberTheme.amber)
-                    .monospacedDigit()
-                    .dosCard(.toast, padding: DOSSpacing.xxs)
+                if marker.showsCard {
+                    Text(marker.cardText)
+                        .font(DOSTypography.micro)
+                        .foregroundStyle(AmberTheme.amber)
+                        .monospacedDigit()
+                        .dosCard(.toast, padding: DOSSpacing.xxs)
+                }
             }
         }
     }
