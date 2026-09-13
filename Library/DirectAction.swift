@@ -206,6 +206,12 @@ enum DirectAction {
     // MARK: Chart Lab (DMNC-1500)
     case setShowChartLab(enabled: Bool)
 
+    // MARK: LAB: SWEEP (DMNC-1503)
+    /// On-demand, cold-path load for the sweep tab. `days` is clamped to 90 by
+    /// `LabSweepStore.effectiveDays` — the ALL chip's 9999 sentinel never reaches GRDB.
+    case loadLabSweeps(days: Int)
+    case setLabSweeps(evidence: LabSweepEvidence?)
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     case setMarkerLanePosition(position: MarkerLanePosition)
 
