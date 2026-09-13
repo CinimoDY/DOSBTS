@@ -86,6 +86,11 @@ struct SameHourDrill: Equatable {
 enum PatternAnalysis {
     /// Below this many distinct days, an hour is a coincidence, not a pattern.
     static let minDaysForBand = 5
+    /// Below this many readings, TODAY's hourly median is not a median — the
+    /// hour in progress has one or two readings in it, and `percentile([x], 0.5)`
+    /// is just `x`. Flagging on that makes the newest hour flicker in and out of
+    /// the band as readings arrive.
+    static let minReadingsPerHour = 3
     /// The drill's fixed look-back — short enough that "the same hour" still
     /// means the same routine.
     static let drillDays = 14
@@ -127,6 +132,8 @@ enum PatternAnalysis {
                   let usualMedian = usual.median,
                   let values = buckets[hourStart]
             else { return nil }
+
+            guard values.count >= minReadingsPerHour else { return nil }
 
             let todayMedian = ClinicReportBuilder.percentile(values.sorted(), 0.5)
             guard todayMedian > p75 || todayMedian < p25 else { return nil }
@@ -171,8 +178,16 @@ enum PatternAnalysis {
 
         var traces: [SameHourTrace] = []
         for back in stride(from: max(days, 1) - 1, through: 0, by: -1) {
+            // Wall-clock, not `hour * 60 + 30` minutes from midnight: on a DST
+            // day that arithmetic slides every hour by one (a 05:30 centre lands
+            // at 06:30) and slices the wrong four hours. `.strict` returns nil
+            // for an hour that does not exist that day, which is the honest
+            // answer — there is no 02:30 on a spring-forward morning.
             guard let dayStart = calendar.date(byAdding: .day, value: -back, to: today),
-                  let centre = calendar.date(byAdding: .minute, value: hour * 60 + 30, to: dayStart)
+                  let centre = calendar.date(
+                      bySettingHour: hour, minute: 30, second: 0, of: dayStart, matchingPolicy: .strict
+                  ),
+                  calendar.isDate(centre, inSameDayAs: dayStart)
             else { continue }
 
             let window = centre.addingTimeInterval(-halfWidth) ... centre.addingTimeInterval(halfWidth)
@@ -196,6 +211,18 @@ enum PatternAnalysis {
             days: traces.count,
             n: traces.reduce(0) { $0 + $1.points.count }
         )
+    }
+
+    /// The evidence snapshot brought up to date with whatever has arrived since
+    /// it was taken.
+    ///
+    /// The multi-day read is a snapshot; the chart's own trace keeps growing.
+    /// Without this the drill's "today" line would freeze at load time while the
+    /// band and the cards beside it stayed live — the one place the tab could
+    /// contradict itself. Splicing at the snapshot's end is exact (no dedupe
+    /// needed) and costs no extra database read.
+    static func splice(snapshot: [SensorGlucose], takenAt: Date, live: [SensorGlucose]) -> [SensorGlucose] {
+        snapshot + live.filter { $0.timestamp > takenAt }
     }
 
     /// Start of the hour a timestamp falls in (calendar-aware, so it survives a
@@ -299,7 +326,9 @@ enum PatternBandBuilder {
         let usable = hourly.filter { $0.median != nil && $0.p25 != nil && $0.p75 != nil }
         guard !usable.isEmpty else { return nil }
 
-        let byHour = Dictionary(uniqueKeysWithValues: hourly.map { ($0.hour, $0) })
+        // `uniqueKeysWithValues` would TRAP on a malformed 25-entry band; the
+        // band is a display, not a reason to crash the Overview.
+        let byHour = Dictionary(hourly.map { ($0.hour, $0) }, uniquingKeysWith: { first, _ in first })
         let firstDay = calendar.startOfDay(for: domainStart)
         let lastDay = calendar.startOfDay(for: domainEnd)
 
@@ -325,8 +354,19 @@ enum PatternBandBuilder {
 
         for day in days {
             for hour in 0 ..< 24 {
+                // Wall-clock centres. Minutes-from-midnight arithmetic shifts
+                // every hour on a DST day, which collides hour 23's centre with
+                // the next day's hour 0 — duplicate `ForEach` ids and a
+                // non-monotonic AreaMark x sequence.
                 guard let row = byHour[hour],
-                      let centre = calendar.date(byAdding: .minute, value: hour * 60 + 30, to: day),
+                      let centre = calendar.date(
+                          bySettingHour: hour, minute: 30, second: 0, of: day, matchingPolicy: .strict
+                      ),
+                      // `.strict` does not return nil for an hour that does not
+                      // exist — it searches FORWARD and hands back 02:30 on the
+                      // following day. The same-day test is what actually skips
+                      // the missing hour.
+                      calendar.isDate(centre, inSameDayAs: day),
                       let point = bandPoint(row, at: centre, unit: glucoseUnit)
                 else { continue }
                 points.append(point)
@@ -420,7 +460,10 @@ enum PatternBandBuilder {
     ) -> ClosedRange<Date>? {
         var found: ClosedRange<Date>?
         for day in days {
-            guard let start = calendar.date(byAdding: .minute, value: hour * 60, to: day),
+            guard let start = calendar.date(
+                      bySettingHour: hour, minute: 0, second: 0, of: day, matchingPolicy: .strict
+                  ),
+                  calendar.isDate(start, inSameDayAs: day),
                   let end = calendar.date(byAdding: .hour, value: 1, to: start)
             else { continue }
             guard end > domainStart, start < domainEnd else { continue }

@@ -11,6 +11,7 @@
 //  Everything here is pure — no view instantiation, no GRDB, no store.
 //
 
+import Combine
 import Foundation
 import Testing
 @testable import DOSBTSApp
@@ -32,6 +33,18 @@ private var utcCalendar: Calendar {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = TimeZone(identifier: "UTC") ?? .current
     return calendar
+}
+
+/// A zone with a real DST transition, for the geometry tests. 2026-03-29 is the
+/// European spring-forward: 02:00 → 03:00, so that day has 23 hours and no 02:xx.
+private var berlinCalendar: Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "Europe/Berlin") ?? .current
+    return calendar
+}
+
+private func berlinDate(day: Int, hour: Int, minute: Int = 0) throws -> Date {
+    try #require(berlinCalendar.date(from: DateComponents(year: 2026, month: 3, day: day, hour: hour, minute: minute)))
 }
 
 /// 15 June 2026, UTC.
@@ -119,6 +132,9 @@ struct LabPatternsStateTests {
     func setAndClear() throws {
         var state: DirectState = makeState()
         #expect(state.labPatterns == nil)
+        // A fresh state carries the GLUCOSE tab's 3-day window; the reducer only
+        // accepts evidence for the window that is live (see `staleWindowIgnored`).
+        reduce(&state, .setStatisticsDays(days: 30))
 
         let evidence = LabPatternEvidence(
             days: 30,
@@ -132,6 +148,49 @@ struct LabPatternsStateTests {
 
         reduce(&state, .setLabPatterns(evidence: nil))
         #expect(state.labPatterns == nil)
+    }
+
+    @Test("evidence for a window the user has moved on from is dropped, not shown")
+    func staleWindowIgnored() throws {
+        var state: DirectState = makeState()
+        reduce(&state, .setStatisticsDays(days: 30))
+
+        func evidence(days: Int) -> LabPatternEvidence {
+            LabPatternEvidence(
+                days: days,
+                hourly: ClinicReportBuilder.hourlyPatterns(from: [], calendar: utcCalendar),
+                readings: [],
+                period: DateInterval(start: Date(timeIntervalSince1970: 0), end: Date(timeIntervalSince1970: 1))
+            )
+        }
+
+        // The answer to the 3-day question the tab asked before the toolbar
+        // normalised the window: late, and about the wrong thing.
+        reduce(&state, .setLabPatterns(evidence: evidence(days: 3)))
+        #expect(state.labPatterns == nil)
+
+        reduce(&state, .setLabPatterns(evidence: evidence(days: 30)))
+        #expect(state.labPatterns?.days == 30)
+
+        // The ALL chip asks for 9999 and is answered with the 90-day cap.
+        reduce(&state, .setStatisticsDays(days: 9999))
+        reduce(&state, .setLabPatterns(evidence: evidence(days: 90)))
+        #expect(state.labPatterns?.days == 90)
+
+        // Clearing is never stale.
+        reduce(&state, .setLabPatterns(evidence: nil))
+        #expect(state.labPatterns == nil)
+    }
+
+    @Test("the chip windows are the ones ChartZoomRow actually offers")
+    func chipWindows() {
+        #expect(LabPatternEvidence.isChipWindow(7))
+        #expect(LabPatternEvidence.isChipWindow(30))
+        #expect(LabPatternEvidence.isChipWindow(90))
+        #expect(LabPatternEvidence.isChipWindow(9999))
+        // `statisticsDays` defaults to 3 — the GLUCOSE tab's window, not a chip.
+        #expect(LabPatternEvidence.isChipWindow(3) == false)
+        #expect(LabPatternEvidence.isChipWindow(14) == false)
     }
 
     @Test("the look-back is capped at 90 days — the ALL chip must not read 9999 days")
@@ -210,6 +269,50 @@ struct PatternAnalysisTests {
         #expect(hours.map(\.hour) == [3, 11, 20])
     }
 
+    @Test("the hour in progress is not flagged on one or two readings")
+    func minimumReadingsPerHour() throws {
+        #expect(PatternAnalysis.minReadingsPerHour == 3)
+
+        // One reading 68 above the usual median: a spike, not yet an hour.
+        let one = [try reading(hour: 11, minute: 2, 218)]
+        #expect(PatternAnalysis.outOfBand(today: one, hourly: band(), calendar: utcCalendar).isEmpty)
+
+        let two = one + [try reading(hour: 11, minute: 7, 220)]
+        #expect(PatternAnalysis.outOfBand(today: two, hourly: band(), calendar: utcCalendar).isEmpty)
+
+        let three = two + [try reading(hour: 11, minute: 12, 222)]
+        #expect(PatternAnalysis.outOfBand(today: three, hourly: band(), calendar: utcCalendar).map(\.hour) == [11])
+    }
+
+    @Test("the drill slices wall-clock hours across a DST transition")
+    func drillAcrossDST() throws {
+        // 05:00–06:00 on the 27th, 28th and 29th (the spring-forward day).
+        var readings: [SensorGlucose] = []
+        for day in 27 ... 29 {
+            for minute in stride(from: 0, to: 60, by: 15) {
+                readings.append(SensorGlucose(
+                    timestamp: try berlinDate(day: day, hour: 5, minute: minute),
+                    rawGlucoseValue: 140,
+                    intGlucoseValue: 140
+                ))
+            }
+        }
+
+        let drill = PatternAnalysis.drill(
+            hour: 5,
+            readings: readings,
+            days: 3,
+            now: try berlinDate(day: 29, hour: 20),
+            calendar: berlinCalendar
+        )
+
+        // Minutes-from-midnight arithmetic would put the 29th's centre at 06:30
+        // and miss that day's readings entirely.
+        #expect(drill.traces.count == 3)
+        #expect(drill.n == 12)
+        #expect(drill.traces.map(\.isToday) == [false, false, true])
+    }
+
     @Test("patternHour picks the widest p25–p75, ties to the earliest hour")
     func widestSpread() {
         var hourly = band()
@@ -277,6 +380,49 @@ struct PatternAnalysisTests {
         #expect(drill.n == 4)
     }
 
+    @Test("the drill's `today` is the day it was asked about, not the real today")
+    func drillFollowsTheAnchorDay() throws {
+        // Paging back to the 16th must highlight the 16th, not the 17th.
+        var readings: [SensorGlucose] = []
+        readings += try flatHour(day: 16, hour: 11, 150, minutes: 4)
+        readings += try flatHour(day: 17, hour: 11, 150, minutes: 4)
+
+        let paged = PatternAnalysis.drill(
+            hour: 11,
+            readings: readings,
+            days: 14,
+            now: try date(day: 16, hour: 12),
+            calendar: utcCalendar
+        )
+        #expect(paged.traces.count == 1) // the 17th is in the future of the 16th
+        #expect(paged.traces.first?.isToday == true)
+        #expect(paged.traces.first?.day == (try date(day: 16, hour: 0)))
+
+        let live = PatternAnalysis.drill(
+            hour: 11,
+            readings: readings,
+            days: 14,
+            now: try date(day: 17, hour: 12),
+            calendar: utcCalendar
+        )
+        #expect(live.traces.map(\.isToday) == [false, true])
+    }
+
+    @Test("the snapshot is spliced with whatever arrived after it was taken")
+    func spliceLiveReadings() throws {
+        let snapshot = try flatHour(day: 17, hour: 10, 120, minutes: 4)
+        let takenAt = try date(day: 17, hour: 11)
+        // The chart's own rolling window: it overlaps the snapshot AND runs past it.
+        let live = try flatHour(day: 17, hour: 10, 120, minutes: 4) + (try flatHour(day: 17, hour: 12, 200, minutes: 4))
+
+        let spliced = PatternAnalysis.splice(snapshot: snapshot, takenAt: takenAt, live: live)
+
+        // Nothing duplicated from the overlap, everything newer kept.
+        #expect(spliced.count == 8)
+        #expect(spliced.filter { $0.timestamp <= takenAt }.count == 4)
+        #expect(PatternAnalysis.splice(snapshot: snapshot, takenAt: takenAt, live: []).count == 4)
+    }
+
     @Test("an empty drill is empty, not a claim")
     func emptyDrill() throws {
         let drill = PatternAnalysis.drill(hour: 2, readings: [], days: 14, now: try date(hour: 12), calendar: utcCalendar)
@@ -284,6 +430,47 @@ struct PatternAnalysisTests {
         #expect(drill.days == 0)
         #expect(drill.n == 0)
         #expect(drill.daysAbove180 == 0)
+    }
+}
+
+// MARK: - Middleware guards
+
+/// Only the NON-loading branches: the loading ones reach `DataStore.shared`, and
+/// a unit test has no business opening the app's database.
+@Suite("Lab patterns middleware guards")
+struct LabPatternsMiddlewareTests {
+    private func emits(_ state: DirectState, _ action: DirectAction) -> Bool {
+        var produced = false
+        let cancellable = labPatternsMiddleware()(state, action, state)?
+            .sink(receiveCompletion: { _ in }, receiveValue: { _ in produced = true })
+        cancellable?.cancel()
+        return produced
+    }
+
+    @Test("nothing loads while the scene is inactive")
+    func inactiveScene() {
+        var state: DirectState = makeState()
+        state.appState = .inactive
+        state.selectedReportType = .labPatterns
+        #expect(emits(state, .loadLabPatterns(days: 30)) == false)
+        #expect(emits(state, .setAppState(appState: .inactive)) == false)
+    }
+
+    @Test("the shared day chips only reload the band on the tab that draws one")
+    func otherTabsDoNotReload() {
+        var state: DirectState = makeState()
+        state.appState = .active
+        state.selectedReportType = .statistics
+        #expect(emits(state, .setStatisticsDays(days: 90)) == false)
+        #expect(emits(state, .setAppState(appState: .active)) == false)
+    }
+
+    @Test("an unrelated action is not a reason to read 90 days of GRDB")
+    func unrelatedAction() {
+        var state: DirectState = makeState()
+        state.appState = .active
+        state.selectedReportType = .labPatterns
+        #expect(emits(state, .setChartZoomLevel(level: 6)) == false)
     }
 }
 
@@ -410,6 +597,61 @@ struct PatternBandBuilderTests {
         let today = try flatHour(hour: 2, 220) + (try flatHour(hour: 11, 218)) + (try flatHour(hour: 20, 90))
         let layer = try #require(build(hourly: hourly(), today: today, from: try date(hour: 0), to: try date(hour: 23)))
         #expect(layer.outOfBand.filter(\.showsCard).map(\.hour) == [2, 11, 20])
+    }
+
+    @Test("across a DST transition every band centre is its own wall-clock hour")
+    func bandAcrossDST() throws {
+        // 2026-03-29 Europe/Berlin: 02:00 → 03:00. A 23-hour day.
+        let layer = try #require(PatternBandBuilder.build(
+            hourly: hourly(),
+            today: [],
+            domainStart: try berlinDate(day: 29, hour: 0),
+            domainEnd: try berlinDate(day: 29, hour: 23, minute: 30),
+            glucoseUnit: .mgdL,
+            lookbackDays: 30,
+            calendar: berlinCalendar
+        ))
+
+        let times = layer.points.map(\.time)
+        // No duplicates: minutes-from-midnight arithmetic collides hour 23's
+        // centre with the next midnight edge point and gives `ForEach` two marks
+        // with the same id.
+        #expect(Set(times).count == times.count)
+        // Strictly increasing: an AreaMark whose x sequence doubles back folds.
+        #expect(zip(times, times.dropFirst()).allSatisfy { $0 < $1 })
+        // 02:xx does not exist that day, so no band point claims it.
+        #expect(layer.points.contains { berlinCalendar.component(.hour, from: $0.time) == 2 } == false)
+        // 23 real hours + both edges.
+        #expect(layer.points.count == 25)
+    }
+
+    @Test("the pattern hour box lands on the right wall-clock hour on a DST day")
+    func patternHourSpanAcrossDST() throws {
+        var rows = hourly()
+        rows[5] = HourlyPattern(hour: 5, median: 150, p25: 100, p75: 220, readings: 324, p5: 80, p95: 240, days: 27)
+
+        let layer = try #require(PatternBandBuilder.build(
+            hourly: rows,
+            today: [],
+            domainStart: try berlinDate(day: 29, hour: 0),
+            domainEnd: try berlinDate(day: 29, hour: 23, minute: 30),
+            glucoseUnit: .mgdL,
+            lookbackDays: 30,
+            calendar: berlinCalendar
+        ))
+
+        #expect(layer.patternHour?.hour == 5)
+        #expect(layer.patternHourSpan?.lowerBound == (try berlinDate(day: 29, hour: 5)))
+        #expect(layer.patternHourSpan?.upperBound == (try berlinDate(day: 29, hour: 6)))
+    }
+
+    @Test("a malformed band with a duplicate hour does not trap")
+    func duplicateHourDoesNotTrap() throws {
+        let rows = hourly() + [HourlyPattern(hour: 0, median: 99, p25: 90, p75: 110, readings: 3, p5: 88, p95: 120, days: 9)]
+        let layer = try #require(build(hourly: rows, from: try date(hour: 6), to: try date(hour: 20)))
+        // First entry wins, so the 24 canonical rows are the ones drawn.
+        #expect(layer.points.count == 26)
+        #expect(layer.points.first?.median == 150)
     }
 
     @Test("the layer carries the look-back it was built for")

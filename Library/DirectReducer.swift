@@ -549,6 +549,16 @@ func directReducer(state: inout DirectState, action: DirectAction) {
 
     // MARK: Chart Lab — LAB: PATTERNS (DMNC-1503)
     case .setLabPatterns(evidence: let evidence):
+        // A window the user has moved on from is not evidence. Two loads can be
+        // in flight at once (the tab's `onAppear` and a day-chip change, or an
+        // app-active re-trigger), and `Store.dispatch` never cancels in-flight
+        // publishers — so the answer to the OLD question can land last. The
+        // evidence carries the window it answered, exactly as `MealHistoryResults`
+        // carries its query; anything that does not match the live window is
+        // dropped rather than trusted to arrive in order.
+        if let evidence, evidence.days != LabPatternEvidence.cappedDays(state.statisticsDays) {
+            break
+        }
         state.labPatterns = evidence
 
     // MARK: Meal Impact

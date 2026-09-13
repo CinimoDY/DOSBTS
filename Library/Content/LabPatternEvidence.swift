@@ -35,4 +35,14 @@ struct LabPatternEvidence: Equatable {
     static func cappedDays(_ days: Int) -> Int {
         min(max(days, 1), maxDays)
     }
+
+    /// The day windows `ChartZoomRow` actually offers. Mirrors the private
+    /// `DaysZoom` in `ChartToolbar.swift` (7 / 30 / 90 / ALL) — kept here so the
+    /// lab can tell "the user picked this window" from "the toolbar has not
+    /// normalised the persisted value yet", without reaching into a view file.
+    static let chipWindows: Set<Int> = [7, 30, 90, 9999]
+
+    static func isChipWindow(_ days: Int) -> Bool {
+        chipWindows.contains(days)
+    }
 }

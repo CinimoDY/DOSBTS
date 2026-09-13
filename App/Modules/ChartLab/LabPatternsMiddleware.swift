@@ -34,6 +34,18 @@ func labPatternsMiddleware() -> Middleware<DirectState, DirectAction> {
 
             return loadPatterns(days: days)
 
+        case .setAppState(appState: let appState):
+            // Coming back from the background with the tab already on screen:
+            // `LabPatternsView.onAppear` does not run again, so without this the
+            // band would silently describe a window that ended hours ago. The
+            // reducer's window guard is what keeps this from becoming a third
+            // concurrent read.
+            guard appState == .active, state.selectedReportType == .labPatterns else {
+                break
+            }
+
+            return loadPatterns(days: state.statisticsDays)
+
         case .setStatisticsDays(days: let days):
             // The day chips are shared with TIR / STATISTICS, so the reload is
             // gated on the tab actually being the one that draws a band. The

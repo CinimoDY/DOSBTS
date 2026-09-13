@@ -46,7 +46,15 @@ struct LabPatternsView: View {
             LabFooter()
         }
         .onAppear {
-            store.dispatch(.loadLabPatterns(days: store.state.statisticsDays))
+            // `statisticsDays` defaults to 3 (the GLUCOSE tab's own window), and
+            // `ChartReportTypeRow` normalises it to 30 the moment a day-window
+            // tab is selected. Loading 3 here would fire a second read whose
+            // answer is already stale — so the load is left to the
+            // normalisation's `.setStatisticsDays`, which the middleware also
+            // handles.
+            if LabPatternEvidence.isChipWindow(store.state.statisticsDays) {
+                store.dispatch(.loadLabPatterns(days: store.state.statisticsDays))
+            }
             refreshDrill()
         }
         // ONE cheap string, so the 90-day reading array is never compared on a
@@ -99,6 +107,11 @@ struct LabPatternsView: View {
         heldHour ?? store.state.labPatterns.flatMap { PatternAnalysis.patternHour($0.hourly)?.hour }
     }
 
+    /// The day the drill is about: the paged day, or today.
+    private var anchorDate: Date {
+        store.state.selectedDate ?? Date()
+    }
+
     /// Cheap identity for the drill inputs — comparing `LabPatternEvidence`
     /// itself would compare up to 90 days of readings on every render.
     private var drillIdentity: String {
@@ -107,7 +120,24 @@ struct LabPatternsView: View {
             String(activeHour ?? -1),
             String(evidence?.readings.count ?? 0),
             String(Int(evidence?.period.end.timeIntervalSince1970 ?? 0)),
+            // The paged day: yesterday's drill must not highlight today's trace.
+            String(Int(store.state.selectedDate?.timeIntervalSince1970 ?? 0)),
+            // The live trace: the evidence is a snapshot, so without this the
+            // drill's own day would freeze at load time while the band stays
+            // live. Newest timestamp, not the count — the chart's window rolls.
+            String(Int(store.state.sensorGlucoseValues.last?.timestamp.timeIntervalSince1970 ?? 0)),
         ].joined(separator: "|")
+    }
+
+    /// The evidence snapshot, brought up to date with whatever has arrived since
+    /// it was taken. Cheaper and quieter than re-reading 90 days of GRDB every
+    /// five minutes, and it is only ever the tail of the current day.
+    private func drillReadings(_ evidence: LabPatternEvidence) -> [SensorGlucose] {
+        PatternAnalysis.splice(
+            snapshot: evidence.readings,
+            takenAt: evidence.period.end,
+            live: store.state.sensorGlucoseValues
+        )
     }
 
     // MARK: Drill card
@@ -260,6 +290,11 @@ struct LabPatternsView: View {
         let key = drillIdentity
         guard key != drillKey else { return }
         drillKey = key
-        drill = PatternAnalysis.drill(hour: hour, readings: evidence.readings, days: drillWindowDays)
+        drill = PatternAnalysis.drill(
+            hour: hour,
+            readings: drillReadings(evidence),
+            days: drillWindowDays,
+            now: anchorDate
+        )
     }
 }
