@@ -147,6 +147,17 @@ protocol DirectState {
     /// rejected — see `MealHistoryResults`.
     var mealHistoryResults: MealHistoryResults? { get set }
 
+    // MARK: Chart Lab window (DMNC-1506)
+    /// Every stream for one interval, loaded on demand by a lab tab that needs
+    /// a window no shipping loader can produce (the night, which spans
+    /// midnight). Transient — never persisted; nil means "not loaded yet".
+    var labWindow: LabWindowSnapshot? { get set }
+    /// The interval the most recent `.loadLabWindow` asked for. `Store.dispatch`
+    /// never cancels an in-flight publisher and the HealthKit reads run
+    /// concurrently, so two quick pages can land out of order; a snapshot whose
+    /// interval is not this one is stale and is dropped. Transient.
+    var labWindowRequest: DateInterval? { get set }
+
     // MARK: Ratio Lab
     /// Transient — loaded on demand when Ratio Lab screen opens. Not persisted.
     var ratioEvidence: RatioEvidence? { get set }

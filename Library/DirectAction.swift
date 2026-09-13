@@ -238,6 +238,13 @@ enum DirectAction {
     case searchMealHistory(query: String)
     case setMealHistoryResults(results: MealHistoryResults?)
 
+    // MARK: Chart Lab window (DMNC-1506)
+    /// Fetch every requested stream for ONE interval. `streams` is advisory —
+    /// the GRDB half is a single read either way — but it records what the
+    /// calling surface believes it needs.
+    case loadLabWindow(interval: DateInterval, streams: Set<LabStream>)
+    case setLabWindow(snapshot: LabWindowSnapshot?)
+
     // MARK: Ratio Lab
     case loadRatioEvidence
     case setRatioEvidence(evidence: RatioEvidence?)

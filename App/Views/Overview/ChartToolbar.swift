@@ -108,10 +108,15 @@ struct ChartZoomRow: View {
     var body: some View {
         Group {
             switch store.state.selectedReportType {
-            case .glucose, .labMeals, .labNight:
+            case .glucose, .labMeals:
                 hoursRow
             case .timeInRange, .statistics, .labSweep, .labPatterns:
                 daysRow
+            case .labNight:
+                // The night window is fixed (20:00 → 10:00): there is nothing
+                // for an hour chip to choose. The tab draws its own
+                // NIGHT · DAY · WK row in this space instead.
+                EmptyView()
             }
         }
         .padding(.vertical, DOSSpacing.xs)
