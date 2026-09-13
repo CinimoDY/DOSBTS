@@ -36,9 +36,12 @@ enum LabFactPins {
     static let crowdingWindow: TimeInterval = 20 * 60
     /// How far apart crowded labels are pushed.
     static let shiftStep: CGFloat = 10
-    /// Where the pin heads sit, as a fraction of the y domain — just under the
-    /// exercise strip (which owns 0.95…1.0).
-    static let headPosition: Double = 0.93
+    /// Where the pin heads sit, as a fraction of the y domain: under the
+    /// exercise strip (which owns 0.95…1.0) AND under the band P0's cursor
+    /// labels occupy at the very top of the plot — tapping a card puts a cursor
+    /// exactly on a pinned anchor, so those two would otherwise collide on the
+    /// feature's own headline interaction.
+    static let headPosition: Double = 0.88
     /// Gap between the reading and the foot of the stem, as a fraction of the y
     /// domain. A fraction, not a fixed 10: ten mg/dL and ten mmol/L are not the
     /// same distance.

@@ -27,20 +27,31 @@ struct LabMealsView: View {
             // height-capped so five cards can never push the chart below its
             // floor (swiftui-vstack-overflow-sinks-safeareainset).
             ScrollView {
-                LabFactSheetLine(sheet: facts.sheet, glucoseUnit: store.state.glucoseUnit)
+                VStack(spacing: 0) {
+                    LabFactSheetLine(sheet: facts.sheet, glucoseUnit: store.state.glucoseUnit)
 
-                LabFactCardList(
-                    facts: facts.facts,
-                    glucoseUnit: store.state.glucoseUnit,
-                    onSelect: { focusRequest = LabFocusRequest(fact: $0) }
+                    LabFactCardList(
+                        facts: facts.facts,
+                        glucoseUnit: store.state.glucoseUnit,
+                        onSelect: { focusRequest = LabFocusRequest(fact: $0) }
+                    )
+                }
+                .background(
+                    GeometryReader { geometry in
+                        Color.clear.preference(key: LabFactsHeightKey.self, value: geometry.size.height)
+                    }
                 )
             }
             .scrollBounceBehavior(.basedOnSize)
-            // Sizes to its content FIRST, then caps: without this the region
-            // reserves its full height even with no facts at all and squeezes
-            // the chart toward its floor for nothing.
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxHeight: Config.factsMaxHeight)
+            // Sized to its content, then capped. A `ScrollView` is greedy in its
+            // scroll axis, so an uncapped one reserves the full budget even with
+            // no facts at all and squeezes the chart toward its floor for
+            // nothing — and `.fixedSize` "fixes" that by ignoring the cap
+            // instead, which overflows the tab and draws cards over the legend
+            // (seen on the simulator with three cards). Measuring is the only
+            // shape that gets both ends right.
+            .frame(height: min(factsHeight, Config.factsMaxHeight))
+            .onPreferenceChange(LabFactsHeightKey.self) { factsHeight = $0 }
 
             LabLegendRow(items: [
                 LabLegendItem(glyph: "A→B", label: "MEASURES", color: AmberTheme.amberLight),
@@ -76,4 +87,17 @@ struct LabMealsView: View {
     /// Set when a card is tapped; the chart scrolls to the anchor and drops a
     /// cursor on it.
     @State private var focusRequest: LabFocusRequest?
+    /// Measured height of the sheet line + cards, so the region can size to its
+    /// content and still be capped.
+    @State private var factsHeight: CGFloat = 0
+}
+
+// MARK: - LabFactsHeightKey
+
+private struct LabFactsHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
 }
