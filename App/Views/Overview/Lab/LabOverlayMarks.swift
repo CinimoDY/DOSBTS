@@ -28,7 +28,7 @@ enum LabOverlayMarks {
         case .ghostBand:
             noMarks // P4 fills this arm — the personal 30-day band.
         case .factPins:
-            noMarks // P5 fills this arm — fact pins.
+            LabFactPins.marks(facts: series.facts, series: series, yMax: yMax)
         }
     }
 

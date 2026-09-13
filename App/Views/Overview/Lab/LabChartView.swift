@@ -34,6 +34,13 @@ struct LabChartView: View {
     /// Hoisted so the tab's legend can say what the nub says.
     @Binding var followStatus: LabFollowStatus
 
+    /// Where the computed facts go. Optional and defaulted: a tab that draws no
+    /// pins (and every sibling lab tab) constructs this view unchanged.
+    var factsBinding: Binding<LabFactsSnapshot>?
+
+    /// Set by a tapped fact card: scroll to the anchor and drop a cursor on it.
+    var focusRequest: LabFocusRequest?
+
     var body: some View {
         VStack(spacing: 0) {
             LabDayPager()
@@ -68,6 +75,7 @@ struct LabChartView: View {
         .onAppear { rebuild() }
         .onChange(of: inputs) { rebuild() }
         .onChange(of: store.state.chartZoomLevel) { reanchorAfterZoom() }
+        .onChange(of: focusRequest) { applyFocus() }
         .onChange(of: store.state.selectedDate) {
             // Another day's numbers under a cursor the user placed on this one
             // would read as `n=0 · G —` with nothing visible to explain it.
@@ -422,6 +430,14 @@ struct LabChartView: View {
                     }
                 }
         )
+        // The app's first AXChartDescriptor: the feature sheet IS the summary, and
+        // every cited fact is a labelled point in the audio-graph rotor.
+        .accessibilityChartDescriptor(LabChartDescriptor(
+            series: series,
+            facts: series.facts,
+            sheet: series.sheet,
+            glucoseUnit: store.state.glucoseUnit
+        ))
         .onChange(of: liveSelection) {
             cursors.apply(selection: liveSelection, minRange: minRangeSeconds)
         }
@@ -566,6 +582,7 @@ struct LabChartView: View {
 
             DispatchQueue.main.async {
                 self.series = built
+                self.factsBinding?.wrappedValue = LabFactsSnapshot(facts: built.facts, sheet: built.sheet)
 
                 if wasFollowing {
                     self.scrollPosition = LabChartMath.followEdge(
@@ -595,6 +612,21 @@ struct LabChartView: View {
             self.scrollPosition = edge
             self.updateFollowState()
         }
+    }
+
+    /// A tapped card moves the instrument: centre the anchor in the visible
+    /// window and leave a standing cursor on it, so the readout strip says the
+    /// same numbers the card does.
+    private func applyFocus() {
+        guard let focusRequest else { return }
+
+        let centred = focusRequest.date.addingTimeInterval(-visibleDuration / 2)
+        let clamped = min(max(series.domainStart, centred), followEdge)
+
+        withAnimation(AnimationTokens.snappy) {
+            scrollPosition = clamped
+        }
+        cursors.place(at: focusRequest.date)
     }
 
     private func updateFollowState() {

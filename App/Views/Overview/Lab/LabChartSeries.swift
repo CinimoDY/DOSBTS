@@ -58,6 +58,9 @@ struct LabChartInputs: Equatable {
     let iobDeliveries: [InsulinDelivery]
     let exercise: [ExerciseEntry]
     let heartRate: [HeartRateSample]
+    /// Journal notes are context for a fact, never a series: the Black Box card
+    /// states the tag that was standing when a hypo started.
+    let journalNotes: [JournalNote]
     let glucoseUnit: GlucoseUnit
     let alarmLow: Int
     let alarmHigh: Int
@@ -78,6 +81,7 @@ struct LabChartInputs: Equatable {
         self.iobDeliveries = state.iobDeliveries
         self.exercise = state.exerciseEntryValues
         self.heartRate = state.heartRateSeries.map { HeartRateSample(time: $0.0, bpm: $0.1) }
+        self.journalNotes = state.journalNoteValues
         self.glucoseUnit = state.glucoseUnit
         self.alarmLow = state.alarmLow
         self.alarmHigh = state.alarmHigh
@@ -106,6 +110,7 @@ struct LabChartInputs: Equatable {
         iobDeliveries: [InsulinDelivery],
         exercise: [ExerciseEntry],
         heartRate: [HeartRateSample],
+        journalNotes: [JournalNote] = [],
         glucoseUnit: GlucoseUnit,
         alarmLow: Int,
         alarmHigh: Int,
@@ -123,6 +128,7 @@ struct LabChartInputs: Equatable {
         self.iobDeliveries = iobDeliveries
         self.exercise = exercise
         self.heartRate = heartRate
+        self.journalNotes = journalNotes
         self.glucoseUnit = glucoseUnit
         self.alarmLow = alarmLow
         self.alarmHigh = alarmHigh
@@ -229,6 +235,12 @@ struct LabChartSeries {
     var meals: [MealDatapoint]
     var exercise: [ExerciseDatapoint]
     var heartRate: [HeartRateSample]
+    /// The cited facts for this window, ranked. Computed HERE — in the one pure
+    /// builder — so the pins, the sheet line, the cards and the accessibility
+    /// descriptor are all reading the same numbers. Empty unless the tab asked
+    /// for `.factPins`.
+    var facts: [ChartFact] = []
+    var sheet: ChartFeatureSheet?
 
     var readingCount: Int { glucose.count }
 
@@ -389,6 +401,11 @@ enum LabChartSeriesBuilder {
         let insulinDoses = inputs.insulin.map {
             LabInsulinDose(id: $0.id.uuidString, starts: $0.starts, units: $0.units, type: $0.type)
         }
+        let iob = iobSamples(inputs, from: domainStart, to: domainEnd)
+
+        // Only the tab that draws pins pays for the detectors.
+        let wantsFacts = inputs.overlays.contains(.factPins)
+        let window = DateInterval(start: domainStart, end: max(domainStart, domainEnd))
 
         return LabChartSeries(
             domainStart: domainStart,
@@ -399,11 +416,80 @@ enum LabChartSeriesBuilder {
             bloodGlucose: bloodGlucose,
             insulin: insulin,
             insulinDoses: insulinDoses,
-            iob: iobSamples(inputs, from: domainStart, to: domainEnd),
+            iob: iob,
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },
-            heartRate: inputs.heartRate.sorted { $0.time < $1.time }
+            heartRate: inputs.heartRate.sorted { $0.time < $1.time },
+            facts: wantsFacts
+                ? ChartHighlights.facts(
+                    readings: inputs.sensorGlucose,
+                    deliveries: inputs.insulin,
+                    meals: inputs.meals,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes,
+                    iob: onsetIOBSamples(inputs, from: domainStart),
+                    heartRate: inputs.heartRate,
+                    windowStart: domainStart,
+                    now: now
+                )
+                : [],
+            sheet: wantsFacts
+                ? ChartHighlights.sheet(
+                    readings: inputs.sensorGlucose,
+                    meals: inputs.meals,
+                    deliveries: inputs.insulin,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes,
+                    window: window
+                )
+                : nil
         )
+    }
+
+    /// IOB at each hypo onset, computed from the CHART's 24-hour delivery set
+    /// rather than from `state.iobDeliveries`.
+    ///
+    /// `getIOBDeliveries` is a `datetime('now', '-DIA minutes')` query: it holds
+    /// what is on board NOW, so `series.iob` is structurally zero at any instant
+    /// older than the DIA — and in a 24-hour window most hypos are. The Black
+    /// Box's IOB is the card's most load-bearing number, so it is computed at
+    /// the onset from the deliveries the chart already has.
+    ///
+    /// Coverage is judged PER COMPONENT. A single `max(bolusDIA, basalDIA)`
+    /// guard is dominated by the long-acting side — with a 24-hour basal DIA it
+    /// can never be satisfied inside a 24-hour window, and every hypo would
+    /// print `IOB —` forever. When only the rapid-acting history is complete the
+    /// card states that half and says so (`BOLUS IOB`); when neither is, nothing
+    /// is emitted and the card prints `IOB —`.
+    ///
+    /// The deeper fix — day-selected loads reaching back to `startOfDay − maxDIA`
+    /// so both halves are complete — is a follow-up on the stores, not here.
+    private static func onsetIOBSamples(_ inputs: LabChartInputs, from domainStart: Date) -> [LabOnsetIOB] {
+        let onsets = ClinicReportBuilder.hypoEpisodeIntervals(from: inputs.sensorGlucose).map(\.start)
+        guard !onsets.isEmpty, !inputs.insulin.isEmpty else { return [] }
+
+        let bolusModel = ExponentialInsulinModel.bolus(preset: inputs.bolusPreset)
+        let basalModel = ExponentialInsulinModel.basal(diaMinutes: inputs.basalDIAMinutes)
+        let bolusCoverage = TimeInterval(inputs.bolusPreset.diaMinutes * 60)
+        let basalCoverage = TimeInterval(inputs.basalDIAMinutes * 60)
+
+        return onsets.compactMap { onset in
+            guard onset.addingTimeInterval(-bolusCoverage) >= domainStart else { return nil }
+
+            let result = computeIOB(
+                deliveries: inputs.insulin,
+                bolusModel: bolusModel,
+                basalModel: basalModel,
+                at: onset
+            )
+            let basalComplete = onset.addingTimeInterval(-basalCoverage) >= domainStart
+
+            return LabOnsetIOB(
+                date: onset,
+                units: basalComplete ? result.total : result.mealSnackIOB,
+                coverage: basalComplete ? .full : .bolusOnly
+            )
+        }
     }
 
     /// 60 s sampling across the domain, inclusive of both ends — the cadence the
