@@ -52,7 +52,7 @@
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>Access to the calendar is required to display up-to-date glucose values on the Apple Watch.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Access to Apple Health is required if glucose data should be exported.</string>
+	<string>Access to Apple Health is required to read nutrition, workouts, heart rate and sleep into the app.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Access to Apple Health is required if glucose data should be exported.</string>
 	<key>NSMicrophoneUsageDescription</key>
