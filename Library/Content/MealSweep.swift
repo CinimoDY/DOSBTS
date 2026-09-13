@@ -110,8 +110,11 @@ struct MealSweep: Identifiable, Equatable {
     let delta: Int?
     /// Minutes from the meal to the peak reading.
     let peakMinutes: Int?
-    /// Readings inside the response window — every caption that quotes this sweep
-    /// carries it.
+    /// Readings inside the response window. Every surface that quotes a *number*
+    /// derived from this sweep carries it: the twin rows in the LAPS card append
+    /// `n=NN`, and the bins carry their own per-offset `n`. The chart's
+    /// `TODAY +Δ` marker is the one exception — it labels a trace the reader can
+    /// see the length of, and the LAPS line directly under it carries the counts.
     let n: Int
 
     var carbBucket: CarbBucket { CarbBucket.bucket(forCarbs: carbs) }
@@ -429,12 +432,27 @@ enum SweepChartMath {
 
     /// Axis ticks across the domain, 20 mg/dL apart and stepping coarser rather
     /// than crowding the plot once the domain grows past the artboard's range.
+    ///
+    /// **Anchored at zero, not at the domain's floor.** Δ0 is the line this whole
+    /// chart is read against — it is where every sweep starts. Striding up from
+    /// `lowerBound` loses it (and the top of the scale with it) the moment the floor
+    /// is not a multiple of the step, which happens as soon as one drawn delta pushes
+    /// the domain past the artboard's −20…100: −20…160 stepped from −20 gives
+    /// −20, 20, 60, 100, 140 — no zero line and no label at the top.
     static func yTicksMgdl(domain: ClosedRange<Int>) -> [Int] {
         let span = domain.upperBound - domain.lowerBound
         let base = 20
         var step = base
         while step > 0, span / step > 6 { step += base }
-        return Array(stride(from: domain.lowerBound, through: domain.upperBound, by: step))
+
+        let up = stride(from: 0, through: domain.upperBound, by: step)
+        let down = stride(from: 0, through: domain.lowerBound, by: -step)
+        var ticks = Set(up)
+        ticks.formUnion(down)
+        // The top of the scale always gets a label, even when the step does not
+        // divide the domain — the reader needs to know where the plot ends.
+        ticks.insert(domain.upperBound)
+        return ticks.sorted()
     }
 
     static func yDomainMgdl(deltas: [Int]) -> ClosedRange<Int> {
@@ -479,7 +497,9 @@ enum TwinFinder {
                 // A twin has to have finished responding, and has to be clean —
                 // an unfinished or confounded meal cannot be a comparison.
                 guard candidate.isClean, !candidate.isInProgress else { return false }
-                guard candidate.carbBucket == meal.carbBucket else { return false }
+                // Size is judged by ±25 % ONLY. `carbBucket` is a display chip, and
+                // ANDing it in made its boundary a hard wall between meals 2 g apart
+                // — an 80 g dinner could never twin an 82 g one.
                 guard let candidateCarbs = candidate.carbs,
                       candidateCarbs >= lower, candidateCarbs <= upper else { return false }
                 return minuteOfDayDistance(candidate.minutesOfDay, meal.minutesOfDay) <= timeOfDayToleranceMinutes
@@ -580,6 +600,7 @@ enum SweepLapsFormatter {
             parts.append(response)
         }
         parts.append(sweep.isClean ? "CLEAN" : "CONFOUNDED")
+        parts.append("n=\(sweep.n)")
 
         return parts.joined(separator: " · ")
     }

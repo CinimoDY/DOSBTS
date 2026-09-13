@@ -89,8 +89,13 @@ extension DataStore {
                         .order(Column(InsulinDelivery.Columns.starts.name))
                         .fetchAll(db)
 
+                    // Filtered on `endTime`, NOT `startTime`: the overlap rule the
+                    // builder applies is `endTime >= meal.timestamp`, so a session that
+                    // began before the cutoff but ran into the oldest meal in the
+                    // period still confounds it. A `startTime` filter would drop it
+                    // and silently mark that meal clean.
                     let exercise = try ExerciseEntry
-                        .filter(Column(ExerciseEntry.Columns.startTime.name) >= readingCutoff)
+                        .filter(Column(ExerciseEntry.Columns.endTime.name) >= cutoff)
                         .order(Column(ExerciseEntry.Columns.startTime.name))
                         .fetchAll(db)
 

@@ -15,6 +15,7 @@
 //  ever drift apart.
 //
 
+import Combine
 import Foundation
 import Testing
 @testable import DOSBTSApp
@@ -428,62 +429,175 @@ struct SweepStatisticsTests {
 
 // MARK: - Parity with the shipping meal-overlay math
 
+/// One parity row: the same meal and readings handed to both implementations.
+private struct ParityCase {
+    let name: String
+    let readings: [SensorGlucose]
+    /// True when the window is non-empty, i.e. when `computeMealOverlayDelta`
+    /// actually reaches its `isLowConfidence` computation instead of early-returning.
+    let windowHasReadings: Bool
+    /// True when a pre-meal baseline exists, i.e. when `.insufficientData` — rather
+    /// than `.noBaseline` — is the exclusion the builder can reach.
+    let hasBaseline: Bool
+}
+
 @Suite("Sweep parity with MealOverlayLogic")
 struct SweepParityTests {
 
-    @Test("the sweep's delta matches computeMealOverlayDelta for a completed meal")
-    func deltaParity() {
-        let time = mealTime(daysAgo: 2)
-        let meal = makeMeal(at: time, carbs: 60)
-        let rows = readings(anchor: time, from: -30, to: 240, baseValue: 100) { minute in
-            minute <= 0 ? 0 : max(0, 60 - abs(minute - 60))
-        }
+    private static let time = mealTime(daysAgo: 2)
+    private static func meal() -> MealEntry { makeMeal(at: time, carbs: 60) }
 
-        let shipping = computeMealOverlayDelta(meal: meal, isInProgress: false, sensorGlucoseValues: rows)
-        let sweeps = SweepStatistics.build(
-            meals: [meal], readings: rows, deliveries: [], exercise: [],
-            now: fixedNow, calendar: testCalendar
+    private static func at(_ minute: Int, _ value: Int) -> SensorGlucose {
+        SensorGlucose(
+            timestamp: time.addingTimeInterval(minutes(minute)),
+            rawGlucoseValue: value,
+            intGlucoseValue: value
         )
-
-        #expect(sweeps.first?.delta == shipping.delta)
-        // `isLowConfidence` is the same gate the sweep uses for `.insufficientData`.
-        #expect(shipping.isLowConfidence == false)
-        #expect(sweeps.first?.isClean == true)
     }
 
-    @Test("the sweep's clean verdict matches detectMealConfounders")
-    func confounderParity() {
-        let time = mealTime(daysAgo: 2)
-        let meal = makeMeal(at: time, carbs: 60)
-        let rows = readings(anchor: time, from: -30, to: 240, baseValue: 100) { max(0, $0) }
-        let correction = InsulinDelivery(
-            starts: time.addingTimeInterval(minutes(30)),
-            ends: time.addingTimeInterval(minutes(30)),
-            units: 2, type: .correctionBolus
-        )
+    /// Rows that walk every `<=` / `>=` boundary the two implementations share.
+    /// A `<=` → `<` flip in `MealOverlayLogic` moves one of these deltas.
+    private static var cases: [ParityCase] {
+        [
+            ParityCase(
+                name: "peak sits exactly on t+120, the window's closing edge",
+                readings: [at(-5, 100), at(0, 110), at(60, 150), at(120, 200)],
+                windowHasReadings: true, hasBaseline: true
+            ),
+            ParityCase(
+                name: "a reading sits exactly on t, the window's opening edge",
+                readings: [at(-5, 100), at(0, 190), at(5, 120), at(10, 130), at(15, 140)],
+                windowHasReadings: true, hasBaseline: true
+            ),
+            ParityCase(
+                name: "the baseline sits exactly on t−15:00 (inside [t−15, t))",
+                readings: [at(-15, 90), at(5, 120), at(10, 130), at(15, 140), at(20, 150)],
+                windowHasReadings: true, hasBaseline: true
+            ),
+            ParityCase(
+                name: "the only pre-meal reading is t−16:00, one minute outside the window",
+                readings: [at(-16, 90), at(5, 120), at(10, 130), at(15, 140), at(20, 150)],
+                windowHasReadings: true, hasBaseline: false
+            ),
+            ParityCase(
+                name: "three in-window readings — low confidence on both sides",
+                readings: [at(-5, 100), at(5, 120), at(10, 130), at(15, 140)],
+                windowHasReadings: true, hasBaseline: true
+            ),
+            ParityCase(
+                name: "four in-window readings — confident on both sides",
+                readings: [at(-5, 100), at(5, 120), at(10, 130), at(15, 140), at(20, 150)],
+                windowHasReadings: true, hasBaseline: true
+            ),
+            ParityCase(
+                name: "a reading one minute past the window never becomes the peak",
+                readings: [at(-5, 100), at(5, 120), at(10, 130), at(15, 140), at(20, 150), at(121, 400)],
+                windowHasReadings: true, hasBaseline: true
+            ),
+            ParityCase(
+                name: "no readings at all",
+                readings: [],
+                windowHasReadings: false, hasBaseline: false
+            )
+        ]
+    }
 
-        for (deliveries, exercise, others) in [
-            ([InsulinDelivery](), [ExerciseEntry](), [MealEntry]()),
-            ([correction], [], []),
-            ([], [ExerciseEntry(
-                startTime: time.addingTimeInterval(minutes(10)),
-                endTime: time.addingTimeInterval(minutes(40)),
-                activityType: "Running", durationMinutes: 30, activeCalories: nil, source: nil
-            )], []),
-            ([], [], [makeMeal(at: time.addingTimeInterval(minutes(50)), carbs: 20, name: "Snack")])
-        ] {
+    @Test("the sweep's delta matches computeMealOverlayDelta at every window edge")
+    func deltaParity() {
+        for row in Self.cases {
+            let meal = Self.meal()
+            let shipping = computeMealOverlayDelta(meal: meal, isInProgress: false, sensorGlucoseValues: row.readings)
+            let sweep = SweepStatistics.build(
+                meals: [meal], readings: row.readings, deliveries: [], exercise: [],
+                now: fixedNow, calendar: testCalendar
+            ).first
+
+            #expect(sweep?.delta == shipping.delta, "delta mismatch: \(row.name)")
+
+            // `.insufficientData` is the builder's name for the shipping helper's
+            // `isLowConfidence`, but only where the helper actually computes it and
+            // where a baseline exists (otherwise `.noBaseline` is the earlier reason).
+            if row.windowHasReadings, row.hasBaseline {
+                #expect(
+                    (sweep?.exclusion == .insufficientData) == shipping.isLowConfidence,
+                    "confidence mismatch: \(row.name)"
+                )
+            }
+        }
+    }
+
+    @Test("an empty response window is insufficient data, which the shipping helper cannot say")
+    func emptyWindowIsNotConfidence() {
+        // `computeMealOverlayDelta` early-returns on an empty window and reports
+        // `isLowConfidence == false` — "no data" read as "confident". The sweep
+        // builder calls it `.insufficientData` and keeps the meal out of the median.
+        // This is the ONE place the two deliberately disagree; it is pinned so the
+        // disagreement stays deliberate.
+        let meal = Self.meal()
+        let onlyBefore = [Self.at(-10, 100), Self.at(-5, 105)]
+
+        let shipping = computeMealOverlayDelta(meal: meal, isInProgress: false, sensorGlucoseValues: onlyBefore)
+        #expect(shipping.delta == nil)
+        #expect(shipping.isLowConfidence == false)
+
+        let sweep = SweepStatistics.build(
+            meals: [meal], readings: onlyBefore, deliveries: [], exercise: [],
+            now: fixedNow, calendar: testCalendar
+        ).first
+        #expect(sweep?.delta == nil)
+        #expect(sweep?.baseline == 105)
+        #expect(sweep?.exclusion == .insufficientData)
+    }
+
+    @Test("the sweep's clean verdict matches detectMealConfounders at every confounder edge")
+    func confounderParity() {
+        let time = Self.time
+        let rows = readings(anchor: time, from: -30, to: 240, baseValue: 100) { max(0, $0) }
+
+        func bolus(_ minute: Int) -> InsulinDelivery {
+            InsulinDelivery(
+                starts: time.addingTimeInterval(minutes(minute)),
+                ends: time.addingTimeInterval(minutes(minute)),
+                units: 2, type: .correctionBolus
+            )
+        }
+        func run(_ from: Int, _ to: Int) -> ExerciseEntry {
+            ExerciseEntry(
+                startTime: time.addingTimeInterval(minutes(from)),
+                endTime: time.addingTimeInterval(minutes(to)),
+                activityType: "Running", durationMinutes: Double(to - from),
+                activeCalories: nil, source: nil
+            )
+        }
+
+        let matrix: [(String, [InsulinDelivery], [ExerciseEntry], [MealEntry])] = [
+            ("nothing", [], [], []),
+            ("correction exactly on t", [bolus(0)], [], []),
+            ("correction exactly on t+120", [bolus(120)], [], []),
+            ("correction one minute past the window", [bolus(121)], [], []),
+            ("correction one minute before the meal", [bolus(-1)], [], []),
+            ("exercise ending exactly on t", [], [run(-30, 0)], []),
+            ("exercise starting exactly on t+120", [], [run(120, 150)], []),
+            ("exercise ending one minute before the meal", [], [run(-30, -1)], []),
+            ("stacked meal exactly on t", [], [], [makeMeal(at: time, carbs: 20, name: "Snack")]),
+            ("stacked meal exactly on t+120", [], [], [makeMeal(at: time.addingTimeInterval(minutes(120)), carbs: 20, name: "Snack")]),
+            ("stacked meal one minute past the window", [], [], [makeMeal(at: time.addingTimeInterval(minutes(121)), carbs: 20, name: "Snack")])
+        ]
+
+        for (name, deliveries, exercise, others) in matrix {
+            let meal = Self.meal()
             let shipping = detectMealConfounders(
                 meal: meal,
                 insulinDeliveryValues: deliveries,
                 exerciseEntryValues: exercise,
                 mealEntryValues: [meal] + others
             )
-            let sweeps = SweepStatistics.build(
+            let sweep = SweepStatistics.build(
                 meals: [meal] + others, readings: rows, deliveries: deliveries, exercise: exercise,
                 now: fixedNow, calendar: testCalendar
-            )
-            let target = sweeps.first(where: { $0.id == meal.id })
-            #expect(target?.isClean == shipping.isClean)
+            ).first(where: { $0.id == meal.id })
+
+            #expect(sweep?.isClean == shipping.isClean, "confounder mismatch: \(name)")
         }
     }
 }
@@ -497,19 +611,35 @@ struct TwinFinderTests {
         makeSweep(mealTime: mealTime(daysAgo: 0), carbs: 80, minutesOfDay: 19 * 60, ageDays: 0, delta: 47, peakMinutes: 38)
     }
 
-    @Test("twins sit within ±25 % of the carbs and in the same bucket")
+    @Test("twins sit within ±25 % of the carbs — the bucket chips do not narrow them further")
     func carbTolerance() {
-        let me = subject()
+        let me = subject()   // 80 g → .from46to80
         let pool = [
             makeSweep(mealTime: mealTime(daysAgo: 1), carbs: 80, minutesOfDay: 19 * 60),   // exact
             makeSweep(mealTime: mealTime(daysAgo: 2), carbs: 61, minutesOfDay: 19 * 60),   // 80 * 0.75 = 60 → in
             makeSweep(mealTime: mealTime(daysAgo: 3), carbs: 59, minutesOfDay: 19 * 60),   // out (< 60)
-            makeSweep(mealTime: mealTime(daysAgo: 4), carbs: 120, minutesOfDay: 19 * 60)   // out (> 100 and another bucket)
+            makeSweep(mealTime: mealTime(daysAgo: 4), carbs: 120, minutesOfDay: 19 * 60)   // out (> 100)
         ]
 
         let twins = TwinFinder.twins(for: me, in: pool)
         #expect(twins.count == 2)
         #expect(twins.allSatisfy { ($0.carbs ?? 0) >= 60 })
+    }
+
+    @Test("an 82 g dinner twins an 80 g one — a bucket edge is not a real difference")
+    func bucketEdgeIsNotABarrier() {
+        // 80 g is `.from46to80`, 82 g is `.over80`, and 82 is well inside ±25 %.
+        // ANDing the bucket with the tolerance made the chip boundary a hard wall
+        // between two meals that are 2 g apart.
+        let me = subject()
+        let pool = [
+            makeSweep(mealTime: mealTime(daysAgo: 1), carbs: 82, minutesOfDay: 19 * 60),
+            makeSweep(mealTime: mealTime(daysAgo: 2), carbs: 99, minutesOfDay: 19 * 60),  // in (<= 100)
+            makeSweep(mealTime: mealTime(daysAgo: 3), carbs: 101, minutesOfDay: 19 * 60)  // out (> 100)
+        ]
+
+        let twins = TwinFinder.twins(for: me, in: pool)
+        #expect(twins.map { $0.carbs ?? 0 } == [82, 99])
     }
 
     @Test("twins sit within ±90 minutes of the same time of day, wrapping at midnight")
@@ -735,17 +865,27 @@ struct SweepViewHelperTests {
             delta: 38, peakMinutes: 52
         )
         #expect(
-            SweepLapsFormatter.twinRow(twin, glucoseUnit: .mgdL) == "3D AGO · 78g · +38 (52 MIN) · CLEAN"
+            SweepLapsFormatter.twinRow(twin, glucoseUnit: .mgdL) == "3D AGO · 78g · +38 (52 MIN) · CLEAN · n=24"
         )
     }
 
-    @Test("the y axis ticks span the domain without crowding the plot")
+    @Test("the y axis ticks are anchored at zero and always reach the top of the domain")
     func yTicks() {
         #expect(SweepChartMath.yTicksMgdl(domain: -20...100) == [-20, 0, 20, 40, 60, 80, 100])
+
+        // The domain leaves the artboard's -20...100 the moment one drawn delta
+        // passes +100. Striding from `lowerBound` then loses BOTH the Δ0 gridline
+        // — the one line this chart is about — and the top of the scale.
+        let raised = SweepChartMath.yTicksMgdl(domain: -20...160)
+        #expect(raised.contains(0))
+        #expect(raised.last == 160)
+        #expect(raised.allSatisfy { $0 >= -20 && $0 <= 160 })
+
         // A wide domain steps coarser rather than printing fifteen labels.
         let wide = SweepChartMath.yTicksMgdl(domain: -60...240)
         #expect(wide.count <= 8)
         #expect(wide.first == -60)
+        #expect(wide.last == 240)
         #expect(wide.contains(0))
     }
 }
@@ -776,40 +916,80 @@ struct SweepDensityTests {
 @Suite("Sweep windowing")
 struct SweepWindowingTests {
 
-    @Test("readings outside a meal's own window never reach its sweep")
+    @Test("the windowed slice reaches exactly ±(30/240 min + the 5-minute tolerance), no further")
     func slicingIsExact() {
-        // A 3-day reading series with three meals in it. Each meal's sweep must
-        // be identical to the sweep it gets from a series containing only its own
-        // neighbourhood — i.e. the builder must window, not scan.
-        var allReadings: [SensorGlucose] = []
-        var allMeals: [MealEntry] = []
-        for daysAgo in [2, 3, 4] {
-            let time = mealTime(daysAgo: daysAgo)
-            allMeals.append(makeMeal(at: time, carbs: 60))
-            allReadings += readings(anchor: time, from: -60, to: 400, baseValue: 100) { minute in
-                minute <= 0 ? 0 : max(0, 60 - abs(minute - 60))
-            }
-        }
+        // Hand-computed, NOT a build-vs-build comparison: the readings that decide
+        // the first and last grid points sit EXACTLY on the slice's two edges, and
+        // there is no second candidate for either slot. An off-by-one at either end
+        // of `lowerBound` — or a return to the pre-windowing full scan — moves
+        // `points.first` / `points.last` and fails here.
+        //
+        //   grid −30 (target t−30:00) can only be served by the t−35:00 reading
+        //            (the next one back in the series is t−15:00, 15 min away)
+        //   grid +240 (target t+240:00) can only be served by the t+245:00 reading
+        //            (the previous one is t+230:00, 10 min away)
+        let time = mealTime(daysAgo: 2)
+        let meal = makeMeal(at: time, carbs: 60)
 
-        let together = SweepStatistics.build(
-            meals: allMeals, readings: allReadings, deliveries: [], exercise: [],
+        // Value encodes the minute: 200 + minute. Baseline is the t−5 reading (195).
+        func reading(_ minute: Int) -> SensorGlucose {
+            SensorGlucose(
+                timestamp: time.addingTimeInterval(minutes(minute)),
+                rawGlucoseValue: 200 + minute,
+                intGlucoseValue: 200 + minute
+            )
+        }
+        var rows = [reading(-35)]
+        rows += stride(from: -15, through: 230, by: 5).map(reading)
+        rows.append(reading(245))
+
+        let sweeps = SweepStatistics.build(
+            meals: [meal], readings: rows, deliveries: [], exercise: [],
             now: fixedNow, calendar: testCalendar
         )
+        let sweep = sweeps.first
 
-        for meal in allMeals {
-            let alone = SweepStatistics.build(
-                meals: [meal],
-                readings: readings(anchor: meal.timestamp, from: -60, to: 400, baseValue: 100) { minute in
-                    minute <= 0 ? 0 : max(0, 60 - abs(minute - 60))
-                },
-                deliveries: [], exercise: [], now: fixedNow, calendar: testCalendar
-            )
-            let joint = together.first(where: { $0.id == meal.id })
-            #expect(joint?.points == alone.first?.points)
-            #expect(joint?.delta == alone.first?.delta)
-            #expect(joint?.baseline == alone.first?.baseline)
-            #expect(joint?.n == alone.first?.n)
-        }
+        #expect(sweep?.baseline == 195)
+        #expect(sweep?.points.first?.minute == -30)
+        #expect(sweep?.points.first?.delta == 165 - 195)      // the t−35:00 reading
+        #expect(sweep?.points.last?.minute == 240)
+        #expect(sweep?.points.last?.delta == 445 - 195)       // the t+245:00 reading
+        // t−25 has no reading within tolerance (t−35 and t−15 are both 10 min away).
+        #expect(sweep?.points.contains(where: { $0.minute == -25 }) == false)
+    }
+
+    @Test("a meal with nothing in reach produces no trace and no number")
+    func nothingInReach() {
+        let time = mealTime(daysAgo: 2)
+        let meal = makeMeal(at: time, carbs: 60)
+
+        // 1. no readings at all
+        let none = SweepStatistics.build(
+            meals: [meal], readings: [], deliveries: [], exercise: [],
+            now: fixedNow, calendar: testCalendar
+        ).first
+        #expect(none?.points.isEmpty == true)
+        #expect(none?.delta == nil)
+        #expect(none?.n == 0)
+        #expect(none?.baseline == nil)
+
+        // 2. the series ends before the meal's reach begins
+        let before = SweepStatistics.build(
+            meals: [meal],
+            readings: readings(anchor: time, from: -600, to: -60, baseValue: 100),
+            deliveries: [], exercise: [], now: fixedNow, calendar: testCalendar
+        ).first
+        #expect(before?.points.isEmpty == true)
+        #expect(before?.delta == nil)
+
+        // 3. the series starts after the meal's reach ends
+        let after = SweepStatistics.build(
+            meals: [meal],
+            readings: readings(anchor: time, from: 300, to: 600, baseValue: 100),
+            deliveries: [], exercise: [], now: fixedNow, calendar: testCalendar
+        ).first
+        #expect(after?.points.isEmpty == true)
+        #expect(after?.delta == nil)
     }
 
     @Test("a 90-day set of meals over a 5-minute series builds without scanning it per meal")
@@ -844,6 +1024,142 @@ struct SweepWindowingTests {
         let elapsed = Date().timeIntervalSince(began)
 
         #expect(sweeps.count == 270)
-        #expect(elapsed < 3.0, "SweepStatistics.build took \(elapsed)s for 270 meals over \(allReadings.count) readings")
+        // Deliberately loose: this exists to catch a return to the O(meals x steps x
+        // readings) scan (tens of seconds), NOT to benchmark. The bound has to
+        // survive a debug simulator sharing a host with other workers' test runs.
+        #expect(elapsed < 10.0, "SweepStatistics.build took \(elapsed)s for 270 meals over \(allReadings.count) readings")
+    }
+}
+
+// MARK: - Middleware trigger set
+
+@Suite("Lab sweep middleware triggers")
+struct LabSweepMiddlewareTests {
+
+    /// Drain a middleware's publisher synchronously. `nil` for both "no publisher"
+    /// and "an `Empty()` that emits nothing" — from the caller's side both mean
+    /// "this action does not reload".
+    private func emitted(_ publisher: AnyPublisher<DirectAction, DirectError>?) -> DirectAction? {
+        guard let publisher else { return nil }
+        var result: DirectAction?
+        let cancellable = publisher.sink(receiveCompletion: { _ in }, receiveValue: { result = $0 })
+        cancellable.cancel()
+        return result
+    }
+
+    private func loadDays(_ action: DirectAction?) -> Int? {
+        guard let action, case .loadLabSweeps(days: let days) = action else { return nil }
+        return days
+    }
+
+    /// A state parked on the sweep tab, on Overview, in an active scene.
+    private func onSweepTab(days: Int = 30) -> AppState {
+        var state = AppState(defaults: makeTestDefaults())
+        state.appState = .active
+        state.selectedView = DirectConfig.overviewViewTag
+        state.showChartLab = true
+        state.selectedReportType = .labSweep
+        state.statisticsDays = days
+        return state
+    }
+
+    @Test("a day chip reloads with the window the reducer already applied")
+    func chipReloads() {
+        let state = onSweepTab(days: 9999)
+        let action = emitted(labSweepMiddleware()(state, .setStatisticsDays(days: 9999), state))
+        // The ALL sentinel travels as-is; `LabSweepStore.effectiveDays` clamps it
+        // inside the load arm, so exactly one function owns the cap.
+        #expect(loadDays(action) == 9999)
+    }
+
+    @Test("nothing reloads while the sweep tab is not what the user is looking at")
+    func gatedOnVisibility() {
+        var other = onSweepTab()
+        other.selectedReportType = .glucose
+        #expect(emitted(labSweepMiddleware()(other, .setStatisticsDays(days: 7), other)) == nil)
+
+        var inactive = onSweepTab()
+        inactive.appState = .background
+        #expect(emitted(labSweepMiddleware()(inactive, .setStatisticsDays(days: 7), inactive)) == nil)
+
+        // The day chips also live on the Lists tab's statistics; a chip tapped
+        // there must not re-read the sweep period behind a screen nobody is on.
+        var elsewhere = onSweepTab()
+        elsewhere.selectedView = DirectConfig.overviewViewTag + 1
+        #expect(emitted(labSweepMiddleware()(elsewhere, .setStatisticsDays(days: 7), elsewhere)) == nil)
+    }
+
+    @Test("becoming active reloads — a cold launch into the tab must not strand the loading pulse")
+    func appStateReloads() {
+        let state = onSweepTab(days: 7)
+        #expect(loadDays(emitted(labSweepMiddleware()(state, .setAppState(appState: .active), state))) == 7)
+        #expect(emitted(labSweepMiddleware()(state, .setAppState(appState: .background), state)) == nil)
+    }
+
+    @Test("entering the tab reloads; staying on it does not")
+    func tabEntryIsEdgeTriggered() {
+        let state = onSweepTab(days: 30)
+
+        var arriving = state
+        arriving.selectedReportType = .statistics   // where the user came FROM
+        #expect(loadDays(emitted(labSweepMiddleware()(
+            state, .setSelectedReportType(reportType: .labSweep), arriving
+        ))) == 30)
+
+        // Already on the tab (e.g. the toolbar re-asserting the selection) — no
+        // second read for a transition that did not happen.
+        #expect(emitted(labSweepMiddleware()(
+            state, .setSelectedReportType(reportType: .labSweep), state
+        )) == nil)
+    }
+
+    @Test("a new reading reloads only while something is still in progress")
+    func glucoseReloadsOnlyForLiveSweeps() {
+        let live = makeSweep(
+            mealTime: fixedNow.addingTimeInterval(minutes(-30)), carbs: 60,
+            isInProgress: true
+        )
+        let done = makeSweep(mealTime: mealTime(daysAgo: 1), carbs: 60)
+
+        var withLive = onSweepTab()
+        withLive.labSweeps = LabSweepEvidence(days: 30, sweeps: [live, done], loadedAt: fixedNow)
+        #expect(loadDays(emitted(labSweepMiddleware()(
+            withLive, .addSensorGlucose(glucoseValues: []), withLive
+        ))) == 30)
+
+        var settled = onSweepTab()
+        settled.labSweeps = LabSweepEvidence(days: 30, sweeps: [done], loadedAt: fixedNow)
+        #expect(emitted(labSweepMiddleware()(
+            settled, .addSensorGlucose(glucoseValues: []), settled
+        )) == nil)
+
+        // Nothing loaded yet: `.setAppState(.active)` owns that case, not every reading.
+        let empty = onSweepTab()
+        #expect(emitted(labSweepMiddleware()(
+            empty, .addSensorGlucose(glucoseValues: []), empty
+        )) == nil)
+    }
+
+    @Test("editing the log reloads — an edit changes the drawn set as much as an add")
+    func logEditsReload() {
+        let state = onSweepTab(days: 90)
+        let meal = makeMeal(at: mealTime(daysAgo: 1), carbs: 60)
+        let delivery = InsulinDelivery(starts: fixedNow, ends: fixedNow, units: 2, type: .correctionBolus)
+        let exercise = ExerciseEntry(
+            startTime: fixedNow, endTime: fixedNow, activityType: "Running",
+            durationMinutes: 30, activeCalories: nil, source: nil
+        )
+
+        for action: DirectAction in [
+            .addMealEntry(mealEntryValues: [meal]),
+            .updateMealEntry(mealEntry: meal),
+            .deleteMealEntry(mealEntry: meal),
+            .addInsulinDelivery(insulinDeliveryValues: [delivery]),
+            .deleteInsulinDelivery(insulinDelivery: delivery),
+            .addExerciseEntry(exerciseEntryValues: [exercise]),
+            .deleteExerciseEntry(exerciseEntry: exercise)
+        ] {
+            #expect(loadDays(emitted(labSweepMiddleware()(state, action, state))) == 90)
+        }
     }
 }

@@ -41,9 +41,7 @@ struct LabSweepView: View {
 
             lapsCard
 
-            bucketChips
-
-            cleanOnlyRow
+            filterChips
 
             LabLegendRow(items: [
                 LabLegendItem(glyph: "—", label: "OLDER · FAINTER", color: AmberTheme.textFaint),
@@ -53,10 +51,11 @@ struct LabSweepView: View {
 
             LabFooter()
         }
-        .onAppear {
-            store.dispatch(.loadLabSweeps(days: store.state.statisticsDays))
-            rebuild()
-        }
+        // No load dispatched from here: `labSweepMiddleware` owns the trigger set
+        // (tab entry, scene activation, chips, log edits, live readings). A second
+        // trigger here raced the toolbar's day-window normalise and could flash a
+        // 3-day set under a 30d chip.
+        .onAppear { rebuild() }
         .onChange(of: inputs) { rebuild() }
     }
 
@@ -83,8 +82,8 @@ struct LabSweepView: View {
 
     private var inputs: SweepInputs {
         SweepInputs(
-            loadedAt: store.state.labSweeps?.loadedAt,
-            days: store.state.labSweeps?.days,
+            loadedAt: currentEvidence?.loadedAt,
+            days: currentEvidence?.days,
             bucket: bucket,
             cleanOnly: cleanOnly,
             glucoseUnit: store.state.glucoseUnit
@@ -93,10 +92,25 @@ struct LabSweepView: View {
 
     private var glucoseUnit: GlucoseUnit { store.state.glucoseUnit }
 
-    /// Blank while the first load is in flight — `N=0 SWEEPS` next to a loading
-    /// pulse reads as a finding, and it is not one.
+    /// The evidence in hand, but ONLY if it answers the window the chips are
+    /// currently showing.
+    ///
+    /// `Store.dispatch` never cancels an in-flight publisher, so a slower 90 d read
+    /// can land after a faster 7 d one; and on a chip change the previous window's
+    /// evidence is still in state. Rendering it under the new chip would caption
+    /// someone else's N. Same rule `mealHistoryResults` follows (CLAUDE.md → food
+    /// history search): the payload carries the question it answers.
+    private var currentEvidence: LabSweepEvidence? {
+        guard let evidence = store.state.labSweeps,
+              evidence.days == LabSweepStore.effectiveDays(store.state.statisticsDays)
+        else { return nil }
+        return evidence
+    }
+
+    /// Blank while a load is in flight — `N=0 SWEEPS` next to a loading pulse reads
+    /// as a finding, and it is not one.
     private var countCaption: String {
-        guard store.state.labSweeps != nil else { return "" }
+        guard currentEvidence != nil else { return "" }
         return SweepLapsFormatter.countCaption(total: model.totalCount, clean: model.cleanCount)
     }
 
@@ -121,7 +135,7 @@ struct LabSweepView: View {
 
     @ViewBuilder
     private func plotArea(height: CGFloat) -> some View {
-        if store.state.labSweeps == nil {
+        if currentEvidence == nil {
             VStack {
                 Spacer()
                 FiguresLoadingView.inline
@@ -161,7 +175,7 @@ struct LabSweepView: View {
     }
 
     private var emptyHeadline: String {
-        let days = store.state.labSweeps?.days ?? LabSweepStore.effectiveDays(store.state.statisticsDays)
+        let days = currentEvidence?.days ?? LabSweepStore.effectiveDays(store.state.statisticsDays)
         if model.unfilteredCount > 0 {
             return "NO SWEEPS MATCH THIS FILTER · n=0"
         }
@@ -324,26 +338,33 @@ struct LabSweepView: View {
     private var lapsCard: some View {
         if model.subject != nil {
             VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
-                HStack(spacing: DOSSpacing.xs) {
-                    Text(model.lapsTitle)
-                        .font(DOSTypography.label)
-                        .foregroundStyle(AmberTheme.amberLight)
-                        .lineLimit(1)
+                // The WHOLE header is the control, not the 13 pt `WHY THESE ›` label:
+                // a full-width 44 pt target, and it costs the card ~24 pt of height
+                // instead of the 44 pt a `minHeight` on the label alone did — which
+                // was enough to push the safety footer off the bottom of the page.
+                Button {
+                    withAnimation(AnimationTokens.snappy) { twinsExpanded.toggle() }
+                } label: {
+                    HStack(spacing: DOSSpacing.xs) {
+                        Text(model.lapsTitle)
+                            .font(DOSTypography.label)
+                            .foregroundStyle(AmberTheme.amberLight)
+                            .lineLimit(1)
 
-                    Spacer()
+                        Spacer()
 
-                    if !model.twins.isEmpty {
-                        Button {
-                            withAnimation(AnimationTokens.snappy) { twinsExpanded.toggle() }
-                        } label: {
+                        if !model.twins.isEmpty {
                             Text(twinsExpanded ? "HIDE ‹" : "WHY THESE ›")
                                 .font(DOSTypography.label)
                                 .foregroundStyle(AmberTheme.amberDark)
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(twinsExpanded ? "Hide the twin meals" : "Show the twin meals")
                     }
+                    .frame(minHeight: LabSweepConfig.minTapTarget)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .disabled(model.twins.isEmpty)
+                .accessibilityLabel(twinsExpanded ? "Hide the twin meals" : "Show the twin meals")
 
                 Text(model.lapsLine)
                     .font(DOSTypography.label)
@@ -380,8 +401,11 @@ struct LabSweepView: View {
 
     // MARK: Chips
 
-    private var bucketChips: some View {
-        HStack(spacing: DOSSpacing.md) {
+    /// Meal size, then the clean toggle — both are filters on the same cloud, and
+    /// giving each its own 44 pt row did not fit under the chart. The `●`/`○` prefix
+    /// is what says the last chip is a toggle rather than a sixth size.
+    private var filterChips: some View {
+        HStack(spacing: DOSSpacing.sm) {
             LabChipButton(label: "ALL", isSelected: bucket == nil) {
                 withAnimation(AnimationTokens.snappy) { bucket = nil }
             }
@@ -390,24 +414,16 @@ struct LabSweepView: View {
                     withAnimation(AnimationTokens.snappy) { bucket = candidate }
                 }
             }
+            LabChipButton(
+                label: cleanOnly ? "● CLEAN" : "○ CLEAN",
+                isSelected: cleanOnly,
+                accessibilityLabel: "Clean sweeps only"
+            ) {
+                withAnimation(AnimationTokens.snappy) { cleanOnly.toggle() }
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, DOSSpacing.xs)
-    }
-
-    private var cleanOnlyRow: some View {
-        Button {
-            withAnimation(AnimationTokens.snappy) { cleanOnly.toggle() }
-        } label: {
-            Text(cleanOnly ? "● CLEAN ONLY" : "○ CLEAN ONLY")
-                .font(DOSTypography.microLabel)
-                .foregroundStyle(cleanOnly ? AmberTheme.amber : AmberTheme.amberDark)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, DOSSpacing.xxs)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Clean sweeps only")
-        .accessibilityAddTraits(cleanOnly ? [.isSelected, .isButton] : .isButton)
     }
 
     // MARK: Rebuild
@@ -416,7 +432,7 @@ struct LabSweepView: View {
     /// the main thread in `labSweepMiddleware`, so there is nothing heavy left to
     /// hop a queue for.
     private func rebuild() {
-        guard let evidence = store.state.labSweeps else {
+        guard let evidence = currentEvidence else {
             model = .empty
             return
         }
@@ -438,6 +454,7 @@ struct LabSweepView: View {
 private struct LabChipButton: View {
     let label: String
     let isSelected: Bool
+    var accessibilityLabel: String?
     let action: () -> Void
 
     var body: some View {
@@ -445,7 +462,12 @@ private struct LabChipButton: View {
             Text(label)
                 .font(isSelected ? DOSTypography.bodySmall.weight(.bold) : DOSTypography.bodySmall)
                 .foregroundStyle(isSelected ? AmberTheme.amber : AmberTheme.amberDark)
-                .padding(.vertical, DOSSpacing.xs)
+                .lineLimit(1)
+                // Six chips on a 393 pt phone leave no slack; scale rather than
+                // truncate, so a narrower device loses size, not meaning.
+                .minimumScaleFactor(0.7)
+                // `sm`, matching P0's `ChartTabButton`: `xs` made the chip ~34 pt tall.
+                .padding(.vertical, DOSSpacing.sm)
                 .padding(.horizontal, DOSSpacing.xs)
                 .overlay(alignment: .bottom) {
                     Rectangle()
@@ -455,7 +477,7 @@ private struct LabChipButton: View {
                 }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(label)
+        .accessibilityLabel(accessibilityLabel ?? label)
         .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
     }
 }
@@ -521,11 +543,21 @@ private struct SweepRenderModel {
         let filtered = SweepStatistics.filter(evidence.sweeps, bucket: bucket, cleanOnly: cleanOnly)
         model.unfilteredCount = evidence.sweeps.count
         model.totalCount = filtered.count
-        model.cleanCount = filtered.filter(\.isClean).count
+        // `bins` never counts an in-progress sweep (the live trace is what the band
+        // is being compared against), so neither may the caption: with 2 completed
+        // and 1 live clean sweep the wash drew from n=2 while the caption said
+        // `3 CLEAN`.
+        model.cleanCount = filtered.filter { $0.isClean && !$0.isInProgress }.count
 
         let drawn = SweepStatistics.capped(filtered)
-        let completed = drawn.filter { !$0.isInProgress }
-        let live = drawn.first(where: \.isInProgress)
+        let inProgress = drawn.filter(\.isInProgress)
+        let live = inProgress.first
+        // A second meal logged inside the first one's 2 h window is in progress too.
+        // It is confounded (both stack each other), so it belongs in the cloud with
+        // the rest — drawn through the normal tiers rather than counted in `N=` and
+        // then silently omitted.
+        let completed = (drawn.filter { !$0.isInProgress } + inProgress.dropFirst())
+            .sorted { $0.mealTime > $1.mealTime }
 
         let bins = SweepStatistics.bins(filtered, cleanOnly: true)
         let hasBand = model.cleanCount >= SweepStatistics.minSweepsForBand
@@ -626,7 +658,11 @@ private struct SweepRenderModel {
 
 /// Shared between the view and its render model.
 private enum LabSweepConfig {
-    static let minHeight: CGFloat = 180
+    /// The chart's floor. It only bites when the LAPS card is expanded — and it has
+    /// to be low enough to absorb that, or the page overflows and the persistent
+    /// bottom bar sinks under the tab bar (the 44 pt tap targets cost ~40 pt of the
+    /// slack that used to cover it).
+    static let minHeight: CGFloat = 140
     static let maxHeight: CGFloat = 270
     /// The sweeps themselves — hairlines, so 120 of them still read as a cloud.
     static let sweepLineWidth: CGFloat = 1.2
@@ -641,7 +677,10 @@ private enum LabSweepConfig {
     static let recentAgeDays = 10
     static let middleAgeDays = 20
     static let bandOpacity: Double = 0.14
-    /// The expanded twin list's ceiling — four rows, the fifth scrolls.
-    static let twinListMaxHeight: CGFloat = 60
+    /// The expanded twin list's ceiling — three rows, the rest scroll. Sized in whole
+    /// rows so the list never clips one in half (which reads as broken, not scrollable).
+    static let twinListMaxHeight: CGFloat = 44
+    /// The smallest thing a finger is asked to hit.
+    static let minTapTarget: CGFloat = 44
     static let recentOpacity: Double = 0.55
 }
