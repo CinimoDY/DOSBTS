@@ -47,11 +47,10 @@ struct LabChartInputs: Equatable {
     let insulin: [InsulinDelivery]
     let iobDeliveries: [InsulinDelivery]
     let exercise: [ExerciseEntry]
-    /// Declared here to match P5's field exactly (same name, same type, same
-    /// source) so the two branches' copies collapse into one at merge instead
-    /// of the compiler catching a missing assignment in this file's inits.
-    let journalNotes: [JournalNote]
     let heartRate: [HeartRateSample]
+    /// Journal notes are context for a fact, never a series: the Black Box card
+    /// states the tag that was standing when a hypo started.
+    let journalNotes: [JournalNote]
     let sleep: [SleepSample]
     /// The night window forces heart rate on; the day path follows the setting.
     let showHeartRate: Bool
@@ -78,8 +77,8 @@ struct LabChartInputs: Equatable {
         self.insulin = state.insulinDeliveryValues
         self.iobDeliveries = state.iobDeliveries
         self.exercise = state.exerciseEntryValues
-        self.journalNotes = state.journalNoteValues
         self.heartRate = state.heartRateSeries.map { HeartRateSample(time: $0.0, bpm: $0.1) }
+        self.journalNotes = state.journalNoteValues
         self.sleep = []
         self.showHeartRate = state.showHeartRateOverlay
         self.domainOverride = nil
@@ -144,8 +143,8 @@ struct LabChartInputs: Equatable {
         insulin: [InsulinDelivery],
         iobDeliveries: [InsulinDelivery],
         exercise: [ExerciseEntry],
-        journalNotes: [JournalNote] = [],
         heartRate: [HeartRateSample],
+        journalNotes: [JournalNote] = [],
         sleep: [SleepSample] = [],
         showHeartRate: Bool = true,
         domainOverride: DateInterval? = nil,
@@ -165,8 +164,8 @@ struct LabChartInputs: Equatable {
         self.insulin = insulin
         self.iobDeliveries = iobDeliveries
         self.exercise = exercise
-        self.journalNotes = journalNotes
         self.heartRate = heartRate
+        self.journalNotes = journalNotes
         self.sleep = sleep
         self.showHeartRate = showHeartRate
         self.domainOverride = domainOverride
