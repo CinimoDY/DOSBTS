@@ -30,21 +30,32 @@ struct LabMealsView: View {
                 focusRequest: focusRequest
             )
 
-            // The chart can show several `?`; each needs its own way in.
-            // Capped so a noisy day cannot push the legend and footer off.
-            ForEach(residuals.suffix(Config.maxResidualRows)) { residual in
-                residualPrompt(residual)
-            }
-
-            if let band = openRegime {
-                regimePrompt(band)
-            }
-
             // The cited facts, under the chart they are about. Scrollable and
             // height-capped so five cards can never push the chart below its
             // floor (swiftui-vstack-overflow-sinks-safeareainset).
+            //
+            // P2's residual rows live INSIDE this region rather than beside it.
+            // They are the same kind of thing as a fact card — something to
+            // read, and optionally tap — and as fixed-height siblings they
+            // overflowed the tab and sank the footer (measured on the
+            // simulator: the hero clipped and `LAB · EXPERIMENTAL` disappeared
+            // under the tab bar). Sharing one capped, scrollable budget is what
+            // keeps the chart above its floor and the footer on screen.
             ScrollView {
                 VStack(spacing: 0) {
+                    // Actionable first, and in this order: the time-bounded
+                    // question, then the unexplained excursion, then the facts.
+                    // Both prompts are the FIRST things in the region, so they
+                    // are visible without scrolling.
+                    if let band = openRegime {
+                        regimePrompt(band)
+                    }
+
+                    // The chart can show several `?`; each needs its own way in.
+                    ForEach(residuals.suffix(Config.maxResidualRows)) { residual in
+                        residualPrompt(residual)
+                    }
+
                     LabFactSheetLine(sheet: facts.sheet, glucoseUnit: store.state.glucoseUnit)
 
                     LabFactCardList(
@@ -70,8 +81,10 @@ struct LabMealsView: View {
             .frame(height: min(factsHeight, Config.factsMaxHeight))
             .onPreferenceChange(LabFactsHeightKey.self) { factsHeight = $0 }
 
-            // Three short rows rather than two crowded ones: the meal
-            // vocabulary, then the context marks, then the platform's own.
+            // Three rows. Six items on one row still ran off both edges at
+            // `minimumScaleFactor(0.6)` — each `Text` scales on its own, so the
+            // ROW's width is never constrained — and an unreadable legend costs
+            // more than the 20 pt a third row spends.
             LabLegendRow(items: [
                 LabLegendItem(glyph: "●", label: "SIZE = CARBS", color: EventMarkerType.meal.color),
                 LabLegendItem(glyph: "▮", label: "2H RESPONSE", color: AmberTheme.amber),
@@ -126,9 +139,10 @@ struct LabMealsView: View {
         /// pushing the footer off the bottom (the VStack overflow that sinks a
         /// safeAreaInset — docs/solutions/ui-bugs).
         static let factsMaxHeight: CGFloat = 120
-        /// At most this many residual rows, newest last. Two rather than three
-        /// now that the facts region shares the space under the chart.
-        static let maxResidualRows = 2
+        /// At most this many residual rows, newest last. One rather than three:
+        /// the rows now share the facts region's budget, and a second row would
+        /// push the sheet line out of view before the user has scrolled.
+        static let maxResidualRows = 1
     }
 
     /// Owned here so the legend and the chart's `◂ N NEW` nub can never disagree
@@ -258,9 +272,11 @@ struct LabMealsView: View {
                 }
             }
         }
-        .dosCard(.panel, padding: DOSSpacing.xs)
+        // Tight on purpose: the 44-pt buttons ARE the row's height, and every
+        // point of chrome around them comes off the chart above.
+        .dosCard(.panel, padding: DOSSpacing.xxs)
         .padding(.horizontal, DOSSpacing.sm)
-        .padding(.top, DOSSpacing.xs)
+        .padding(.top, DOSSpacing.xxs)
     }
 
     private func promptButton(
