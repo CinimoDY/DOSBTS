@@ -9,10 +9,14 @@
 
 /// One additive mark-set a lab tab switches on inside `LabChartView`.
 enum ChartLabOverlay: Hashable, CaseIterable {
-    case carbSizedMeals        // P2
+    // P2's four are ordered back-to-front: the bands are context, the dots are
+    // the subject, so the dots must not be drawn under a tint. Only the P2
+    // cases moved — `.nightContext` / `.ghostBand` / `.factPins` keep their
+    // relative order, and therefore their layer, untouched.
+    case regimeBands           // P2
     case mealResponseRibbons   // P2
     case residualMarks         // P2
-    case regimeBands           // P2
+    case carbSizedMeals        // P2
     case nightContext          // P1 (sleep stages, HR, cross-midnight ribbon)
     case ghostBand             // P4
     case factPins              // P5

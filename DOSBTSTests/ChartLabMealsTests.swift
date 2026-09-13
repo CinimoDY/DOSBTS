@@ -147,6 +147,20 @@ struct ResponseWindowKernelTests {
         #expect(summary.end == t0.addingTimeInterval(2 * 60 * 60))
     }
 
+    @Test("a reading exactly at anchor + lag is INSIDE the window")
+    func readingAtPlusTwoHoursIsInclusive() {
+        let readings = [
+            reading(-5, 100),                                        // baseline, not in-window
+            reading(30, 120), reading(60, 130), reading(90, 128),
+            reading(120, 150),                                       // exactly at the edge
+        ]
+        let summary = ResponseKernel.summarize(.meal(at: t0), readings: readings, now: at(300))
+        #expect(summary.n == 4, "the +120 reading counts; the −5 baseline does not")
+        #expect(summary.extremum == 150, "and can be the peak")
+        #expect(summary.delta == 50)
+        #expect(summary.timeToExtremumMinutes == 120)
+    }
+
     @Test("a .min window summarises by its minimum — the shape exercise will use")
     func minimumSummary() {
         let window = ResponseWindow(
@@ -290,6 +304,19 @@ struct MealOverlayDeltaParityTests {
         )
         #expect(actual.delta == nil)
         #expect(actual.isLowConfidence == false)
+    }
+
+    @Test("a reading exactly at +2 h is inside the shipping window too")
+    func readingAtPlusTwoHoursParity() {
+        let entry = meal(-300, carbs: 40)
+        let readings = [reading(-305, 100), reading(-240, 130), reading(-180, 160)]
+        let actual = computeMealOverlayDelta(
+            meal: entry,
+            isInProgress: false,
+            sensorGlucoseValues: readings
+        )
+        // -180 is exactly the meal's +120; it must be the peak, not excluded.
+        #expect(actual.delta == 60)
     }
 
     @Test("the delta tier bands are untouched")
@@ -646,7 +673,7 @@ struct ResidualDetectorTests {
 
     @Test("a +45 rise with nothing logged is one residual, carrying its n")
     func unexplainedRise() {
-        let segments = ResidualDetector.detect(readings: rampFixture(), anchors: [], regimes: [])
+        let segments = ResidualDetector.detect(readings: rampFixture(), anchors: ResidualAnchors(), regimes: [])
         #expect(segments.count == 1)
         #expect(segments[0].deltaMgDL >= 40)
         #expect(segments[0].n >= 4)
@@ -657,7 +684,7 @@ struct ResidualDetectorTests {
     func anchoredRiseIsNotResidual() {
         let segments = ResidualDetector.detect(
             readings: rampFixture(),
-            anchors: [at(-20)],
+            anchors: ResidualAnchors(points: [at(-20)]),
             regimes: []
         )
         #expect(segments.isEmpty)
@@ -673,7 +700,7 @@ struct ResidualDetectorTests {
         readings.append(reading(35, 145))
         for step in 8 ... 20 { readings.append(reading(Double(step) * 5, 145)) }
 
-        #expect(ResidualDetector.detect(readings: readings, anchors: [], regimes: []).isEmpty)
+        #expect(ResidualDetector.detect(readings: readings, anchors: ResidualAnchors(), regimes: []).isEmpty)
     }
 
     @Test("overlapping candidates merge into one segment; distant ones stay apart")
@@ -692,7 +719,7 @@ struct ResidualDetectorTests {
 
         let segments = ResidualDetector.detect(
             readings: first + second + tail,
-            anchors: [],
+            anchors: ResidualAnchors(),
             regimes: []
         )
         #expect(segments.count == 2)
@@ -708,13 +735,77 @@ struct ResidualDetectorTests {
             end: at(90),
             isOpen: false
         )
-        #expect(ResidualDetector.detect(readings: rampFixture(), anchors: [], regimes: [band]).isEmpty)
+        #expect(ResidualDetector.detect(readings: rampFixture(), anchors: ResidualAnchors(), regimes: [band]).isEmpty)
+    }
+
+    @Test("the segment starts where the MOVE starts, not 90 minutes of flat earlier")
+    func segmentStartsWhereTheMoveStarts() {
+        let segments = ResidualDetector.detect(
+            readings: rampFixture(),
+            anchors: ResidualAnchors(),
+            regimes: []
+        )
+        #expect(segments.count == 1)
+        #expect(segments[0].start == at(0), "the flat trace before the ramp is not part of the excursion")
+        #expect(segments[0].end == at(60))
+        #expect(segments[0].n == 13)
+        #expect(segments[0].deltaMgDL == 45)
+    }
+
+    @Test("a spike keeps its magnitude — a rise and its fall are not one +0 segment")
+    func spikeKeepsItsMagnitude() {
+        // Flat 100, +45 over 30 min, back to 100 over 30 min, flat. The whole
+        // move fits inside one 90-minute span, which is exactly the case that
+        // collapsed to `UNEXPLAINED +0`.
+        var readings: [SensorGlucose] = []
+        var minute = -60.0
+        while minute < 0 { readings.append(reading(minute, 100)); minute += 5 }
+        for step in 0 ... 6 { readings.append(reading(Double(step) * 5, 100 + Int((45.0 * Double(step) / 6.0).rounded()))) }
+        for step in 1 ... 6 { readings.append(reading(30 + Double(step) * 5, 145 - Int((45.0 * Double(step) / 6.0).rounded()))) }
+        minute = 65
+        while minute <= 180 { readings.append(reading(minute, 100)); minute += 5 }
+
+        let segments = ResidualDetector.detect(
+            readings: readings,
+            anchors: ResidualAnchors(),
+            regimes: []
+        )
+        #expect(!segments.isEmpty, "the spike is still an excursion")
+        #expect(
+            segments.allSatisfy { abs($0.deltaMgDL) >= ResidualDetector.minDeltaMgDL },
+            "no segment may claim less than the threshold it was detected by"
+        )
+    }
+
+    @Test("a workout spanning the excursion explains it — exercise is an interval, not an instant")
+    func exerciseIntervalSuppresses() {
+        // Starts an hour before the move and ends an hour after it: a point
+        // anchor at either end would miss the middle entirely.
+        let ride = ResidualDetector.anchors(
+            meals: [],
+            insulin: [],
+            exercise: [workout(from: -60, to: 120)],
+            notes: []
+        )
+        #expect(ResidualDetector.detect(readings: rampFixture(), anchors: ride, regimes: []).isEmpty)
+    }
+
+    @Test("anchors() collects meals, boluses and notes as points, workouts as intervals")
+    func anchorsBuilder() {
+        let built = ResidualDetector.anchors(
+            meals: [meal(0, carbs: 40)],
+            insulin: [bolus(5, units: 3)],
+            exercise: [workout(from: 60, to: 90)],
+            notes: [note(120, tag: nil)]
+        )
+        #expect(built.points.count == 3)
+        #expect(built.intervals == [at(60) ... at(90)])
     }
 
     @Test("too few readings is not a residual, however big the swing")
     func tooFewReadings() {
         let readings = [reading(0, 100), reading(30, 150), reading(60, 155)]
-        #expect(ResidualDetector.detect(readings: readings, anchors: [], regimes: []).isEmpty)
+        #expect(ResidualDetector.detect(readings: readings, anchors: ResidualAnchors(), regimes: []).isEmpty)
     }
 }
 
@@ -726,7 +817,7 @@ struct RegimeDeriverTests {
 
     @Test("STRESSED opens a four-hour band")
     func stressedIsFourHours() {
-        let bands = RegimeDeriver.derive(notes: [note(0, tag: .stressed)], now: at(60), dayEnd: dayEnd)
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .stressed)], dayEnd: dayEnd)
         #expect(bands.count == 1)
         #expect(bands[0].start == at(0))
         #expect(bands[0].end == at(240))
@@ -735,7 +826,7 @@ struct RegimeDeriverTests {
 
     @Test("SICK with no later note runs 24 h and stays open")
     func sickRunsADay() {
-        let bands = RegimeDeriver.derive(notes: [note(0, tag: .sick)], now: at(60), dayEnd: dayEnd)
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .sick)], dayEnd: dayEnd)
         #expect(bands.count == 1)
         #expect(bands[0].end == at(24 * 60))
         #expect(bands[0].isOpen)
@@ -743,25 +834,24 @@ struct RegimeDeriverTests {
 
     @Test("SLUGGISH runs to the end of the day")
     func sluggishRunsToDayEnd() {
-        let bands = RegimeDeriver.derive(notes: [note(0, tag: .sluggish)], now: at(60), dayEnd: dayEnd)
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .sluggish)], dayEnd: dayEnd)
         #expect(bands[0].end == dayEnd)
     }
 
     @Test("OTHER is a note, not a regime")
     func otherYieldsNoBand() {
-        #expect(RegimeDeriver.derive(notes: [note(0, tag: .other)], now: at(60), dayEnd: dayEnd).isEmpty)
+        #expect(RegimeDeriver.derive(notes: [note(0, tag: .other)], dayEnd: dayEnd).isEmpty)
     }
 
     @Test("an untagged note is a note, not a regime")
     func untaggedYieldsNoBand() {
-        #expect(RegimeDeriver.derive(notes: [note(0, tag: nil)], now: at(60), dayEnd: dayEnd).isEmpty)
+        #expect(RegimeDeriver.derive(notes: [note(0, tag: nil)], dayEnd: dayEnd).isEmpty)
     }
 
     @Test("a later tagged note closes the earlier band early")
     func laterTaggedNoteCloses() {
         let bands = RegimeDeriver.derive(
             notes: [note(0, tag: .stressed), note(90, tag: .sick)],
-            now: at(120),
             dayEnd: dayEnd
         )
         #expect(bands.count == 2)
@@ -775,7 +865,6 @@ struct RegimeDeriverTests {
     func backToNormalCloses() {
         let bands = RegimeDeriver.derive(
             notes: [note(0, tag: .stressed), note(75, tag: nil, text: "BACK TO NORMAL")],
-            now: at(120),
             dayEnd: dayEnd
         )
         #expect(bands.count == 1)
@@ -789,20 +878,30 @@ struct RegimeDeriverTests {
         // the default end, so the answer necessarily lands after it.
         let bands = RegimeDeriver.derive(
             notes: [note(0, tag: .stressed), note(283, tag: nil, text: "BACK TO NORMAL")],
-            now: at(283),
             dayEnd: dayEnd
         )
         #expect(bands.count == 1)
         #expect(bands[0].end == at(240), "a late answer must not extend the band past its default")
         #expect(bands[0].isOpen == false)
-        #expect(RegimePrompt.shouldShow(bands: bands, now: at(283)) == nil, "and the row must go away")
+        #expect(RegimePrompt.shouldShow(bands: bands, now: at(283), isLiveDay: true) == nil, "and the row must go away")
+    }
+
+    @Test("an OTHER note does not close a standing band — it opens no regime of its own")
+    func otherDoesNotClose() {
+        let bands = RegimeDeriver.derive(
+            notes: [note(0, tag: .sick), note(120, tag: .other, text: "took paracetamol")],
+            dayEnd: dayEnd
+        )
+        #expect(bands.count == 1)
+        #expect(bands[0].tag == .sick)
+        #expect(bands[0].end == at(24 * 60), "SICK still runs its full default")
+        #expect(bands[0].isOpen)
     }
 
     @Test("notes arrive in any order and still derive in time order")
     func unsortedNotes() {
         let bands = RegimeDeriver.derive(
             notes: [note(90, tag: .sick), note(0, tag: .stressed)],
-            now: at(120),
             dayEnd: dayEnd
         )
         #expect(bands.count == 2)
@@ -812,7 +911,7 @@ struct RegimeDeriverTests {
 
     @Test("the band's label names its tag and its hours, never a prescription")
     func bandLabel() {
-        let bands = RegimeDeriver.derive(notes: [note(0, tag: .stressed)], now: at(60), dayEnd: dayEnd)
+        let bands = RegimeDeriver.derive(notes: [note(0, tag: .stressed)], dayEnd: dayEnd)
         let label = bands[0].label
         #expect(label.hasPrefix("STRESSED "))
         #expect(label.contains("→"))
@@ -829,25 +928,34 @@ struct RegimePromptTests {
 
     @Test("nothing is asked before the band's last half hour")
     func quietEarly() {
-        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(120)) == nil)
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(120), isLiveDay: true) == nil)
     }
 
     @Test("the prompt appears 30 minutes before the default end")
     func showsNearTheEnd() {
-        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(210))?.tag == .stressed)
-        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(260))?.tag == .stressed)
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(210), isLiveDay: true)?.tag == .stressed)
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(260), isLiveDay: true)?.tag == .stressed)
     }
 
     @Test("a band the user already closed is never asked about")
     func closedBandIsNotAsked() {
-        #expect(RegimePrompt.shouldShow(bands: [stressedBand(open: false)], now: at(260)) == nil)
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand(open: false)], now: at(260), isLiveDay: true) == nil)
+    }
+
+    @Test("a day you are only reading never asks — the answer could not come back")
+    func pastDayNeverPrompts() {
+        // `journalNoteValues` is scoped to the selected day, so a `BACK TO
+        // NORMAL` written at `now` would land outside it, never close the band,
+        // and the row would ask again on every open — writing an orphan note
+        // into the log each time.
+        #expect(RegimePrompt.shouldShow(bands: [stressedBand()], now: at(260), isLiveDay: false) == nil)
     }
 
     @Test("with several open bands the most recent one is asked about")
     func mostRecentWins() {
         let older = RegimeBand(id: "a", tag: .sick, start: at(-600), end: at(840), isOpen: true)
         let newer = stressedBand()
-        #expect(RegimePrompt.shouldShow(bands: [older, newer], now: at(260))?.tag == .stressed)
+        #expect(RegimePrompt.shouldShow(bands: [older, newer], now: at(260), isLiveDay: true)?.tag == .stressed)
     }
 }
 

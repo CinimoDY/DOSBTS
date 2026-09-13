@@ -63,9 +63,10 @@ enum RegimeDeriver {
         }
     }
 
-    /// Derive the day's bands. `now` is taken rather than read so the result is
-    /// render-stable and unit-testable.
-    static func derive(notes: [JournalNote], now: Date, dayEnd: Date) -> [RegimeBand] {
+    /// Derive the day's bands. Deliberately clock-free: a band's extent is a
+    /// property of the NOTES, so the result is render-stable and unit-testable.
+    /// Whether a band is worth asking about is `RegimePrompt`'s job.
+    static func derive(notes: [JournalNote], dayEnd: Date) -> [RegimeBand] {
         let sorted = notes.sorted { $0.timestamp < $1.timestamp }
 
         return sorted.enumerated().compactMap { index, note -> RegimeBand? in
@@ -74,10 +75,11 @@ enum RegimeDeriver {
                 let defaultEnd = defaultEnd(for: tag, start: note.timestamp, dayEnd: dayEnd)
             else { return nil }
 
-            // The next note that says the world changed: any tagged note (it
-            // opens its own regime) or an explicit close marker.
+            // The next note that says the world changed: one that OPENS its own
+            // regime, or an explicit close marker. A tag that opens nothing
+            // (`.other`) is just a note — "took paracetamol" must not end SICK.
             let closer = sorted[(index + 1)...].first { later in
-                later.tag != nil || isCloseMarker(later)
+                isCloseMarker(later) || opensARegime(later, dayEnd: dayEnd)
             }
 
             if let closer {
@@ -106,6 +108,13 @@ enum RegimeDeriver {
         }
     }
 
+    /// True when this note would open a band of its own — which is what makes it
+    /// able to end the one before it. `.other` and untagged notes do not.
+    static func opensARegime(_ note: JournalNote, dayEnd: Date) -> Bool {
+        guard let tag = note.tag else { return false }
+        return defaultEnd(for: tag, start: note.timestamp, dayEnd: dayEnd) != nil
+    }
+
     /// Case- and whitespace-insensitive, so a note the user typed by hand reads
     /// the same as the one the **N** button writes.
     static func isCloseMarker(_ note: JournalNote) -> Bool {
@@ -121,10 +130,18 @@ enum RegimePrompt {
     /// before the chart quietly stops saying anything.
     static let leadSeconds: TimeInterval = 30 * 60
 
-    /// The band worth asking about, or nil. Pure so the visibility rule is
-    /// pinned by a test rather than by watching a clock.
-    static func shouldShow(bands: [RegimeBand], now: Date) -> RegimeBand? {
-        bands
+    /// The band worth asking about, or nil.
+    ///
+    /// `isLiveDay` is load-bearing, not decoration. `journalNoteValues` is
+    /// scoped to the selected day, so on a PAST day the answer would be written
+    /// at `now` (today), land outside the day being shown, never come back as a
+    /// closer — and the row would ask again forever, inserting an orphan
+    /// `BACK TO NORMAL` into the log on every tap. A day you are only reading
+    /// is not a day you can answer for.
+    static func shouldShow(bands: [RegimeBand], now: Date, isLiveDay: Bool) -> RegimeBand? {
+        guard isLiveDay else { return nil }
+
+        return bands
             .filter { $0.isOpen && now >= $0.end.addingTimeInterval(-leadSeconds) }
             .max { $0.start < $1.start }
     }

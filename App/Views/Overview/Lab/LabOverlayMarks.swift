@@ -136,8 +136,11 @@ enum LabOverlayMarks {
             .foregroundStyle(AmberTheme.amberDark.opacity(0.05))
         }
 
-        ForEach(series.mealResponses.filter { $0.stubEnd != nil }) { response in
-            RuleMark(x: .value("Closes", response.stubEnd ?? response.windowEnd))
+        // Only when the real +2 h is ON the chart. `stubEnd` is clamped into
+        // the domain, so an unclamped rule would draw at the domain's edge for
+        // every live ribbon — "closes in 12 min" next to a `42 MIN` label.
+        ForEach(series.mealResponses.filter { closingRuleDate(for: $0, series: series) != nil }) { response in
+            RuleMark(x: .value("Closes", closingRuleDate(for: response, series: series) ?? response.windowEnd))
                 .foregroundStyle(AmberTheme.borderStrong)
                 .lineStyle(Config.stubStyle)
         }
@@ -192,11 +195,19 @@ enum LabOverlayMarks {
             // Same reason as the ribbon labels: an overlay annotation is
             // clipped to the mark, and a band that starts off-screen would show
             // `ESSED 14→18`.
+            //
+            // `.bottom`, not `.top`: the y-fit pulls it to the plot FLOOR, which
+            // is the one horizontal strip the trace never occupies (glucose is
+            // clamped ≥ 40), and it frees the top band entirely for the ribbon
+            // labels instead of stacking a fifth row on them.
             .annotation(
-                position: .top,
+                position: .bottom,
                 alignment: .center,
+                // `y: .fit(to: .plot)`, not `.chart`: fitting to the chart lets
+                // it settle over the hour labels: the PLOT floor is inside the
+                // frame the trace lives in, which is where it belongs.
                 spacing: 0,
-                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
+                overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .plot))
             ) {
                 Text(band.label)
                     .font(DOSTypography.micro)
@@ -207,8 +218,6 @@ enum LabOverlayMarks {
                     .padding(.horizontal, 3)
                     .padding(.vertical, 1)
                     .background(AmberTheme.scrimHeavy)
-                    // Under the exercise strip, which owns the top of the plot.
-                    .padding(.top, Config.regimeLabelDrop)
             }
         }
     }
@@ -218,14 +227,18 @@ enum LabOverlayMarks {
     private enum Config {
         /// The prototype's stagger between overlapping ribbon labels.
         static let labelRowHeight: CGFloat = 12
-        /// How many rows the ribbon labels cycle through before wrapping.
-        static let labelRows: CGFloat = 4
-        // The plot's top band is shared: ribbon labels take the first four
-        // rows, then the regime label. Stacking them explicitly is what stops
-        // `STRESSED 14→18` printing over `NO BOLUS`, which is exactly what
-        // happened on the first simulator pass.
-        static let regimeLabelDrop: CGFloat = labelRowHeight * labelRows + 4
         static let stubStyle: StrokeStyle = .init(lineWidth: 1, dash: [3, 3])
+    }
+
+    /// Where a live window will close, but only when that instant is actually
+    /// on the chart — otherwise the clamped `stubEnd` sits at the domain edge
+    /// and lies about when the window ends.
+    private static func closingRuleDate(
+        for response: MealResponseDatapoint,
+        series: LabChartSeries
+    ) -> Date? {
+        guard let stub = response.stubEnd, stub < series.domainEnd else { return nil }
+        return stub
     }
 
     /// Tier tint for a fair window, dim for an excluded one. The opacity is

@@ -27,6 +27,22 @@ struct ResidualSegment: Identifiable, Equatable {
     let n: Int
 }
 
+// MARK: - ResidualAnchors
+
+/// Everything already logged that could explain an excursion. Points are
+/// instants (a meal, a bolus, a note); intervals are things with a duration (a
+/// workout), which explain a move anywhere inside them — a 90-minute ride that
+/// starts an hour early and ends after the move still explains it.
+struct ResidualAnchors: Equatable {
+    let points: [Date]
+    let intervals: [ClosedRange<Date>]
+
+    init(points: [Date] = [], intervals: [ClosedRange<Date>] = []) {
+        self.points = points
+        self.intervals = intervals
+    }
+}
+
 // MARK: - ResidualDetector
 
 enum ResidualDetector {
@@ -45,26 +61,60 @@ enum ResidualDetector {
     /// physiology. Longer gaps get proportionally more allowance.
     static let maxStepMgDLPer5Min = 25.0
 
+    // MARK: Anchors
+
+    /// The ONE place the anchor set is built, so the chart's `?` marks and the
+    /// row that opens the note can never disagree about what counts as logged.
+    static func anchors(
+        meals: [MealEntry],
+        insulin: [InsulinDelivery],
+        exercise: [ExerciseEntry],
+        notes: [JournalNote]
+    ) -> ResidualAnchors {
+        ResidualAnchors(
+            points: meals.map(\.timestamp)
+                + insulin.map(\.starts)
+                + notes.map(\.timestamp),
+            // A workout is a window, not a moment. Ordered defensively: a
+            // mis-entered entry with `endTime` before `startTime` must not trap
+            // in `ClosedRange`.
+            intervals: exercise.map {
+                Swift.min($0.startTime, $0.endTime) ... Swift.max($0.startTime, $0.endTime)
+            }
+        )
+    }
+
     // MARK: Detection
 
     static func detect(
         readings: [SensorGlucose],
-        anchors: [Date],
+        anchors: ResidualAnchors,
         regimes: [RegimeBand]
     ) -> [ResidualSegment] {
         let sorted = readings.sorted { $0.timestamp < $1.timestamp }
         guard sorted.count >= minReadings else { return [] }
 
         // The tightest candidate from each start: the FIRST later reading that
-        // crosses the threshold, so one long ramp does not also produce every
-        // longer superset of itself.
-        var candidates: [(start: Int, end: Int)] = []
+        // crosses the threshold, and then the LATEST start that still reaches
+        // it. Without that second step the segment begins at whatever flat
+        // reading happened to be within 90 minutes — the `?` covers dead trace,
+        // the note opens at the wrong time, and anchor suppression goes wide.
+        var candidates: [Candidate] = []
         for i in sorted.indices {
             var j = i + 1
             while j < sorted.count,
                   sorted[j].timestamp.timeIntervalSince(sorted[i].timestamp) <= maxSpanSeconds {
                 if abs(sorted[j].glucoseValue - sorted[i].glucoseValue) >= minDeltaMgDL {
-                    candidates.append((start: i, end: j))
+                    var start = i
+                    while start + 1 < j,
+                          abs(sorted[j].glucoseValue - sorted[start + 1].glucoseValue) >= minDeltaMgDL {
+                        start += 1
+                    }
+                    candidates.append(Candidate(
+                        start: start,
+                        end: j,
+                        isRising: sorted[j].glucoseValue > sorted[start].glucoseValue
+                    ))
                     break
                 }
                 j += 1
@@ -72,11 +122,15 @@ enum ResidualDetector {
         }
         guard !candidates.isEmpty else { return [] }
 
-        // One excursion, one `?`. Candidates arrive in ascending start order.
-        var merged: [(start: Int, end: Int)] = []
-        for candidate in candidates {
-            if let last = merged.last, candidate.start <= last.end {
-                merged[merged.count - 1].end = max(last.end, candidate.end)
+        // One excursion, one `?` — but only in the SAME direction. Merging a
+        // rise into the fall that follows it produces a segment whose ends
+        // happen to match, i.e. `UNEXPLAINED +0`, which says nothing.
+        var merged: [Candidate] = []
+        for candidate in candidates.sorted(by: { $0.start < $1.start }) {
+            if let last = merged.last,
+               last.isRising == candidate.isRising,
+               candidate.start <= last.end {
+                merged[merged.count - 1].end = Swift.max(last.end, candidate.end)
             } else {
                 merged.append(candidate)
             }
@@ -85,22 +139,38 @@ enum ResidualDetector {
         return merged.compactMap { range -> ResidualSegment? in
             let slice = Array(sorted[range.start ... range.end])
             guard slice.count >= minReadings, !hasNoiseStep(slice) else { return nil }
+            guard let first = slice.first else { return nil }
 
-            guard let first = slice.first, let last = slice.last else { return nil }
+            // Measured to the EXTREMUM in the direction of the move, never to
+            // the last reading: a spike that comes back down inside the window
+            // is still a +45 excursion.
+            let extremum = range.isRising
+                ? slice.max(by: { $0.glucoseValue < $1.glucoseValue })
+                : slice.min(by: { $0.glucoseValue < $1.glucoseValue })
+            guard let extremum else { return nil }
+
+            let delta = extremum.glucoseValue - first.glucoseValue
+            // Merging can only widen a window, so the threshold is re-checked
+            // against what the merged segment actually claims.
+            guard abs(delta) >= minDeltaMgDL else { return nil }
+
             let from = first.timestamp
-            let to = last.timestamp
+            let to = extremum.timestamp
             let explainedFrom = from.addingTimeInterval(-anchorLookbackSeconds)
 
             // Anything logged in (or overlapping) the window IS the explanation.
-            guard !anchors.contains(where: { $0 >= explainedFrom && $0 <= to }) else { return nil }
+            guard !anchors.points.contains(where: { $0 >= explainedFrom && $0 <= to }) else { return nil }
+            guard !anchors.intervals.contains(where: {
+                $0.lowerBound <= to && $0.upperBound >= explainedFrom
+            }) else { return nil }
             guard !regimes.contains(where: { $0.start <= to && $0.end >= explainedFrom }) else { return nil }
 
             return ResidualSegment(
                 id: "residual-\(Int(from.timeIntervalSince1970))",
                 start: from,
                 end: to,
-                deltaMgDL: last.glucoseValue - first.glucoseValue,
-                n: slice.count
+                deltaMgDL: delta,
+                n: sorted.filter { $0.timestamp >= from && $0.timestamp <= to }.count
             )
         }
     }
@@ -114,6 +184,13 @@ enum ResidualDetector {
     }
 
     // MARK: Private
+
+    /// A candidate excursion, as indices into the sorted readings.
+    private struct Candidate {
+        let start: Int
+        var end: Int
+        let isRising: Bool
+    }
 
     /// True when any consecutive pair moves further than the sensor plausibly
     /// can in the time between them.

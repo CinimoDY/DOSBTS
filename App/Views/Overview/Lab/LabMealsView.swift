@@ -24,7 +24,9 @@ struct LabMealsView: View {
                 followStatus: $followStatus
             )
 
-            if let residual = residuals.last {
+            // The chart can show several `?`; each needs its own way in.
+            // Capped so a noisy day cannot push the legend and footer off.
+            ForEach(residuals.suffix(Config.maxResidualRows)) { residual in
                 residualPrompt(residual)
             }
 
@@ -60,6 +62,8 @@ struct LabMealsView: View {
         .onChange(of: store.state.journalNoteValues) { refreshResiduals() }
         .onChange(of: store.state.mealEntryValues) { refreshResiduals() }
         .onChange(of: store.state.insulinDeliveryValues) { refreshResiduals() }
+        .onChange(of: store.state.exerciseEntryValues) { refreshResiduals() }
+        .onChange(of: store.state.selectedDate) { refreshResiduals() }
     }
 
     // MARK: Private
@@ -79,29 +83,36 @@ struct LabMealsView: View {
 
     private let clock = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
+    private enum Config {
+        /// At most this many residual rows, newest last.
+        static let maxResidualRows = 3
+    }
+
+    /// The same next-midnight the chart's bands use (DST-safe).
     private var dayEnd: Date {
-        Calendar.current
-            .startOfDay(for: store.state.selectedDate ?? now)
-            .addingTimeInterval(24 * 60 * 60)
+        LabChartSeriesBuilder.endOfDay(for: store.state.selectedDate ?? now)
+    }
+
+    /// A day you are only READING is not a day you can answer for: the notes
+    /// are scoped to it, so an answer written at `now` would never come back.
+    private var isLiveDay: Bool {
+        guard let selected = store.state.selectedDate else { return true }
+        return Calendar.current.isDateInToday(selected)
     }
 
     /// The same pure detector the chart's `?` marks come from, over the same
     /// anchors — so the row and the chart can never disagree about what is
     /// unexplained.
     private func refreshResiduals() {
-        let bands = RegimeDeriver.derive(
-            notes: store.state.journalNoteValues,
-            now: Date(),
-            dayEnd: dayEnd
-        )
         residuals = ResidualDetector.detect(
             readings: store.state.sensorGlucoseValues,
-            anchors: store.state.mealEntryValues.map(\.timestamp)
-                + store.state.insulinDeliveryValues.map(\.starts)
-                + store.state.exerciseEntryValues.map(\.startTime)
-                + store.state.exerciseEntryValues.map(\.endTime)
-                + store.state.journalNoteValues.map(\.timestamp),
-            regimes: bands
+            anchors: ResidualDetector.anchors(
+                meals: store.state.mealEntryValues,
+                insulin: store.state.insulinDeliveryValues,
+                exercise: store.state.exerciseEntryValues,
+                notes: store.state.journalNoteValues
+            ),
+            regimes: RegimeDeriver.derive(notes: store.state.journalNoteValues, dayEnd: dayEnd)
         )
     }
 
@@ -144,12 +155,9 @@ struct LabMealsView: View {
     /// Derived, never stored: the same pure deriver the chart's bands come from.
     private var openRegime: RegimeBand? {
         RegimePrompt.shouldShow(
-            bands: RegimeDeriver.derive(
-                notes: store.state.journalNoteValues,
-                now: now,
-                dayEnd: dayEnd
-            ),
-            now: now
+            bands: RegimeDeriver.derive(notes: store.state.journalNoteValues, dayEnd: dayEnd),
+            now: now,
+            isLiveDay: isLiveDay
         )
     }
 
@@ -195,13 +203,10 @@ struct LabMealsView: View {
     ) -> some View {
         Button(action: action) {
             Text(verbatim: title)
-                .font(DOSTypography.mono(size: 12, weight: .semibold))
-                .foregroundStyle(AmberTheme.amber)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
-                .overlay(Rectangle().stroke(AmberTheme.amberDark, lineWidth: 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dosGhost)
         .accessibilityLabel(accessibility)
     }
 }

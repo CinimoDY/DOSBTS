@@ -58,6 +58,9 @@ struct LabChartInputs: Equatable {
     let iobDeliveries: [InsulinDelivery]
     let exercise: [ExerciseEntry]
     let heartRate: [HeartRateSample]
+    /// Journal notes are context for a fact, never a series: the Black Box card
+    /// states the tag that was standing when a hypo started.
+    let journalNotes: [JournalNote]
     let glucoseUnit: GlucoseUnit
     let alarmLow: Int
     let alarmHigh: Int
@@ -67,9 +70,6 @@ struct LabChartInputs: Equatable {
     let showSmoothed: Bool
     let smoothThreshold: Date
     let selectedDate: Date?
-    /// Regimes are DERIVED from these at build time — there is no stored regime
-    /// model (DMNC-1501).
-    let journalNotes: [JournalNote]
     let overlays: Set<ChartLabOverlay>
 
     /// The ONLY place the lab reads `store.state` for series data.
@@ -81,6 +81,7 @@ struct LabChartInputs: Equatable {
         self.iobDeliveries = state.iobDeliveries
         self.exercise = state.exerciseEntryValues
         self.heartRate = state.heartRateSeries.map { HeartRateSample(time: $0.0, bpm: $0.1) }
+        self.journalNotes = state.journalNoteValues
         self.glucoseUnit = state.glucoseUnit
         self.alarmLow = state.alarmLow
         self.alarmHigh = state.alarmHigh
@@ -97,7 +98,6 @@ struct LabChartInputs: Equatable {
             ? state.smoothThreshold.toRounded(on: 1, .minute)
             : Date(timeIntervalSince1970: 0)
         self.selectedDate = state.selectedDate
-        self.journalNotes = state.journalNoteValues
         self.overlays = overlays
     }
 
@@ -110,6 +110,7 @@ struct LabChartInputs: Equatable {
         iobDeliveries: [InsulinDelivery],
         exercise: [ExerciseEntry],
         heartRate: [HeartRateSample],
+        journalNotes: [JournalNote] = [],
         glucoseUnit: GlucoseUnit,
         alarmLow: Int,
         alarmHigh: Int,
@@ -118,7 +119,6 @@ struct LabChartInputs: Equatable {
         showSmoothed: Bool,
         smoothThreshold: Date,
         selectedDate: Date?,
-        journalNotes: [JournalNote] = [],
         overlays: Set<ChartLabOverlay>
     ) {
         self.sensorGlucose = sensorGlucose
@@ -128,6 +128,7 @@ struct LabChartInputs: Equatable {
         self.iobDeliveries = iobDeliveries
         self.exercise = exercise
         self.heartRate = heartRate
+        self.journalNotes = journalNotes
         self.glucoseUnit = glucoseUnit
         self.alarmLow = alarmLow
         self.alarmHigh = alarmHigh
@@ -136,7 +137,6 @@ struct LabChartInputs: Equatable {
         self.showSmoothed = showSmoothed
         self.smoothThreshold = smoothThreshold
         self.selectedDate = selectedDate
-        self.journalNotes = journalNotes
         self.overlays = overlays
     }
 }
@@ -432,9 +432,8 @@ enum LabChartSeriesBuilder {
         let regimes = (wantsRegimes || wantsResiduals)
             ? RegimeDeriver.derive(
                 notes: inputs.journalNotes,
-                now: now,
-                dayEnd: Calendar.current.startOfDay(for: inputs.selectedDate ?? now)
-                    .addingTimeInterval(24 * 60 * 60)
+                // `+ 24 h` is not the next midnight across a DST change.
+                dayEnd: endOfDay(for: inputs.selectedDate ?? now)
             )
             : []
 
@@ -443,11 +442,12 @@ enum LabChartSeriesBuilder {
                 readings: inputs.sensorGlucose,
                 // Everything a user can log is an anchor: if any of it is near
                 // the excursion, the excursion is not unexplained.
-                anchors: inputs.meals.map(\.timestamp)
-                    + inputs.insulin.map(\.starts)
-                    + inputs.exercise.map(\.startTime)
-                    + inputs.exercise.map(\.endTime)
-                    + inputs.journalNotes.map(\.timestamp),
+                anchors: ResidualDetector.anchors(
+                    meals: inputs.meals,
+                    insulin: inputs.insulin,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes
+                ),
                 regimes: regimes
             )
             : []
@@ -470,6 +470,14 @@ enum LabChartSeriesBuilder {
             regimes: regimes,
             glucoseUnit: inputs.glucoseUnit
         )
+    }
+
+    /// The next midnight, which is NOT `startOfDay + 24 h` on a DST boundary.
+    /// Shared with `LabMealsView` so the chart's bands and the `STILL <TAG>?`
+    /// row can never derive different days.
+    static func endOfDay(for date: Date, calendar: Calendar = .current) -> Date {
+        let start = calendar.startOfDay(for: date)
+        return calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(24 * 60 * 60)
     }
 
     /// 60 s sampling across the domain, inclusive of both ends — the cadence the

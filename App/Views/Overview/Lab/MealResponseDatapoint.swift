@@ -79,6 +79,11 @@ struct MealResponseDatapoint: Identifiable, Equatable {
         carbs != nil && pairedBolusUnits > 0
     }
 
+    /// How many rows the ribbon labels cycle through. ONE source: the marks
+    /// file spends this many 12-pt rows of the plot's top band, so the two
+    /// cannot drift into labels drawn outside the band they were budgeted.
+    static let maxLabelLanes = 4
+
     /// Which stagger row each ribbon's label takes, in time order, cycling
     /// through `maxLanes` rows — the prototype's four 12-pt rows.
     ///
@@ -88,7 +93,10 @@ struct MealResponseDatapoint: Identifiable, Equatable {
     /// other. The marks function has no plot width to measure against, and
     /// cycling guarantees that any four consecutive meals — far more than a real
     /// day has in view at once — are on four different rows at every zoom.
-    static func labelLanes(_ responses: [MealResponseDatapoint], maxLanes: Int = 4) -> [String: Int] {
+    static func labelLanes(
+        _ responses: [MealResponseDatapoint],
+        maxLanes: Int = MealResponseDatapoint.maxLabelLanes
+    ) -> [String: Int] {
         var lanes: [String: Int] = [:]
 
         for (index, response) in responses.sorted(by: { $0.mealTime < $1.mealTime }).enumerated() {
@@ -175,8 +183,11 @@ enum MealResponseClassifier {
         // 2 — the insulin half of the pairing was never written down.
         if pairedBolusUnits <= 0 { return .noBolus }
 
-        // 3 — too small for a ±5 g estimate to mean anything.
-        if (meal.carbsGrams ?? 0) < RatioEstimator.minCarbsGrams { return .smallMeal }
+        // 3 — too small for a ±5 g estimate to mean anything. A meal with NO
+        //     carbs recorded is not a small meal — it is an unknown one, which
+        //     the floor-sized dot already says. Grading its response is still
+        //     the more useful answer than tagging it `SMALL MEAL`.
+        if let carbs = meal.carbsGrams, carbs < RatioEstimator.minCarbsGrams { return .smallMeal }
 
         // 4 — a hypo we can SEE always wins: it is the safety-critical lesson.
         if let minInWindow = RatioEstimator.minGlucoseInWindow(
