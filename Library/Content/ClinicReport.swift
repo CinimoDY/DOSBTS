@@ -36,14 +36,46 @@ enum ReportPeriod: Int, CaseIterable, Identifiable {
 
 // MARK: - HourlyPattern
 
-/// One hour-of-day bucket of the daily glucose pattern. `median`/`p25`/`p75` are `nil`
-/// when the hour had no readings across the period; `readings` is that hour's sample count.
+/// One hour-of-day bucket of the daily glucose pattern. `median`/`p25`/`p75`/`p5`/`p95`
+/// are `nil` when the hour had no readings across the period; `readings` is that hour's
+/// sample count and `days` the number of DISTINCT calendar days behind it.
+///
+/// `p5`/`p95`/`days` were added for the Chart Lab's personal band (DMNC-1503) and are
+/// **additive**: the clinic report (`ClinicReportPage`, the CSV, `ClinicReportTests`)
+/// neither reads nor supplies them, and keeps using the compatibility initializer below.
+/// `days` is what separates "the usual" from "one strange Tuesday" — a percentile over a
+/// single day is not a pattern, so the lab gates its claims on it.
 struct HourlyPattern: Equatable {
     let hour: Int // 0...23
     let median: Int?
     let p25: Int?
     let p75: Int?
     let readings: Int
+    let p5: Int?
+    let p95: Int?
+    let days: Int
+
+    /// The new fields default, so the clinic report's five-argument call shape still
+    /// compiles and still means exactly what it meant before.
+    init(
+        hour: Int,
+        median: Int?,
+        p25: Int?,
+        p75: Int?,
+        readings: Int,
+        p5: Int? = nil,
+        p95: Int? = nil,
+        days: Int = 0
+    ) {
+        self.hour = hour
+        self.median = median
+        self.p25 = p25
+        self.p75 = p75
+        self.readings = readings
+        self.p5 = p5
+        self.p95 = p95
+        self.days = days
+    }
 }
 
 // MARK: - ClinicReportRaw
@@ -114,13 +146,16 @@ enum ClinicReportBuilder {
 
     // MARK: Hourly pattern
 
-    /// 24 hour-of-day buckets (median + P25/P75) from the period's readings. ALWAYS returns
-    /// 24 entries (hour 0...23); empty hours get `nil` quantiles and 0 readings.
+    /// 24 hour-of-day buckets (median + P5/P25/P75/P95, plus the number of distinct days
+    /// behind each) from the period's readings. ALWAYS returns 24 entries (hour 0...23);
+    /// empty hours get `nil` quantiles, 0 readings and 0 days.
     static func hourlyPatterns(from readings: [SensorGlucose], calendar: Calendar = .current) -> [HourlyPattern] {
         var buckets: [Int: [Int]] = [:]
+        var dayBuckets: [Int: Set<Date>] = [:]
         for reading in readings {
             let hour = calendar.component(.hour, from: reading.timestamp)
             buckets[hour, default: []].append(reading.glucoseValue)
+            dayBuckets[hour, default: []].insert(calendar.startOfDay(for: reading.timestamp))
         }
         return (0 ..< 24).map { hour in
             let values = (buckets[hour] ?? []).sorted()
@@ -132,7 +167,10 @@ enum ClinicReportBuilder {
                 median: percentile(values, 0.5),
                 p25: percentile(values, 0.25),
                 p75: percentile(values, 0.75),
-                readings: values.count
+                readings: values.count,
+                p5: percentile(values, 0.05),
+                p95: percentile(values, 0.95),
+                days: (dayBuckets[hour] ?? []).count
             )
         }
     }
@@ -142,21 +180,37 @@ enum ClinicReportBuilder {
     /// Count of hypo episodes: maximal runs of low readings (< `hypoThresholdMgDL`) spanning
     /// ≥ `hypoMinDurationMinutes`; consecutive lows more than `hypoSeparationMinutes` apart start
     /// a new episode (a return to range shorter than that does not split one).
+    ///
+    /// Exactly `hypoEpisodeIntervals(from:).count` — the count and the bounds can never
+    /// disagree about what an episode is.
     static func hypoEpisodes(from readings: [SensorGlucose]) -> Int {
+        hypoEpisodeIntervals(from: readings).count
+    }
+
+    /// The same walk as `hypoEpisodes(from:)`, but KEEPING each qualifying episode's
+    /// bounds instead of discarding them. The Chart Lab's Black Box card is anchored on
+    /// the onset (`start`) and labelled with the duration, so the boundaries the counter
+    /// threw away are the whole fact.
+    ///
+    /// `start` is the first low reading of the run and `end` the last one — both are real
+    /// reading timestamps, never interpolated, so an anchor always has a reading under it.
+    static func hypoEpisodeIntervals(from readings: [SensorGlucose]) -> [DateInterval] {
         let lows = readings
             .filter { $0.glucoseValue < hypoThresholdMgDL }
             .map { $0.timestamp }
             .sorted()
-        guard let firstLow = lows.first else { return 0 }
+        guard let firstLow = lows.first else { return [] }
 
-        var episodes = 0
+        var intervals: [DateInterval] = []
         var episodeStart = firstLow
         var previousLow = firstLow
         let minDuration = Double(hypoMinDurationMinutes * 60)
         let separation = Double(hypoSeparationMinutes * 60)
 
         func closeEpisode(end: Date) {
-            if end.timeIntervalSince(episodeStart) >= minDuration { episodes += 1 }
+            if end.timeIntervalSince(episodeStart) >= minDuration {
+                intervals.append(DateInterval(start: episodeStart, end: end))
+            }
         }
 
         for low in lows.dropFirst() {
@@ -167,7 +221,7 @@ enum ClinicReportBuilder {
             previousLow = low
         }
         closeEpisode(end: previousLow)
-        return episodes
+        return intervals
     }
 
     // MARK: Statistics helper

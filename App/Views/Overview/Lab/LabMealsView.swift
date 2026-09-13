@@ -2,11 +2,15 @@
 //  LabMealsView.swift
 //  DOSBTS
 //
-//  LAB: MEALS (DMNC-1500) — the lab chart plus its legend and safety footer.
-//  P0 shipped the platform: the chart, the instrument cursors, and no overlays.
-//  P2 (DMNC-1501) fills the meal overlays, appends their legend items, and adds
-//  the one control the chart itself cannot carry: `STILL <TAG>? Y / N`, which is
-//  how an open regime band gets an end.
+//  LAB: MEALS (DMNC-1500) — the lab chart plus everything that cannot live
+//  inside it. P0 shipped the platform (chart + instrument cursors); P5
+//  (DMNC-1505) added the cited-facts region under the chart; P2 (DMNC-1501)
+//  adds the meal overlays and the two controls the chart itself cannot carry:
+//  the residual `TAP TO NOTE` rows and `STILL <TAG>? Y / N`.
+//
+//  Reading order under the chart is deliberate: what the user can ACT on comes
+//  first (the prompts are short and fixed-height), then what they can READ
+//  (the facts region, scrollable and height-capped).
 //
 
 import SwiftUI
@@ -21,7 +25,9 @@ struct LabMealsView: View {
         VStack(spacing: 0) {
             LabChartView(
                 overlays: ReportType.labMeals.labOverlays,
-                followStatus: $followStatus
+                followStatus: $followStatus,
+                factsBinding: $facts,
+                focusRequest: focusRequest
             )
 
             // The chart can show several `?`; each needs its own way in.
@@ -34,6 +40,38 @@ struct LabMealsView: View {
                 regimePrompt(band)
             }
 
+            // The cited facts, under the chart they are about. Scrollable and
+            // height-capped so five cards can never push the chart below its
+            // floor (swiftui-vstack-overflow-sinks-safeareainset).
+            ScrollView {
+                VStack(spacing: 0) {
+                    LabFactSheetLine(sheet: facts.sheet, glucoseUnit: store.state.glucoseUnit)
+
+                    LabFactCardList(
+                        facts: facts.facts,
+                        glucoseUnit: store.state.glucoseUnit,
+                        onSelect: { focusRequest = LabFocusRequest(fact: $0) }
+                    )
+                }
+                .background(
+                    GeometryReader { geometry in
+                        Color.clear.preference(key: LabFactsHeightKey.self, value: geometry.size.height)
+                    }
+                )
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            // Sized to its content, then capped. A `ScrollView` is greedy in its
+            // scroll axis, so an uncapped one reserves the full budget even with
+            // no facts at all and squeezes the chart toward its floor for
+            // nothing — and `.fixedSize` "fixes" that by ignoring the cap
+            // instead, which overflows the tab and draws cards over the legend
+            // (seen on the simulator with three cards). Measuring is the only
+            // shape that gets both ends right.
+            .frame(height: min(factsHeight, Config.factsMaxHeight))
+            .onPreferenceChange(LabFactsHeightKey.self) { factsHeight = $0 }
+
+            // Three short rows rather than two crowded ones: the meal
+            // vocabulary, then the context marks, then the platform's own.
             LabLegendRow(items: [
                 LabLegendItem(glyph: "●", label: "SIZE = CARBS", color: EventMarkerType.meal.color),
                 LabLegendItem(glyph: "▮", label: "2H RESPONSE", color: AmberTheme.amber),
@@ -45,6 +83,13 @@ struct LabMealsView: View {
             LabLegendRow(items: [
                 LabLegendItem(glyph: "▨", label: "REGIME", color: AmberTheme.amberLight),
                 LabLegendItem(glyph: "?", label: "NO CAUSE", color: AmberTheme.amber),
+                LabLegendItem(glyph: "●", label: "CITED FACT", color: AmberTheme.amber),
+                LabLegendItem(glyph: "■", label: "HYPO ONSET", color: AmberTheme.cgaRed),
+            ])
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+
+            LabLegendRow(items: [
                 LabLegendItem(glyph: "A→B", label: "MEASURES", color: AmberTheme.amberLight),
                 LabLegendItem.follow(followStatus),
             ])
@@ -63,14 +108,41 @@ struct LabMealsView: View {
         .onChange(of: store.state.mealEntryValues) { refreshResiduals() }
         .onChange(of: store.state.insulinDeliveryValues) { refreshResiduals() }
         .onChange(of: store.state.exerciseEntryValues) { refreshResiduals() }
-        .onChange(of: store.state.selectedDate) { refreshResiduals() }
+        // A focus request is about a fact on THIS day; paging the chart retires
+        // it (P0 clears its cursors on the same change). The residuals are
+        // day-scoped too, so they are recomputed on the same edge.
+        .onChange(of: store.state.selectedDate) {
+            focusRequest = nil
+            refreshResiduals()
+        }
     }
 
     // MARK: Private
 
+    private enum Config {
+        /// The cards' share of the tab. Measured on an iPhone 17: the chart sits
+        /// at its 140 pt floor and the legend + safety footer must still fit
+        /// under it, so the facts region is capped and scrolls rather than
+        /// pushing the footer off the bottom (the VStack overflow that sinks a
+        /// safeAreaInset — docs/solutions/ui-bugs).
+        static let factsMaxHeight: CGFloat = 120
+        /// At most this many residual rows, newest last. Two rather than three
+        /// now that the facts region shares the space under the chart.
+        static let maxResidualRows = 2
+    }
+
     /// Owned here so the legend and the chart's `◂ N NEW` nub can never disagree
     /// about whether the view is pinned to the newest reading.
     @State private var followStatus: LabFollowStatus = .following
+    /// Pushed up by the chart, so the pins and the cards are built from ONE
+    /// computation of the facts rather than two that could disagree.
+    @State private var facts: LabFactsSnapshot = .empty
+    /// Set when a card is tapped; the chart scrolls to the anchor and drops a
+    /// cursor on it.
+    @State private var focusRequest: LabFocusRequest?
+    /// Measured height of the sheet line + cards, so the region can size to its
+    /// content and still be capped.
+    @State private var factsHeight: CGFloat = 0
 
     /// A regime's default end passes while the app is open, so the prompt needs
     /// a clock. Once a minute — the same cadence as the hero's IOB refresh —
@@ -82,11 +154,6 @@ struct LabMealsView: View {
     @State private var residuals: [ResidualSegment] = []
 
     private let clock = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
-
-    private enum Config {
-        /// At most this many residual rows, newest last.
-        static let maxResidualRows = 3
-    }
 
     /// The same next-midnight the chart's bands use (DST-safe).
     private var dayEnd: Date {
@@ -208,5 +275,15 @@ struct LabMealsView: View {
         }
         .buttonStyle(.dosGhost)
         .accessibilityLabel(accessibility)
+    }
+}
+
+// MARK: - LabFactsHeightKey
+
+private struct LabFactsHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

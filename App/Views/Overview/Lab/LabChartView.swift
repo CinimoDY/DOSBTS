@@ -34,9 +34,31 @@ struct LabChartView: View {
     /// Hoisted so the tab's legend can say what the nub says.
     @Binding var followStatus: LabFollowStatus
 
+    /// Where the computed facts go. Optional and defaulted: a tab that draws no
+    /// pins (and every sibling lab tab) constructs this view unchanged.
+    var factsBinding: Binding<LabFactsSnapshot>?
+
+    /// Set by a tapped fact card: scroll to the anchor and drop a cursor on it.
+    var focusRequest: LabFocusRequest?
+    /// Optional extra chip on the unit row (P4's `▒ YOUR 30-DAY BAND`).
+    /// Defaults to nil, so every existing call site is unchanged.
+    var unitRowLabel: String? = nil
+
+    /// Fires when the sticky scrub cursor moves or clears.
+    ///
+    /// P4's "hold an hour" drill reads THIS rather than adding a long-press of
+    /// its own: press-and-hold is already the scrub gesture (P0's arbitration),
+    /// and a second long-press on the same plot would fight it. Defaults to nil.
+    var onCursorChange: ((Date?) -> Void)? = nil
+    /// The whole-system window path (DMNC-1506). When set, the chart draws THIS
+    /// snapshot over its own interval instead of the store's day window, and the
+    /// visible domain is the whole window — a night is a thing you look at, not
+    /// a thing you scroll through.
+    var windowInputs: LabChartInputs? = nil
+
     var body: some View {
         VStack(spacing: 0) {
-            LabDayPager()
+            LabDayPager(windowDate: isWindowed ? (store.state.selectedDate ?? Date()) : nil)
 
             unitRow
 
@@ -68,6 +90,7 @@ struct LabChartView: View {
         .onAppear { rebuild() }
         .onChange(of: inputs) { rebuild() }
         .onChange(of: store.state.chartZoomLevel) { reanchorAfterZoom() }
+        .onChange(of: focusRequest) { applyFocus() }
         .onChange(of: store.state.selectedDate) {
             // Another day's numbers under a cursor the user placed on this one
             // would read as `n=0 · G —` with nothing visible to explain it.
@@ -107,6 +130,7 @@ struct LabChartView: View {
         static let tapMaxDuration: TimeInterval = 0.35
         static let tapMaxDistance: CGFloat = 10
         static let plotSideInset: CGFloat = 10
+        static let windowedPlotSideInset: CGFloat = 22
     }
 
     @State private var series: LabChartSeries = .empty
@@ -130,8 +154,13 @@ struct LabChartView: View {
     // MARK: Layout
 
     private var unitRow: some View {
-        HStack {
+        HStack(spacing: DOSSpacing.xs) {
             Spacer()
+            if let unitRowLabel {
+                Text(unitRowLabel)
+                    .font(DOSTypography.mono(size: 9, weight: .medium))
+                    .foregroundStyle(AmberTheme.amberDark)
+            }
             Text(store.state.glucoseUnit.localizedDescription)
                 .font(DOSTypography.mono(size: 9, weight: .medium))
                 .foregroundStyle(AmberTheme.amberMuted)
@@ -149,13 +178,24 @@ struct LabChartView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: height)
         } else if series.isEmpty {
-            VStack {
-                Spacer()
-                FiguresLoadingView.inline
-                Spacer()
+            // A WINDOWED chart knows its domain up front, so "no rows" is a
+            // fact about that window, not a load still in flight — a pulse here
+            // would spin forever, and (worse) the day pager above it would be
+            // the thing that vanished, stranding the user on the empty night
+            // with no way back.
+            if isWindowed {
+                emptyState
+                    .frame(maxWidth: .infinity)
+                    .frame(height: height)
+            } else {
+                VStack {
+                    Spacer()
+                    FiguresLoadingView.inline
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: height)
         } else {
             chart
                 .frame(height: height)
@@ -175,7 +215,7 @@ struct LabChartView: View {
                 Text("NO READINGS TO PLOT")
                     .font(DOSTypography.bodySmall)
                     .foregroundStyle(AmberTheme.cgaCyan)
-                Text("n=\(series.readingCount) · a day needs two readings before it has a shape")
+                Text(emptyCaption)
                     .font(DOSTypography.caption)
                     .foregroundStyle(AmberTheme.amberDark)
             }
@@ -184,6 +224,15 @@ struct LabChartView: View {
             .padding(.horizontal, DOSSpacing.sm)
             Spacer()
         }
+    }
+
+    /// A windowed chart names the window it found nothing in — that is the
+    /// informative part. A day chart says what a day needs.
+    private var emptyCaption: String {
+        if let window = windowInputs?.domainOverride {
+            return "n=\(series.readingCount) · \(window.start.toLocalTime()) → \(window.end.toLocalTime())"
+        }
+        return "n=\(series.readingCount) · a day needs two readings before it has a shape"
     }
 
     // MARK: Chart
@@ -308,7 +357,9 @@ struct LabChartView: View {
             }
 
             // MARK: Heart rate
-            if store.state.showHeartRateOverlay {
+            // Gated by the SERIES, not the setting, so the night window can
+            // force it on without drawing a second line from the overlay arm.
+            if series.showsHeartRate {
                 ForEach(series.heartRate.indices, id: \.self) { index in
                     let point = series.heartRate[index]
                     LineMark(
@@ -371,7 +422,20 @@ struct LabChartView: View {
                 AxisGridLine(stroke: Config.axisStyle)
                 AxisTick(length: 4, stroke: Config.tickStyle)
                     .foregroundStyle(AmberTheme.amberMuted)
-                AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
+                // A windowed chart's labels are hours apart and cannot collide
+                // with each other — the only thing they "collide" with is the
+                // plot frame, and Charts resolves that by dropping the two that
+                // NAME the window. A scrolling chart keeps the default: its edge
+                // labels move constantly and overlapping them would be worse.
+                if isWindowed {
+                    AxisValueLabel(
+                        format: .dateTime.hour(.defaultDigits(amPM: .narrow)),
+                        anchor: .top,
+                        collisionResolution: .disabled
+                    )
+                } else {
+                    AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
+                }
             }
         }
         .chartYAxis {
@@ -392,7 +456,7 @@ struct LabChartView: View {
         // insetting the plot downwards pushes the x-axis labels out of frame —
         // the cursor labels get their headroom from `overflowResolution` instead.
         .chartPlotStyle { plotArea in
-            plotArea.padding(.horizontal, Config.plotSideInset)
+            plotArea.padding(.horizontal, plotSideInset)
         }
         // Simultaneous, so it never starves the scroll or the selection gesture.
         // A quick tap on empty plot clears the cursors; a press-and-hold (which
@@ -422,6 +486,14 @@ struct LabChartView: View {
                     }
                 }
         )
+        // The app's first AXChartDescriptor: the feature sheet IS the summary, and
+        // every cited fact is a labelled point in the audio-graph rotor.
+        .accessibilityChartDescriptor(LabChartDescriptor(
+            series: series,
+            facts: series.facts,
+            sheet: series.sheet,
+            glucoseUnit: store.state.glucoseUnit
+        ))
         .onChange(of: liveSelection) {
             cursors.apply(selection: liveSelection, minRange: minRangeSeconds)
         }
@@ -478,7 +550,12 @@ struct LabChartView: View {
     // MARK: Derived values
 
     private var inputs: LabChartInputs {
-        LabChartInputs(state: store.state, overlays: overlays)
+        windowInputs ?? LabChartInputs(state: store.state, overlays: overlays)
+    }
+
+    /// A fixed window shows all of itself; the day chart shows a zoom chip's worth.
+    private var isWindowed: Bool {
+        windowInputs?.domainOverride != nil
     }
 
     private var sortedOverlays: [ChartLabOverlay] {
@@ -490,20 +567,31 @@ struct LabChartView: View {
     }
 
     private var visibleDuration: TimeInterval {
-        TimeInterval(visibleHours * 3600)
+        if isWindowed {
+            return max(3600, series.domainEnd.timeIntervalSince(series.domainStart))
+        }
+        return TimeInterval(visibleHours * 3600)
     }
 
     private var labelEvery: Int {
-        LabChartMath.labelEvery(visibleHours: visibleHours)
+        LabChartMath.labelEvery(visibleHours: Int((visibleDuration / 3600).rounded()))
     }
 
     /// 12 pt of plot, whatever that is worth in time at this zoom.
     private var minRangeSeconds: TimeInterval {
         LabChartMath.minRangeSeconds(
             visibleDuration: visibleDuration,
-            plotWidth: plotWidth - 2 * Config.plotSideInset,
+            plotWidth: plotWidth - 2 * plotSideInset,
             points: Config.minRangePoints
         )
+    }
+
+    /// A windowed chart's FIRST and LAST hour labels are the two numbers that
+    /// name the window (20:00 → 10:00), so they get the room to render whole.
+    /// A scrolling chart's edge labels move constantly and are not worth the
+    /// plot width — P0's known nit, left as it is there.
+    private var plotSideInset: CGFloat {
+        isWindowed ? Config.windowedPlotSideInset : Config.plotSideInset
     }
 
     private var yAxisSteps: Double {
@@ -519,8 +607,21 @@ struct LabChartView: View {
     private var yMax: Double {
         LabChartMath.yMax(
             floor: chartMinimum,
-            plotted: series.glucose.map(\.value) + series.bloodGlucose.map(\.value)
+            // The band is drawn on the SAME scale as the trace, so a p95 above
+            // today's maximum widens the floor instead of being clipped at it.
+            plotted: plottedValues + (series.patternBand?.maxValue.map { [$0] } ?? [])
         )
+    }
+
+    /// Only what is actually ON the plot. The window path fetches a 4-hour lead
+    /// so a meal keeps its pre-meal baseline — but a 19:00 spike must not lift
+    /// the night's axis for a reading the user cannot see.
+    private var plottedValues: [Double] {
+        let points = series.glucose + series.bloodGlucose
+        guard isWindowed else { return points.map(\.value) }
+        return points
+            .filter { $0.time >= series.domainStart && $0.time <= series.domainEnd }
+            .map(\.value)
     }
 
     private var alarmLow: Double {
@@ -566,6 +667,7 @@ struct LabChartView: View {
 
             DispatchQueue.main.async {
                 self.series = built
+                self.factsBinding?.wrappedValue = LabFactsSnapshot(facts: built.facts, sheet: built.sheet)
 
                 if wasFollowing {
                     self.scrollPosition = LabChartMath.followEdge(
@@ -595,6 +697,21 @@ struct LabChartView: View {
             self.scrollPosition = edge
             self.updateFollowState()
         }
+    }
+
+    /// A tapped card moves the instrument: centre the anchor in the visible
+    /// window and leave a standing cursor on it, so the readout strip says the
+    /// same numbers the card does.
+    private func applyFocus() {
+        guard let focusRequest else { return }
+
+        let centred = focusRequest.date.addingTimeInterval(-visibleDuration / 2)
+        let clamped = min(max(series.domainStart, centred), followEdge)
+
+        withAnimation(AnimationTokens.snappy) {
+            scrollPosition = clamped
+        }
+        cursors.place(at: focusRequest.date)
     }
 
     private func updateFollowState() {
@@ -635,6 +752,7 @@ struct LabChartView: View {
     private func fireDetentIfNeeded() {
         guard let cursor = cursors.cursor else {
             lastDetentKey = nil
+            onCursorChange?(nil)
             return
         }
 
@@ -650,6 +768,7 @@ struct LabChartView: View {
             isNight: store.state.activeAlarmProfile == .night
         )
         lastDetentKey = key
+        onCursorChange?(cursor)
 
         switch feedback {
         case .light: DirectNotifications.shared.hapticFeedback(.light)
@@ -665,6 +784,10 @@ struct LabChartView: View {
 /// (ChartView.swift:35-77) so the shipping file stays untouched.
 private struct LabDayPager: View {
     @EnvironmentObject var store: DirectStore
+
+    /// Non-nil when the chart is drawing a fixed window (the night). "24 hours"
+    /// would be a lie there — the window is 14, and it belongs to a DAY.
+    let windowDate: Date?
 
     var body: some View {
         HStack {
@@ -685,6 +808,8 @@ private struct LabDayPager: View {
             Group {
                 if let selectedDate = store.state.selectedDate {
                     Text(verbatim: selectedDate.toLocalDate())
+                } else if let windowDate {
+                    Text(verbatim: windowDate.toLocalDate())
                 } else {
                     Text("\(DirectConfig.lastChartHours.description) hours")
                 }

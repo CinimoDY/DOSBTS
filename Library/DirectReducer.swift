@@ -540,12 +540,41 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setMealHistoryResults(results: let results):
         state.mealHistoryResults = results
 
+    // MARK: Chart Lab window (DMNC-1506)
+    case .loadLabWindow(interval: let interval, streams: _):
+        state.labWindowRequest = interval
+
+    case .setLabWindow(snapshot: let snapshot):
+        // Drop a snapshot the user has already paged away from. Nothing cancels
+        // an in-flight load, and the two HealthKit reads are concurrent, so
+        // pressing `<` twice quickly can land night N-1 AFTER night N-2 — which
+        // would draw N-1's hours under N-2's pager date, with nothing left to
+        // reload it. A nil snapshot always lands: that is an explicit clear.
+        if let snapshot, let request = state.labWindowRequest, snapshot.interval != request {
+            break
+        }
+        state.labWindow = snapshot
+
     // MARK: Ratio Lab
     case .setRatioEvidence(evidence: let evidence):
         state.ratioEvidence = evidence
 
     case .setConfirmedICR(icr: let icr):
         state.confirmedICR = icr
+
+    // MARK: Chart Lab — LAB: PATTERNS (DMNC-1503)
+    case .setLabPatterns(evidence: let evidence):
+        // A window the user has moved on from is not evidence. Two loads can be
+        // in flight at once (the tab's `onAppear` and a day-chip change, or an
+        // app-active re-trigger), and `Store.dispatch` never cancels in-flight
+        // publishers — so the answer to the OLD question can land last. The
+        // evidence carries the window it answered, exactly as `MealHistoryResults`
+        // carries its query; anything that does not match the live window is
+        // dropped rather than trusted to arrive in order.
+        if let evidence, evidence.days != LabPatternEvidence.cappedDays(state.statisticsDays) {
+            break
+        }
+        state.labPatterns = evidence
 
     // MARK: Meal Impact
     case .setScoredMealEntryIds(scoredMealEntryIds: let ids):

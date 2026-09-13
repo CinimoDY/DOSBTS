@@ -55,7 +55,10 @@ extension ReportType {
     var labOverlays: Set<ChartLabOverlay> {
         switch self {
         case .labMeals: return [.carbSizedMeals, .mealResponseRibbons, .residualMarks, .regimeBands, .factPins]
-        case .labNight: return [.nightContext, .mealResponseRibbons]
+        // NOT `.mealResponseRibbons`: the night draws its own carried-in ribbon
+        // from `.nightContext`, so carrying P2's arm too would draw it twice the
+        // moment P2 lands. Swapping to P2's graded ribbon is a follow-up.
+        case .labNight: return [.nightContext]
         case .labPatterns: return [.ghostBand]
         case .labSweep, .glucose, .timeInRange, .statistics: return []
         }

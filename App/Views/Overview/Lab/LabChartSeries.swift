@@ -12,16 +12,6 @@
 
 import Foundation
 
-// MARK: - HeartRateSample
-
-/// `state.heartRateSeries` is `[(Date, Double)]`; tuples are not `Equatable`
-/// enough to drive a single `.onChange(of: inputs)`, so the lab carries a named
-/// struct instead.
-struct HeartRateSample: Equatable {
-    let time: Date
-    let bpm: Double
-}
-
 // MARK: - LabInsulinDose
 
 /// An insulin delivery at its TRUE time.
@@ -61,6 +51,13 @@ struct LabChartInputs: Equatable {
     /// Journal notes are context for a fact, never a series: the Black Box card
     /// states the tag that was standing when a hypo started.
     let journalNotes: [JournalNote]
+    let sleep: [SleepSample]
+    /// The night window forces heart rate on; the day path follows the setting.
+    let showHeartRate: Bool
+    /// When set, the chart's x domain is THIS, not the span of the data — the
+    /// only way a window can show a period with no readings in part of it
+    /// (a sensor gap at 03:00 must still leave 03:00 on the axis).
+    let domainOverride: DateInterval?
     let glucoseUnit: GlucoseUnit
     let alarmLow: Int
     let alarmHigh: Int
@@ -71,6 +68,12 @@ struct LabChartInputs: Equatable {
     let smoothThreshold: Date
     let selectedDate: Date?
     let overlays: Set<ChartLabOverlay>
+    /// P4's personal hourly band (nil while it loads, or off this tab).
+    ///
+    /// Deliberately the 24 hourly rows and NOT `LabPatternEvidence` itself: the
+    /// evidence carries up to 90 days of raw readings, and this struct's
+    /// `Equatable` conformance is compared on every render.
+    let patternBand: PatternBandInput?
 
     /// The ONLY place the lab reads `store.state` for series data.
     init(state: DirectState, overlays: Set<ChartLabOverlay>) {
@@ -82,6 +85,9 @@ struct LabChartInputs: Equatable {
         self.exercise = state.exerciseEntryValues
         self.heartRate = state.heartRateSeries.map { HeartRateSample(time: $0.0, bpm: $0.1) }
         self.journalNotes = state.journalNoteValues
+        self.sleep = []
+        self.showHeartRate = state.showHeartRateOverlay
+        self.domainOverride = nil
         self.glucoseUnit = state.glucoseUnit
         self.alarmLow = state.alarmLow
         self.alarmHigh = state.alarmHigh
@@ -99,6 +105,45 @@ struct LabChartInputs: Equatable {
             : Date(timeIntervalSince1970: 0)
         self.selectedDate = state.selectedDate
         self.overlays = overlays
+        self.patternBand = overlays.contains(.ghostBand)
+            ? state.labPatterns.map { PatternBandInput(hourly: $0.hourly, days: $0.days) }
+            : nil
+    }
+
+    /// The whole-system window path (DMNC-1506): the series comes from ONE
+    /// `LabWindowSnapshot` and the domain is the window itself, not the span of
+    /// whatever rows came back. Formatting still comes from the store — a lab
+    /// tab shows the user's units and the user's thresholds like every other.
+    init(window: LabWindowSnapshot, state: DirectState, overlays: Set<ChartLabOverlay>) {
+        self.sensorGlucose = window.readings
+        self.bloodGlucose = window.bloodGlucose
+        self.meals = window.meals
+        self.insulin = window.deliveries
+        self.iobDeliveries = window.iobDeliveries
+        self.exercise = window.exercise
+        self.journalNotes = window.notes
+        // P4's band is a day-tab concern; the window path never asks for it.
+        self.patternBand = nil
+        self.heartRate = window.heartRate
+        self.sleep = window.sleep
+        // The night is the one window where heart rate is part of the story, so
+        // it is not behind the day chart's overlay toggle.
+        self.showHeartRate = true
+        self.domainOverride = window.interval
+        self.glucoseUnit = state.glucoseUnit
+        self.alarmLow = state.alarmLow
+        self.alarmHigh = state.alarmHigh
+        self.bolusPreset = state.bolusInsulinPreset
+        self.basalDIAMinutes = state.basalDIAMinutes
+        let showSmoothed = DirectConfig.showSmoothedGlucose && state.showSmoothedGlucose
+        self.showSmoothed = showSmoothed
+        self.smoothThreshold = showSmoothed
+            ? state.smoothThreshold.toRounded(on: 1, .minute)
+            : Date(timeIntervalSince1970: 0)
+        // A fixed window never scrolls to "now", so the day path's selected-date
+        // domain rule does not apply — the override is the whole story.
+        self.selectedDate = state.selectedDate
+        self.overlays = overlays
     }
 
     /// Memberwise init for tests and previews.
@@ -111,6 +156,9 @@ struct LabChartInputs: Equatable {
         exercise: [ExerciseEntry],
         heartRate: [HeartRateSample],
         journalNotes: [JournalNote] = [],
+        sleep: [SleepSample] = [],
+        showHeartRate: Bool = true,
+        domainOverride: DateInterval? = nil,
         glucoseUnit: GlucoseUnit,
         alarmLow: Int,
         alarmHigh: Int,
@@ -119,7 +167,8 @@ struct LabChartInputs: Equatable {
         showSmoothed: Bool,
         smoothThreshold: Date,
         selectedDate: Date?,
-        overlays: Set<ChartLabOverlay>
+        overlays: Set<ChartLabOverlay>,
+        patternBand: PatternBandInput? = nil
     ) {
         self.sensorGlucose = sensorGlucose
         self.bloodGlucose = bloodGlucose
@@ -129,6 +178,9 @@ struct LabChartInputs: Equatable {
         self.exercise = exercise
         self.heartRate = heartRate
         self.journalNotes = journalNotes
+        self.sleep = sleep
+        self.showHeartRate = showHeartRate
+        self.domainOverride = domainOverride
         self.glucoseUnit = glucoseUnit
         self.alarmLow = alarmLow
         self.alarmHigh = alarmHigh
@@ -138,6 +190,7 @@ struct LabChartInputs: Equatable {
         self.smoothThreshold = smoothThreshold
         self.selectedDate = selectedDate
         self.overlays = overlays
+        self.patternBand = patternBand
     }
 }
 
@@ -245,6 +298,22 @@ struct LabChartSeries {
     /// The display unit the labels format in. Carried here so
     /// `LabOverlayMarks` stays a pure function of the series.
     var glucoseUnit: GlucoseUnit = .mgdL
+    /// The cited facts for this window, ranked. Computed HERE — in the one pure
+    /// builder — so the pins, the sheet line, the cards and the accessibility
+    /// descriptor are all reading the same numbers. Empty unless the tab asked
+    /// for `.factPins`.
+    var facts: [ChartFact] = []
+    var sheet: ChartFeatureSheet?
+    /// P4's ghost band, already positioned on this chart's domain and converted
+    /// to the display unit. nil on every other tab.
+    var patternBand: PatternBandLayer?
+    /// Drawn by the chart's own heart-rate block; the night forces it on.
+    var showsHeartRate: Bool
+    /// Filled only when `.nightContext` is one of the overlays.
+    var nightContext: LabNightContext
+    /// Post-meal response ribbons carried across the window's left edge. P2 owns
+    /// `.mealResponseRibbons`; until it merges, the night arm draws these.
+    var mealRibbons: [LabMealRibbon]
 
     var readingCount: Int { glucose.count }
 
@@ -265,7 +334,11 @@ struct LabChartSeries {
             iob: [],
             meals: [],
             exercise: [],
-            heartRate: []
+            heartRate: [],
+            patternBand: nil,
+            showsHeartRate: false,
+            nightContext: .empty,
+            mealRibbons: []
         )
     }
 
@@ -354,17 +427,28 @@ enum LabChartSeriesBuilder {
     static func build(_ inputs: LabChartInputs, now: Date = Date()) -> LabChartSeries {
         let timestamps = inputs.sensorGlucose.map(\.timestamp) + inputs.bloodGlucose.map(\.timestamp)
 
-        guard let first = timestamps.min(), let last = timestamps.max() else {
-            return LabChartSeries.blank(at: now)
-        }
+        let domainStart: Date
+        let domainEnd: Date
 
-        let domainStart = first
-        // The live view runs 15 minutes past the newest reading so the trace has
-        // somewhere to grow into; a picked day stops at its last reading
-        // (ChartView.swift:725-755).
-        let domainEnd = inputs.selectedDate == nil
-            ? last.addingTimeInterval(15 * 60)
-            : last
+        if let window = inputs.domainOverride {
+            // The window IS the domain. A night with a sensor gap from 02:00 to
+            // 04:00 still shows those hours; deriving the domain from the data
+            // would quietly shrink the night to the part that has readings.
+            domainStart = window.start
+            domainEnd = window.end
+        } else {
+            guard let first = timestamps.min(), let last = timestamps.max() else {
+                return LabChartSeries.blank(at: now)
+            }
+
+            domainStart = first
+            // The live view runs 15 minutes past the newest reading so the trace
+            // has somewhere to grow into; a picked day stops at its last reading
+            // (ChartView.swift:725-755).
+            domainEnd = inputs.selectedDate == nil
+                ? last.addingTimeInterval(15 * 60)
+                : last
+        }
 
         let glucose = inputs.sensorGlucose
             .sorted { $0.timestamp < $1.timestamp }
@@ -405,6 +489,11 @@ enum LabChartSeriesBuilder {
         let insulinDoses = inputs.insulin.map {
             LabInsulinDose(id: $0.id.uuidString, starts: $0.starts, units: $0.units, type: $0.type)
         }
+        let iob = iobSamples(inputs, from: domainStart, to: domainEnd)
+
+        // Only the tab that draws pins pays for the detectors.
+        let wantsFacts = inputs.overlays.contains(.factPins)
+        let window = DateInterval(start: domainStart, end: max(domainStart, domainEnd))
 
         // MARK: P2 overlays (DMNC-1501)
         //
@@ -461,14 +550,50 @@ enum LabChartSeriesBuilder {
             bloodGlucose: bloodGlucose,
             insulin: insulin,
             insulinDoses: insulinDoses,
-            iob: iobSamples(inputs, from: domainStart, to: domainEnd),
+            iob: iob,
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },
             heartRate: inputs.heartRate.sorted { $0.time < $1.time },
             mealResponses: mealResponses,
             residuals: residuals,
             regimes: regimes,
-            glucoseUnit: inputs.glucoseUnit
+            glucoseUnit: inputs.glucoseUnit,
+            facts: wantsFacts
+                ? ChartHighlights.facts(
+                    readings: inputs.sensorGlucose,
+                    deliveries: inputs.insulin,
+                    meals: inputs.meals,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes,
+                    iob: onsetIOBSamples(inputs, from: domainStart),
+                    heartRate: inputs.heartRate,
+                    windowStart: domainStart,
+                    now: now
+                )
+                : [],
+            sheet: wantsFacts
+                ? ChartHighlights.sheet(
+                    readings: inputs.sensorGlucose,
+                    meals: inputs.meals,
+                    deliveries: inputs.insulin,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes,
+                    window: window
+                )
+                : nil,
+            patternBand: inputs.patternBand.flatMap { band in
+                PatternBandBuilder.build(
+                    hourly: band.hourly,
+                    today: inputs.sensorGlucose,
+                    domainStart: domainStart,
+                    domainEnd: domainEnd,
+                    glucoseUnit: inputs.glucoseUnit,
+                    lookbackDays: band.days
+                )
+            },
+            showsHeartRate: inputs.showHeartRate,
+            nightContext: nightContext(inputs, domain: DateInterval(start: domainStart, end: max(domainStart, domainEnd))),
+            mealRibbons: mealRibbons(inputs, domainStart: domainStart, domainEnd: domainEnd)
         )
     }
 
@@ -478,6 +603,112 @@ enum LabChartSeriesBuilder {
     static func endOfDay(for date: Date, calendar: Calendar = .current) -> Date {
         let start = calendar.startOfDay(for: date)
         return calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(24 * 60 * 60)
+    }
+
+    /// IOB at each hypo onset, computed from the CHART's 24-hour delivery set
+    /// rather than from `state.iobDeliveries`.
+    ///
+    /// `getIOBDeliveries` is a `datetime('now', '-DIA minutes')` query: it holds
+    /// what is on board NOW, so `series.iob` is structurally zero at any instant
+    /// older than the DIA — and in a 24-hour window most hypos are. The Black
+    /// Box's IOB is the card's most load-bearing number, so it is computed at
+    /// the onset from the deliveries the chart already has.
+    ///
+    /// Coverage is judged PER COMPONENT. A single `max(bolusDIA, basalDIA)`
+    /// guard is dominated by the long-acting side — with a 24-hour basal DIA it
+    /// can never be satisfied inside a 24-hour window, and every hypo would
+    /// print `IOB —` forever. When only the rapid-acting history is complete the
+    /// card states that half and says so (`BOLUS IOB`); when neither is, nothing
+    /// is emitted and the card prints `IOB —`.
+    ///
+    /// The deeper fix — day-selected loads reaching back to `startOfDay − maxDIA`
+    /// so both halves are complete — is a follow-up on the stores, not here.
+    private static func onsetIOBSamples(_ inputs: LabChartInputs, from domainStart: Date) -> [LabOnsetIOB] {
+        let onsets = ClinicReportBuilder.hypoEpisodeIntervals(from: inputs.sensorGlucose).map(\.start)
+        guard !onsets.isEmpty, !inputs.insulin.isEmpty else { return [] }
+
+        let bolusModel = ExponentialInsulinModel.bolus(preset: inputs.bolusPreset)
+        let basalModel = ExponentialInsulinModel.basal(diaMinutes: inputs.basalDIAMinutes)
+        let bolusCoverage = TimeInterval(inputs.bolusPreset.diaMinutes * 60)
+        let basalCoverage = TimeInterval(inputs.basalDIAMinutes * 60)
+
+        return onsets.compactMap { onset in
+            guard onset.addingTimeInterval(-bolusCoverage) >= domainStart else { return nil }
+
+            let result = computeIOB(
+                deliveries: inputs.insulin,
+                bolusModel: bolusModel,
+                basalModel: basalModel,
+                at: onset
+            )
+            let basalComplete = onset.addingTimeInterval(-basalCoverage) >= domainStart
+
+            return LabOnsetIOB(
+                date: onset,
+                units: basalComplete ? result.total : result.mealSnackIOB,
+                coverage: basalComplete ? .full : .bolusOnly
+            )
+        }
+    }
+
+    /// Only the night tab pays for this — every other tab's `.nightContext` is
+    /// `.empty` and the arm draws nothing.
+    private static func nightContext(_ inputs: LabChartInputs, domain: DateInterval) -> LabNightContext {
+        guard inputs.overlays.contains(.nightContext) else { return .empty }
+
+        return LabNightContext.make(
+            sleep: inputs.sleep,
+            readings: inputs.sensorGlucose,
+            interval: domain,
+            glucoseUnit: inputs.glucoseUnit,
+            alarmLow: inputs.alarmLow
+        )
+    }
+
+    /// A meal's two-hour response, clamped into the domain so a dinner logged
+    /// before the window's left edge still draws its ribbon from that edge —
+    /// while `mealTime` keeps the truth about when it actually happened.
+    ///
+    /// The delta comes from the SHIPPING `computeMealOverlayDelta`, so the lab
+    /// and the meal-impact overlay can never disagree about a number.
+    private static func mealRibbons(_ inputs: LabChartInputs, domainStart: Date, domainEnd: Date) -> [LabMealRibbon] {
+        guard inputs.overlays.contains(.nightContext) else { return [] }
+
+        let responseWindow: TimeInterval = 2 * 60 * 60
+
+        return inputs.meals.compactMap { meal -> LabMealRibbon? in
+            let end = meal.timestamp.addingTimeInterval(responseWindow)
+            // Entirely outside the drawn domain — nothing to say.
+            guard end > domainStart, meal.timestamp < domainEnd else { return nil }
+
+            let delta = computeMealOverlayDelta(
+                meal: meal,
+                isInProgress: false,
+                sensorGlucoseValues: inputs.sensorGlucose
+            )
+            let readings = inputs.sensorGlucose.filter {
+                $0.timestamp >= meal.timestamp && $0.timestamp <= end
+            }.count
+
+            // No delta and no readings behind it is not a fact the lab may draw.
+            guard let value = delta.delta, readings > 0 else { return nil }
+
+            // `computeMealOverlayDelta` works in mg/dL (the storage unit); the
+            // LABEL is the user's unit, so an mmol/L user reads `+2,1`, not `+38`.
+            // Sign comes off the raw value so a rounded-to-zero delta still
+            // shows the direction it went.
+            let sign = value > 0 ? "+" : ""
+            let magnitude = inputs.glucoseUnit == .mmolL
+                ? (GlucoseFormatters.mmolLFormatter.string(from: Double(value).toMmolL() as NSNumber) ?? "\(value)")
+                : "\(value)"
+            return LabMealRibbon(
+                id: meal.id.uuidString,
+                start: max(domainStart, meal.timestamp),
+                end: min(domainEnd, end),
+                mealTime: meal.timestamp,
+                label: "\(sign)\(magnitude) · \(readings) RDG"
+            )
+        }
     }
 
     /// 60 s sampling across the domain, inclusive of both ends — the cadence the

@@ -69,6 +69,17 @@ struct LabCursorState: Equatable {
         sessionActive = false
     }
 
+    /// Put the cursor somewhere without a gesture — how a tapped fact card
+    /// moves the instrument to what it is talking about. Whatever was standing
+    /// is replaced (a range from an earlier measurement would otherwise survive
+    /// under the new cursor), and the next press measures from here.
+    mutating func place(at date: Date) {
+        cursor = date
+        range = nil
+        anchor = nil
+        sessionActive = false
+    }
+
     // MARK: Private
 
     /// A while B is being dragged.
@@ -118,8 +129,13 @@ enum LabChartMath {
         zoomLabelEvery[zoomLevel] == nil ? fallback : zoomLevel
     }
 
+    /// Hour-label stride. The four zoom chips have hand-picked values; an
+    /// unmapped span (the lab's whole-night window is 14 h) falls back to
+    /// "about seven labels across the plot", which is what the chips work out
+    /// to and what fits at phone width.
     static func labelEvery(visibleHours: Int) -> Int {
-        zoomLabelEvery[visibleHours] ?? 1
+        if let mapped = zoomLabelEvery[visibleHours] { return mapped }
+        return max(1, Int((Double(visibleHours) / 7.0).rounded(.up)))
     }
 
     /// The y domain's top is a FLOOR the data can push past — never a ceiling.

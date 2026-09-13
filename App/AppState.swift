@@ -348,9 +348,16 @@ struct AppState: DirectState {
     // MARK: Food History Search (DMNC-1484)
     var mealHistoryResults: MealHistoryResults? // transient — loaded on demand, not persisted
 
+    // MARK: Chart Lab window (DMNC-1506)
+    var labWindow: LabWindowSnapshot? // transient — loaded on demand, not persisted
+    var labWindowRequest: DateInterval? // transient — the in-flight window request
+
     // MARK: Ratio Lab
     var ratioEvidence: RatioEvidence? // transient — loaded on demand, not persisted
     var confirmedICR: Double? { didSet { defaults.confirmedICR = confirmedICR } }
+
+    // MARK: Chart Lab — LAB: PATTERNS (DMNC-1503)
+    var labPatterns: LabPatternEvidence? // transient — loaded on demand, not persisted
     // MARK: View State Persistence (DMNC-1293)
     var selectedReportType: ReportType { didSet { defaults.selectedReportType = selectedReportType } }
     var listSectionExpanded: [String: Bool] { didSet { defaults.listSectionExpanded = listSectionExpanded } }
