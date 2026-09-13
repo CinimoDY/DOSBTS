@@ -84,7 +84,7 @@ struct DigestView: View {
             // with no digest data. Presents through the app's single
             // presentation root — never a local .sheet (R8a).
             Button {
-                sheets.present(.journalNote)
+                sheets.present(.journalNote(prefill: nil))
             } label: {
                 Image(systemName: "square.and.pencil")
                     .font(DOSTypography.body)

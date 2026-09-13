@@ -56,10 +56,18 @@ struct RootSheetContent: View {
                 loggedEntryToast.stage(.bloodGlucose(glucose))
             }
 
-        case .journalNote:
+        case .journalNote(let prefill):
             // No loggedEntryToast stage: notes have no undo case (deliberately
             // out of scope for V1 — see docs/plans/2026-08-09-journal-notes-v1-plan.md).
-            AddJournalNoteView { timestamp, text, tag in
+            //
+            // The prefill (DMNC-1501) only seeds the form's initial state: the
+            // Chart Lab's residual `?` opens it at the excursion's start, the
+            // `STILL <TAG>?` row opens it pre-tagged. Everything else passes nil
+            // and the sheet opens exactly as it always has.
+            AddJournalNoteView(
+                timestamp: prefill?.timestamp ?? Date(),
+                tag: prefill?.tag
+            ) { timestamp, text, tag in
                 let note = JournalNote(id: UUID(), timestamp: timestamp, text: text, tag: tag)
                 store.dispatch(.addJournalNote(journalNoteValues: [note]))
                 addedHighlighter.flash(note.id)

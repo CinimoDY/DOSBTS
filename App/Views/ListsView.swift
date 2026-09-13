@@ -70,7 +70,7 @@ struct ListsView: View {
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        sheets.present(.journalNote)
+                        sheets.present(.journalNote(prefill: nil))
                     } label: {
                         Image(systemName: "square.and.pencil")
                             .accessibilityLabel("Add note")

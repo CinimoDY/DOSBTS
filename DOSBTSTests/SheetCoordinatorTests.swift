@@ -243,6 +243,27 @@ extension TreatmentPresentDecisionTests {
         #expect(decision == nil)
     }
 
+    // MARK: Journal-note prefill (DMNC-1501)
+
+    @Test("a prefilled journal note is the SAME sheet as a bare one — the id is load-bearing")
+    func journalNotePrefillKeepsItsIdentity() {
+        #expect(ActiveSheet.journalNote(prefill: nil).id == "journalNote")
+        #expect(
+            ActiveSheet.journalNote(
+                prefill: JournalNotePrefill(timestamp: Date(), tag: .stressed)
+            ).id == "journalNote"
+        )
+    }
+
+    @Test("a second journal-note present de-dupes even when it carries a prefill")
+    func journalNotePrefillDeDupes() {
+        let c = SheetCoordinator()
+        c.present(.journalNote(prefill: nil))
+        c.present(.journalNote(prefill: JournalNotePrefill(timestamp: Date(), tag: .sick)))
+        #expect(c.activeSheet?.id == "journalNote")
+        #expect(c.pendingSheet == nil)
+    }
+
     @Test("recheck flags set, no glucose, but prompt flag set falls back to the modal")
     func recheckWithoutReadingFallsBackToPrompt() {
         let decision = SheetCoordinator.treatmentPresent(

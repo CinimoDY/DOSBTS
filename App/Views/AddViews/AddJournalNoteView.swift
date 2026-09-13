@@ -12,9 +12,27 @@ import SwiftUI
 /// `addCallback`. Building the model, dispatching, flashing the highlighter and
 /// firing the haptic all live in RootSheetContent — no DirectStore access here.
 struct AddJournalNoteView: View {
+    // MARK: Lifecycle
+
+    /// An explicit init so a caller can SEED the form (DMNC-1501) without the
+    /// view becoming aware of who asked: the Chart Lab's residual `?` opens it
+    /// at the excursion's start, the `STILL <TAG>?` row opens it pre-tagged.
+    /// Both parameters default, so the Log tab and the Digest call it unchanged.
+    init(
+        timestamp: Date = .init(),
+        tag: JournalNoteTag? = nil,
+        addCallback: @escaping (_ timestamp: Date, _ text: String, _ tag: JournalNoteTag?) -> Void
+    ) {
+        self._timestamp = State(initialValue: timestamp)
+        self._tag = State(initialValue: tag)
+        self.addCallback = addCallback
+    }
+
+    // MARK: Internal
+
     @Environment(\.dismiss) var dismiss
 
-    @State var timestamp: Date = .init()
+    @State var timestamp: Date
 
     var addCallback: (_ timestamp: Date, _ text: String, _ tag: JournalNoteTag?) -> Void
 

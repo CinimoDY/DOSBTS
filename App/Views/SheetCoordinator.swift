@@ -13,13 +13,25 @@
 import Combine
 import Foundation
 
+// MARK: - JournalNotePrefill
+
+/// What a surface already knows about the note it is asking for (DMNC-1501).
+/// The Chart Lab's residual `?` opens the sheet at the excursion's start; the
+/// `STILL <TAG>?` row opens it at now, pre-tagged. Everything else presents
+/// with no prefill and the sheet behaves exactly as it always has.
+struct JournalNotePrefill {
+    let timestamp: Date
+    let tag: JournalNoteTag?
+}
+
 // MARK: - Active Sheet Enum
 
 enum ActiveSheet: Identifiable {
     case insulin
     case meal
     case bloodGlucose
-    case journalNote
+    /// The prefill is presentation detail, NOT identity — see `id` below.
+    case journalNote(prefill: JournalNotePrefill?)
     case treatmentModal(alarmFiredAt: Date)
     case filteredFoodEntry
     case treatmentRecheck(glucoseValue: Int)
@@ -35,9 +47,11 @@ enum ActiveSheet: Identifiable {
         case .insulin: return "insulin"
         case .meal: return "meal"
         case .bloodGlucose: return "bloodGlucose"
-        // Constant id: the Log tab and the Digest screen both present this
-        // case, so a second request while it is up is a no-op rather than a
-        // duplicate sheet.
+        // Constant id: the Log tab, the Digest screen and the Chart Lab all
+        // present this case, so a second request while it is up is a no-op
+        // rather than a duplicate sheet. The prefill deliberately does NOT
+        // enter the id — a prefilled present arriving behind a bare one is the
+        // same sheet, and racing them would stack two note forms.
         case .journalNote: return "journalNote"
         case .treatmentModal: return "treatmentModal"
         case .filteredFoodEntry: return "filteredFoodEntry"

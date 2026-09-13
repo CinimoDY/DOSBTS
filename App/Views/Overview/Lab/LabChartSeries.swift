@@ -288,6 +288,16 @@ struct LabChartSeries {
     var meals: [MealDatapoint]
     var exercise: [ExerciseDatapoint]
     var heartRate: [HeartRateSample]
+    // MARK: P2 (DMNC-1501) — built only when the owning overlay is switched on.
+    /// One two-hour response window per drawable meal.
+    var mealResponses: [MealResponseDatapoint] = []
+    /// Excursions with nothing logged against them.
+    var residuals: [ResidualSegment] = []
+    /// Tagged-note bands. Derived every build; never stored.
+    var regimes: [RegimeBand] = []
+    /// The display unit the labels format in. Carried here so
+    /// `LabOverlayMarks` stays a pure function of the series.
+    var glucoseUnit: GlucoseUnit = .mgdL
     /// The cited facts for this window, ranked. Computed HERE — in the one pure
     /// builder — so the pins, the sheet line, the cards and the accessibility
     /// descriptor are all reading the same numbers. Empty unless the tab asked
@@ -485,6 +495,52 @@ enum LabChartSeriesBuilder {
         let wantsFacts = inputs.overlays.contains(.factPins)
         let window = DateInterval(start: domainStart, end: max(domainStart, domainEnd))
 
+        // MARK: P2 overlays (DMNC-1501)
+        //
+        // Built only for the tabs that switched the overlay on, so a tab that
+        // draws none of this pays none of the cost. Regimes come before
+        // residuals: a regime IS an explanation, so it suppresses the `?`.
+
+        let wantsMealResponses = inputs.overlays.contains(.mealResponseRibbons)
+            || inputs.overlays.contains(.carbSizedMeals)
+        let wantsRegimes = inputs.overlays.contains(.regimeBands)
+        let wantsResiduals = inputs.overlays.contains(.residualMarks)
+
+        let mealResponses = wantsMealResponses
+            ? buildMealResponses(
+                meals: inputs.meals,
+                readings: inputs.sensorGlucose,
+                deliveries: inputs.insulin,
+                exercise: inputs.exercise,
+                domainStart: domainStart,
+                domainEnd: domainEnd,
+                now: now
+            )
+            : []
+
+        let regimes = (wantsRegimes || wantsResiduals)
+            ? RegimeDeriver.derive(
+                notes: inputs.journalNotes,
+                // `+ 24 h` is not the next midnight across a DST change.
+                dayEnd: endOfDay(for: inputs.selectedDate ?? now)
+            )
+            : []
+
+        let residuals = wantsResiduals
+            ? ResidualDetector.detect(
+                readings: inputs.sensorGlucose,
+                // Everything a user can log is an anchor: if any of it is near
+                // the excursion, the excursion is not unexplained.
+                anchors: ResidualDetector.anchors(
+                    meals: inputs.meals,
+                    insulin: inputs.insulin,
+                    exercise: inputs.exercise,
+                    notes: inputs.journalNotes
+                ),
+                regimes: regimes
+            )
+            : []
+
         return LabChartSeries(
             domainStart: domainStart,
             domainEnd: domainEnd,
@@ -498,6 +554,10 @@ enum LabChartSeriesBuilder {
             meals: inputs.meals.map { $0.toDatapoint() },
             exercise: inputs.exercise.map { $0.toDatapoint() },
             heartRate: inputs.heartRate.sorted { $0.time < $1.time },
+            mealResponses: mealResponses,
+            residuals: residuals,
+            regimes: regimes,
+            glucoseUnit: inputs.glucoseUnit,
             facts: wantsFacts
                 ? ChartHighlights.facts(
                     readings: inputs.sensorGlucose,
@@ -535,6 +595,14 @@ enum LabChartSeriesBuilder {
             nightContext: nightContext(inputs, domain: DateInterval(start: domainStart, end: max(domainStart, domainEnd))),
             mealRibbons: mealRibbons(inputs, domainStart: domainStart, domainEnd: domainEnd)
         )
+    }
+
+    /// The next midnight, which is NOT `startOfDay + 24 h` on a DST boundary.
+    /// Shared with `LabMealsView` so the chart's bands and the `STILL <TAG>?`
+    /// row can never derive different days.
+    static func endOfDay(for date: Date, calendar: Calendar = .current) -> Date {
+        let start = calendar.startOfDay(for: date)
+        return calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(24 * 60 * 60)
     }
 
     /// IOB at each hypo onset, computed from the CHART's 24-hour delivery set

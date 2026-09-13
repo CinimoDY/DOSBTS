@@ -69,6 +69,7 @@
 		TE0100010000002800A00028 /* FoodHistorySearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000002800A00028 /* FoodHistorySearchTests.swift */; };
 		TE0100010000003000A00030 /* DictationDisplayModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000003000A00030 /* DictationDisplayModelTests.swift */; };
 		C1AB15010000000100A00002 /* ChartLabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15010000000100A00001 /* ChartLabTests.swift */; };
+		C1AB15010000000200A00002 /* ChartLabMealsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15010000000200A00001 /* ChartLabMealsTests.swift */; };
 		C1AB15050000000100A00002 /* ChartLabFactsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15050000000100A00001 /* ChartLabFactsTests.swift */; };
 		C1AB15030000000200A00002 /* ChartLabPatternsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15030000000200A00001 /* ChartLabPatternsTests.swift */; };
 		C1AB15040000000100A00002 /* ChartLabNightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15040000000100A00001 /* ChartLabNightTests.swift */; };
@@ -170,6 +171,7 @@
 		TE0100020000002800A00028 /* FoodHistorySearchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodHistorySearchTests.swift; sourceTree = "<group>"; };
 		TE0100020000003000A00030 /* DictationDisplayModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationDisplayModelTests.swift; sourceTree = "<group>"; };
 		C1AB15010000000100A00001 /* ChartLabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabTests.swift; sourceTree = "<group>"; };
+		C1AB15010000000200A00001 /* ChartLabMealsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabMealsTests.swift; sourceTree = "<group>"; };
 		C1AB15050000000100A00001 /* ChartLabFactsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabFactsTests.swift; sourceTree = "<group>"; };
 		C1AB15030000000200A00001 /* ChartLabPatternsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabPatternsTests.swift; sourceTree = "<group>"; };
 		C1AB15040000000100A00001 /* ChartLabNightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabNightTests.swift; sourceTree = "<group>"; };
@@ -348,6 +350,7 @@
 				TE0100020000002800A00028 /* FoodHistorySearchTests.swift */,
 				TE0100020000003000A00030 /* DictationDisplayModelTests.swift */,
 				C1AB15010000000100A00001 /* ChartLabTests.swift */,
+				C1AB15010000000200A00001 /* ChartLabMealsTests.swift */,
 				C1AB15050000000100A00001 /* ChartLabFactsTests.swift */,
 				C1AB15030000000200A00001 /* ChartLabPatternsTests.swift */,
 				C1AB15040000000100A00001 /* ChartLabNightTests.swift */,
@@ -578,6 +581,7 @@
 				TE0100010000002800A00028 /* FoodHistorySearchTests.swift in Sources */,
 				TE0100010000003000A00030 /* DictationDisplayModelTests.swift in Sources */,
 				C1AB15010000000100A00002 /* ChartLabTests.swift in Sources */,
+				C1AB15010000000200A00002 /* ChartLabMealsTests.swift in Sources */,
 				C1AB15050000000100A00002 /* ChartLabFactsTests.swift in Sources */,
 				C1AB15030000000200A00002 /* ChartLabPatternsTests.swift in Sources */,
 				C1AB15040000000100A00002 /* ChartLabNightTests.swift in Sources */,
