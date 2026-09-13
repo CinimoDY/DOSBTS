@@ -110,6 +110,29 @@ struct LabFactsSnapshot: Equatable {
     static let empty = LabFactsSnapshot(facts: [], sheet: nil)
 }
 
+// MARK: - LabOnsetIOB
+
+/// IOB at a hypo onset, with how much of it the loaded window can actually
+/// account for.
+///
+/// The lab's delivery arrays are day-scoped or a rolling 24 hours, so an onset
+/// early in the window may have a complete rapid-acting history behind it and an
+/// incomplete long-acting one. Saying `BOLUS IOB 0.4U` is then both true and
+/// useful; saying `IOB 0.4U` would not be, and saying nothing at all (what this
+/// PR did first) throws away the half that IS known.
+struct LabOnsetIOB: Equatable {
+    enum Coverage: Equatable {
+        /// Both the bolus and the basal DIA fit inside the loaded window.
+        case full
+        /// Only the bolus DIA fits: `units` is the rapid-acting half.
+        case bolusOnly
+    }
+
+    let date: Date
+    let units: Double
+    let coverage: Coverage
+}
+
 // MARK: - ChartHighlights
 
 enum ChartHighlights {
@@ -120,10 +143,15 @@ enum ChartHighlights {
     /// The post-meal window every meal number is derived over — the same two
     /// hours `MealImpact` uses, so the lab and the meal overlay agree.
     static let mealWindow: TimeInterval = 2 * 60 * 60
-    /// Two boluses closer than this confound each other's attribution
+    /// A CORRECTION bolus this soon after another bolus confounds attribution
     /// (`RatioEstimator.correctionStackLookbackMinutes`, reused rather than
-    /// re-invented).
+    /// re-invented). The constant is about corrections, so the rule is too: a
+    /// meal bolus 2.5 hours after breakfast is lunch, not stacking.
     static let stackingWindow = TimeInterval(RatioEstimator.correctionStackLookbackMinutes * 60)
+    /// How far back a bolus is still context for an onset.
+    static let insulinLookback: TimeInterval = 12 * 60 * 60
+    /// How far back an exercise session is still context for an onset.
+    static let exerciseLookback: TimeInterval = 24 * 60 * 60
     /// Carbs within this of each other count as "similar meals".
     static let similarCarbsGrams: Double = 15
     /// A drop this big (mg/dL) inside `exerciseDropWindow` of an exercise start
@@ -147,15 +175,21 @@ enum ChartHighlights {
         meals: [MealEntry] = [],
         exercise: [ExerciseEntry] = [],
         notes: [JournalNote] = [],
-        iob: [IOBSample] = [],
+        iob: [LabOnsetIOB] = [],
         heartRate: [HeartRateSample] = [],
+        /// The start of the LOADED window. Everything the lab reads is either
+        /// day-scoped or a rolling 24 hours, so "nothing found" only means
+        /// "nothing happened" when the lookback fits inside this.
+        windowStart: Date? = nil,
         now: Date = Date()
     ) -> [ChartFact] {
         let sorted = readings.sorted { $0.timestamp < $1.timestamp }
+        let start = windowStart ?? sorted.first?.timestamp ?? now
 
         var facts: [ChartFact] = []
         facts += hypoFacts(
             readings: sorted,
+            windowStart: start,
             deliveries: deliveries,
             exercise: exercise,
             notes: notes,
@@ -227,17 +261,54 @@ enum ChartHighlights {
 
     private static func hypoFacts(
         readings: [SensorGlucose],
+        windowStart: Date,
         deliveries: [InsulinDelivery],
         exercise: [ExerciseEntry],
         notes: [JournalNote],
-        iob: [IOBSample],
+        iob: [LabOnsetIOB],
         heartRate: [HeartRateSample]
     ) -> [ChartFact] {
         ClinicReportBuilder.hypoEpisodeIntervals(from: readings).map { interval in
             let onset = interval.start
             let episode = readings.filter { interval.contains($0.timestamp) }
-            let n = episode.count
+            // `n` counts the LOW readings, not every reading across the span: a
+            // sub-30-minute return to range does not split an episode, so the
+            // span can contain in-range readings that were never part of the low.
+            let n = episode.filter { $0.glucoseValue < ClinicReportBuilder.hypoThresholdMgDL }.count
             let minutes = Int(interval.duration / 60)
+
+            // The onset is only an onset if something was loaded BEFORE it. A
+            // 23:30 → 00:40 hypo read back on the picked day starts at that day's
+            // first reading, and every `T-…` offset from it would be measured
+            // from a boundary, not from an event. Say what is true instead.
+            let isOpenAtWindowStart = !readings.contains { $0.timestamp < onset }
+
+            if isOpenAtWindowStart {
+                let lowest = episode.min { $0.glucoseValue < $1.glucoseValue }
+                return ChartFact(
+                    id: "hypo-\(isoString(onset))",
+                    kind: .hypoOnset,
+                    anchor: onset,
+                    end: interval.end,
+                    title: [
+                        .observation(label: "HYPO", value: onset.toLocalTime(), n: 1),
+                        .observation(label: "OPEN AT", value: windowStart.toLocalTime(), n: 1),
+                        .figure(LabFigure(kind: .duration, value: Double(minutes), unit: "MIN", n: n, citesSampleSize: false))
+                    ],
+                    lines: [[
+                        .figure(LabFigure(
+                            kind: .glucose,
+                            value: Double(lowest?.glucoseValue ?? 0),
+                            unit: "",
+                            n: lowest == nil ? 0 : n,
+                            label: "LOW",
+                            citesSampleSize: false
+                        )),
+                        .figure(LabFigure(kind: .sampleCount, value: Double(n), unit: "RDG", n: n, citesSampleSize: false))
+                    ]],
+                    severity: 3
+                )
+            }
 
             let title: [LabFactItem] = [
                 .observation(label: "BLACK BOX", value: nil, n: 1),
@@ -252,17 +323,34 @@ enum ChartHighlights {
                 end: interval.end,
                 title: title,
                 lines: [
-                    blackBoxState(onset: onset, episode: episode, iob: iob),
-                    blackBoxHistory(onset: onset, deliveries: deliveries, exercise: exercise),
-                    blackBoxContext(onset: onset, notes: notes, heartRate: heartRate)
+                    blackBoxState(onset: onset, episode: episode, lows: n, iob: iob),
+                    blackBoxHistory(onset: onset, windowStart: windowStart, deliveries: deliveries, exercise: exercise),
+                    blackBoxContext(onset: onset, windowStart: windowStart, notes: notes, heartRate: heartRate)
                 ],
                 severity: 3
             )
         }
     }
 
-    /// `T-0 62 · IOB 1.8U · COB —`
-    private static func blackBoxState(onset: Date, episode: [SensorGlucose], iob: [IOBSample]) -> [LabFactItem] {
+    /// What a missing record means, given how far back the window actually goes.
+    ///
+    /// `—` is reserved for "nothing happened in the lookback". When the window
+    /// is shorter than the lookback, nothing found means nothing LOADED, and the
+    /// card says how many hours it can actually speak for.
+    private static func absence(onset: Date, windowStart: Date, lookback: TimeInterval) -> (value: String?, n: Int) {
+        let covered = onset.timeIntervalSince(windowStart)
+        guard covered < lookback else { return (nil, 0) }
+        let minutes = max(0, Int(covered / 60))
+        return (minutes >= 60 ? "NONE IN \(minutes / 60)H" : "NONE IN \(minutes)M", 1)
+    }
+
+    /// `T-0 62 · IOB 1.8U · COB — · n=11 RDG`
+    private static func blackBoxState(
+        onset: Date,
+        episode: [SensorGlucose],
+        lows: Int,
+        iob: [LabOnsetIOB]
+    ) -> [LabFactItem] {
         let onsetValue = episode.first { $0.timestamp == onset } ?? episode.first
         let sample = iob
             .filter { abs($0.date.timeIntervalSince(onset)) <= iobTolerance }
@@ -273,58 +361,81 @@ enum ChartHighlights {
                 kind: .glucose,
                 value: Double(onsetValue?.glucoseValue ?? 0),
                 unit: "",
-                n: onsetValue == nil ? 0 : episode.count,
+                n: onsetValue == nil ? 0 : lows,
                 label: "T-0",
                 citesSampleSize: false
             )),
             .figure(LabFigure(
                 kind: .iob,
-                value: sample?.total ?? 0,
+                value: sample?.units ?? 0,
                 unit: "U",
                 n: sample == nil ? 0 : 1,
-                label: "IOB",
+                // Says which half it can account for, rather than implying both.
+                label: sample?.coverage == .bolusOnly ? "BOLUS IOB" : "IOB",
                 citesSampleSize: false
             )),
             // COB is a placeholder until W2 ships carb absorption: n=0, so it
             // renders `COB —` and never an invented zero.
-            .figure(LabFigure(kind: .cob, value: 0, unit: "g", n: 0, label: "COB", citesSampleSize: false))
+            .figure(LabFigure(kind: .cob, value: 0, unit: "g", n: 0, label: "COB", citesSampleSize: false)),
+            // The card's own sample size, stated once, the way the meal card does.
+            .figure(LabFigure(kind: .sampleCount, value: Double(lows), unit: "RDG", n: lows, citesSampleSize: false))
         ]
     }
 
     /// `LAST BOLUS T-4h10 7.0U · EXERCISE T-9h 30m RUN`
     private static func blackBoxHistory(
         onset: Date,
+        windowStart: Date,
         deliveries: [InsulinDelivery],
         exercise: [ExerciseEntry]
     ) -> [LabFactItem] {
         let lastBolus = deliveries
-            .filter { $0.type != .basal && $0.starts <= onset }
+            .filter {
+                $0.type != .basal && $0.starts <= onset
+                    && onset.timeIntervalSince($0.starts) <= insulinLookback
+            }
             .max { $0.starts < $1.starts }
 
         let lastExercise = exercise
-            .filter { $0.startTime <= onset }
+            .filter {
+                $0.startTime <= onset && onset.timeIntervalSince($0.startTime) <= exerciseLookback
+            }
             .max { $0.startTime < $1.startTime }
 
-        let exerciseValue = lastExercise.map {
-            "\(offsetLabel(from: $0.startTime, to: onset)) \(Int($0.durationMinutes))m \($0.activityType.uppercased())"
+        var items: [LabFactItem] = []
+
+        if let lastBolus {
+            items.append(.figure(LabFigure(
+                kind: .insulin,
+                value: lastBolus.units,
+                unit: "U",
+                n: 1,
+                label: "LAST BOLUS \(offsetLabel(from: lastBolus.starts, to: onset))",
+                citesSampleSize: false
+            )))
+        } else {
+            let absent = absence(onset: onset, windowStart: windowStart, lookback: insulinLookback)
+            items.append(.observation(label: "LAST BOLUS", value: absent.value, n: absent.n))
         }
 
-        return [
-            .figure(LabFigure(
-                kind: .insulin,
-                value: lastBolus?.units ?? 0,
-                unit: "U",
-                n: lastBolus == nil ? 0 : 1,
-                label: lastBolus.map { "LAST BOLUS \(offsetLabel(from: $0.starts, to: onset))" } ?? "LAST BOLUS",
-                citesSampleSize: false
-            )),
-            .observation(label: "EXERCISE", value: exerciseValue, n: lastExercise == nil ? 0 : 1)
-        ]
+        if let lastExercise {
+            items.append(.observation(
+                label: "EXERCISE",
+                value: "\(offsetLabel(from: lastExercise.startTime, to: onset)) \(Int(lastExercise.durationMinutes))m \(lastExercise.activityType.uppercased())",
+                n: 1
+            ))
+        } else {
+            let absent = absence(onset: onset, windowStart: windowStart, lookback: exerciseLookback)
+            items.append(.observation(label: "EXERCISE", value: absent.value, n: absent.n))
+        }
+
+        return items
     }
 
     /// `HR 71→96 · TAG SICK`
     private static func blackBoxContext(
         onset: Date,
+        windowStart: Date,
         notes: [JournalNote],
         heartRate: [HeartRateSample]
     ) -> [LabFactItem] {
@@ -343,13 +454,16 @@ enum ChartHighlights {
             .filter { $0.tag != nil && $0.timestamp <= onset && onset.timeIntervalSince($0.timestamp) <= noteLookback }
             .max { $0.timestamp < $1.timestamp }
 
+        let heartRateAbsence = absence(onset: onset, windowStart: windowStart, lookback: heartRateWindow)
+        let tagAbsence = absence(onset: onset, windowStart: windowStart, lookback: noteLookback)
+
         return [
-            .observation(label: "HR", value: heartRateValue, n: around.count),
-            .observation(
-                label: "TAG",
-                value: tagged?.tag?.rawValue.uppercased(),
-                n: tagged == nil ? 0 : 1
-            )
+            around.isEmpty
+                ? .observation(label: "HR", value: heartRateAbsence.value, n: heartRateAbsence.n)
+                : .observation(label: "HR", value: heartRateValue, n: around.count),
+            tagged == nil
+                ? .observation(label: "TAG", value: tagAbsence.value, n: tagAbsence.n)
+                : .observation(label: "TAG", value: tagged?.tag?.rawValue.uppercased(), n: 1)
         ]
     }
 
@@ -383,9 +497,14 @@ enum ChartHighlights {
                 exerciseEntryValues: exercise,
                 mealEntryValues: meals
             )
-            let similar = meals.filter {
-                abs(($0.carbsGrams ?? 0) - (meal.carbsGrams ?? 0)) <= similarCarbsGrams
-            }.count
+            // A meal with no carbs logged is not "similar" to a 10 g snack — it
+            // is uncomparable. Both sides must carry carbs or the lab says so.
+            let similar: Int? = meal.carbsGrams.map { carbs in
+                meals.filter { other in
+                    guard let otherCarbs = other.carbsGrams else { return false }
+                    return abs(otherCarbs - carbs) <= similarCarbsGrams
+                }.count
+            }
 
             var title: [LabFactItem] = []
             if let carbs = meal.carbsGrams {
@@ -423,14 +542,16 @@ enum ChartHighlights {
                 end: windowEnd,
                 title: title,
                 lines: [[
-                    .figure(LabFigure(
-                        kind: .count,
-                        value: Double(similar),
-                        unit: "SIMILAR MEALS",
-                        n: similar,
-                        label: "1 OF",
-                        citesSampleSize: false
-                    )),
+                    similar.map { count in
+                        LabFactItem.figure(LabFigure(
+                            kind: .count,
+                            value: Double(count),
+                            unit: "SIMILAR MEALS",
+                            n: count,
+                            label: "1 OF",
+                            citesSampleSize: false
+                        ))
+                    } ?? .observation(label: "SIMILAR MEALS", value: nil, n: 0),
                     .observation(label: confounders.isClean ? "CLEAN" : "CONFOUNDED", value: nil, n: 1),
                     .figure(LabFigure(
                         kind: .sampleCount,
@@ -462,7 +583,10 @@ enum ChartHighlights {
             let previous = boluses[index - 1]
             let dose = boluses[index]
             let gap = dose.starts.timeIntervalSince(previous.starts)
-            guard gap <= stackingWindow else { return nil }
+            // The window constant is a CORRECTION lookback, so the rule is one
+            // too: a meal bolus 2.5 hours after breakfast is lunch, not stacking,
+            // and it must not outrank a real finding under the five-fact cap.
+            guard dose.type == .correctionBolus, gap <= stackingWindow else { return nil }
 
             return ChartFact(
                 id: "stack-\(dose.id.uuidString)",

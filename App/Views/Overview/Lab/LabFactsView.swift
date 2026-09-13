@@ -77,23 +77,30 @@ struct LabFactCardList: View {
         .padding(.top, DOSSpacing.xs)
         .onAppear { cascade() }
         .onChange(of: facts.map(\.id)) { cascade() }
+        .onDisappear { cascadeTask?.cancel() }
     }
 
     // MARK: Private
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var revealedStages = 0
+    /// Held so a re-run can cancel the one in flight: two loops writing
+    /// `revealedStages` interleave, and cards flicker back to invisible.
+    @State private var cascadeTask: Task<Void, Never>?
 
     /// The digest's CRT boot cascade, async-stepped: same-tick writes to one
     /// `@State` coalesce into a single fade instead of staggering.
     private func cascade() {
+        cascadeTask?.cancel()
+
         guard !reduceMotion else {
             revealedStages = facts.count
             return
         }
         revealedStages = 0
-        Task { @MainActor in
+        cascadeTask = Task { @MainActor in
             for stage in 0 ..< facts.count {
+                if Task.isCancelled { return }
                 withAnimation(AnimationTokens.easeReveal) {
                     revealedStages = stage + 1
                 }

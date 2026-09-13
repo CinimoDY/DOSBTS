@@ -36,6 +36,10 @@ struct LabMealsView: View {
                 )
             }
             .scrollBounceBehavior(.basedOnSize)
+            // Sizes to its content FIRST, then caps: without this the region
+            // reserves its full height even with no facts at all and squeezes
+            // the chart toward its floor for nothing.
+            .fixedSize(horizontal: false, vertical: true)
             .frame(maxHeight: Config.factsMaxHeight)
 
             LabLegendRow(items: [
@@ -47,6 +51,9 @@ struct LabMealsView: View {
 
             LabFooter()
         }
+        // A focus request is about a fact on THIS day; paging the chart retires
+        // it (P0 clears its cursors on the same change).
+        .onChange(of: store.state.selectedDate) { focusRequest = nil }
     }
 
     // MARK: Private

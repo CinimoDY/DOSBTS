@@ -115,7 +115,9 @@ struct LabCaption: View {
             return "\(number(spread.lowerBound, kind: figure.kind, unit: unit))–\(number(spread.upperBound, kind: figure.kind, unit: unit))"
         case .sampleCount:
             return suffixed("n=\(Int(figure.value.rounded()))", figure.displayUnit(for: unit))
-        default:
+        // Listed rather than defaulted: a kind added later should fail to
+        // compile here, not fall through to a rendering nobody chose.
+        case .delta, .peakMinutes, .glucose, .iob, .insulin, .cob, .carbs, .count, .median, .percentile, .duration:
             return suffixed(value, figure.displayUnit(for: unit))
         }
     }

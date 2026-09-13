@@ -97,6 +97,10 @@ enum LabFactPins {
     @ChartContentBuilder
     static func marks(facts: [ChartFact], series: LabChartSeries, yMax: Double) -> some ChartContent {
         ForEach(layout(facts)) { pin in
+            // The nudge moves the STEM and the HEAD together, so a crowd of
+            // anchors stays legible without the digit drifting off its own pin.
+            // Offsetting only the annotation (what this PR did first) left two
+            // heads drawn on top of each other with their numbers beside them.
             RuleMark(
                 x: .value("Fact", pin.fact.anchor),
                 yStart: .value("From", stemFoot(pin, series: series, yMax: yMax)),
@@ -104,6 +108,7 @@ enum LabFactPins {
             )
             .foregroundStyle(AmberTheme.amber)
             .lineStyle(StrokeStyle(lineWidth: 1))
+            .offset(x: pin.labelShift)
 
             PointMark(
                 x: .value("Fact", pin.fact.anchor),
@@ -111,6 +116,7 @@ enum LabFactPins {
             )
             .symbolSize(headSymbolSize)
             .foregroundStyle(AmberTheme.amber)
+            .offset(x: pin.labelShift)
             .annotation(
                 position: .overlay,
                 overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))
@@ -119,7 +125,6 @@ enum LabFactPins {
                     .font(DOSTypography.microLabel)
                     .foregroundStyle(AmberTheme.inkOnAmber)
                     .monospacedDigit()
-                    .offset(x: pin.labelShift)
             }
 
             if isOnsetRule(pin.fact) {

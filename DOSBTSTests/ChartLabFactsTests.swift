@@ -249,7 +249,7 @@ struct ChartHighlightsTests {
         exercise: [ExerciseEntry],
         heartRate: [HeartRateSample],
         notes: [JournalNote],
-        iob: [IOBSample]
+        iob: [LabOnsetIOB]
     ) {
         (
             readings: run(from: -120, to: -5, value: 140) + run(from: 0, to: 50, value: 62) + run(from: 55, to: 120, value: 110),
@@ -257,7 +257,7 @@ struct ChartHighlightsTests {
             exercise: [exercise(-540, 30)],
             heartRate: [HeartRateSample(time: at(-20), bpm: 71), HeartRateSample(time: at(20), bpm: 96)],
             notes: [JournalNote(timestamp: at(-60), text: "family's sick", tag: .sick)],
-            iob: [IOBSample(date: at(0), total: 1.8, mealSnack: 1.8, corrBasal: 0)]
+            iob: [LabOnsetIOB(date: at(0), units: 1.8, coverage: .full)]
         )
     }
 
@@ -271,6 +271,7 @@ struct ChartHighlightsTests {
             notes: fixture.notes,
             iob: fixture.iob,
             heartRate: fixture.heartRate,
+            windowStart: at(-120),
             now: at(180)
         )
     }
@@ -305,7 +306,7 @@ struct ChartHighlightsTests {
         #expect(figures.first?.value == 62)
         // 11 readings at 5-minute spacing across the 50-minute episode.
         #expect(figures.first?.n == 11)
-        #expect(LabCaption.text(for: first, unit: .mgdL) == "T-0 62 · IOB 1.8U · COB —")
+        #expect(LabCaption.text(for: first, unit: .mgdL) == "T-0 62 · IOB 1.8U · COB — · n=11 RDG")
     }
 
     @Test("the Black Box states what was already on board and what came before")
@@ -318,24 +319,126 @@ struct ChartHighlightsTests {
         #expect(LabCaption.text(for: fact.lines[2], unit: .mgdL) == "HR 71→96 · TAG SICK")
     }
 
-    @Test("missing context is an em dash, never an invented zero")
+    @Test("missing context is an em dash — but only when the window covers the lookback")
     func hypoMissingContext() {
         let facts = ChartHighlights.facts(
-            readings: run(from: 0, to: 50, value: 62),
+            readings: run(from: -60, to: -5, value: 140) + run(from: 0, to: 50, value: 62),
             deliveries: [],
             meals: [],
             exercise: [],
             notes: [],
             iob: [],
             heartRate: [],
+            // 25 hours of loaded history behind the onset: every lookback fits,
+            // so "nothing found" really does mean "nothing happened".
+            windowStart: at(-1500),
             now: at(180)
         )
         guard let fact = facts.first, fact.lines.count >= 3 else {
             return #expect(Bool(false), "no fact")
         }
-        #expect(LabCaption.text(for: fact.lines[0], unit: .mgdL) == "T-0 62 · IOB — · COB —")
+        #expect(LabCaption.text(for: fact.lines[0], unit: .mgdL) == "T-0 62 · IOB — · COB — · n=11 RDG")
         #expect(LabCaption.text(for: fact.lines[1], unit: .mgdL) == "LAST BOLUS — · EXERCISE —")
         #expect(LabCaption.text(for: fact.lines[2], unit: .mgdL) == "HR — · TAG —")
+    }
+
+    @Test("an episode already under way at the window start is not a Black Box")
+    func hypoOpenAtWindowStart() {
+        // The first loaded reading IS the first low: on a picked day this is a
+        // hypo that began before midnight, and every T-offset from it would be
+        // measured from the day boundary rather than from an event.
+        let facts = ChartHighlights.facts(
+            readings: run(from: 0, to: 50, value: 62) + run(from: 55, to: 120, value: 110),
+            deliveries: [bolus(-250, 7)],
+            meals: [],
+            exercise: [],
+            notes: [],
+            iob: [],
+            heartRate: [],
+            windowStart: at(0),
+            now: at(180)
+        )
+        guard let fact = facts.first(where: { $0.kind == .hypoOnset }) else {
+            return #expect(Bool(false), "no hypo fact")
+        }
+
+        let title = LabCaption.text(for: fact.title, unit: .mgdL)
+        #expect(title == "HYPO \(at(0).toLocalTime()) · OPEN AT \(at(0).toLocalTime()) · 50 MIN")
+        #expect(title.contains("BLACK BOX") == false)
+
+        let rendered = fact.lines.map { LabCaption.text(for: $0, unit: .mgdL) }
+        #expect(rendered == ["LOW 62 · n=11 RDG"])
+        #expect(rendered.contains { $0.contains("T-0") } == false)
+        #expect(rendered.contains { $0.contains("T-") } == false)
+    }
+
+    @Test("a short window names the hours it can speak for instead of claiming nothing happened")
+    func hypoNamesCoveredHours() {
+        let facts = ChartHighlights.facts(
+            readings: run(from: -120, to: -5, value: 140) + run(from: 0, to: 50, value: 62),
+            deliveries: [],
+            meals: [],
+            exercise: [],
+            notes: [],
+            iob: [],
+            heartRate: [],
+            // Only two hours of history behind the onset — a 22:00 bolus would
+            // simply not be loaded, so `—` would be a lie.
+            windowStart: at(-120),
+            now: at(180)
+        )
+        guard let fact = facts.first, fact.lines.count >= 3 else {
+            return #expect(Bool(false), "no fact")
+        }
+        #expect(LabCaption.text(for: fact.lines[1], unit: .mgdL) == "LAST BOLUS NONE IN 2H · EXERCISE NONE IN 2H")
+        // Heart rate only ever looks 30 minutes back, which two hours DOES cover,
+        // so its absence is real and still reads as an em dash.
+        #expect(LabCaption.text(for: fact.lines[2], unit: .mgdL) == "HR — · TAG NONE IN 2H")
+    }
+
+    @Test("IOB says which half it can account for")
+    func hypoBolusOnlyIOB() {
+        let facts = ChartHighlights.facts(
+            readings: run(from: -60, to: -5, value: 140) + run(from: 0, to: 50, value: 62),
+            deliveries: [],
+            meals: [],
+            exercise: [],
+            notes: [],
+            iob: [LabOnsetIOB(date: at(0), units: 0.4, coverage: .bolusOnly)],
+            heartRate: [],
+            windowStart: at(-1500),
+            now: at(180)
+        )
+        guard let fact = facts.first, let first = fact.lines.first else {
+            return #expect(Bool(false), "no fact")
+        }
+        #expect(LabCaption.text(for: first, unit: .mgdL) == "T-0 62 · BOLUS IOB 0.4U · COB — · n=11 RDG")
+    }
+
+    @Test("the episode sample size counts the lows, not the in-range readings across the span")
+    func hypoSampleSizeCountsLows() {
+        // Lows 0–20 and 40–60 with a 15-minute return to range between them: one
+        // episode (the gap is under the 30-minute separation), but only ten of
+        // the thirteen readings across that span were ever low.
+        let facts = ChartHighlights.facts(
+            readings: run(from: -60, to: -5, value: 140)
+                + run(from: 0, to: 20, value: 62)
+                + run(from: 25, to: 35, value: 120)
+                + run(from: 40, to: 60, value: 64),
+            deliveries: [],
+            meals: [],
+            exercise: [],
+            notes: [],
+            iob: [],
+            heartRate: [],
+            windowStart: at(-1500),
+            now: at(180)
+        )
+        guard let fact = facts.first, let first = fact.lines.first else {
+            return #expect(Bool(false), "no fact")
+        }
+        #expect(LabCaption.text(for: fact.title, unit: .mgdL).hasSuffix("· 60 MIN"))
+        #expect(LabCaption.text(for: first, unit: .mgdL).hasSuffix("· n=10 RDG"))
     }
 
     // MARK: Meal response
@@ -402,6 +505,29 @@ struct ChartHighlightsTests {
         #expect(LabCaption.text(for: fact.lines[0], unit: .mgdL).contains("CONFOUNDED"))
     }
 
+    @Test("a meal with no carbs logged is comparable to nothing")
+    func mealWithoutCarbs() {
+        let readings = run(from: -15, to: 120, value: 120)
+        let facts = ChartHighlights.facts(
+            readings: readings,
+            deliveries: [],
+            meals: [
+                MealEntry(timestamp: at(0), mealDescription: "SOUP", carbsGrams: nil),
+                meal(240, 10, "SNACK")
+            ],
+            exercise: [],
+            notes: [],
+            iob: [],
+            heartRate: [],
+            now: at(400)
+        )
+        guard let fact = facts.first(where: { $0.id.hasPrefix("meal-") }) else {
+            return #expect(Bool(false), "no meal fact")
+        }
+        // Not "1 OF 2 SIMILAR MEALS": a missing carb count is not zero carbs.
+        #expect(LabCaption.text(for: fact.lines[0], unit: .mgdL).hasPrefix("SIMILAR MEALS — · "))
+    }
+
     // MARK: Stacked bolus
 
     @Test("two boluses inside the stacking window are one stacked-bolus fact")
@@ -423,6 +549,21 @@ struct ChartHighlightsTests {
         #expect(fact.anchor == at(90))
         #expect(LabCaption.text(for: fact.title, unit: .mgdL) == "STACKED BOLUS · 90 MIN APART")
         #expect(LabCaption.text(for: fact.lines[0], unit: .mgdL) == "FIRST 5.0U · THEN 3.0U")
+    }
+
+    @Test("a meal bolus after a meal bolus is lunch, not stacking")
+    func mealBolusIsNotStacking() {
+        let facts = ChartHighlights.facts(
+            readings: run(from: 0, to: 240, value: 150),
+            deliveries: [bolus(0, 5), bolus(90, 4)],
+            meals: [],
+            exercise: [],
+            notes: [],
+            iob: [],
+            heartRate: [],
+            now: at(300)
+        )
+        #expect(facts.contains { $0.kind == .stackedBolus } == false)
     }
 
     @Test("boluses further apart than the stacking window are not stacked")
@@ -734,6 +875,47 @@ struct ChartLabFactsCopyGuardTests {
         }
     }
 
+    /// Every scannable run of copy in a file, one entry per source line.
+    ///
+    /// Two things a naive per-literal scan misses, both of which would let real
+    /// dosing copy through: a sentence SPLIT across concatenated literals
+    /// (`"Ta" + "ke 2U now"`), and the body of a `\"\"\"` multi-line literal,
+    /// which contains no quote characters at all on its own lines. So a line's
+    /// literals are joined before matching, and multi-line bodies are tracked
+    /// across lines and scanned whole.
+    private static func copyRuns(in contents: String) throws -> [(line: Int, text: String)] {
+        var runs: [(line: Int, text: String)] = []
+        var insideMultiline = false
+
+        for (index, line) in contents.components(separatedBy: "\n").enumerated() {
+            let delimiters = line.components(separatedBy: "\"\"\"").count - 1
+
+            if insideMultiline {
+                if delimiters > 0 {
+                    insideMultiline = false
+                    // The tail before the closing delimiter is still copy.
+                    if let head = line.components(separatedBy: "\"\"\"").first, !head.isEmpty {
+                        runs.append((index + 1, head))
+                    }
+                } else {
+                    runs.append((index + 1, line))
+                }
+                continue
+            }
+
+            if delimiters % 2 == 1 {
+                insideMultiline = true
+                continue
+            }
+            if isCommentLine(line) { continue }
+
+            let joined = try literals(in: line).map { staticText(of: $0) }.joined()
+            if !joined.isEmpty { runs.append((index + 1, joined)) }
+        }
+
+        return runs
+    }
+
     @Test("the lab scans a non-empty set of sources — the guards below are not vacuous")
     func scopeResolves() {
         #expect(Self.swiftFiles().count >= 5)
@@ -742,7 +924,8 @@ struct ChartLabFactsCopyGuardTests {
     /// Imperatives. `dose` is banned as a word; the standing safety footer is
     /// the one sanctioned use and is exempted by exact text.
     private static let bannedCopy = [
-        "\\btake\\b", "\\binject", "\\bdose\\b", "units to", "you should", "bolus now", "correct with"
+        "\\btake\\b", "\\btaking\\b", "\\binject", "\\bdose\\b", "\\bdosing\\b",
+        "\\badminister", "\\bgive\\b", "units to", "you should", "bolus now", "bolus for", "correct with"
     ]
 
     @Test("no dosing language in anything the lab prints")
@@ -753,13 +936,10 @@ struct ChartLabFactsCopyGuardTests {
         var hits: [String] = []
         for file in Self.swiftFiles() {
             let contents = try String(contentsOf: file, encoding: .utf8)
-            for (index, line) in contents.components(separatedBy: "\n").enumerated() where !Self.isCommentLine(line) {
-                for literal in try Self.literals(in: line) where !exempt.contains(literal) {
-                    let copy = Self.staticText(of: literal)
-                    let range = NSRange(copy.startIndex ..< copy.endIndex, in: copy)
-                    for regex in regexes where regex.firstMatch(in: copy, range: range) != nil {
-                        hits.append("\(Self.relativePath(of: file)):\(index + 1): \"\(literal)\"")
-                    }
+            for run in try Self.copyRuns(in: contents) where !exempt.contains(run.text) {
+                let range = NSRange(run.text.startIndex ..< run.text.endIndex, in: run.text)
+                for regex in regexes where regex.firstMatch(in: run.text, range: range) != nil {
+                    hits.append("\(Self.relativePath(of: file)):\(run.line): \"\(run.text)\"")
                 }
             }
         }
@@ -784,6 +964,37 @@ struct ChartLabFactsCopyGuardTests {
         #expect(trips("stack-\\(dose.id.uuidString)") == false)
         #expect(trips("LAST BOLUS T-4h10") == false)
         #expect(trips("STACKED BOLUS") == false)
+    }
+
+    @Test("the scan reads split literals and multi-line bodies, not just single quoted runs")
+    func rule_scanReadsSplitAndMultilineCopy() throws {
+        let quote = "\"\"\""
+        let source = [
+            "let a = \"Ta\" + \"ke 2U now\"",
+            "let b = " + quote,
+            "You should give 2U for that",
+            quote,
+            "let c = \"stack-\\(dose.id)\""
+        ].joined(separator: "\n")
+
+        let runs = try Self.copyRuns(in: source).map(\.text)
+        #expect(runs.contains("Take 2U now"))
+        #expect(runs.contains("You should give 2U for that"))
+        #expect(runs.contains("stack-"))
+
+        let regexes = try Self.bannedCopy.map { try NSRegularExpression(pattern: $0, options: .caseInsensitive) }
+        func trips(_ text: String) -> Bool {
+            let range = NSRange(text.startIndex ..< text.endIndex, in: text)
+            return regexes.contains { $0.firstMatch(in: text, range: range) != nil }
+        }
+        #expect(trips("Take 2U now"))
+        #expect(trips("You should give 2U for that"))
+        #expect(trips("stack-") == false)
+        // The widened token list.
+        #expect(trips("administer 2U"))
+        #expect(trips("dosing guidance"))
+        #expect(trips("taking insulin"))
+        #expect(trips("bolus for 60g"))
     }
 
     @Test("every LabFigure in the lab is constructed with its sample size")
