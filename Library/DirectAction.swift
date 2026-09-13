@@ -243,6 +243,12 @@ enum DirectAction {
     case setRatioEvidence(evidence: RatioEvidence?)
     case setConfirmedICR(icr: Double?)
 
+    // MARK: Chart Lab — LAB: PATTERNS (DMNC-1503)
+    /// On-demand: the tab appeared, or the day chips changed. `days` is capped
+    /// to `LabPatternEvidence.maxDays` by the middleware.
+    case loadLabPatterns(days: Int)
+    case setLabPatterns(evidence: LabPatternEvidence?)
+
     case debugAlarm
     case debugNotification
 }

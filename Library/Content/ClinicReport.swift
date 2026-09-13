@@ -36,14 +36,46 @@ enum ReportPeriod: Int, CaseIterable, Identifiable {
 
 // MARK: - HourlyPattern
 
-/// One hour-of-day bucket of the daily glucose pattern. `median`/`p25`/`p75` are `nil`
-/// when the hour had no readings across the period; `readings` is that hour's sample count.
+/// One hour-of-day bucket of the daily glucose pattern. `median`/`p25`/`p75`/`p5`/`p95`
+/// are `nil` when the hour had no readings across the period; `readings` is that hour's
+/// sample count and `days` the number of DISTINCT calendar days behind it.
+///
+/// `p5`/`p95`/`days` were added for the Chart Lab's personal band (DMNC-1503) and are
+/// **additive**: the clinic report (`ClinicReportPage`, the CSV, `ClinicReportTests`)
+/// neither reads nor supplies them, and keeps using the compatibility initializer below.
+/// `days` is what separates "the usual" from "one strange Tuesday" — a percentile over a
+/// single day is not a pattern, so the lab gates its claims on it.
 struct HourlyPattern: Equatable {
     let hour: Int // 0...23
     let median: Int?
     let p25: Int?
     let p75: Int?
     let readings: Int
+    let p5: Int?
+    let p95: Int?
+    let days: Int
+
+    /// The new fields default, so the clinic report's five-argument call shape still
+    /// compiles and still means exactly what it meant before.
+    init(
+        hour: Int,
+        median: Int?,
+        p25: Int?,
+        p75: Int?,
+        readings: Int,
+        p5: Int? = nil,
+        p95: Int? = nil,
+        days: Int = 0
+    ) {
+        self.hour = hour
+        self.median = median
+        self.p25 = p25
+        self.p75 = p75
+        self.readings = readings
+        self.p5 = p5
+        self.p95 = p95
+        self.days = days
+    }
 }
 
 // MARK: - ClinicReportRaw
@@ -114,13 +146,16 @@ enum ClinicReportBuilder {
 
     // MARK: Hourly pattern
 
-    /// 24 hour-of-day buckets (median + P25/P75) from the period's readings. ALWAYS returns
-    /// 24 entries (hour 0...23); empty hours get `nil` quantiles and 0 readings.
+    /// 24 hour-of-day buckets (median + P5/P25/P75/P95, plus the number of distinct days
+    /// behind each) from the period's readings. ALWAYS returns 24 entries (hour 0...23);
+    /// empty hours get `nil` quantiles, 0 readings and 0 days.
     static func hourlyPatterns(from readings: [SensorGlucose], calendar: Calendar = .current) -> [HourlyPattern] {
         var buckets: [Int: [Int]] = [:]
+        var dayBuckets: [Int: Set<Date>] = [:]
         for reading in readings {
             let hour = calendar.component(.hour, from: reading.timestamp)
             buckets[hour, default: []].append(reading.glucoseValue)
+            dayBuckets[hour, default: []].insert(calendar.startOfDay(for: reading.timestamp))
         }
         return (0 ..< 24).map { hour in
             let values = (buckets[hour] ?? []).sorted()
@@ -132,7 +167,10 @@ enum ClinicReportBuilder {
                 median: percentile(values, 0.5),
                 p25: percentile(values, 0.25),
                 p75: percentile(values, 0.75),
-                readings: values.count
+                readings: values.count,
+                p5: percentile(values, 0.05),
+                p95: percentile(values, 0.95),
+                days: (dayBuckets[hour] ?? []).count
             )
         }
     }

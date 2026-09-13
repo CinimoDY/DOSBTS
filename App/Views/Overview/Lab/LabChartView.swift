@@ -40,6 +40,16 @@ struct LabChartView: View {
 
     /// Set by a tapped fact card: scroll to the anchor and drop a cursor on it.
     var focusRequest: LabFocusRequest?
+    /// Optional extra chip on the unit row (P4's `▒ YOUR 30-DAY BAND`).
+    /// Defaults to nil, so every existing call site is unchanged.
+    var unitRowLabel: String? = nil
+
+    /// Fires when the sticky scrub cursor moves or clears.
+    ///
+    /// P4's "hold an hour" drill reads THIS rather than adding a long-press of
+    /// its own: press-and-hold is already the scrub gesture (P0's arbitration),
+    /// and a second long-press on the same plot would fight it. Defaults to nil.
+    var onCursorChange: ((Date?) -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -138,8 +148,13 @@ struct LabChartView: View {
     // MARK: Layout
 
     private var unitRow: some View {
-        HStack {
+        HStack(spacing: DOSSpacing.xs) {
             Spacer()
+            if let unitRowLabel {
+                Text(unitRowLabel)
+                    .font(DOSTypography.mono(size: 9, weight: .medium))
+                    .foregroundStyle(AmberTheme.amberDark)
+            }
             Text(store.state.glucoseUnit.localizedDescription)
                 .font(DOSTypography.mono(size: 9, weight: .medium))
                 .foregroundStyle(AmberTheme.amberMuted)
@@ -535,7 +550,10 @@ struct LabChartView: View {
     private var yMax: Double {
         LabChartMath.yMax(
             floor: chartMinimum,
+            // The band is drawn on the SAME scale as the trace, so a p95 above
+            // today's maximum widens the floor instead of being clipped at it.
             plotted: series.glucose.map(\.value) + series.bloodGlucose.map(\.value)
+                + (series.patternBand?.maxValue.map { [$0] } ?? [])
         )
     }
 
@@ -667,6 +685,7 @@ struct LabChartView: View {
     private func fireDetentIfNeeded() {
         guard let cursor = cursors.cursor else {
             lastDetentKey = nil
+            onCursorChange?(nil)
             return
         }
 
@@ -682,6 +701,7 @@ struct LabChartView: View {
             isNight: store.state.activeAlarmProfile == .night
         )
         lastDetentKey = key
+        onCursorChange?(cursor)
 
         switch feedback {
         case .light: DirectNotifications.shared.hapticFeedback(.light)
