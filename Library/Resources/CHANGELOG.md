@@ -7,6 +7,11 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 137] — 2026-09-13
+
+### Added
+- Settings → Glucose & Display → "Chart Lab" toggle (off by default): four experimental LAB tabs beside GLUCOSE on a natively scrolling chart you can scrub, measure between two points, and scroll back through without new readings pulling the view away. MEALS: carb-sized dots, two-hour response ribbons, prompts for unexplained rises, cited facts and a hypo Black Box card. NIGHT: 20:00 to 10:00 with sleep from Apple Health, the insulin tail across midnight and a coverage strip. SWEEP: every meal of the period aligned at t=0, with twins and laps. PATTERNS: your own 30-day band under today with a same-hour drill. Nothing in the lab is dosing advice — DMNC-1500
+
 ## [Build 136] — 2026-09-02
 
 ### Fixed
