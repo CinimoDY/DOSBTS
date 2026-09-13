@@ -126,6 +126,12 @@ protocol DirectState {
     /// default; nothing in the lab is dosing advice.
     var showChartLab: Bool { get set }
 
+    // MARK: LAB: SWEEP (DMNC-1503)
+    /// Transient — loaded on demand when the sweep tab appears, and again when
+    /// the day window or the meal log changes under it. Not persisted; `nil` is
+    /// the view's loading state, exactly as `ratioEvidence` is for the Ratio Lab.
+    var labSweeps: LabSweepEvidence? { get set }
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     var markerLanePosition: MarkerLanePosition { get set }
 

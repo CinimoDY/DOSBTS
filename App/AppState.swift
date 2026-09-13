@@ -312,6 +312,9 @@ struct AppState: DirectState {
     // MARK: Chart Lab (DMNC-1500)
     var showChartLab: Bool { didSet { defaults.showChartLab = showChartLab } }
 
+    // MARK: LAB: SWEEP (DMNC-1503)
+    var labSweeps: LabSweepEvidence? // transient — loaded on demand, not persisted
+
     // MARK: Marker Lane Position (DMNC-848 D7)
     var markerLanePosition: MarkerLanePosition { didSet { defaults.markerLanePosition = markerLanePosition } }
 
