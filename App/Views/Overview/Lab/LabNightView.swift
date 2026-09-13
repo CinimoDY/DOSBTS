@@ -28,7 +28,21 @@ struct LabNightView: View {
             LabFooter()
                 .padding(.bottom, DOSSpacing.xxs)
         }
+        // Every trigger is view-scoped on purpose: the window read — and the
+        // HealthKit consent dialog that can come with it — happens only while
+        // this tab is on screen. The middleware has no triggers of its own.
         .onAppear { load() }
+        .onChange(of: store.state.selectedDate) { load() }
+        .onChange(of: store.state.appState) { _, phase in
+            // A cold launch straight onto a persisted NIGHT tab runs `onAppear`
+            // BEFORE ContentView sets `.active`, and the middleware's `.active`
+            // guard drops that load — leaving `labWindow == nil`, which this
+            // view reads as "still loading", forever. Re-arm when the scene
+            // actually becomes active and nothing has landed.
+            if phase == .active, store.state.labWindow == nil {
+                load()
+            }
+        }
     }
 
     // MARK: Private
@@ -42,8 +56,13 @@ struct LabNightView: View {
         NightWindow.interval(for: store.state.selectedDate ?? Date())
     }
 
+    /// The loaded window, but only if it is the one being asked for. A snapshot
+    /// for a different night is the previous night still in memory while this
+    /// one loads — treating it as absent is what puts the loading figure up
+    /// instead of last night's numbers under this night's date.
     private var snapshot: LabWindowSnapshot? {
-        store.state.labWindow
+        guard let window = store.state.labWindow, window.interval == requestedInterval else { return nil }
+        return window
     }
 
     private var summary: NightSummary {
@@ -102,6 +121,9 @@ struct LabNightView: View {
 
     @ViewBuilder
     private var content: some View {
+        // A snapshot for a DIFFERENT window is the previous night still on
+        // screen while this one loads — show the loading figure, not last
+        // night's numbers under this night's date.
         if let snapshot {
             // One branch, readings or not: `LabChartView` renders its own empty
             // state for a window it found nothing in, and keeps the day pager
@@ -131,15 +153,13 @@ struct LabNightView: View {
             )
         )
 
-        LabSleepLane(samples: snapshot.sleep, interval: snapshot.interval)
-            .padding(.horizontal, DOSSpacing.sm)
-
         LabCoverageStrip(snapshot: snapshot)
 
         modeRow
 
         LabLegendRow(items: [
             LabLegendItem(glyph: "▮", label: "2H RESPONSE", color: AmberTheme.amber),
+            LabLegendItem(glyph: "▁", label: "SLEEP STAGES", color: AmberTheme.cgaCyan),
             LabLegendItem(glyph: "▒", label: "AWAKE", color: AmberTheme.cgaCyan),
             LabLegendItem(glyph: "╌╌", label: "HR", color: AmberTheme.cgaMagenta),
             LabLegendItem(glyph: "POST", label: "COVERAGE PER STREAM", color: AmberTheme.amberLight),
@@ -171,11 +191,13 @@ struct LabNightView: View {
         .accessibilityHidden(true)
     }
 
-    private func format(_ value: Double) -> String {
-        let formatter = store.state.glucoseUnit == .mmolL
-            ? GlucoseFormatters.mmolLFormatter
-            : GlucoseFormatters.mgdLFormatter
-        return formatter.string(from: value as NSNumber) ?? "—"
+    /// `NightSummary` stores mg/dL — the storage unit — so this is the ONE
+    /// layer that converts, exactly as `LabCaption` does for P5's figures.
+    private func format(_ mgdL: Double) -> String {
+        if store.state.glucoseUnit == .mmolL {
+            return GlucoseFormatters.mmolLFormatter.string(from: mgdL.toMmolL() as NSNumber) ?? "—"
+        }
+        return GlucoseFormatters.mgdLFormatter.string(from: mgdL as NSNumber) ?? "—"
     }
 
     /// On-demand, like the Ratio Lab's evidence load: no app-activation path

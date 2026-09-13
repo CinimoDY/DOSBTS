@@ -31,13 +31,25 @@ private func reduce(_ state: inout DirectState, _ action: DirectAction) {
 enum NightFixture {
     static var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/London") ?? .current
+        // Explicit and DST-bearing: 2026-03-29 springs forward, 2026-10-25
+        // falls back, so the night-window tests exercise both.
+        calendar.timeZone = TimeZone(identifier: "Europe/Berlin") ?? .current
         return calendar
     }
 
     /// The anchor day the night belongs to (the MORNING day).
     static var day: Date {
         calendar.date(from: DateComponents(year: 2026, month: 9, day: 12, hour: 12))!
+    }
+
+    /// Wall-clock rendering, so a DST assertion says what a clock would say.
+    static func wallClock(_ date: Date, _ calendar: Calendar) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        return formatter.string(from: date)
     }
 
     static func at(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
@@ -261,6 +273,32 @@ struct NightWindowTests {
         #expect(midnight == NightFixture.at(12, 0))
     }
 
+    @Test("the spring-forward night is 13 hours, still 20:00 → 10:00 on the clock")
+    func springForwardNight() {
+        // 2026-03-29, Europe/Berlin: 02:00 → 03:00. Adding 14 absolute hours
+        // would have ended the window at 11:00.
+        let interval = NightWindow.interval(
+            for: NightFixture.calendar.date(from: DateComponents(year: 2026, month: 3, day: 29, hour: 12))!,
+            calendar: NightFixture.calendar
+        )
+        #expect(NightFixture.wallClock(interval.start, NightFixture.calendar) == "2026-03-28 20:00")
+        #expect(NightFixture.wallClock(interval.end, NightFixture.calendar) == "2026-03-29 10:00")
+        #expect(interval.duration == 13 * 3600)
+    }
+
+    @Test("the fall-back night is 15 hours, still 20:00 → 10:00 on the clock")
+    func fallBackNight() {
+        // 2026-10-25, Europe/Berlin: 03:00 → 02:00. Adding 14 absolute hours
+        // would have ended the window at 09:00.
+        let interval = NightWindow.interval(
+            for: NightFixture.calendar.date(from: DateComponents(year: 2026, month: 10, day: 25, hour: 12))!,
+            calendar: NightFixture.calendar
+        )
+        #expect(NightFixture.wallClock(interval.start, NightFixture.calendar) == "2026-10-24 20:00")
+        #expect(NightFixture.wallClock(interval.end, NightFixture.calendar) == "2026-10-25 10:00")
+        #expect(interval.duration == 15 * 3600)
+    }
+
     @Test("setLabWindow stores and clears the snapshot")
     func reducerSetsAndClears() {
         var state: DirectState = makeState()
@@ -269,6 +307,40 @@ struct NightWindowTests {
         let snapshot = LabWindowSnapshot.empty(interval: NightFixture.interval)
         reduce(&state, .setLabWindow(snapshot: snapshot))
         #expect(state.labWindow?.interval == NightFixture.interval)
+
+        reduce(&state, .setLabWindow(snapshot: nil))
+        #expect(state.labWindow == nil)
+    }
+
+    @Test("a snapshot the user has already paged away from is dropped")
+    func staleSnapshotIsDropped() {
+        var state: DirectState = makeState()
+
+        let nightOne = NightWindow.interval(for: NightFixture.at(12, 12), calendar: NightFixture.calendar)
+        let nightTwo = NightWindow.interval(for: NightFixture.at(11, 12), calendar: NightFixture.calendar)
+        #expect(nightOne != nightTwo)
+
+        // Two quick pages: the second request is the one in flight.
+        reduce(&state, .loadLabWindow(interval: nightOne, streams: LabNightStreams.all))
+        reduce(&state, .loadLabWindow(interval: nightTwo, streams: LabNightStreams.all))
+
+        // The FIRST night's read finishes last — it must not land.
+        reduce(&state, .setLabWindow(snapshot: .empty(interval: nightOne)))
+        #expect(state.labWindow == nil, "a snapshot for a window nobody asked for any more is stale")
+
+        // The one actually asked for does.
+        reduce(&state, .setLabWindow(snapshot: .empty(interval: nightTwo)))
+        #expect(state.labWindow?.interval == nightTwo)
+    }
+
+    @Test("an explicit clear always lands, whatever is in flight")
+    func explicitClearAlwaysLands() {
+        var state: DirectState = makeState()
+        let night = NightWindow.interval(for: NightFixture.day, calendar: NightFixture.calendar)
+
+        reduce(&state, .loadLabWindow(interval: night, streams: LabNightStreams.all))
+        reduce(&state, .setLabWindow(snapshot: .empty(interval: night)))
+        #expect(state.labWindow != nil)
 
         reduce(&state, .setLabWindow(snapshot: nil))
         #expect(state.labWindow == nil)
@@ -368,12 +440,16 @@ struct NightSummaryTests {
         #expect(summary.glucoseAtSleep?.n == 1)
     }
 
-    @Test("mmol/L figures are converted, and their unit says so")
-    func mmolConversion() {
-        let summary = NightSummary.make(sleep: Self.sleep, readings: Self.readings, unit: .mmolL)
-        #expect(summary.glucoseAtSleep?.unit == GlucoseUnit.mmolL.localizedDescription)
-        let value = summary.glucoseAtSleep?.value ?? 0
-        #expect(abs(value - 112.0 / 18.0182) < 0.05)
+    @Test("figures are stored in mg/dL whatever the display unit — the view converts")
+    func figuresAreStoredInMgdL() {
+        // P5's `LabCaption` converts glucose-family figures at render. Storing a
+        // converted value here would make it convert a second time.
+        for unit in [GlucoseUnit.mgdL, .mmolL] {
+            let summary = NightSummary.make(sleep: Self.sleep, readings: Self.readings, unit: unit)
+            #expect(summary.glucoseAtSleep?.unit == GlucoseUnit.mgdL.localizedDescription)
+            #expect(summary.glucoseAtSleep?.value == 112)
+            #expect(summary.riseByWake?.value == 40)
+        }
     }
 
     @Test("no sleep data means no sleep figures, and no crash")
@@ -395,6 +471,26 @@ struct NightSummaryTests {
 
         let summary = NightSummary.make(sleep: samples, readings: Self.readings, unit: .mgdL)
         #expect(summary.awakeCount == 2, "only awakenings BETWEEN falling asleep and waking count")
+    }
+
+    @Test("two sources reporting the same awakening count it once")
+    func overlappingAwakeMerged() {
+        // A Watch and an iPhone both writing sleep: the 01:00 awakening arrives
+        // twice, slightly offset.
+        var samples = Self.sleep
+        samples.append(SleepSample(start: NightFixture.at(12, 1, 2), end: NightFixture.at(12, 1, 9), stage: .awake))
+
+        let summary = NightSummary.make(sleep: samples, readings: Self.readings, unit: .mgdL)
+        #expect(summary.awakeCount == 2, "the duplicated awakening must not become a third")
+
+        let context = LabNightContext.make(
+            sleep: samples, readings: Self.readings,
+            interval: NightFixture.interval, glucoseUnit: .mgdL, alarmLow: 80,
+            calendar: NightFixture.calendar
+        )
+        #expect(context.awakeGaps.count == 2)
+        // Duplicate ids in a `ForEach` are a rendering hazard, not just a count.
+        #expect(Set(context.awakeGaps.map(\.start)).count == context.awakeGaps.count)
     }
 
     @Test("overlapping asleep spans are merged, never double-counted")
@@ -619,8 +715,11 @@ struct LabCoverageStripTests {
 
 // MARK: - Lab figures
 
-@Suite("Lab figure")
-struct LabFigureTests {
+// Named for THIS file, not for the type: P5's `ChartLabFactsTests` declares its
+// own `LabFigureTests` in the same module, and two of them is an invalid
+// redeclaration the moment either branch merges.
+@Suite("Lab figure — night")
+struct NightLabFigureTests {
     @Test("a figure always carries its sample size")
     func figureCarriesN() {
         // Compile-time contract: `LabFigure` has no initializer without `n`.

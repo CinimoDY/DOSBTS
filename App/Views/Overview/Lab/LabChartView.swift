@@ -400,7 +400,20 @@ struct LabChartView: View {
                 AxisGridLine(stroke: Config.axisStyle)
                 AxisTick(length: 4, stroke: Config.tickStyle)
                     .foregroundStyle(AmberTheme.amberMuted)
-                AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
+                // A windowed chart's labels are hours apart and cannot collide
+                // with each other — the only thing they "collide" with is the
+                // plot frame, and Charts resolves that by dropping the two that
+                // NAME the window. A scrolling chart keeps the default: its edge
+                // labels move constantly and overlapping them would be worse.
+                if isWindowed {
+                    AxisValueLabel(
+                        format: .dateTime.hour(.defaultDigits(amPM: .narrow)),
+                        anchor: .top,
+                        collisionResolution: .disabled
+                    )
+                } else {
+                    AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .narrow)), anchor: .top)
+                }
             }
         }
         .chartYAxis {
@@ -562,10 +575,18 @@ struct LabChartView: View {
     }
 
     private var yMax: Double {
-        LabChartMath.yMax(
-            floor: chartMinimum,
-            plotted: series.glucose.map(\.value) + series.bloodGlucose.map(\.value)
-        )
+        LabChartMath.yMax(floor: chartMinimum, plotted: plottedValues)
+    }
+
+    /// Only what is actually ON the plot. The window path fetches a 4-hour lead
+    /// so a meal keeps its pre-meal baseline — but a 19:00 spike must not lift
+    /// the night's axis for a reading the user cannot see.
+    private var plottedValues: [Double] {
+        let points = series.glucose + series.bloodGlucose
+        guard isWindowed else { return points.map(\.value) }
+        return points
+            .filter { $0.time >= series.domainStart && $0.time <= series.domainEnd }
+            .map(\.value)
     }
 
     private var alarmLow: Double {

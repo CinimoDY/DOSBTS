@@ -114,7 +114,7 @@ private class AppleHealthImportService {
             // Chart Lab's night window (DMNC-1506). Included here so enabling
             // Apple Health import asks for it in the same prompt; the lab also
             // completes the grant on its own for users who opted in earlier.
-            HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
+            HKCategoryType(.sleepAnalysis),
         ])
     }
 

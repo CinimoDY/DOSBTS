@@ -541,7 +541,18 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         state.mealHistoryResults = results
 
     // MARK: Chart Lab window (DMNC-1506)
+    case .loadLabWindow(interval: let interval, streams: _):
+        state.labWindowRequest = interval
+
     case .setLabWindow(snapshot: let snapshot):
+        // Drop a snapshot the user has already paged away from. Nothing cancels
+        // an in-flight load, and the two HealthKit reads are concurrent, so
+        // pressing `<` twice quickly can land night N-1 AFTER night N-2 — which
+        // would draw N-1's hours under N-2's pager date, with nothing left to
+        // reload it. A nil snapshot always lands: that is an explicit clear.
+        if let snapshot, let request = state.labWindowRequest, snapshot.interval != request {
+            break
+        }
         state.labWindow = snapshot
 
     // MARK: Ratio Lab

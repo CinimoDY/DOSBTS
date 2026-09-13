@@ -12,6 +12,11 @@ import Charts
 import SwiftUI
 
 enum LabOverlayMarks {
+    private enum Config {
+        /// The stage lane's tallest cell, as a fraction of the y domain.
+        static let stageLaneHeight: Double = 0.06
+    }
+
     @ChartContentBuilder
     static func marks(for overlay: ChartLabOverlay, series: LabChartSeries, yMax: Double) -> some ChartContent {
         switch overlay {
@@ -59,8 +64,20 @@ enum LabOverlayMarks {
             .foregroundStyle(AmberTheme.cgaCyan.opacity(0.05))
         }
 
+        // The sleep-stage lane, drawn IN the chart so it shares the x scale
+        // exactly — deepest sleep tallest, anchored to the plot floor.
+        ForEach(Array(context.stageCells.enumerated()), id: \.offset) { _, cell in
+            RectangleMark(
+                xStart: .value("Stage start", cell.start),
+                xEnd: .value("Stage end", cell.end),
+                yStart: .value("Bottom", 0),
+                yEnd: .value("Stage depth", yMax * Config.stageLaneHeight * cell.stage.laneWeight)
+            )
+            .foregroundStyle(AmberTheme.cgaCyan.opacity(cell.stage.laneWeight))
+        }
+
         // Awakenings, carved back out of it.
-        ForEach(context.awakeGaps, id: \.start) { gap in
+        ForEach(Array(context.awakeGaps.enumerated()), id: \.offset) { _, gap in
             RectangleMark(
                 xStart: .value("Awake", gap.start),
                 xEnd: .value("Asleep again", gap.end),

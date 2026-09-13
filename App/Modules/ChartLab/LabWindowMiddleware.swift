@@ -5,19 +5,22 @@
 //  Chart Lab P1 (DMNC-1506) — the whole-system window loader.
 //
 //  Data flow:
-//    LabNightView.onAppear → .loadLabWindow(interval:streams:)
+//    LabNightView (onAppear / selectedDate / scene active) → .loadLabWindow
 //      labWindowMiddleware (guard .active)
 //        ├─ DataStore.getLabWindowRaw(interval:)        — ONE asyncRead
-//        ├─ LabHealthKitService.fetchSleep(in:)         — its own .catch
-//        └─ LabHealthKitService.fetchHourlyHeartRate(in:)
+//        └─ ONE HealthKit Task: authorize once, then sleep + heart rate
 //             → LabWindowSnapshot.assemble (pure)
 //             → .setLabWindow(snapshot:)
 //
-//  Every leg is total. Each HealthKit read carries its own `.catch` so one
-//  denial or one throw can never sink the window, and the whole publisher has a
-//  final `.catch` → an empty snapshot, because `.setLabWindow` never landing
-//  would leave the view treating `labWindow == nil` as "still loading" forever
-//  (middleware-failure-swallowed-nil-as-loading-spins-20260704).
+//  Every leg is total. The HealthKit reads can only ever downgrade their OWN
+//  stream's status, so a denial or a throw never sinks the window, and the whole
+//  publisher has a final `.catch` → an empty snapshot, because `.setLabWindow`
+//  never landing would leave the view treating `labWindow == nil` as "still
+//  loading" forever (middleware-failure-swallowed-nil-as-loading-spins-20260704).
+//
+//  Triggers are deliberately NOT here. They live in `LabNightView`, so the read
+//  — and the HealthKit consent dialog that can come with it — happens only while
+//  the tab that needs the window is actually on screen.
 //
 
 import Combine
@@ -33,9 +36,10 @@ private func labWindowMiddleware(service: LazyService<LabHealthKitService>) -> M
     return { state, action, _ in
         switch action {
         case .loadLabWindow(interval: let interval, streams: let streams):
-            // Same guard every DataStore middleware uses: a load dispatched
-            // while the scene is inactive races the ContentView.onAppear that
-            // sets `.active`.
+            // Same guard every DataStore middleware uses. The view re-arms the
+            // load on `.setAppState(.active)`, so a load dispatched during a
+            // cold launch — before ContentView sets `.active` — is retried
+            // rather than silently dropped into a permanent loading state.
             guard state.appState == .active else {
                 break
             }
@@ -46,18 +50,6 @@ private func labWindowMiddleware(service: LazyService<LabHealthKitService>) -> M
                 state: state,
                 service: service
             )
-
-        case .setSelectedDate:
-            // The day pager moves the NIGHT window by a day. Only the tab that
-            // uses the window reloads it — no other surface pays for this read.
-            guard state.selectedReportType == .labNight else {
-                break
-            }
-
-            let interval = NightWindow.interval(for: state.selectedDate ?? Date())
-            return Just(DirectAction.loadLabWindow(interval: interval, streams: LabNightStreams.all))
-                .setFailureType(to: DirectError.self)
-                .eraseToAnyPublisher()
 
         default:
             break
@@ -96,33 +88,23 @@ private func loadWindow(
         iobLookbackMinutes: iobLookbackMinutes
     )
 
-    let sleep = healthKitLeg(
-        wanted: streams.contains(.sleep),
-        service: service,
+    let healthKit = healthKitLegs(
+        interval: interval,
+        wantsSleep: streams.contains(.sleep),
+        wantsHeartRate: streams.contains(.heartRate),
         mayPrompt: mayPrompt,
-        availability: { $0.sleepAvailability },
-        fetch: { try await $0.fetchSleep(in: interval) },
-        label: "sleep"
+        service: service
     )
 
-    let heartRate = healthKitLeg(
-        wanted: streams.contains(.heartRate),
-        service: service,
-        mayPrompt: mayPrompt,
-        availability: { $0.heartRateAvailability },
-        fetch: { try await $0.fetchHourlyHeartRate(in: interval) },
-        label: "heart rate"
-    )
-
-    return Publishers.Zip3(grdb, sleep, heartRate)
-        .map { raw, sleepLeg, heartRateLeg in
+    return Publishers.Zip(grdb, healthKit)
+        .map { raw, legs in
             DirectAction.setLabWindow(snapshot: LabWindowSnapshot.assemble(
                 raw: raw,
                 interval: interval,
-                heartRate: heartRateLeg.samples,
-                sleep: sleepLeg.samples,
-                heartRateAvailability: heartRateLeg.availability,
-                sleepAvailability: sleepLeg.availability
+                heartRate: legs.heartRate.samples,
+                sleep: legs.sleep.samples,
+                heartRateAvailability: legs.heartRate.availability,
+                sleepAvailability: legs.sleep.availability
             ))
         }
         .catch { error -> Just<DirectAction> in
@@ -135,53 +117,86 @@ private func loadWindow(
         .eraseToAnyPublisher()
 }
 
-// MARK: - HealthKit leg
+// MARK: - HealthKit legs
 
 /// One HealthKit stream's rows plus what we are allowed to say about them.
 private struct LabHealthKitLeg<Sample> {
     let samples: [Sample]
     let availability: LabStreamAvailability
+
+    static var unavailable: LabHealthKitLeg { LabHealthKitLeg(samples: [], availability: .unavailable) }
 }
 
-/// A HealthKit read that can never fail the zip: a throw becomes `.failed`, a
-/// never-asked type becomes `.unavailable`, and either way the window still
-/// lands with its GRDB streams intact.
-private func healthKitLeg<Sample>(
-    wanted: Bool,
-    service: LazyService<LabHealthKitService>,
+private struct LabHealthKitLegs {
+    let sleep: LabHealthKitLeg<SleepSample>
+    let heartRate: LabHealthKitLeg<HeartRateSample>
+}
+
+/// Both HealthKit reads in ONE Task, behind ONE authorization step.
+///
+/// They used to be two independent `Future`s that each awaited
+/// `requestAccessIfNeeded()`, which meant a user with Apple Health import on and
+/// sleep still `.notDetermined` got TWO overlapping system prompts for the same
+/// type. Authorization is asked once, up front; the reads follow.
+///
+/// Never fails: a throw becomes `.failed` for that stream alone, a never-asked
+/// type becomes `.unavailable`, and the window still lands with its GRDB
+/// streams intact either way.
+private func healthKitLegs(
+    interval: DateInterval,
+    wantsSleep: Bool,
+    wantsHeartRate: Bool,
     mayPrompt: Bool,
-    availability: @escaping (LabHealthKitService) -> LabStreamAvailability,
-    fetch: @escaping (LabHealthKitService) async throws -> [Sample],
-    label: String
-) -> AnyPublisher<LabHealthKitLeg<Sample>, DirectError> {
-    guard wanted else {
-        return Just(LabHealthKitLeg<Sample>(samples: [], availability: .unavailable))
+    service: LazyService<LabHealthKitService>
+) -> AnyPublisher<LabHealthKitLegs, DirectError> {
+    guard wantsSleep || wantsHeartRate else {
+        return Just(LabHealthKitLegs(sleep: .unavailable, heartRate: .unavailable))
             .setFailureType(to: DirectError.self)
             .eraseToAnyPublisher()
     }
 
-    return Future<LabHealthKitLeg<Sample>, DirectError> { promise in
+    return Future<LabHealthKitLegs, DirectError> { promise in
         Task {
             let health = service.value
 
+            // ONCE, before either read.
             if mayPrompt {
                 await health.requestAccessIfNeeded()
             }
 
-            let status = availability(health)
-            guard status == .available else {
-                promise(.success(LabHealthKitLeg(samples: [], availability: status)))
-                return
-            }
+            async let sleep = leg(
+                wanted: wantsSleep,
+                availability: health.sleepAvailability,
+                label: "sleep"
+            ) { try await health.fetchSleep(in: interval) }
 
-            do {
-                let samples = try await fetch(health)
-                promise(.success(LabHealthKitLeg(samples: samples, availability: .available)))
-            } catch {
-                DirectLog.error("Chart Lab \(label) read failed: \(error.localizedDescription)")
-                promise(.success(LabHealthKitLeg(samples: [], availability: .failed)))
-            }
+            async let heartRate = leg(
+                wanted: wantsHeartRate,
+                availability: health.heartRateAvailability,
+                label: "heart rate"
+            ) { try await health.fetchHourlyHeartRate(in: interval) }
+
+            promise(.success(LabHealthKitLegs(sleep: await sleep, heartRate: await heartRate)))
         }
     }
     .eraseToAnyPublisher()
+}
+
+private func leg<Sample>(
+    wanted: Bool,
+    availability: LabStreamAvailability,
+    label: String,
+    fetch: () async throws -> [Sample]
+) async -> LabHealthKitLeg<Sample> {
+    guard wanted else { return .unavailable }
+    guard availability == .available else {
+        return LabHealthKitLeg(samples: [], availability: availability)
+    }
+
+    do {
+        return LabHealthKitLeg(samples: try await fetch(), availability: .available)
+    } catch {
+        DirectLog.error("Chart Lab \(label) read failed: \(error.localizedDescription)")
+        return LabHealthKitLeg(samples: [], availability: .failed)
+    }
 }

@@ -47,6 +47,10 @@ struct LabChartInputs: Equatable {
     let insulin: [InsulinDelivery]
     let iobDeliveries: [InsulinDelivery]
     let exercise: [ExerciseEntry]
+    /// Declared here to match P5's field exactly (same name, same type, same
+    /// source) so the two branches' copies collapse into one at merge instead
+    /// of the compiler catching a missing assignment in this file's inits.
+    let journalNotes: [JournalNote]
     let heartRate: [HeartRateSample]
     let sleep: [SleepSample]
     /// The night window forces heart rate on; the day path follows the setting.
@@ -74,6 +78,7 @@ struct LabChartInputs: Equatable {
         self.insulin = state.insulinDeliveryValues
         self.iobDeliveries = state.iobDeliveries
         self.exercise = state.exerciseEntryValues
+        self.journalNotes = state.journalNoteValues
         self.heartRate = state.heartRateSeries.map { HeartRateSample(time: $0.0, bpm: $0.1) }
         self.sleep = []
         self.showHeartRate = state.showHeartRateOverlay
@@ -108,6 +113,7 @@ struct LabChartInputs: Equatable {
         self.insulin = window.deliveries
         self.iobDeliveries = window.iobDeliveries
         self.exercise = window.exercise
+        self.journalNotes = window.notes
         self.heartRate = window.heartRate
         self.sleep = window.sleep
         // The night is the one window where heart rate is part of the story, so
@@ -138,6 +144,7 @@ struct LabChartInputs: Equatable {
         insulin: [InsulinDelivery],
         iobDeliveries: [InsulinDelivery],
         exercise: [ExerciseEntry],
+        journalNotes: [JournalNote] = [],
         heartRate: [HeartRateSample],
         sleep: [SleepSample] = [],
         showHeartRate: Bool = true,
@@ -158,6 +165,7 @@ struct LabChartInputs: Equatable {
         self.insulin = insulin
         self.iobDeliveries = iobDeliveries
         self.exercise = exercise
+        self.journalNotes = journalNotes
         self.heartRate = heartRate
         self.sleep = sleep
         self.showHeartRate = showHeartRate
@@ -511,13 +519,20 @@ enum LabChartSeriesBuilder {
             // No delta and no readings behind it is not a fact the lab may draw.
             guard let value = delta.delta, readings > 0 else { return nil }
 
+            // `computeMealOverlayDelta` works in mg/dL (the storage unit); the
+            // LABEL is the user's unit, so an mmol/L user reads `+2,1`, not `+38`.
+            // Sign comes off the raw value so a rounded-to-zero delta still
+            // shows the direction it went.
             let sign = value > 0 ? "+" : ""
+            let magnitude = inputs.glucoseUnit == .mmolL
+                ? (GlucoseFormatters.mmolLFormatter.string(from: Double(value).toMmolL() as NSNumber) ?? "\(value)")
+                : "\(value)"
             return LabMealRibbon(
                 id: meal.id.uuidString,
                 start: max(domainStart, meal.timestamp),
                 end: min(domainEnd, end),
                 mealTime: meal.timestamp,
-                label: "\(sign)\(value) · \(readings) RDG"
+                label: "\(sign)\(magnitude) · \(readings) RDG"
             )
         }
     }

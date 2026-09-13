@@ -22,11 +22,25 @@ enum NightWindow {
     static let startHour = 20
     static let endHour = 10
 
+    /// The night is defined by the CLOCK, not by a count of hours.
+    ///
+    /// `byAdding: .hour` adds absolute hours, so on the two DST nights it slides
+    /// the window off the wall clock entirely — 2026-03-29 became 20:00 → 11:00
+    /// and 2026-10-25 became 20:00 → 09:00. `bySettingHour:` keeps both ends
+    /// where the user's clock says they are and lets the window itself be 13 h
+    /// or 15 h, which is the truth about those nights. Nothing downstream
+    /// assumes 14: `glucosePercent` divides by `interval.duration`.
     static func interval(for day: Date, calendar: Calendar = .current) -> DateInterval {
         let morning = calendar.startOfDay(for: day)
-        let end = calendar.date(byAdding: .hour, value: endHour, to: morning) ?? morning
         let evening = calendar.date(byAdding: .day, value: -1, to: morning) ?? morning
-        let start = calendar.date(byAdding: .hour, value: startHour, to: evening) ?? evening
+
+        let end = calendar.date(bySettingHour: endHour, minute: 0, second: 0, of: morning)
+            ?? calendar.date(byAdding: .hour, value: endHour, to: morning)
+            ?? morning
+        let start = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: evening)
+            ?? calendar.date(byAdding: .hour, value: startHour, to: evening)
+            ?? evening
+
         return DateInterval(start: start, end: max(start, end))
     }
 
@@ -61,9 +75,13 @@ struct NightSummary: Equatable {
         glucoseAtSleep: nil, glucoseAtWake: nil, riseByWake: nil
     )
 
-    /// `unit` is the DISPLAY unit: the figures come out converted, with the
-    /// unit string to match, so no caller has to convert a second time.
+    /// Figures come out in **mg/dL**, tagged `mg/dL`, and the view converts at
+    /// render — the convention `LabCaption` (P5) expects. Storing a converted
+    /// value with a converted unit string would make that caption convert a
+    /// second time. `unit` is kept in the signature because the plan names it
+    /// and a future kind may need it.
     static func make(sleep: [SleepSample], readings: [SensorGlucose], unit: GlucoseUnit) -> NightSummary {
+        _ = unit
         let asleepSpans = merge(sleep.filter { $0.stage.isAsleep }.map { DateInterval(start: $0.start, end: max($0.start, $0.end)) })
 
         let inBed = sleep.map(\.start).min()
@@ -71,9 +89,11 @@ struct NightSummary: Equatable {
         let wake = asleepSpans.last?.end
         let asleepMinutes = Int(asleepSpans.reduce(0) { $0 + $1.duration } / 60)
 
+        // Merged, like the asleep spans: a Watch and an iPhone both writing
+        // sleep would otherwise make one awakening count as two.
         let awakeCount: Int
         if let asleep, let wake {
-            awakeCount = sleep.filter { $0.stage == .awake && $0.start >= asleep && $0.end <= wake }.count
+            awakeCount = awakeSpans(in: sleep, between: asleep, and: wake).count
         } else {
             awakeCount = 0
         }
@@ -100,12 +120,12 @@ struct NightSummary: Equatable {
             wake: wake,
             asleepMinutes: asleepMinutes,
             awakeCount: awakeCount,
-            glucoseAtSleep: atSleep.map { figure(.glucose, mgdL: Double($0.glucoseValue), unit: unit, n: 1) },
-            glucoseAtWake: atWake.map { figure(.glucose, mgdL: Double($0.glucoseValue), unit: unit, n: 1) },
+            glucoseAtSleep: atSleep.map { figure(.glucose, mgdL: Double($0.glucoseValue), n: 1) },
+            glucoseAtWake: atWake.map { figure(.glucose, mgdL: Double($0.glucoseValue), n: 1) },
             riseByWake: {
                 guard let atSleep, let atWake, !between.isEmpty else { return nil }
                 let delta = Double(atWake.glucoseValue - atSleep.glucoseValue)
-                return figure(.delta, mgdL: delta, unit: unit, n: between.count, window: window)
+                return figure(.delta, mgdL: delta, n: between.count, window: window)
             }()
         )
     }
@@ -121,19 +141,28 @@ struct NightSummary: Equatable {
             .min { abs($0.timestamp.timeIntervalSince(date)) < abs($1.timestamp.timeIntervalSince(date)) }
     }
 
+    /// Stored in mg/dL — the storage unit — so exactly one layer converts.
     private static func figure(
         _ kind: LabFigure.Kind,
         mgdL: Double,
-        unit: GlucoseUnit,
         n: Int,
         window: DateInterval? = nil
     ) -> LabFigure {
         LabFigure(
             kind: kind,
-            value: unit == .mmolL ? mgdL.toMmolL() : mgdL,
-            unit: unit.localizedDescription,
+            value: mgdL,
+            unit: GlucoseUnit.mgdL.localizedDescription,
             n: n,
             window: window
+        )
+    }
+
+    /// Awakenings between falling asleep and waking, overlapping sources merged.
+    static func awakeSpans(in sleep: [SleepSample], between asleep: Date, and wake: Date) -> [DateInterval] {
+        merge(
+            sleep
+                .filter { $0.stage == .awake && $0.end > $0.start && $0.start >= asleep && $0.end <= wake }
+                .map { DateInterval(start: $0.start, end: $0.end) }
         )
     }
 
@@ -189,8 +218,13 @@ struct LabNightContext: Equatable {
     let awakeGaps: [DateInterval]
     let midnight: Date?
     let hypo: LabNightHypoMark?
+    /// The stage lane's cells, drawn INSIDE the chart so they share its x scale
+    /// exactly. A sibling strip cannot: the windowed plot has its own side inset
+    /// and a trailing y axis inside the same frame, so a hand-computed lane sits
+    /// a few points left and ~30 short of the trace it is supposed to align with.
+    let stageCells: [SleepSample]
 
-    static let empty = LabNightContext(sleepBand: nil, awakeGaps: [], midnight: nil, hypo: nil)
+    static let empty = LabNightContext(sleepBand: nil, awakeGaps: [], midnight: nil, hypo: nil, stageCells: [])
 
     /// - Parameters:
     ///   - alarmLow: the active profile's low, in mg/dL (the stored unit).
@@ -212,12 +246,11 @@ struct LabNightContext: Equatable {
             return DateInterval(start: first.start, end: last.end)
         }()
 
+        // Merged: two sources writing the same awakening would otherwise draw
+        // two overlapping rectangles AND collide on `id: \.start`.
         let gaps: [DateInterval] = {
             guard let band else { return [] }
-            return sleep
-                .filter { $0.stage == .awake && $0.start >= band.start && $0.end <= band.end && $0.end > $0.start }
-                .map { DateInterval(start: $0.start, end: $0.end) }
-                .sorted { $0.start < $1.start }
+            return NightSummary.awakeSpans(in: sleep, between: band.start, and: band.end)
         }()
 
         let hypo: LabNightHypoMark? = readings
@@ -236,7 +269,12 @@ struct LabNightContext: Equatable {
             sleepBand: band,
             awakeGaps: gaps,
             midnight: NightWindow.midnight(in: interval, calendar: calendar),
-            hypo: hypo
+            hypo: hypo,
+            // `inBed` is the envelope, not a stage — drawing it would paint a
+            // solid bar under every real cell.
+            stageCells: sleep
+                .filter { $0.stage != .inBed && $0.end > $0.start }
+                .sorted { $0.start < $1.start }
         )
     }
 }

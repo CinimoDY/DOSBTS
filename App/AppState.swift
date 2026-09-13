@@ -350,6 +350,7 @@ struct AppState: DirectState {
 
     // MARK: Chart Lab window (DMNC-1506)
     var labWindow: LabWindowSnapshot? // transient — loaded on demand, not persisted
+    var labWindowRequest: DateInterval? // transient — the in-flight window request
 
     // MARK: Ratio Lab
     var ratioEvidence: RatioEvidence? // transient — loaded on demand, not persisted
