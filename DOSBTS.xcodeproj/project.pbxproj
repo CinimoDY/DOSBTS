@@ -70,6 +70,7 @@
 		TE0100010000003000A00030 /* DictationDisplayModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TE0100020000003000A00030 /* DictationDisplayModelTests.swift */; };
 		C1AB15010000000100A00002 /* ChartLabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15010000000100A00001 /* ChartLabTests.swift */; };
 		C1AB15050000000100A00002 /* ChartLabFactsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15050000000100A00001 /* ChartLabFactsTests.swift */; };
+		C1AB15030000000200A00002 /* ChartLabPatternsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AB15030000000200A00001 /* ChartLabPatternsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,6 +169,7 @@
 		TE0100020000003000A00030 /* DictationDisplayModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationDisplayModelTests.swift; sourceTree = "<group>"; };
 		C1AB15010000000100A00001 /* ChartLabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabTests.swift; sourceTree = "<group>"; };
 		C1AB15050000000100A00001 /* ChartLabFactsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabFactsTests.swift; sourceTree = "<group>"; };
+		C1AB15030000000200A00001 /* ChartLabPatternsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartLabPatternsTests.swift; sourceTree = "<group>"; };
 		TE01000400000001000A0001 /* DOSBTSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DOSBTSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -343,6 +345,7 @@
 				TE0100020000003000A00030 /* DictationDisplayModelTests.swift */,
 				C1AB15010000000100A00001 /* ChartLabTests.swift */,
 				C1AB15050000000100A00001 /* ChartLabFactsTests.swift */,
+				C1AB15030000000200A00001 /* ChartLabPatternsTests.swift */,
 			);
 			path = DOSBTSTests;
 			sourceTree = "<group>";
@@ -570,6 +573,7 @@
 				TE0100010000003000A00030 /* DictationDisplayModelTests.swift in Sources */,
 				C1AB15010000000100A00002 /* ChartLabTests.swift in Sources */,
 				C1AB15050000000100A00002 /* ChartLabFactsTests.swift in Sources */,
+				C1AB15030000000200A00002 /* ChartLabPatternsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
