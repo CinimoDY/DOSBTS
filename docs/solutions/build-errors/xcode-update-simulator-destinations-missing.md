@@ -10,8 +10,10 @@ symptoms:
   - "Ineligible destinations list shows only 'Any iOS Device' with 'iOS 26.5 is not installed. Please download and install the platform'"
   - "xcrun simctl list devices hangs indefinitely (CoreSimulator 'Framework version does not match existing job version')"
   - "xcodebuild -showsdks lists the iphonesimulator SDK, and older runtimes show Ready — yet builds still fail"
+  - "CoreSimulator is out of date. Current version (1051.55.0) is older than build version (1171.7.0). Simulator device support disabled."
 resolution_type: environment_setup
 severity: high
+last_updated: 2026-09-28
 tags: [xcode-update, simulator-runtime, coresimulator, destinations, download-platform]
 ---
 
@@ -64,8 +66,34 @@ An Xcode update ships the new simulator **SDK** inside Xcode but not the simulat
 
 - After any Xcode update, before assuming code is broken: run `xcodebuild -downloadPlatform iOS` (or download via Xcode > Settings > Components) and expect the first `simctl` call to need a CoreSimulator restart
 - Diagnostic order that separates the two failures: `xcodebuild -version` → `xcrun simctl runtime list` (hangs? → kill CoreSimulator) → `xcodebuild -showdestinations -scheme <scheme>` (ineligible-only? → download platform)
-- `./deploy.sh` archive builds after an Xcode update likely need the device platform equivalent (`xcodebuild -downloadPlatform iOS` covers both) — budget the ~8.5 GB download into the first post-update deploy
+- `./deploy.sh` archives to `generic/platform=iOS`, which does NOT depend on CoreSimulator: Build 138 archived and uploaded cleanly while simulator support was disabled (see variant below). A broken simulator is not, by itself, a reason to hold a deploy
 - macOS has no `timeout` command by default — don't wrap the download in one; run it in the background and poll `xcrun simctl runtime list`
+
+## Variant: "CoreSimulator is out of date" (2026-09-28, Build 138)
+
+A second failure shape after an Xcode update: the installed system CoreSimulator framework is *older* than the one the new Xcode was built against.
+
+```
+iOSSimulator: ... CoreSimulator is out of date. Current version (1051.55.0) is older than
+build version (1171.7.0). Simulator device support disabled.
+xcodebuild: error: Unable to find a device matching the provided destination specifier
+```
+
+Unlike the stale-job case above, killing the service does not help: the framework on disk is the wrong version. The likely fix (untested this session) is to let Xcode install its bundled system components: launch Xcode.app once, or run `sudo xcodebuild -runFirstLaunch`, then retry `xcodebuild -downloadPlatform iOS` if destinations are still missing.
+
+What still works while simulator support is disabled:
+
+- **Device archive/deploy:** `./deploy.sh` (`-destination 'generic/platform=iOS'`) archived, exported and uploaded normally.
+- **Asset-catalog validation without a build:** compile the catalog directly to catch icon/asset errors (used for the PR #123 app-icon change):
+
+  ```bash
+  xcrun actool Library/Assets.xcassets --compile /tmp/actool \
+    --platform iphoneos --minimum-deployment-target 26.0 --app-icon AppIcon \
+    --output-partial-info-plist /tmp/actool/partial.plist \
+    --output-format human-readable-text
+  ```
+
+  No warnings plus `AppIcon60x60@2x.png` in the output means the AppIcon set (including the single-size 1024 Any/Dark/Tinted format) is valid.
 
 ## Related Issues
 

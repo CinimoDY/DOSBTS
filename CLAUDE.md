@@ -12,7 +12,7 @@ xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSApp -destination 'platform=iO
 xcodebuild -project DOSBTS.xcodeproj -scheme DOSBTSWidget -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.5' -configuration Debug build
 ```
 
-After an Xcode update: simulator builds fail until `xcodebuild -downloadPlatform iOS` runs (and a wedged CoreSimulator may need `killall -9 com.apple.CoreSimulator.CoreSimulatorService`). See `docs/solutions/build-errors/xcode-update-simulator-destinations-missing.md`.
+After an Xcode update: simulator builds fail until `xcodebuild -downloadPlatform iOS` runs (and a wedged CoreSimulator may need `killall -9 com.apple.CoreSimulator.CoreSimulatorService`). A "CoreSimulator is out of date" error is a different case (system framework older than Xcode's): it disables simulator builds only — `./deploy.sh` (device archive) still works, and asset/icon changes can be validated with `xcrun actool` directly. See `docs/solutions/build-errors/xcode-update-simulator-destinations-missing.md`.
 
 No package manager (SPM/CocoaPods) - all dependencies are vendored or first-party.
 
