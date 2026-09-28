@@ -1,86 +1,57 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <!-- ===================================================================
-       DOSBTS app icon — eiDotter yolk, restated as a 3-cellular CGM sensor.
+       DOSBTS app icon — the eiDotter yolk restated as a Libre-style CGM sensor.
+       Mirrors the `any` variant of scripts/render-app-icon.py (the rasterizer,
+       which also emits the dark + tinted variants). Keep the two in sync.
 
-       Direct line from the eiDotter V2 Logo (src/components/Brand/Logo.tsx):
-         <circle cx="16" cy="16" r="11"  fill="#FFB000" />   sensor body
-         <circle cx="12" cy="12" r="3.2" fill="#FFD97A" />   dome
-         <circle cx="11" cy="11" r="1.1" fill="#FFE8A8" />   specular
-
-       Yolk-to-sensor transform:
-         - off-centre highlight → concentric rings (sensor geometry)
-         - 3 layers stay (brand-locked structure)
-         - 3 faint transmission arcs read as wireless/cellular without
-           adding a 4th element
-         - phosphor glow from Logo's `glow` prop kept as a radial sheen
+       Geometry is proportional to the body radius R = 300 (disc ≈ 59% of the
+       frame, inside Apple's icon grid):
+         body       circle r=R at centre, radial DOME → AMBER → AMBER_DARK
+         edge ring  0.03R, #9A5700
+         oval       rx=0.50R ry=0.21R, centred 0.45R above centre — recessed
+                    well with a shadowed top edge and a lit bottom lip
+         hole       r=0.11R at the disc centre, 0.035R #9A5700 ring
 
        Palette hexes match eiDotter brand tokens verbatim.
        ===================================================================
   -->
-
   <defs>
-    <!-- Phosphor glow (eiDotter's `glow` prop, upscaled for 1024px) -->
-    <filter id="phosphor" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="bloom" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="24"/>
     </filter>
-
-    <!-- Faint CRT scanlines — matches DOSTypography treatment -->
+    <radialGradient id="bodyFill" cx="39%" cy="36%" r="62%">
+      <stop offset="0%"   stop-color="#FFD97A"/>
+      <stop offset="50%"  stop-color="#FFB000"/>
+      <stop offset="100%" stop-color="#9A5700"/>
+    </radialGradient>
+    <clipPath id="disc"><circle cx="512" cy="512" r="300"/></clipPath>
+    <clipPath id="well"><ellipse cx="512" cy="377" rx="150" ry="63"/></clipPath>
     <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
       <rect width="4" height="2" fill="rgba(0,0,0,0.08)"/>
     </pattern>
-
-    <!-- Radial sheen on the sensor body — mimics the yolk's soft gradient -->
-    <radialGradient id="bodyFill" cx="45%" cy="42%" r="60%">
-      <stop offset="0%"  stop-color="#FFD97A"/>
-      <stop offset="55%" stop-color="#FFB000"/>
-      <stop offset="100%" stop-color="#9A5700"/>
-    </radialGradient>
   </defs>
 
-  <!-- Black CGA background -->
   <rect width="1024" height="1024" fill="#000000"/>
 
-  <!-- Transmission arcs — cellular hint, drawn behind the sensor body so they
-       read as emissions radiating outward. Three arcs = "three-cellular". -->
-  <g fill="none" stroke="#FFB000" stroke-linecap="round" opacity="0.28">
-    <!-- 10 o'clock direction — upper left quadrant only -->
-    <path d="M 240,320 A 400,400 0 0 1 320,240" stroke-width="14"/>
-    <path d="M 180,300 A 480,480 0 0 1 300,180" stroke-width="10" opacity="0.7"/>
-    <path d="M 120,280 A 560,560 0 0 1 280,120" stroke-width="6"  opacity="0.45"/>
+  <!-- Phosphor bloom -->
+  <circle cx="512" cy="512" r="300" fill="#FFB000" opacity="0.43" filter="url(#bloom)"/>
+
+  <!-- Sensor body + edge ring -->
+  <circle cx="512" cy="512" r="300" fill="url(#bodyFill)"/>
+  <circle cx="512" cy="512" r="295.5" fill="none" stroke="#9A5700" stroke-width="9"/>
+
+  <!-- Oval cutout: lit lip (lowered copy), well floor, shadowed top edge -->
+  <ellipse cx="512" cy="390.5" rx="150" ry="63" fill="#FFE8A8"/>
+  <ellipse cx="512" cy="377"   rx="150" ry="63" fill="#9A5700"/>
+  <g clip-path="url(#well)">
+    <path fill="#603400" fill-rule="evenodd"
+          d="M362,300 H662 V460 H362 Z M362,390.5 a150,63 0 1,0 300,0 a150,63 0 1,0 -300,0 Z"/>
   </g>
 
-  <g filter="url(#phosphor)">
-    <!-- Layer 1 — sensor body (maps to yolk outer disc, r=11 in 32px = ~352 in 1024px) -->
-    <circle cx="512" cy="512" r="352" fill="url(#bodyFill)"/>
+  <!-- Filament hole -->
+  <circle cx="512" cy="512" r="43.5" fill="#9A5700"/>
+  <circle cx="512" cy="512" r="33"   fill="#000000"/>
 
-    <!-- Layer 1b — body edge, thin darker ring for definition against scanlines -->
-    <circle cx="512" cy="512" r="352" fill="none" stroke="#9A5700" stroke-width="6"/>
-
-    <!-- Layer 2 — active-scan ring (maps to yolk highlight, r=3.2 in 32 = 102 in 1024).
-         Concentric instead of offset — that's the "sensor" tell. -->
-    <circle cx="512" cy="512" r="188" fill="none" stroke="#FFD97A" stroke-width="20"/>
-
-    <!-- Layer 3 — central filament dome (maps to yolk specular, r=1.1 in 32 = 35 in 1024).
-         Brightest point, small enough to read as "exit point". -->
-    <circle cx="512" cy="512" r="52" fill="#FFE8A8"/>
-
-    <!-- Inner dome highlight — suggests curvature on the filament exit -->
-    <circle cx="498" cy="498" r="18" fill="#FFFFFF" opacity="0.55"/>
-  </g>
-
-  <!-- Four tick marks at cardinal points on the active-scan ring — subtle
-       sensor-grid cue, reads as filament contact points. -->
-  <g stroke="#FFB000" stroke-width="6" stroke-linecap="round" opacity="0.85">
-    <line x1="512" y1="296" x2="512" y2="316"/>
-    <line x1="512" y1="708" x2="512" y2="728"/>
-    <line x1="296" y1="512" x2="316" y2="512"/>
-    <line x1="708" y1="512" x2="728" y2="512"/>
-  </g>
-
-  <!-- Scanline overlay -->
-  <rect width="1024" height="1024" fill="url(#scanlines)"/>
+  <!-- Scanlines, clipped to the disc -->
+  <rect width="1024" height="1024" fill="url(#scanlines)" clip-path="url(#disc)"/>
 </svg>
