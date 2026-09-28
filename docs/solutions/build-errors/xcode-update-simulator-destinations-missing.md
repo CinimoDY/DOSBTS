@@ -79,7 +79,7 @@ build version (1171.7.0). Simulator device support disabled.
 xcodebuild: error: Unable to find a device matching the provided destination specifier
 ```
 
-Unlike the stale-job case above, killing the service does not help: the framework on disk is the wrong version. The likely fix (untested this session) is to let Xcode install its bundled system components: launch Xcode.app once, or run `sudo xcodebuild -runFirstLaunch`, then retry `xcodebuild -downloadPlatform iOS` if destinations are still missing.
+Unlike the stale-job case above, killing the service does not help: the framework on disk is the wrong version. **Fix (confirmed 2026-09-28):** launch Xcode.app once so it installs its bundled system components (`sudo xcodebuild -runFirstLaunch` is the headless equivalent). Afterwards `xcodebuild -showdestinations` listed the iPhone 17 Pro simulators again. Retry `xcodebuild -downloadPlatform iOS` only if destinations are still missing.
 
 What still works while simulator support is disabled:
 
