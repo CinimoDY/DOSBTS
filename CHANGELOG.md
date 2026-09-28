@@ -7,6 +7,9 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+### Changed
+- Refreshed app icon: a smaller sensor disc with a Libre-style oval cutout and filament hole, plus dark and tinted home-screen variants
+
 ## [Build 137] — 2026-09-13
 
 ### Added
