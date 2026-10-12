@@ -141,6 +141,7 @@ struct AppState: DirectState {
         self.treatmentCycleSnoozeUntil = defaults.treatmentCycleSnoozeUntil
         self.hypoTreatmentWaitMinutes = defaults.hypoTreatmentWaitMinutes
         self.showPredictiveLowAlarm = defaults.showPredictiveLowAlarm
+        self.predictiveLowAlarmFired = defaults.predictiveLowAlarmFired
         self.showMissedBolusNudge = defaults.showMissedBolusNudge
         self.showHeartRateOverlay = defaults.showHeartRateOverlay
         self.showChartLab = defaults.showChartLab
@@ -301,7 +302,9 @@ struct AppState: DirectState {
 
     // MARK: Predictive Low Alarm
     var showPredictiveLowAlarm: Bool { didSet { defaults.showPredictiveLowAlarm = showPredictiveLowAlarm } }
-    var predictiveLowAlarmFired: Bool = false
+    // Persisted (DMNC-1560): SheetCoordinator needs it to tell a predictive
+    // prompt (fired above alarmLow) from a stale one after a cold launch.
+    var predictiveLowAlarmFired: Bool { didSet { defaults.predictiveLowAlarmFired = predictiveLowAlarmFired } }
 
     // MARK: Missed-Bolus Nudge (DMNC-1300)
     var showMissedBolusNudge: Bool { didSet { defaults.showMissedBolusNudge = showMissedBolusNudge } }

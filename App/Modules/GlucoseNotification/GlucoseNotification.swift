@@ -8,6 +8,11 @@ import Foundation
 import UIKit
 import UserNotifications
 
+/// Identifier of the "Trending Low" notification. Shared with
+/// TreatmentCycleMiddleware, which removes it once the episode is treated or
+/// ended (DMNC-1560).
+let predictiveLowNotificationIdentifier = "libre-direct.notifications.sensor-glucose-alarm.predictive"
+
 func glucoseNotificationMiddleware() -> Middleware<DirectState, DirectAction> {
     return glucoseNotificationMiddleware(service: LazyService<GlucoseNotificationService>(initialization: {
         GlucoseNotificationService()
@@ -42,13 +47,9 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
             {
                 // Compute smoothed minuteChange (average of last 3 with non-nil values)
                 // Require at least 2 samples to avoid single-reading noise spikes
-                let recentChanges = state.sensorGlucoseValues
-                    .suffix(10)
-                    .compactMap(\.minuteChange)
-                    .suffix(3)
-
-                guard recentChanges.count >= 2 else { break predictiveCheck }
-                let smoothedChange = recentChanges.reduce(0, +) / Double(recentChanges.count)
+                // Shared helper (AlarmProfile.swift) so the prompt-currency
+                // predicate uses the identical slope — DMNC-1560.
+                guard let smoothedChange = smoothedMinuteChange(of: state.sensorGlucoseValues) else { break predictiveCheck }
 
                 // R3: Linear extrapolation over 20 minutes
                 let predictedGlucose = Double(glucose.glucoseValue) + (smoothedChange * 20.0)
@@ -66,11 +67,13 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                         smoothedMinuteChange: smoothedChange
                     )
 
-                    // R8a: NO autosnooze — return showTreatmentPrompt + flag, NOT setAlarmSnoozeUntil
+                    // R8a: NO autosnooze — return showTreatmentPrompt + flag, NOT setAlarmSnoozeUntil.
+                    // The flag lands first so the prompt observer already sees
+                    // a predictive prompt (SheetCoordinator.treatmentPresent).
                     return Publishers.Merge(
-                        Just(DirectAction.showTreatmentPrompt(alarmFiredAt: Date()))
-                            .setFailureType(to: DirectError.self),
                         Just(DirectAction.setPredictiveLowAlarmFired(fired: true))
+                            .setFailureType(to: DirectError.self),
+                        Just(DirectAction.showTreatmentPrompt(alarmFiredAt: Date()))
                             .setFailureType(to: DirectError.self)
                     ).eraseToAnyPublisher()
                 }
@@ -82,13 +85,28 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
             var deferredActions: [DirectAction] = []
 
             if state.predictiveLowAlarmFired {
-                if glucose.glucoseValue >= state.alarmLow + 10 {
+                if glucose.glucoseValue >= state.alarmLow + predictiveLowClearMargin {
                     // Episode resolved — glucose recovered
                     deferredActions.append(.setPredictiveLowAlarmFired(fired: false))
+                    service.value.clearPredictiveLowNotification()
                 } else if glucose.glucoseValue < state.alarmLow {
                     // Actual low — clear flag so prediction can re-fire on next episode
                     deferredActions.append(.setPredictiveLowAlarmFired(fired: false))
+                    service.value.clearPredictiveLowNotification()
                 }
+            }
+
+            // DMNC-1560: clear a pending treatment prompt at the source once
+            // glucose has recovered past the predictive clear line. Presenters
+            // keep their own currency gate as a defensive check. An active
+            // cycle owns its prompt/alarmFiredAt state and is left alone.
+            if shouldClearTreatmentPromptAtSource(
+                glucoseValue: glucose.glucoseValue,
+                alarmLow: state.alarmLow,
+                showTreatmentPrompt: state.showTreatmentPrompt,
+                treatmentCycleActive: state.treatmentCycleActive
+            ) {
+                deferredActions.append(.clearStaleTreatmentPrompt)
             }
 
             let alarm = state.isAlarm(glucoseValue: glucose.glucoseValue)
@@ -124,13 +142,11 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
 
                     let snoozeAction = Just(DirectAction.setAlarmSnoozeUntil(untilDate: Date().addingTimeInterval(5 * 60).toRounded(on: 1, .minute), autosnooze: true))
                         .setFailureType(to: DirectError.self)
-                    if let deferredAction = deferredActions.first {
-                        return Publishers.Merge(
-                            snoozeAction,
-                            Just(deferredAction).setFailureType(to: DirectError.self)
-                        ).eraseToAnyPublisher()
-                    }
-                    return snoozeAction.eraseToAnyPublisher()
+                    return Publishers.MergeMany(
+                        [snoozeAction.eraseToAnyPublisher()] + deferredActions.map {
+                            Just($0).setFailureType(to: DirectError.self).eraseToAnyPublisher()
+                        }
+                    ).eraseToAnyPublisher()
                 }
 
             } else if alarm == .highAlarm {
@@ -145,9 +161,15 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                         service.value.setHighGlucoseAlarm(sound: state.highGlucoseAlarmSound, volume: state.alarmVolume, ignoreMute: state.ignoreMute)
                     }
 
-                    return Just(.setAlarmSnoozeUntil(untilDate: Date().addingTimeInterval(5 * 60).toRounded(on: 1, .minute), autosnooze: true))
+                    // Deferred actions ride along — a high reading is exactly
+                    // when the predictive flag and a stale prompt must clear.
+                    let snoozeAction = Just(DirectAction.setAlarmSnoozeUntil(untilDate: Date().addingTimeInterval(5 * 60).toRounded(on: 1, .minute), autosnooze: true))
                         .setFailureType(to: DirectError.self)
-                        .eraseToAnyPublisher()
+                    return Publishers.MergeMany(
+                        [snoozeAction.eraseToAnyPublisher()] + deferredActions.map {
+                            Just($0).setFailureType(to: DirectError.self).eraseToAnyPublisher()
+                        }
+                    ).eraseToAnyPublisher()
                 }
 
             } else if state.normalGlucoseNotification {
@@ -156,9 +178,10 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                 service.value.clear()
             }
 
-            // Emit any deferred predictive alarm actions (flag clear) that weren't merged above
-            if let deferredAction = deferredActions.first {
-                return Just(deferredAction)
+            // Emit any deferred actions (predictive flag clear, stale prompt
+            // clear) that weren't merged above — all of them, in order.
+            if !deferredActions.isEmpty {
+                return deferredActions.publisher
                     .setFailureType(to: DirectError.self)
                     .eraseToAnyPublisher()
             }
@@ -186,9 +209,16 @@ private class GlucoseNotificationService {
         case sensorGlucoseAlarm = "libre-direct.notifications.sensor-glucose-alarm"
     }
 
+    // Runs on every in-range reading — must NOT remove the predictive
+    // notification; that is removed where the predictive flag clears.
     func clear() {
         UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)
         DirectNotifications.shared.removeNotification(identifier: Identifier.sensorGlucoseAlarm.rawValue)
+    }
+
+    /// Removes the delivered + pending "Trending Low" notification (DMNC-1560).
+    func clearPredictiveLowNotification() {
+        DirectNotifications.shared.removeNotification(identifier: predictiveLowNotificationIdentifier)
     }
 
     func setGlucoseNotification(glucose: SensorGlucose, glucoseUnit: GlucoseUnit) {
@@ -288,7 +318,7 @@ private class GlucoseNotificationService {
                                        minutesToCross
             )
 
-            DirectNotifications.shared.addNotification(identifier: Identifier.sensorGlucoseAlarm.rawValue + ".predictive", content: notification)
+            DirectNotifications.shared.addNotification(identifier: predictiveLowNotificationIdentifier, content: notification)
         }
     }
 

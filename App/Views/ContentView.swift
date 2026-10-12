@@ -152,6 +152,8 @@ struct ContentView: View {
                 // (the cold-launch-already-active case is covered by onAppear).
                 if newValue == .active {
                     presentWhatsNewIfNeeded()
+                    revalidateTreatmentModalOnForeground()
+                    presentTreatmentSheetIfNeeded()
                 }
             }
             .onChange(of: store.state.showTreatmentPrompt) { _, newValue in
@@ -229,28 +231,42 @@ struct ContentView: View {
 
     // MARK: Private
 
-    /// Shared by cold launch and both treatment observers. The stillLow
-    /// reducer transition sets BOTH flags at once; the decision function
-    /// resolves it to one sheet (recheck wins) and presentSafety's dedup
-    /// makes the double observer fire a no-op. Safety presents preempt
-    /// whatever sheet is up and land the user on Overview, where the
+    /// Shared by cold launch, foreground and both treatment observers. The
+    /// decision function picks at most one sheet (recheck wins) and only
+    /// presents a prompt that is still current (DMNC-1560). Safety presents
+    /// preempt whatever sheet is up and land the user on Overview, where the
     /// treatment banner lives (snooze-notification precedent in App.swift).
     private func presentTreatmentSheetIfNeeded() {
-        let sheet = SheetCoordinator.treatmentPresent(
-            showTreatmentPrompt: store.state.showTreatmentPrompt,
-            alarmFiredAt: store.state.alarmFiredAt,
-            recheckDispatched: store.state.recheckDispatched,
-            treatmentCycleActive: store.state.treatmentCycleActive,
-            latestGlucoseValue: store.state.latestSensorGlucose?.glucoseValue,
-            alarmLow: store.state.alarmLow
-        )
-        guard let sheet else { return }
+        let sheet = SheetCoordinator.treatmentPresent(state: store.state)
+        guard let sheet else {
+            // A prompt that is no longer current is dropped, so a stuck `true`
+            // can't turn the next genuine prompt into a true→true no-op that
+            // .onChange never sees.
+            if store.state.showTreatmentPrompt {
+                store.dispatch(.clearStaleTreatmentPrompt)
+            }
+            return
+        }
 
         sheets.presentSafety(sheet)
         store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))
         if store.state.showTreatmentPrompt {
             store.dispatch(.setShowTreatmentPrompt(show: false))
         }
+    }
+
+    /// DMNC-1560: a treatment modal presented while backgrounded (the
+    /// .onChange observers are dormant there, but a cold-launch / earlier
+    /// present can leave one up) may be hours old when the user returns.
+    /// Re-check it against the current reading and drop it if the alarm is
+    /// over. The recheck sheet is owned by the cycle and left alone.
+    private func revalidateTreatmentModalOnForeground() {
+        guard sheets.activeSheet?.id == "treatmentModal",
+              !store.state.isTreatmentPromptCurrent(predictive: store.state.predictiveLowAlarmFired)
+        else { return }
+
+        sheets.dismiss()
+        store.dispatch(.clearStaleTreatmentPrompt)
     }
 
     /// Auto-present "What's New" once per update (DMNC-1147). Pure decision in

@@ -71,12 +71,12 @@ class DOSBTSAppDelegate: NSObject, UIApplicationDelegate {
 
         // Register notification categories with action buttons
         let tookDextroAction = UNNotificationAction(
-            identifier: "tookDextro",
+            identifier: TreatmentNotificationAction.tookDextro,
             title: "TREAT NOW",
             options: [.foreground]
         )
         let moreOptionsAction = UNNotificationAction(
-            identifier: "moreOptions",
+            identifier: TreatmentNotificationAction.moreOptions,
             title: "More...",
             options: [.foreground]
         )
@@ -90,12 +90,12 @@ class DOSBTSAppDelegate: NSObject, UIApplicationDelegate {
 
         // Predictive low alarm category — distinct from actual low alarm
         let eatNowAction = UNNotificationAction(
-            identifier: "eatNow",
+            identifier: TreatmentNotificationAction.eatNow,
             title: "EAT NOW",
             options: [.foreground]
         )
         let predictiveMoreAction = UNNotificationAction(
-            identifier: "moreOptions",
+            identifier: TreatmentNotificationAction.moreOptions,
             title: "More...",
             options: [.foreground]
         )
@@ -134,6 +134,14 @@ class DOSBTSAppDelegate: NSObject, UIApplicationDelegate {
 
 // MARK: UNUserNotificationCenterDelegate
 
+/// Action identifiers of the low / predictive-low notification buttons —
+/// shared by category registration and the response handler.
+enum TreatmentNotificationAction {
+    static let tookDextro = "tookDextro"
+    static let eatNow = "eatNow"
+    static let moreOptions = "moreOptions"
+}
+
 extension DOSBTSAppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         DirectLog.info("Application will present notification")
@@ -157,8 +165,30 @@ extension DOSBTSAppDelegate: UNUserNotificationCenterDelegate {
             alarmFiredAt = Date()
         }
 
+        // DMNC-1560: the treatment buttons can be tapped long after the alarm
+        // (a notification sitting on the lock screen).
+        // - TREAT NOW / EAT NOW are the user saying they ate: honour them
+        //   unless there is no usable reading at all (none, or 15+ min old) —
+        //   a fresh, recovered reading still logs the treatment and the
+        //   recheck reports stabilised.
+        // - More... opens the prompt, so it keeps the full currency gate.
+        // A refused action only opens Overview.
+        let isPredictive = response.notification.request.content.categoryIdentifier == "predictiveLowAlarm"
+        let hasUsableReading: Bool = {
+            guard let latest = store.state.latestSensorGlucose else { return false }
+            if case .veryStale = GlucoseStaleness.of(readingTimestamp: latest.timestamp) { return false }
+            return true
+        }()
+        let isAlarmCurrent = store.state.isTreatmentPromptCurrent(predictive: isPredictive)
+
         switch response.actionIdentifier {
-        case "tookDextro", "eatNow":
+        case TreatmentNotificationAction.tookDextro, TreatmentNotificationAction.eatNow:
+            guard hasUsableReading else {
+                DirectLog.info("Treatment action '\(response.actionIdentifier)' without a usable reading — opening Overview only")
+                store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))
+                break
+            }
+
             // Handle both actual low alarm (tookDextro) and predictive alarm (eatNow)
             let hypoTreatments = store.state.favoriteFoodValues
                 .filter { $0.isHypoTreatment }
@@ -166,12 +196,21 @@ extension DOSBTSAppDelegate: UNUserNotificationCenterDelegate {
 
             if let defaultTreatment = hypoTreatments.first {
                 store.dispatch(.logHypoTreatment(favorite: defaultTreatment, alarmFiredAt: alarmFiredAt, overrideTimestamp: nil))
-            } else {
+            } else if isAlarmCurrent {
                 store.dispatch(.showTreatmentPrompt(alarmFiredAt: alarmFiredAt))
+            } else {
+                // No default treatment to log, and the prompt would be
+                // dropped as no longer current — just open Overview.
+                store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))
             }
 
-        case "moreOptions":
-            store.dispatch(.showTreatmentPrompt(alarmFiredAt: alarmFiredAt))
+        case TreatmentNotificationAction.moreOptions:
+            if isAlarmCurrent {
+                store.dispatch(.showTreatmentPrompt(alarmFiredAt: alarmFiredAt))
+            } else {
+                DirectLog.info("More... on an alarm that is no longer current — opening Overview only")
+                store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))
+            }
 
         case UNNotificationDefaultActionIdentifier:
             // Body tap — route by userInfo "action"

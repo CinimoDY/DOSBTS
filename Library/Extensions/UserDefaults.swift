@@ -78,6 +78,7 @@ private enum Keys: String {
     case treatmentCycleSnoozeUntil = "libre-direct.settings.treatment-cycle-snooze-until"
     case hypoTreatmentWaitMinutes = "libre-direct.settings.hypo-treatment-wait-minutes"
     case showPredictiveLowAlarm = "libre-direct.settings.show-predictive-low-alarm"
+    case predictiveLowAlarmFired = "libre-direct.settings.predictive-low-alarm-fired"
     case showMissedBolusNudge = "libre-direct.settings.show-missed-bolus-nudge"
     case showHeartRateOverlay = "libre-direct.settings.show-heart-rate-overlay"
     case showChartLab = "libre-direct.settings.show-chart-lab"
@@ -938,6 +939,19 @@ extension UserDefaults {
         }
         set {
             setArray(newValue, forKey: Keys.servingPresets.rawValue)
+        }
+    }
+
+    var predictiveLowAlarmFired: Bool {
+        get {
+            if object(forKey: Keys.predictiveLowAlarmFired.rawValue) != nil {
+                return bool(forKey: Keys.predictiveLowAlarmFired.rawValue)
+            }
+
+            return false
+        }
+        set {
+            set(newValue, forKey: Keys.predictiveLowAlarmFired.rawValue)
         }
     }
 

@@ -152,6 +152,120 @@ func isCriticalLow(glucoseValue: Int, alarmLow: Int) -> Bool {
     glucoseValue < (alarmLow - criticalLowBreakthroughMargin)
 }
 
+// MARK: - Treatment prompt currency (DMNC-1560)
+
+/// Width of the predictive-low "still relevant" zone above `alarmLow`. The
+/// predictive flag clears on the first reading at or above
+/// `alarmLow + predictiveLowClearMargin` (GlucoseNotification R8c); a
+/// predictive treatment prompt is only current below that line.
+let predictiveLowClearMargin = 10
+
+/// Is a pending treatment prompt still about a real (or imminent) low?
+///
+/// The prompt is presented on foreground / cold launch, possibly hours after
+/// the alarm that set it. This gates presentation on the *current* reading:
+/// - no reading, or a reading 15+ min old (`GlucoseStaleness.veryStale`) → false
+///   (no evidence; the hero already shows red staleness). The 5–14 min
+///   `.stale` tier still presents — a BLE gap must not hide a genuine low.
+/// - value below `alarmLow` → true.
+/// - otherwise only for a predictive prompt that is still heading low: a
+///   `.fresh` reading (< 5 min — the predictive alarm's own R8b gate; a stale
+///   reading can't anchor a 20-min projection), value inside the clear zone,
+///   a known slope, and the same 20-min linear projection the predictive
+///   alarm uses still crossing `alarmLow`.
+///
+/// Pure and UIKit-free so it is shared with the widget target and unit-tested.
+func isTreatmentPromptCurrent(
+    latestGlucose: SensorGlucose?,
+    alarmLow: Int,
+    predictive: Bool,
+    smoothedMinuteChange: Double? = nil,
+    now: Date = Date()
+) -> Bool {
+    guard let latestGlucose else { return false }
+
+    let staleness = GlucoseStaleness.of(readingTimestamp: latestGlucose.timestamp, now: now)
+    if case .veryStale = staleness {
+        return false
+    }
+
+    let value = latestGlucose.glucoseValue
+    if value < alarmLow {
+        return true
+    }
+
+    // Prefer the same 3-reading smoothed slope the predictive alarm fired on;
+    // a single reading's slope is noisier and could drop a just-fired prompt.
+    guard predictive,
+          staleness == .fresh,
+          value < alarmLow + predictiveLowClearMargin,
+          let minuteChange = smoothedMinuteChange ?? latestGlucose.minuteChange
+    else {
+        return false
+    }
+
+    return Double(value) + minuteChange * 20.0 < Double(alarmLow)
+}
+
+/// Should a new reading clear a pending treatment prompt at the source
+/// (GlucoseNotification, DMNC-1560)? Yes once glucose is at/above the
+/// predictive clear line (`alarmLow + predictiveLowClearMargin`) and no
+/// treatment cycle owns the prompt state.
+func shouldClearTreatmentPromptAtSource(
+    glucoseValue: Int,
+    alarmLow: Int,
+    showTreatmentPrompt: Bool,
+    treatmentCycleActive: Bool
+) -> Bool {
+    showTreatmentPrompt
+        && !treatmentCycleActive
+        && glucoseValue >= alarmLow + predictiveLowClearMargin
+}
+
+/// The predictive alarm's slope: mean of the last ≤3 known `minuteChange`
+/// values among the latest 10 readings, nil with fewer than 2 samples.
+/// Shared by the predictive-low check and the prompt-currency predicate so
+/// the two can never disagree on "still heading low".
+func smoothedMinuteChange(of readings: [SensorGlucose]) -> Double? {
+    let recent = readings.suffix(10).compactMap(\.minuteChange).suffix(3)
+    guard recent.count >= 2 else { return nil }
+    return recent.reduce(0, +) / Double(recent.count)
+}
+
+/// Forwarder: inside the `DirectState` extension the unqualified name would
+/// resolve to the method itself (member lookup shadows the global function).
+private func promptCurrency(
+    latestGlucose: SensorGlucose?,
+    alarmLow: Int,
+    predictive: Bool,
+    smoothedMinuteChange: Double?,
+    now: Date
+) -> Bool {
+    isTreatmentPromptCurrent(
+        latestGlucose: latestGlucose,
+        alarmLow: alarmLow,
+        predictive: predictive,
+        smoothedMinuteChange: smoothedMinuteChange,
+        now: now
+    )
+}
+
+extension DirectState {
+    /// Single source for the treatment-prompt currency check (DMNC-1560):
+    /// the latest reading, the active profile's `alarmLow` and the predictive
+    /// alarm's smoothed slope. Every presenter and the notification-action
+    /// handler go through this.
+    func isTreatmentPromptCurrent(predictive: Bool, now: Date = Date()) -> Bool {
+        promptCurrency(
+            latestGlucose: latestSensorGlucose,
+            alarmLow: alarmLow,
+            predictive: predictive,
+            smoothedMinuteChange: smoothedMinuteChange(of: sensorGlucoseValues),
+            now: now
+        )
+    }
+}
+
 // MARK: - Resolution
 
 /// Returns the active alarm profile for the given clock time and night-window schedule.
