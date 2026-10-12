@@ -135,6 +135,17 @@ func favoriteFoodStoreMiddleware() -> Middleware<DirectState, DirectAction> {
     }
 }
 
+// MARK: - Module-wide access
+
+extension DataStore {
+    /// Thin internal wrapper over the file-private `searchMealEntries` so the
+    /// staging plate's item search (`FoodCorrectionStore`, DMNC-1561) reuses
+    /// the exact same Swift-filtered query instead of growing a second one.
+    func searchMealEntriesForPlate(matching query: String, limit: Int) -> Future<[MealEntry], DirectError> {
+        searchMealEntries(matching: query, limit: limit)
+    }
+}
+
 private extension DataStore {
     func createFavoriteFoodTable() {
         if let dbQueue = dbQueue {

@@ -245,6 +245,18 @@ enum DirectAction {
     case searchMealHistory(query: String)
     case setMealHistoryResults(results: MealHistoryResults?)
 
+    // MARK: Staging plate item replace (DMNC-1561)
+    /// Debounced DB search for the REPLACE panel (PersonalFood + single-name
+    /// meals). No reducer case, same as `searchMealHistory`.
+    case searchPlateItems(query: String)
+    case setPlateItemSearchResults(results: PlateItemSearchResults?)
+    /// Single-turn AI estimate for ONE plate row. Never writes
+    /// `foodAnalysisResult` — the plate merges the answer into that row only.
+    case analyzeFoodItem(itemID: UUID, query: String)
+    case setFoodItemAnalysisResult(itemID: UUID, estimate: NutritionEstimate)
+    case setFoodItemAnalysisError(itemID: UUID, error: String)
+    case resetFoodItemAnalysis
+
     // MARK: Chart Lab window (DMNC-1506)
     /// Fetch every requested stream for ONE interval. `streams` is advisory —
     /// the GRDB half is a single read either way — but it records what the

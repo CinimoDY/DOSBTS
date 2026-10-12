@@ -10,6 +10,9 @@ import AVFoundation
 import SwiftUI
 
 struct ItemBarcodeScannerView: View {
+    /// Viewfinder caption — the plate reuses this scanner for both replacing a
+    /// row and adding a new one (DMNC-1561).
+    var overlayTitle: String = "Scan barcode to replace item"
     var onResult: (NutritionEstimate) -> Void
     @Environment(\.dismiss) var dismiss
 
@@ -71,7 +74,7 @@ struct ItemBarcodeScannerView: View {
             Rectangle()
                 .stroke(AmberTheme.amber, lineWidth: 2)
                 .frame(width: 280, height: 120)
-            Text("Scan barcode to replace item")
+            Text(LocalizedStringKey(overlayTitle))
                 .font(DOSTypography.caption)
                 .foregroundStyle(AmberTheme.amber)
                 .padding(.top, DOSSpacing.sm)

@@ -354,6 +354,12 @@ struct AppState: DirectState {
     // MARK: Food History Search (DMNC-1484)
     var mealHistoryResults: MealHistoryResults? // transient — loaded on demand, not persisted
 
+    // MARK: Staging plate item replace (DMNC-1561)
+    var plateItemSearchResults: PlateItemSearchResults? // transient — loaded on demand, not persisted
+    var foodItemAnalysisLoadingItemID: UUID? // transient
+    var foodItemAnalysisResult: FoodItemAnalysisResult? // transient
+    var foodItemAnalysisError: FoodItemAnalysisError? // transient
+
     // MARK: Chart Lab window (DMNC-1506)
     var labWindow: LabWindowSnapshot? // transient — loaded on demand, not persisted
     var labWindowRequest: DateInterval? // transient — the in-flight window request

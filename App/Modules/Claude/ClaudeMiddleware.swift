@@ -63,6 +63,37 @@ private func claudeMiddleware(service: LazyService<ClaudeService>) -> Middleware
             }
             .eraseToAnyPublisher()
 
+        case .analyzeFoodItem(let itemID, let query):
+            // Item-scoped ASK AI from the staging plate's REPLACE panel
+            // (DMNC-1561). Single-turn on purpose: no history means the full
+            // system prompt applies. Answers land in `foodItemAnalysisResult`,
+            // NEVER `foodAnalysisResult` — that would replace the whole plate.
+            // The reducer already set the loading flag, so a refusal must emit
+            // an error rather than return Empty (which would strand the row).
+            guard state.aiConsentFoodPhoto else {
+                return Just(DirectAction.setFoodItemAnalysisError(
+                    itemID: itemID,
+                    error: LocalizedString("Enable AI food analysis in Settings first.")
+                ))
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
+            }
+
+            return Future<DirectAction, DirectError> { promise in
+                Task {
+                    do {
+                        let analysisResult = try await service.value.analyzeFoodText(
+                            query: query,
+                            personalFoods: state.personalFoodValues
+                        )
+                        promise(.success(.setFoodItemAnalysisResult(itemID: itemID, estimate: analysisResult.estimate)))
+                    } catch {
+                        promise(.success(.setFoodItemAnalysisError(itemID: itemID, error: error.localizedDescription)))
+                    }
+                }
+            }
+            .eraseToAnyPublisher()
+
         case .analyzeFoodBarcode(let code):
             // No consent gate — OFF is free, no API key needed
             return Future<DirectAction, DirectError> { promise in

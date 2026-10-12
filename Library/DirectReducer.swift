@@ -553,6 +553,33 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setMealHistoryResults(results: let results):
         state.mealHistoryResults = results
 
+    // MARK: Staging plate item replace (DMNC-1561)
+    case .setPlateItemSearchResults(results: let results):
+        state.plateItemSearchResults = results
+
+    case .analyzeFoodItem(itemID: let itemID, query: _):
+        state.foodItemAnalysisLoadingItemID = itemID
+        state.foodItemAnalysisResult = nil
+        state.foodItemAnalysisError = nil
+
+    case .setFoodItemAnalysisResult(itemID: let itemID, estimate: let estimate):
+        state.foodItemAnalysisResult = FoodItemAnalysisResult(itemID: itemID, estimate: estimate)
+        state.foodItemAnalysisError = nil
+        if state.foodItemAnalysisLoadingItemID == itemID {
+            state.foodItemAnalysisLoadingItemID = nil
+        }
+
+    case .setFoodItemAnalysisError(itemID: let itemID, error: let error):
+        state.foodItemAnalysisError = FoodItemAnalysisError(itemID: itemID, message: error)
+        if state.foodItemAnalysisLoadingItemID == itemID {
+            state.foodItemAnalysisLoadingItemID = nil
+        }
+
+    case .resetFoodItemAnalysis:
+        state.foodItemAnalysisLoadingItemID = nil
+        state.foodItemAnalysisResult = nil
+        state.foodItemAnalysisError = nil
+
     // MARK: Chart Lab window (DMNC-1506)
     case .loadLabWindow(interval: let interval, streams: _):
         state.labWindowRequest = interval
