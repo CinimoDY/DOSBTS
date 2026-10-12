@@ -152,6 +152,54 @@ func isCriticalLow(glucoseValue: Int, alarmLow: Int) -> Bool {
     glucoseValue < (alarmLow - criticalLowBreakthroughMargin)
 }
 
+// MARK: - Treatment prompt currency (DMNC-1560)
+
+/// Width of the predictive-low "still relevant" zone above `alarmLow`. The
+/// predictive flag clears on the first reading at or above
+/// `alarmLow + predictiveLowClearMargin` (GlucoseNotification R8c); a
+/// predictive treatment prompt is only current below that line.
+let predictiveLowClearMargin = 10
+
+/// Is a pending treatment prompt still about a real (or imminent) low?
+///
+/// The prompt is presented on foreground / cold launch, possibly hours after
+/// the alarm that set it. This gates presentation on the *current* reading:
+/// - no reading, or a reading 15+ min old (`GlucoseStaleness.veryStale`) → false
+///   (no evidence; the hero already shows red staleness). The 5–14 min
+///   `.stale` tier still presents — a BLE gap must not hide a genuine low.
+/// - value below `alarmLow` → true.
+/// - otherwise only for a predictive prompt that is still heading low: value
+///   inside the clear zone, a known slope, and the same 20-min linear
+///   projection the predictive alarm uses still crossing `alarmLow`.
+///
+/// Pure and UIKit-free so it is shared with the widget target and unit-tested.
+func isTreatmentPromptCurrent(
+    latestGlucose: SensorGlucose?,
+    alarmLow: Int,
+    predictive: Bool,
+    now: Date = Date()
+) -> Bool {
+    guard let latestGlucose else { return false }
+
+    if case .veryStale = GlucoseStaleness.of(readingTimestamp: latestGlucose.timestamp, now: now) {
+        return false
+    }
+
+    let value = latestGlucose.glucoseValue
+    if value < alarmLow {
+        return true
+    }
+
+    guard predictive,
+          value < alarmLow + predictiveLowClearMargin,
+          let minuteChange = latestGlucose.minuteChange
+    else {
+        return false
+    }
+
+    return Double(value) + minuteChange * 20.0 < Double(alarmLow)
+}
+
 // MARK: - Resolution
 
 /// Returns the active alarm profile for the given clock time and night-window schedule.

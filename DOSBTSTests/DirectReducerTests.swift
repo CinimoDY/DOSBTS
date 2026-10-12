@@ -83,14 +83,14 @@ struct TreatmentCycleTests {
         #expect(state.recheckDispatched == true)
     }
 
-    @Test("treatmentCycleStillLow sets recheckDispatched and showTreatmentPrompt")
+    @Test("treatmentCycleStillLow sets only recheckDispatched — the recheck sheet is its sole surface (DMNC-1560)")
     func stillLow() {
         var state: DirectState = makeState()
         reduce(&state, .startTreatmentCycle)
         reduce(&state, .treatmentCycleStillLow(glucoseValue: 55))
 
         #expect(state.recheckDispatched == true)
-        #expect(state.showTreatmentPrompt == true)
+        #expect(state.showTreatmentPrompt == false)
     }
 
     @Test("startTreatmentCycle resets recheckDispatched for chained cycles")
@@ -154,6 +154,21 @@ struct PredictiveLowAlarmTests {
         reduce(&state, .setPredictiveLowAlarmFired(fired: false))
         #expect(state.predictiveLowAlarmFired == false)
     }
+
+    @Test("predictiveLowAlarmFired survives an AppState re-init (cold launch, DMNC-1560)")
+    func firedFlagPersists() {
+        let defaults = makeTestDefaults()
+        var state: DirectState = AppState(defaults: defaults)
+        reduce(&state, .setPredictiveLowAlarmFired(fired: true))
+        #expect(defaults.predictiveLowAlarmFired == true)
+
+        let reloaded = AppState(defaults: defaults)
+        #expect(reloaded.predictiveLowAlarmFired == true)
+
+        var reloadedState: DirectState = reloaded
+        reduce(&reloadedState, .setPredictiveLowAlarmFired(fired: false))
+        #expect(AppState(defaults: defaults).predictiveLowAlarmFired == false)
+    }
 }
 
 // MARK: - Alarm Snooze Tests
@@ -206,6 +221,29 @@ struct TreatmentPromptTests {
         reduce(&state, .setShowTreatmentPrompt(show: false))
 
         #expect(state.showTreatmentPrompt == false)
+    }
+
+    @Test("clearStaleTreatmentPrompt clears the flag and alarmFiredAt when no cycle is active (DMNC-1560)")
+    func clearStaleWithoutCycle() {
+        var state: DirectState = makeState()
+        reduce(&state, .showTreatmentPrompt(alarmFiredAt: Date()))
+        reduce(&state, .clearStaleTreatmentPrompt)
+
+        #expect(state.showTreatmentPrompt == false)
+        #expect(state.alarmFiredAt == nil)
+    }
+
+    @Test("clearStaleTreatmentPrompt keeps alarmFiredAt during an active cycle — it anchors the TreatmentEvent")
+    func clearStaleKeepsAnchorDuringCycle() {
+        var state: DirectState = makeState()
+        let firedAt = Date()
+        reduce(&state, .showTreatmentPrompt(alarmFiredAt: firedAt))
+        reduce(&state, .startTreatmentCycle)
+        reduce(&state, .clearStaleTreatmentPrompt)
+
+        #expect(state.showTreatmentPrompt == false)
+        #expect(state.treatmentCycleActive == true)
+        #expect(state.alarmFiredAt != nil)
     }
 }
 

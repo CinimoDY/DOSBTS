@@ -157,7 +157,24 @@ extension DOSBTSAppDelegate: UNUserNotificationCenterDelegate {
             alarmFiredAt = Date()
         }
 
+        // DMNC-1560: the treatment buttons can be tapped long after the alarm
+        // (a notification sitting on the lock screen). Only act on an alarm
+        // that is still current; for one that is over, just open Overview —
+        // never log a treatment or raise a prompt for it.
+        let isPredictive = response.notification.request.content.categoryIdentifier == "predictiveLowAlarm"
+        let isAlarmCurrent = isTreatmentPromptCurrent(
+            latestGlucose: store.state.latestSensorGlucose,
+            alarmLow: store.state.alarmLow,
+            predictive: isPredictive
+        )
+
         switch response.actionIdentifier {
+        // (A `where` on a multi-pattern case binds only to the last pattern,
+        // hence the explicit membership test.)
+        case let identifier where !isAlarmCurrent && ["tookDextro", "eatNow", "moreOptions"].contains(identifier):
+            DirectLog.info("Treatment action '\(identifier)' on an alarm that is no longer current — opening Overview only")
+            store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))
+
         case "tookDextro", "eatNow":
             // Handle both actual low alarm (tookDextro) and predictive alarm (eatNow)
             let hypoTreatments = store.state.favoriteFoodValues

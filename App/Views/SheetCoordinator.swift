@@ -130,30 +130,37 @@ final class SheetCoordinator: ObservableObject {
 
     // MARK: Treatment decision
 
-    /// One derived decision for the treatment observers (and cold launch):
-    /// `.treatmentCycleStillLow` sets `recheckDispatched` AND
-    /// `showTreatmentPrompt` in a single reducer transition; both onChange
-    /// observers fire against the same new state and must yield exactly one
-    /// present — the recheck wins. Pure so the matrix is unit-testable.
+    /// One derived decision for the treatment observers (and cold launch /
+    /// foreground). Pure so the matrix is unit-testable.
+    ///
+    /// - Recheck: a dispatched still-low recheck of an active cycle with a
+    ///   reading below `alarmLow` presents the recheck sheet. Deliberately NOT
+    ///   staleness-gated — the cycle owns its own stale-data handling.
+    /// - Prompt: `showTreatmentPrompt` + `alarmFiredAt` present the treatment
+    ///   modal only while the alarm is still current
+    ///   (`isTreatmentPromptCurrent`, DMNC-1560): a fresh-enough reading below
+    ///   `alarmLow`, or — for a predictive prompt — one still projected to
+    ///   cross it. A prompt surviving recovery, a very stale reading or no
+    ///   reading yields nil; the caller clears the flag.
     static func treatmentPresent(
         showTreatmentPrompt: Bool,
         alarmFiredAt: Date?,
         recheckDispatched: Bool,
         treatmentCycleActive: Bool,
-        latestGlucoseValue: Int?,
-        alarmLow: Int
+        latestGlucose: SensorGlucose?,
+        alarmLow: Int,
+        predictive: Bool,
+        now: Date = Date()
     ) -> ActiveSheet? {
-        // Recheck takes priority over the prompt when both flags are set.
         if recheckDispatched, treatmentCycleActive,
-           let glucose = latestGlucoseValue, glucose < alarmLow {
+           let glucose = latestGlucose?.glucoseValue, glucose < alarmLow {
             return .treatmentRecheck(glucoseValue: glucose)
         }
 
-        // The stillLow double-flag write always satisfies the recheck branch
-        // above (cycle active, glucose below low), so reaching here with a
-        // prompt flag means a genuine prompt — present it even if a stale
-        // recheckDispatched is still set from an earlier, resolved recheck.
-        if showTreatmentPrompt, let alarmFiredAt {
+        // A stale recheckDispatched left over from an earlier, resolved
+        // recheck must not block a genuine prompt.
+        if showTreatmentPrompt, let alarmFiredAt,
+           isTreatmentPromptCurrent(latestGlucose: latestGlucose, alarmLow: alarmLow, predictive: predictive, now: now) {
             return .treatmentModal(alarmFiredAt: alarmFiredAt)
         }
 

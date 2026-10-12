@@ -229,11 +229,10 @@ struct ContentView: View {
 
     // MARK: Private
 
-    /// Shared by cold launch and both treatment observers. The stillLow
-    /// reducer transition sets BOTH flags at once; the decision function
-    /// resolves it to one sheet (recheck wins) and presentSafety's dedup
-    /// makes the double observer fire a no-op. Safety presents preempt
-    /// whatever sheet is up and land the user on Overview, where the
+    /// Shared by cold launch, foreground and both treatment observers. The
+    /// decision function picks at most one sheet (recheck wins) and only
+    /// presents a prompt that is still current (DMNC-1560). Safety presents
+    /// preempt whatever sheet is up and land the user on Overview, where the
     /// treatment banner lives (snooze-notification precedent in App.swift).
     private func presentTreatmentSheetIfNeeded() {
         let sheet = SheetCoordinator.treatmentPresent(
@@ -241,10 +240,19 @@ struct ContentView: View {
             alarmFiredAt: store.state.alarmFiredAt,
             recheckDispatched: store.state.recheckDispatched,
             treatmentCycleActive: store.state.treatmentCycleActive,
-            latestGlucoseValue: store.state.latestSensorGlucose?.glucoseValue,
-            alarmLow: store.state.alarmLow
+            latestGlucose: store.state.latestSensorGlucose,
+            alarmLow: store.state.alarmLow,
+            predictive: store.state.predictiveLowAlarmFired
         )
-        guard let sheet else { return }
+        guard let sheet else {
+            // A prompt that is no longer current is dropped, so a stuck `true`
+            // can't turn the next genuine prompt into a true→true no-op that
+            // .onChange never sees.
+            if store.state.showTreatmentPrompt {
+                store.dispatch(.clearStaleTreatmentPrompt)
+            }
+            return
+        }
 
         sheets.presentSafety(sheet)
         store.dispatch(.selectView(viewTag: DirectConfig.overviewViewTag))

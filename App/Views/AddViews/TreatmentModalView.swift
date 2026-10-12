@@ -77,6 +77,20 @@ struct TreatmentModalView: View {
                 store.dispatch(.dismissTreatmentCycle)
             }
         }
+        .onChange(of: store.state.latestSensorGlucose) { _, newValue in
+            // DMNC-1560: an open prompt closes itself once the alarm is over
+            // (recovered, or no longer heading low). Recheck mode is owned by
+            // the treatment cycle and stays untouched.
+            guard !isRecheckMode else { return }
+            let current = isTreatmentPromptCurrent(
+                latestGlucose: newValue,
+                alarmLow: store.state.alarmLow,
+                predictive: store.state.predictiveLowAlarmFired
+            )
+            guard !current else { return }
+            store.dispatch(.clearStaleTreatmentPrompt)
+            dismiss()
+        }
     }
 
     // MARK: - Glucose Header

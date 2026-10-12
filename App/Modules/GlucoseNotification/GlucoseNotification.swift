@@ -8,6 +8,11 @@ import Foundation
 import UIKit
 import UserNotifications
 
+/// Identifier of the "Trending Low" notification. Shared with
+/// TreatmentCycleMiddleware, which removes it once the episode is treated or
+/// ended (DMNC-1560).
+let predictiveLowNotificationIdentifier = "libre-direct.notifications.sensor-glucose-alarm.predictive"
+
 func glucoseNotificationMiddleware() -> Middleware<DirectState, DirectAction> {
     return glucoseNotificationMiddleware(service: LazyService<GlucoseNotificationService>(initialization: {
         GlucoseNotificationService()
@@ -66,11 +71,13 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                         smoothedMinuteChange: smoothedChange
                     )
 
-                    // R8a: NO autosnooze — return showTreatmentPrompt + flag, NOT setAlarmSnoozeUntil
+                    // R8a: NO autosnooze — return showTreatmentPrompt + flag, NOT setAlarmSnoozeUntil.
+                    // The flag lands first so the prompt observer already sees
+                    // a predictive prompt (SheetCoordinator.treatmentPresent).
                     return Publishers.Merge(
-                        Just(DirectAction.showTreatmentPrompt(alarmFiredAt: Date()))
-                            .setFailureType(to: DirectError.self),
                         Just(DirectAction.setPredictiveLowAlarmFired(fired: true))
+                            .setFailureType(to: DirectError.self),
+                        Just(DirectAction.showTreatmentPrompt(alarmFiredAt: Date()))
                             .setFailureType(to: DirectError.self)
                     ).eraseToAnyPublisher()
                 }
@@ -82,12 +89,14 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
             var deferredActions: [DirectAction] = []
 
             if state.predictiveLowAlarmFired {
-                if glucose.glucoseValue >= state.alarmLow + 10 {
+                if glucose.glucoseValue >= state.alarmLow + predictiveLowClearMargin {
                     // Episode resolved — glucose recovered
                     deferredActions.append(.setPredictiveLowAlarmFired(fired: false))
+                    service.value.clearPredictiveLowNotification()
                 } else if glucose.glucoseValue < state.alarmLow {
                     // Actual low — clear flag so prediction can re-fire on next episode
                     deferredActions.append(.setPredictiveLowAlarmFired(fired: false))
+                    service.value.clearPredictiveLowNotification()
                 }
             }
 
@@ -186,9 +195,16 @@ private class GlucoseNotificationService {
         case sensorGlucoseAlarm = "libre-direct.notifications.sensor-glucose-alarm"
     }
 
+    // Runs on every in-range reading — must NOT remove the predictive
+    // notification; that is removed where the predictive flag clears.
     func clear() {
         UNUserNotificationCenter.current().setBadgeCount(0, withCompletionHandler: nil)
         DirectNotifications.shared.removeNotification(identifier: Identifier.sensorGlucoseAlarm.rawValue)
+    }
+
+    /// Removes the delivered + pending "Trending Low" notification (DMNC-1560).
+    func clearPredictiveLowNotification() {
+        DirectNotifications.shared.removeNotification(identifier: predictiveLowNotificationIdentifier)
     }
 
     func setGlucoseNotification(glucose: SensorGlucose, glucoseUnit: GlucoseUnit) {
@@ -288,7 +304,7 @@ private class GlucoseNotificationService {
                                        minutesToCross
             )
 
-            DirectNotifications.shared.addNotification(identifier: Identifier.sensorGlucoseAlarm.rawValue + ".predictive", content: notification)
+            DirectNotifications.shared.addNotification(identifier: predictiveLowNotificationIdentifier, content: notification)
         }
     }
 

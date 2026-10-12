@@ -414,6 +414,13 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setShowTreatmentPrompt(show: let show):
         state.showTreatmentPrompt = show
 
+    case .clearStaleTreatmentPrompt:
+        state.showTreatmentPrompt = false
+        // alarmFiredAt anchors the TreatmentEvent of an active cycle — keep it.
+        if !state.treatmentCycleActive {
+            state.alarmFiredAt = nil
+        }
+
     case .logHypoTreatment(favorite: _, alarmFiredAt: _, overrideTimestamp: let overrideTimestamp):
         state.treatmentLoggedAt = overrideTimestamp ?? Date()
         state.showTreatmentPrompt = false
@@ -449,8 +456,10 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         state.recheckDispatched = true
 
     case .treatmentCycleStillLow(glucoseValue: _):
+        // Recheck sheet is the sole surface for a still-low recheck
+        // (DMNC-1560); setting showTreatmentPrompt here left a flag that
+        // resurfaced as a stale "LOW GLUCOSE DETECTED" prompt after recovery.
         state.recheckDispatched = true
-        state.showTreatmentPrompt = true
 
     case .setHypoTreatmentWaitMinutes(minutes: let minutes):
         state.hypoTreatmentWaitMinutes = minutes

@@ -27,6 +27,8 @@ func treatmentCycleMiddleware() -> Middleware<DirectState, DirectAction> {
 
             // Cancel any existing recheck notification before scheduling new one (chained cycle safety)
             DirectNotifications.shared.removeNotification(identifier: recheckNotificationIdentifier)
+            // The "Trending Low" alert has been acted on (DMNC-1560).
+            DirectNotifications.shared.removeNotification(identifier: predictiveLowNotificationIdentifier)
 
             // Schedule recheck notification for when the countdown expires
             let content = UNMutableNotificationContent()
@@ -93,10 +95,12 @@ func treatmentCycleMiddleware() -> Middleware<DirectState, DirectAction> {
 
         case .dismissTreatmentCycle:
             DirectNotifications.shared.removeNotification(identifier: recheckNotificationIdentifier)
+            DirectNotifications.shared.removeNotification(identifier: predictiveLowNotificationIdentifier)
             DirectLog.info("Treatment cycle: dismissed, cancelled recheck notification")
 
         case .endTreatmentCycle:
             DirectNotifications.shared.removeNotification(identifier: recheckNotificationIdentifier)
+            DirectNotifications.shared.removeNotification(identifier: predictiveLowNotificationIdentifier)
             DirectLog.info("Treatment cycle: ended, cancelled recheck notification")
 
         case .setAppState(appState: let appState):
