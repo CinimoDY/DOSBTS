@@ -147,6 +147,7 @@ struct UnifiedFoodEntryView: View {
     @State private var showingFavoriteManagement = false
     @State private var quickExpanded = false
     @StateObject private var toast = LoggedMealToastController()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var relogMeal: MealEntry?
     @State private var askAINavigating = false
     @State private var searchDebounceTask: DispatchWorkItem?
@@ -159,7 +160,12 @@ struct UnifiedFoodEntryView: View {
     /// what QUICK is for (log several items in a row). Chip logs park their id
     /// here and the follow skips it; every other path (staging plate, recents
     /// hold-to-log, photo analysis) still follows as before.
-    @State private var quickLoggedID: UUID?
+    @State private var lastQuickLog: (sourceKey: String, entryID: UUID, at: Date)?
+    /// Count mode (DMNC-1562): second hold on the same source inside
+    /// `QuantityCommit.rearmWindow` opens a stepper instead of a duplicate entry.
+    @State private var countSession: QuantityCommitSession?
+    @State private var countSourceIsFavorite = false
+    @State private var countIdleTask: Task<Void, Never>?
 
     private var displayedFavorites: [FavoriteFood] {
         if filterToHypoTreatments {
@@ -225,7 +231,7 @@ struct UnifiedFoodEntryView: View {
             // where the meal landed.
             .onChange(of: store.state.recentMealEntries) { _, recents in
                 guard let id = addedHighlighter.highlightedID,
-                      id != quickLoggedID,
+                      id != lastQuickLog?.entryID,
                       recents.contains(where: { $0.id == id }) else { return }
                 withAnimation(AnimationTokens.easeStandard) {
                     scrollProxy.scrollTo(id, anchor: .center)
@@ -256,7 +262,11 @@ struct UnifiedFoodEntryView: View {
                 Group {
                     if let meal = toast.meal {
                         LoggedMealToast(meal: meal) {
-                            store.dispatch(.deleteMealEntry(mealEntry: meal))
+                            if let undo = toast.undoAction {
+                                undo()
+                            } else {
+                                store.dispatch(.deleteMealEntry(mealEntry: meal))
+                            }
                             toast.dismiss()
                         }
                     }
@@ -304,6 +314,8 @@ struct UnifiedFoodEntryView: View {
         // (relog plate / ASK AI) tears the List down, and clearing results there
         // would leave a stale query searching forever when the user pops back.
         .onDisappear {
+            countIdleTask?.cancel()
+            countIdleTask = nil
             searchDebounceTask?.cancel()
             searchDebounceTask = nil
             clearHistoryResults()
@@ -340,6 +352,12 @@ struct UnifiedFoodEntryView: View {
                 }
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
+            }
+
+            if countSession != nil, countSourceIsFavorite {
+                countRow
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
             }
         } header: {
             Button {
@@ -416,7 +434,11 @@ struct UnifiedFoodEntryView: View {
                         onTap: { openOnStagingPlate(meal) },
                         onCommit: { logRecent(meal) }
                     ) {
-                        MealItemRow(meal: meal, variant: .recent)
+                        if showsCountRow(in: meal) {
+                            countRow
+                        } else {
+                            MealItemRow(meal: meal, variant: .recent)
+                        }
                     }
                     .id(meal.id)
                     .dosAddedHighlight(addedHighlighter.highlightedID == meal.id)
@@ -683,6 +705,10 @@ struct UnifiedFoodEntryView: View {
 
     private func logFavorite(_ favorite: FavoriteFood) {
         let mealEntry = favorite.toMealEntry()
+        let key = QuantityCommit.sourceKey(for: mealEntry.mealDescription)
+        // Hypo treatments stay strictly 1-tap: never enter count mode.
+        if !favorite.isHypoTreatment, advanceCountMode(sourceKey: key, fromFavorite: true) { return }
+        countSession = nil
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
         DirectNotifications.shared.hapticNotification(.success)
@@ -690,7 +716,7 @@ struct UnifiedFoodEntryView: View {
         addedHighlighter.flash(mealEntry.id)
         // Stay put: the chip the user just tapped must still be under their
         // thumb for the next one.
-        quickLoggedID = mealEntry.id
+        lastQuickLog = (key, mealEntry.id, Date())
     }
 
     private func stageFavorite(_ favorite: FavoriteFood) {
@@ -702,10 +728,94 @@ struct UnifiedFoodEntryView: View {
 
     private func logRecent(_ meal: MealEntry) {
         let newEntry = FavoriteFood.from(mealEntry: meal).toMealEntry()
+        let key = QuantityCommit.sourceKey(for: newEntry.mealDescription)
+        if advanceCountMode(sourceKey: key, fromFavorite: false) { return }
+        countSession = nil
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
         DirectNotifications.shared.hapticNotification(.success)
         toast.show(newEntry)
         addedHighlighter.flash(newEntry.id)
+        lastQuickLog = (key, newEntry.id, Date())
+    }
+
+    // MARK: - Count mode (DMNC-1562)
+
+    /// Second hold on the same source inside the re-arm window, while the
+    /// first entry still exists: open the stepper (count 2) or add one more.
+    /// Returns true when the hold was consumed (no new entry is logged).
+    private func advanceCountMode(sourceKey: String, fromFavorite: Bool) -> Bool {
+        guard QuantityCommit.shouldEnterCountMode(lastLogged: lastQuickLog, tappedSourceKey: sourceKey, now: Date()),
+              let entryID = lastQuickLog?.entryID else { return false }
+        if var session = countSession, session.entryID == entryID {
+            session.count = QuantityCommit.clamped(session.count + 1)
+            countSession = session
+        } else {
+            guard let base = store.state.mealEntryValues.first(where: { $0.id == entryID }) else { return false }
+            countSourceIsFavorite = fromFavorite
+            withAnimation(reduceMotion ? nil : AnimationTokens.easeStandard) {
+                countSession = QuantityCommitSession(
+                    sourceKey: sourceKey,
+                    entryID: entryID,
+                    baseEntry: base,
+                    count: QuantityCommit.countRange.lowerBound,
+                    startedAt: Date()
+                )
+            }
+        }
+        DirectNotifications.shared.hapticNotification(.success)
+        restartCountIdleTimer()
+        return true
+    }
+
+    private func showsCountRow(in meal: MealEntry) -> Bool {
+        guard let session = countSession, !countSourceIsFavorite else { return false }
+        return meal.id == session.entryID
+            || QuantityCommit.sourceKey(for: meal.mealDescription) == session.sourceKey
+    }
+
+    private var countRow: some View {
+        QuantityCommitRow(
+            baseDescription: countSession?.baseEntry.mealDescription ?? "",
+            baseCarbs: countSession?.baseEntry.carbsGrams,
+            count: Binding(
+                get: { countSession?.count ?? QuantityCommit.countRange.lowerBound },
+                set: { newCount in
+                    countSession?.count = QuantityCommit.clamped(newCount)
+                    restartCountIdleTimer()
+                }
+            ),
+            onAdd: commitCount,
+            onCancel: exitCountMode
+        )
+    }
+
+    private func commitCount() {
+        guard let session = countSession else { return }
+        let base = session.baseEntry
+        let scaledEntry = QuantityCommit.scaled(base, count: session.count)
+        store.dispatch(.updateMealEntry(mealEntry: scaledEntry))
+        DirectNotifications.shared.hapticNotification(.success)
+        toast.show(scaledEntry, undo: { store.dispatch(.updateMealEntry(mealEntry: base)) })
+        // The entry is now a scaled one; a further hold must log fresh.
+        lastQuickLog = nil
+        exitCountMode()
+    }
+
+    private func exitCountMode() {
+        countIdleTask?.cancel()
+        countIdleTask = nil
+        withAnimation(reduceMotion ? nil : AnimationTokens.easeStandard) {
+            countSession = nil
+        }
+    }
+
+    private func restartCountIdleTimer() {
+        countIdleTask?.cancel()
+        countIdleTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(QuantityCommit.idleTimeout))
+            guard !Task.isCancelled else { return }
+            exitCountMode()
+        }
     }
 
     private func openOnStagingPlate(_ meal: MealEntry) {

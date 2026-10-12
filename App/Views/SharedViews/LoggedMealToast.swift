@@ -50,10 +50,15 @@ final class LoggedMealToastController: ObservableObject {
 
     @Published private(set) var meal: MealEntry?
 
+    /// Custom UNDO side effect for this toast; nil = the caller's default
+    /// (delete the logged entry). Count-mode ADD uses it to restore the base entry.
+    private(set) var undoAction: (() -> Void)?
+
     private var workItem: DispatchWorkItem?
 
-    func show(_ meal: MealEntry) {
+    func show(_ meal: MealEntry, undo: (() -> Void)? = nil) {
         self.meal = meal
+        self.undoAction = undo
         workItem?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.dismiss() }
         workItem = item
@@ -63,6 +68,7 @@ final class LoggedMealToastController: ObservableObject {
     func dismiss() {
         workItem?.cancel()
         workItem = nil
+        undoAction = nil
         meal = nil
     }
 }
