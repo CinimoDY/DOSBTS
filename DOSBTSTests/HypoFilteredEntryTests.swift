@@ -43,4 +43,47 @@ struct HypoFilteredEntryModelTests {
         #expect(model.showsEmptyHypoMessage == false)
         #expect(model.showsEscapeRow == false)
     }
+
+    @Test("filtered + other favourites exist: OTHER FAVOURITES shown (DMNC-1564)")
+    func filteredWithOtherFavorites() {
+        let model = HypoFilteredEntryModel.make(
+            hypoFavoriteCount: 1,
+            otherFavoriteCount: 3,
+            filterToHypoTreatments: true
+        )
+        #expect(model.showsOtherFavourites == true)
+        #expect(model.showsEmptyHypoMessage == false)
+    }
+
+    @Test("filtered + no hypo favourites but other favourites: empty message AND other section")
+    func filteredNoHypoButOthers() {
+        let model = HypoFilteredEntryModel.make(
+            hypoFavoriteCount: 0,
+            otherFavoriteCount: 2,
+            filterToHypoTreatments: true
+        )
+        #expect(model.showsEmptyHypoMessage == true)
+        #expect(model.showsOtherFavourites == true)
+        #expect(model.showsEscapeRow == true)
+    }
+
+    @Test("filtered + no other favourites: no OTHER FAVOURITES section")
+    func filteredNoOthers() {
+        let model = HypoFilteredEntryModel.make(
+            hypoFavoriteCount: 2,
+            otherFavoriteCount: 0,
+            filterToHypoTreatments: true
+        )
+        #expect(model.showsOtherFavourites == false)
+    }
+
+    @Test("unfiltered: never shows OTHER FAVOURITES")
+    func unfilteredNoOthers() {
+        let model = HypoFilteredEntryModel.make(
+            hypoFavoriteCount: 0,
+            otherFavoriteCount: 5,
+            filterToHypoTreatments: false
+        )
+        #expect(model.showsOtherFavourites == false)
+    }
 }
