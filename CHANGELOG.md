@@ -7,6 +7,8 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 139] — 2026-10-12
+
 ### Added
 - AI staging plate: open a food item and tap the magnifier to replace it from your own history — type or say a food ("popcorn") and pick from your favourites, foods you have corrected before, and past single-food meals, shown with their carbs. The item is rewritten in place. With AI analysis set up, an ASK AI row estimates just that one item without touching the rest of the plate. This also covers photo results, which still have no CLARIFY field — DMNC-1561, PR #127
 - AI staging plate: SCAN ITEM beside Add Item scans a barcode and adds the product as a new item, instead of only replacing an existing one — DMNC-1561, PR #127
