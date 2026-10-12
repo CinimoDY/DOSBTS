@@ -101,6 +101,17 @@ private func appleHealthExportMiddleware(service: LazyService<AppleHealthExportS
 
             service.value.addMealNutrition(meals: mealEntryValues)
 
+        case .updateMealEntry(mealEntry: let mealEntry):
+            guard state.appleHealthExport else {
+                break
+            }
+
+            guard service.value.healthStoreAvailable else {
+                break
+            }
+
+            service.value.replaceMealNutrition(meal: mealEntry)
+
         case .addSensorGlucose(glucoseValues: let glucoseValues):
             guard state.appleHealthExport else {
                 DirectLog.info("Guard: state.appleHealth is false")
@@ -313,6 +324,39 @@ private class AppleHealthExportService {
                 if !success {
                     DirectLog.info("Guard: Writing nutrition data to apple health store failed, error: \(error?.localizedDescription)")
                 }
+            }
+        }
+    }
+
+    /// Delete-then-add of every nutrition sample keyed to this entry id
+    /// (count-mode ADD / UNDO rewrite an existing entry in place).
+    func replaceMealNutrition(meal: MealEntry) {
+        guard let healthStore = healthStore else {
+            return
+        }
+
+        healthStore.requestAuthorization(toShare: requiredPermissions, read: nil) { granted, error in
+            guard granted else {
+                DirectLog.info("Guard: HKHealthStore.requestAuthorization failed, error: \(error?.localizedDescription)")
+                return
+            }
+
+            let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, allowedValues: [meal.id.uuidString])
+            let types: [HKQuantityType] = [self.carbType, self.proteinType, self.fatType, self.calorieType, self.fiberType]
+            let group = DispatchGroup()
+
+            for type in types {
+                group.enter()
+                healthStore.deleteObjects(of: type, predicate: predicate) { success, _, error in
+                    if !success {
+                        DirectLog.info("Guard: Deleting nutrition data in apple health store failed, error: \(error?.localizedDescription)")
+                    }
+                    group.leave()
+                }
+            }
+
+            group.notify(queue: .main) {
+                self.addMealNutrition(meals: [meal])
             }
         }
     }
