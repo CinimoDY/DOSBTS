@@ -85,7 +85,8 @@ struct TreatmentModalView: View {
             let current = isTreatmentPromptCurrent(
                 latestGlucose: newValue,
                 alarmLow: store.state.alarmLow,
-                predictive: store.state.predictiveLowAlarmFired
+                predictive: store.state.predictiveLowAlarmFired,
+                smoothedMinuteChange: smoothedMinuteChange(of: store.state.sensorGlucoseValues)
             )
             guard !current else { return }
             store.dispatch(.clearStaleTreatmentPrompt)

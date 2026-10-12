@@ -165,7 +165,8 @@ extension DOSBTSAppDelegate: UNUserNotificationCenterDelegate {
         let isAlarmCurrent = isTreatmentPromptCurrent(
             latestGlucose: store.state.latestSensorGlucose,
             alarmLow: store.state.alarmLow,
-            predictive: isPredictive
+            predictive: isPredictive,
+            smoothedMinuteChange: smoothedMinuteChange(of: store.state.sensorGlucoseValues)
         )
 
         switch response.actionIdentifier {

@@ -389,4 +389,32 @@ struct TreatmentPromptCurrencyTests {
     func recheckNotStalenessGated() {
         #expect(prompt(reading(62, ageMinutes: 20), recheckDispatched: true, treatmentCycleActive: true)?.id == "treatmentRecheck")
     }
+    @Test("predictive prompt uses the smoothed slope when supplied: flat latest reading, falling average still presents")
+    func predictiveSmoothedSlopeOverridesLatest() {
+        let sheet = SheetCoordinator.treatmentPresent(
+            showTreatmentPrompt: true,
+            alarmFiredAt: fixtureNow,
+            recheckDispatched: false,
+            treatmentCycleActive: false,
+            latestGlucose: reading(86, minuteChange: -0.1),
+            alarmLow: 80,
+            predictive: true,
+            smoothedMinuteChange: -1.0,
+            now: fixtureNow
+        )
+        #expect(sheet?.id == "treatmentModal")
+    }
+
+    @Test("smoothedMinuteChange averages the last three known slopes and needs two samples")
+    func smoothedSlopeHelper() {
+        let readings = [
+            reading(100, ageMinutes: 4, minuteChange: -2.0),
+            reading(98, ageMinutes: 3, minuteChange: nil),
+            reading(96, ageMinutes: 2, minuteChange: -1.0),
+            reading(95, ageMinutes: 1, minuteChange: -0.5),
+            reading(94, minuteChange: -1.5),
+        ]
+        #expect(smoothedMinuteChange(of: readings) == -1.0)
+        #expect(smoothedMinuteChange(of: [reading(94, minuteChange: -1.5)]) == nil)
+    }
 }

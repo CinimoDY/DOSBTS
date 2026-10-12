@@ -242,7 +242,8 @@ struct ContentView: View {
             treatmentCycleActive: store.state.treatmentCycleActive,
             latestGlucose: store.state.latestSensorGlucose,
             alarmLow: store.state.alarmLow,
-            predictive: store.state.predictiveLowAlarmFired
+            predictive: store.state.predictiveLowAlarmFired,
+            smoothedMinuteChange: smoothedMinuteChange(of: store.state.sensorGlucoseValues)
         )
         guard let sheet else {
             // A prompt that is no longer current is dropped, so a stuck `true`

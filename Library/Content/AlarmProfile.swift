@@ -177,6 +177,7 @@ func isTreatmentPromptCurrent(
     latestGlucose: SensorGlucose?,
     alarmLow: Int,
     predictive: Bool,
+    smoothedMinuteChange: Double? = nil,
     now: Date = Date()
 ) -> Bool {
     guard let latestGlucose else { return false }
@@ -190,14 +191,26 @@ func isTreatmentPromptCurrent(
         return true
     }
 
+    // Prefer the same 3-reading smoothed slope the predictive alarm fired on;
+    // a single reading's slope is noisier and could drop a just-fired prompt.
     guard predictive,
           value < alarmLow + predictiveLowClearMargin,
-          let minuteChange = latestGlucose.minuteChange
+          let minuteChange = smoothedMinuteChange ?? latestGlucose.minuteChange
     else {
         return false
     }
 
     return Double(value) + minuteChange * 20.0 < Double(alarmLow)
+}
+
+/// The predictive alarm's slope: mean of the last ≤3 known `minuteChange`
+/// values among the latest 10 readings, nil with fewer than 2 samples.
+/// Shared by the predictive-low check and the prompt-currency predicate so
+/// the two can never disagree on "still heading low".
+func smoothedMinuteChange(of readings: [SensorGlucose]) -> Double? {
+    let recent = readings.suffix(10).compactMap(\.minuteChange).suffix(3)
+    guard recent.count >= 2 else { return nil }
+    return recent.reduce(0, +) / Double(recent.count)
 }
 
 // MARK: - Resolution

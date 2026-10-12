@@ -47,13 +47,9 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
             {
                 // Compute smoothed minuteChange (average of last 3 with non-nil values)
                 // Require at least 2 samples to avoid single-reading noise spikes
-                let recentChanges = state.sensorGlucoseValues
-                    .suffix(10)
-                    .compactMap(\.minuteChange)
-                    .suffix(3)
-
-                guard recentChanges.count >= 2 else { break predictiveCheck }
-                let smoothedChange = recentChanges.reduce(0, +) / Double(recentChanges.count)
+                // Shared helper (AlarmProfile.swift) so the prompt-currency
+                // predicate uses the identical slope — DMNC-1560.
+                guard let smoothedChange = smoothedMinuteChange(of: state.sensorGlucoseValues) else { break predictiveCheck }
 
                 // R3: Linear extrapolation over 20 minutes
                 let predictedGlucose = Double(glucose.glucoseValue) + (smoothedChange * 20.0)

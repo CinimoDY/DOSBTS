@@ -150,6 +150,7 @@ final class SheetCoordinator: ObservableObject {
         latestGlucose: SensorGlucose?,
         alarmLow: Int,
         predictive: Bool,
+        smoothedMinuteChange: Double? = nil,
         now: Date = Date()
     ) -> ActiveSheet? {
         if recheckDispatched, treatmentCycleActive,
@@ -160,7 +161,7 @@ final class SheetCoordinator: ObservableObject {
         // A stale recheckDispatched left over from an earlier, resolved
         // recheck must not block a genuine prompt.
         if showTreatmentPrompt, let alarmFiredAt,
-           isTreatmentPromptCurrent(latestGlucose: latestGlucose, alarmLow: alarmLow, predictive: predictive, now: now) {
+           isTreatmentPromptCurrent(latestGlucose: latestGlucose, alarmLow: alarmLow, predictive: predictive, smoothedMinuteChange: smoothedMinuteChange, now: now) {
             return .treatmentModal(alarmFiredAt: alarmFiredAt)
         }
 
