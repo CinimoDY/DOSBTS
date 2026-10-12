@@ -168,9 +168,11 @@ let predictiveLowClearMargin = 10
 ///   (no evidence; the hero already shows red staleness). The 5–14 min
 ///   `.stale` tier still presents — a BLE gap must not hide a genuine low.
 /// - value below `alarmLow` → true.
-/// - otherwise only for a predictive prompt that is still heading low: value
-///   inside the clear zone, a known slope, and the same 20-min linear
-///   projection the predictive alarm uses still crossing `alarmLow`.
+/// - otherwise only for a predictive prompt that is still heading low: a
+///   `.fresh` reading (< 5 min — the predictive alarm's own R8b gate; a stale
+///   reading can't anchor a 20-min projection), value inside the clear zone,
+///   a known slope, and the same 20-min linear projection the predictive
+///   alarm uses still crossing `alarmLow`.
 ///
 /// Pure and UIKit-free so it is shared with the widget target and unit-tested.
 func isTreatmentPromptCurrent(
@@ -182,7 +184,8 @@ func isTreatmentPromptCurrent(
 ) -> Bool {
     guard let latestGlucose else { return false }
 
-    if case .veryStale = GlucoseStaleness.of(readingTimestamp: latestGlucose.timestamp, now: now) {
+    let staleness = GlucoseStaleness.of(readingTimestamp: latestGlucose.timestamp, now: now)
+    if case .veryStale = staleness {
         return false
     }
 
@@ -194,6 +197,7 @@ func isTreatmentPromptCurrent(
     // Prefer the same 3-reading smoothed slope the predictive alarm fired on;
     // a single reading's slope is noisier and could drop a just-fired prompt.
     guard predictive,
+          staleness == .fresh,
           value < alarmLow + predictiveLowClearMargin,
           let minuteChange = smoothedMinuteChange ?? latestGlucose.minuteChange
     else {
@@ -201,6 +205,21 @@ func isTreatmentPromptCurrent(
     }
 
     return Double(value) + minuteChange * 20.0 < Double(alarmLow)
+}
+
+/// Should a new reading clear a pending treatment prompt at the source
+/// (GlucoseNotification, DMNC-1560)? Yes once glucose is at/above the
+/// predictive clear line (`alarmLow + predictiveLowClearMargin`) and no
+/// treatment cycle owns the prompt state.
+func shouldClearTreatmentPromptAtSource(
+    glucoseValue: Int,
+    alarmLow: Int,
+    showTreatmentPrompt: Bool,
+    treatmentCycleActive: Bool
+) -> Bool {
+    showTreatmentPrompt
+        && !treatmentCycleActive
+        && glucoseValue >= alarmLow + predictiveLowClearMargin
 }
 
 /// The predictive alarm's slope: mean of the last ≤3 known `minuteChange`
@@ -211,6 +230,40 @@ func smoothedMinuteChange(of readings: [SensorGlucose]) -> Double? {
     let recent = readings.suffix(10).compactMap(\.minuteChange).suffix(3)
     guard recent.count >= 2 else { return nil }
     return recent.reduce(0, +) / Double(recent.count)
+}
+
+/// Forwarder: inside the `DirectState` extension the unqualified name would
+/// resolve to the method itself (member lookup shadows the global function).
+private func promptCurrency(
+    latestGlucose: SensorGlucose?,
+    alarmLow: Int,
+    predictive: Bool,
+    smoothedMinuteChange: Double?,
+    now: Date
+) -> Bool {
+    isTreatmentPromptCurrent(
+        latestGlucose: latestGlucose,
+        alarmLow: alarmLow,
+        predictive: predictive,
+        smoothedMinuteChange: smoothedMinuteChange,
+        now: now
+    )
+}
+
+extension DirectState {
+    /// Single source for the treatment-prompt currency check (DMNC-1560):
+    /// the latest reading, the active profile's `alarmLow` and the predictive
+    /// alarm's smoothed slope. Every presenter and the notification-action
+    /// handler go through this.
+    func isTreatmentPromptCurrent(predictive: Bool, now: Date = Date()) -> Bool {
+        promptCurrency(
+            latestGlucose: latestSensorGlucose,
+            alarmLow: alarmLow,
+            predictive: predictive,
+            smoothedMinuteChange: smoothedMinuteChange(of: sensorGlucoseValues),
+            now: now
+        )
+    }
 }
 
 // MARK: - Resolution

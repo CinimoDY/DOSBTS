@@ -96,6 +96,19 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                 }
             }
 
+            // DMNC-1560: clear a pending treatment prompt at the source once
+            // glucose has recovered past the predictive clear line. Presenters
+            // keep their own currency gate as a defensive check. An active
+            // cycle owns its prompt/alarmFiredAt state and is left alone.
+            if shouldClearTreatmentPromptAtSource(
+                glucoseValue: glucose.glucoseValue,
+                alarmLow: state.alarmLow,
+                showTreatmentPrompt: state.showTreatmentPrompt,
+                treatmentCycleActive: state.treatmentCycleActive
+            ) {
+                deferredActions.append(.clearStaleTreatmentPrompt)
+            }
+
             let alarm = state.isAlarm(glucoseValue: glucose.glucoseValue)
             DirectLog.info("alarm: \(alarm)")
             
@@ -129,13 +142,11 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
 
                     let snoozeAction = Just(DirectAction.setAlarmSnoozeUntil(untilDate: Date().addingTimeInterval(5 * 60).toRounded(on: 1, .minute), autosnooze: true))
                         .setFailureType(to: DirectError.self)
-                    if let deferredAction = deferredActions.first {
-                        return Publishers.Merge(
-                            snoozeAction,
-                            Just(deferredAction).setFailureType(to: DirectError.self)
-                        ).eraseToAnyPublisher()
-                    }
-                    return snoozeAction.eraseToAnyPublisher()
+                    return Publishers.MergeMany(
+                        [snoozeAction.eraseToAnyPublisher()] + deferredActions.map {
+                            Just($0).setFailureType(to: DirectError.self).eraseToAnyPublisher()
+                        }
+                    ).eraseToAnyPublisher()
                 }
 
             } else if alarm == .highAlarm {
@@ -150,9 +161,15 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                         service.value.setHighGlucoseAlarm(sound: state.highGlucoseAlarmSound, volume: state.alarmVolume, ignoreMute: state.ignoreMute)
                     }
 
-                    return Just(.setAlarmSnoozeUntil(untilDate: Date().addingTimeInterval(5 * 60).toRounded(on: 1, .minute), autosnooze: true))
+                    // Deferred actions ride along — a high reading is exactly
+                    // when the predictive flag and a stale prompt must clear.
+                    let snoozeAction = Just(DirectAction.setAlarmSnoozeUntil(untilDate: Date().addingTimeInterval(5 * 60).toRounded(on: 1, .minute), autosnooze: true))
                         .setFailureType(to: DirectError.self)
-                        .eraseToAnyPublisher()
+                    return Publishers.MergeMany(
+                        [snoozeAction.eraseToAnyPublisher()] + deferredActions.map {
+                            Just($0).setFailureType(to: DirectError.self).eraseToAnyPublisher()
+                        }
+                    ).eraseToAnyPublisher()
                 }
 
             } else if state.normalGlucoseNotification {
@@ -161,9 +178,10 @@ private func glucoseNotificationMiddleware(service: LazyService<GlucoseNotificat
                 service.value.clear()
             }
 
-            // Emit any deferred predictive alarm actions (flag clear) that weren't merged above
-            if let deferredAction = deferredActions.first {
-                return Just(deferredAction)
+            // Emit any deferred actions (predictive flag clear, stale prompt
+            // clear) that weren't merged above — all of them, in order.
+            if !deferredActions.isEmpty {
+                return deferredActions.publisher
                     .setFailureType(to: DirectError.self)
                     .eraseToAnyPublisher()
             }

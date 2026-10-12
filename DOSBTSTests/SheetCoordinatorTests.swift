@@ -389,6 +389,32 @@ struct TreatmentPromptCurrencyTests {
     func recheckNotStalenessGated() {
         #expect(prompt(reading(62, ageMinutes: 20), recheckDispatched: true, treatmentCycleActive: true)?.id == "treatmentRecheck")
     }
+    @Test("predictive 86 falling 1.0/min but 7 min old (not fresh) presents nothing")
+    func predictiveStaleReadingPresentsNothing() {
+        #expect(prompt(reading(86, ageMinutes: 7, minuteChange: -1.0), predictive: true) == nil)
+    }
+
+    @Test("source clear: prompt cleared at/above alarmLow + 10 with no active cycle only")
+    func sourceClearRule() {
+        #expect(shouldClearTreatmentPromptAtSource(glucoseValue: 90, alarmLow: 80, showTreatmentPrompt: true, treatmentCycleActive: false))
+        #expect(shouldClearTreatmentPromptAtSource(glucoseValue: 160, alarmLow: 80, showTreatmentPrompt: true, treatmentCycleActive: false))
+        #expect(!shouldClearTreatmentPromptAtSource(glucoseValue: 89, alarmLow: 80, showTreatmentPrompt: true, treatmentCycleActive: false))
+        #expect(!shouldClearTreatmentPromptAtSource(glucoseValue: 120, alarmLow: 80, showTreatmentPrompt: true, treatmentCycleActive: true))
+        #expect(!shouldClearTreatmentPromptAtSource(glucoseValue: 120, alarmLow: 80, showTreatmentPrompt: false, treatmentCycleActive: false))
+    }
+
+    @Test("DirectState.isTreatmentPromptCurrent reads latest reading, alarmLow and smoothed slope from state")
+    func stateExtensionSingleSource() {
+        var state: DirectState = AppState(defaults: makeTestDefaults())
+        let now = Date()
+        // No reading → not current.
+        #expect(!state.isTreatmentPromptCurrent(predictive: false, now: now))
+        state.latestSensorGlucose = SensorGlucose(timestamp: now, rawGlucoseValue: 60, intGlucoseValue: 60)
+        #expect(state.isTreatmentPromptCurrent(predictive: false, now: now))
+        state.latestSensorGlucose = SensorGlucose(timestamp: now, rawGlucoseValue: 150, intGlucoseValue: 150)
+        #expect(!state.isTreatmentPromptCurrent(predictive: true, now: now))
+    }
+
     @Test("predictive prompt uses the smoothed slope when supplied: flat latest reading, falling average still presents")
     func predictiveSmoothedSlopeOverridesLatest() {
         let sheet = SheetCoordinator.treatmentPresent(

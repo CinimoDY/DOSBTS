@@ -8,7 +8,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Fixed
-- The "LOW GLUCOSE DETECTED" treatment prompt no longer pops up after your glucose has already recovered, and the TREAT NOW / EAT NOW / More... notification buttons no longer log a treatment or open the prompt for an alarm that is over — they just open Overview. An open prompt now closes itself once glucose is back in range (or a Trending Low is no longer heading low), and the "Trending Low" notification is cleared once the episode resolves or a treatment is logged — DMNC-1560, PR #126
+- The "LOW GLUCOSE DETECTED" treatment prompt no longer pops up after your glucose has already recovered — including when you come back to the app hours later with the prompt still open. A notification's More... button no longer opens the prompt for an alarm that is over, and TREAT NOW / EAT NOW only open Overview, without logging anything, when there is no recent reading (none, or 15+ minutes old); with a recent reading they still log your treatment even if glucose has already come back up. An open prompt closes itself once a new reading shows glucose back in range, and the "Trending Low" notification is cleared once the episode resolves or a treatment is logged — DMNC-1560, PR #126
 
 ## [Build 138] — 2026-09-28
 

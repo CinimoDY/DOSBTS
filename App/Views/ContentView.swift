@@ -152,6 +152,8 @@ struct ContentView: View {
                 // (the cold-launch-already-active case is covered by onAppear).
                 if newValue == .active {
                     presentWhatsNewIfNeeded()
+                    revalidateTreatmentModalOnForeground()
+                    presentTreatmentSheetIfNeeded()
                 }
             }
             .onChange(of: store.state.showTreatmentPrompt) { _, newValue in
@@ -235,16 +237,7 @@ struct ContentView: View {
     /// preempt whatever sheet is up and land the user on Overview, where the
     /// treatment banner lives (snooze-notification precedent in App.swift).
     private func presentTreatmentSheetIfNeeded() {
-        let sheet = SheetCoordinator.treatmentPresent(
-            showTreatmentPrompt: store.state.showTreatmentPrompt,
-            alarmFiredAt: store.state.alarmFiredAt,
-            recheckDispatched: store.state.recheckDispatched,
-            treatmentCycleActive: store.state.treatmentCycleActive,
-            latestGlucose: store.state.latestSensorGlucose,
-            alarmLow: store.state.alarmLow,
-            predictive: store.state.predictiveLowAlarmFired,
-            smoothedMinuteChange: smoothedMinuteChange(of: store.state.sensorGlucoseValues)
-        )
+        let sheet = SheetCoordinator.treatmentPresent(state: store.state)
         guard let sheet else {
             // A prompt that is no longer current is dropped, so a stuck `true`
             // can't turn the next genuine prompt into a true→true no-op that
@@ -260,6 +253,20 @@ struct ContentView: View {
         if store.state.showTreatmentPrompt {
             store.dispatch(.setShowTreatmentPrompt(show: false))
         }
+    }
+
+    /// DMNC-1560: a treatment modal presented while backgrounded (the
+    /// .onChange observers are dormant there, but a cold-launch / earlier
+    /// present can leave one up) may be hours old when the user returns.
+    /// Re-check it against the current reading and drop it if the alarm is
+    /// over. The recheck sheet is owned by the cycle and left alone.
+    private func revalidateTreatmentModalOnForeground() {
+        guard sheets.activeSheet?.id == "treatmentModal",
+              !store.state.isTreatmentPromptCurrent(predictive: store.state.predictiveLowAlarmFired)
+        else { return }
+
+        sheets.dismiss()
+        store.dispatch(.clearStaleTreatmentPrompt)
     }
 
     /// Auto-present "What's New" once per update (DMNC-1147). Pure decision in

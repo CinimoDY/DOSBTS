@@ -153,15 +153,50 @@ final class SheetCoordinator: ObservableObject {
         smoothedMinuteChange: Double? = nil,
         now: Date = Date()
     ) -> ActiveSheet? {
+        decide(
+            showTreatmentPrompt: showTreatmentPrompt,
+            alarmFiredAt: alarmFiredAt,
+            recheckDispatched: recheckDispatched,
+            treatmentCycleActive: treatmentCycleActive,
+            latestGlucoseValue: latestGlucose?.glucoseValue,
+            alarmLow: alarmLow,
+            isPromptCurrent: {
+                isTreatmentPromptCurrent(latestGlucose: latestGlucose, alarmLow: alarmLow, predictive: predictive, smoothedMinuteChange: smoothedMinuteChange, now: now)
+            }
+        )
+    }
+
+    /// The same decision read straight from app state; prompt currency goes
+    /// through the single `DirectState.isTreatmentPromptCurrent` source.
+    static func treatmentPresent(state: DirectState, now: Date = Date()) -> ActiveSheet? {
+        decide(
+            showTreatmentPrompt: state.showTreatmentPrompt,
+            alarmFiredAt: state.alarmFiredAt,
+            recheckDispatched: state.recheckDispatched,
+            treatmentCycleActive: state.treatmentCycleActive,
+            latestGlucoseValue: state.latestSensorGlucose?.glucoseValue,
+            alarmLow: state.alarmLow,
+            isPromptCurrent: { state.isTreatmentPromptCurrent(predictive: state.predictiveLowAlarmFired, now: now) }
+        )
+    }
+
+    private static func decide(
+        showTreatmentPrompt: Bool,
+        alarmFiredAt: Date?,
+        recheckDispatched: Bool,
+        treatmentCycleActive: Bool,
+        latestGlucoseValue: Int?,
+        alarmLow: Int,
+        isPromptCurrent: () -> Bool
+    ) -> ActiveSheet? {
         if recheckDispatched, treatmentCycleActive,
-           let glucose = latestGlucose?.glucoseValue, glucose < alarmLow {
+           let glucose = latestGlucoseValue, glucose < alarmLow {
             return .treatmentRecheck(glucoseValue: glucose)
         }
 
         // A stale recheckDispatched left over from an earlier, resolved
         // recheck must not block a genuine prompt.
-        if showTreatmentPrompt, let alarmFiredAt,
-           isTreatmentPromptCurrent(latestGlucose: latestGlucose, alarmLow: alarmLow, predictive: predictive, smoothedMinuteChange: smoothedMinuteChange, now: now) {
+        if showTreatmentPrompt, let alarmFiredAt, isPromptCurrent() {
             return .treatmentModal(alarmFiredAt: alarmFiredAt)
         }
 
