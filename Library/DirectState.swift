@@ -153,6 +153,16 @@ protocol DirectState {
     /// rejected — see `MealHistoryResults`.
     var mealHistoryResults: MealHistoryResults? { get set }
 
+    // MARK: Staging plate item replace (DMNC-1561)
+    /// Transient — the REPLACE panel's DB hits, keyed by the query they answer
+    /// (see `PlateItemSearchResults`). Not persisted.
+    var plateItemSearchResults: PlateItemSearchResults? { get set }
+    /// Transient — item-scoped ASK AI. `LoadingItemID` names the row awaiting
+    /// an answer; result/error name the row they belong to. Not persisted.
+    var foodItemAnalysisLoadingItemID: UUID? { get set }
+    var foodItemAnalysisResult: FoodItemAnalysisResult? { get set }
+    var foodItemAnalysisError: FoodItemAnalysisError? { get set }
+
     // MARK: Chart Lab window (DMNC-1506)
     /// Every stream for one interval, loaded on demand by a lab tab that needs
     /// a window no shipping loader can produce (the night, which spans

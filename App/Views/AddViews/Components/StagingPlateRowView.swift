@@ -35,6 +35,10 @@ enum StagingPlateRowLogic {
 struct StagingPlateRowView: View {
     @Binding var item: EditableFoodItem
     var onBarcodeRescan: (UUID) -> Void = { _ in }
+    /// Opens/closes the inline REPLACE panel (history search + speech) for this
+    /// row. The plate hosts the panel; the row only owns the trigger (DMNC-1561).
+    var onReplace: (UUID) -> Void = { _ in }
+    var isReplacing: Bool = false
     var isExpanded: Bool
     var onToggleExpand: () -> Void
 
@@ -72,6 +76,15 @@ struct StagingPlateRowView: View {
                 TextField("Food name", text: $item.name)
                     .multilineTextAlignment(.trailing)
                     .focused($isNameFocused)
+                Button { onReplace(item.id) } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(DOSTypography.mono(size: 18))
+                        .frame(width: 44, height: 44)
+                        .foregroundStyle(isReplacing ? AmberTheme.amber : AmberTheme.amberDark)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Replace item")
+                .accessibilityHint("Search your food history or say a food")
                 Button { onBarcodeRescan(item.id) } label: {
                     Image(systemName: "barcode.viewfinder")
                         .font(DOSTypography.mono(size: 18))

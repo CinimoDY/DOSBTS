@@ -645,18 +645,10 @@ struct UnifiedFoodEntryView: View {
     /// folds non-ASCII — the SQL `LIKE`/`NOCASE` trap from DMNC-1484 applies to
     /// case folding generally, not just to search.
     private var foodContextualStrings: [String] {
-        let candidates = store.state.favoriteFoodValues.map(\.mealDescription)
-            + store.state.recentMealEntries.map(\.mealDescription)
-
-        var seen = Set<String>()
-        var phrases: [String] = []
-        for candidate in candidates {
-            let trimmed = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty, seen.insert(trimmed.lowercased()).inserted else { continue }
-            phrases.append(trimmed)
-            if phrases.count == 100 { break }
-        }
-        return phrases
+        SpeechContextPhrases.make(
+            store.state.favoriteFoodValues.map(\.mealDescription)
+                + store.state.recentMealEntries.map(\.mealDescription)
+        )
     }
 
     // MARK: - Filtering

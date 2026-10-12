@@ -8,9 +8,12 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Added
+- AI staging plate: open a food item and tap the magnifier to replace it from your own history — type or say a food ("popcorn") and pick from your favourites, foods you have corrected before, and past single-food meals, shown with their carbs. The item is rewritten in place. With AI analysis set up, an ASK AI row estimates just that one item without touching the rest of the plate. This also covers photo results, which still have no CLARIFY field — DMNC-1561, PR #127
+- AI staging plate: SCAN ITEM beside Add Item scans a barcode and adds the product as a new item, instead of only replacing an existing one — DMNC-1561, PR #127
 - Hold a favourite or a recent meal a second time within 15 seconds to set a count: a stepper appears (each further hold adds one), and ADD turns the meal you just logged into a single "N× name" entry with its carbs and other values multiplied. UNDO restores the single entry — DMNC-1562, PR #125
 
 ### Fixed
+- AI staging plate: corrections you make are now remembered against the right food. Deleting an item from the middle of the list used to shift every later edit onto the wrong food, teaching the AI wrong names and carbs — DMNC-1561, PR #127
 - The "LOW GLUCOSE DETECTED" treatment prompt no longer pops up after your glucose has already recovered — including when you come back to the app hours later with the prompt still open. A notification's More... button no longer opens the prompt for an alarm that is over, and TREAT NOW / EAT NOW only open Overview, without logging anything, when there is no recent reading (none, or 15+ minutes old); with a recent reading they still log your treatment even if glucose has already come back up. An open prompt closes itself once a new reading shows glucose back in range, and the "Trending Low" notification is cleared once the episode resolves or a treatment is logged — DMNC-1560, PR #126
 
 ## [Build 138] — 2026-09-28

@@ -76,6 +76,40 @@ func foodCorrectionStoreMiddleware() -> Middleware<DirectState, DirectAction> {
                 DirectAction.setRecentFoodCorrections(recentFoodCorrections: corrections)
             }.eraseToAnyPublisher()
 
+        case .searchPlateItems(query: let query):
+            // Staging plate REPLACE panel (DMNC-1561). Silently drops when not
+            // .active — the panel keeps showing its in-memory candidates and
+            // the next keystroke re-arms the search.
+            guard state.appState == .active else {
+                break
+            }
+
+            // Echo `query` back EXACTLY as received (see `MealHistoryResults`
+            // for why re-normalizing here would strand the view). A failed read
+            // degrades to an empty half, never a missing result.
+            let personal = DataStore.shared.searchPersonalFoods(matching: query, limit: 20)
+                .catch { error -> Just<[PersonalFood]> in
+                    DirectLog.error("Plate item search (PersonalFood) failed: \(error)")
+                    return Just([])
+                }
+            // Single-food meals ("Popcorn", 20g) are item candidates too.
+            let meals = DataStore.shared.searchMealEntriesForPlate(matching: query, limit: 20)
+                .catch { error -> Just<[MealEntry]> in
+                    DirectLog.error("Plate item search (MealEntry) failed: \(error)")
+                    return Just([])
+                }
+
+            return Publishers.Zip(personal, meals)
+                .map { personalFoods, mealEntries in
+                    DirectAction.setPlateItemSearchResults(results: PlateItemSearchResults(
+                        query: query,
+                        personalFoods: personalFoods,
+                        mealEntries: mealEntries
+                    ))
+                }
+                .setFailureType(to: DirectError.self)
+                .eraseToAnyPublisher()
+
         case .setAppState(appState: let appState):
             guard appState == .active else {
                 return Empty().eraseToAnyPublisher()
@@ -287,6 +321,47 @@ private extension DataStore {
                 }
             } else {
                 promise(.success([]))
+            }
+        }
+    }
+
+    /// Item-level history search for the staging plate (DMNC-1561). Mirrors
+    /// `searchMealEntries`: read the table UNFILTERED and filter in Swift with
+    /// `localizedCaseInsensitiveContains` — never SQL `LIKE`, which folds ASCII
+    /// only and would miss `äpfel`/`Äpfel`. The table is pruned to ≤200 rows,
+    /// so the scan is cheap. Newest-used first; deduped by lowercased name
+    /// because the `NOCASE` unique index folds ASCII only.
+    ///
+    /// NO writes inside the `asyncRead` — GRDB deadlock rule applies.
+    func searchPersonalFoods(matching query: String, limit: Int) -> Future<[PersonalFood], DirectError> {
+        return Future { promise in
+            guard let dbQueue = self.dbQueue else {
+                promise(.success([]))
+                return
+            }
+
+            let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !needle.isEmpty else {
+                promise(.success([]))
+                return
+            }
+
+            dbQueue.asyncRead { asyncDB in
+                do {
+                    let db = try asyncDB.get()
+
+                    let candidates = try PersonalFood
+                        .order(Column(PersonalFood.Columns.lastUsed.name).desc)
+                        .fetchAll(db)
+
+                    let result = FoodNameSearch.distinctNameMatches(
+                        candidates, needle: needle, limit: limit, name: \.name
+                    )
+
+                    promise(.success(result))
+                } catch {
+                    promise(.failure(.withError(error)))
+                }
             }
         }
     }

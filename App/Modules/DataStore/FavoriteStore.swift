@@ -135,6 +135,17 @@ func favoriteFoodStoreMiddleware() -> Middleware<DirectState, DirectAction> {
     }
 }
 
+// MARK: - Module-wide access
+
+extension DataStore {
+    /// Thin internal wrapper over the file-private `searchMealEntries` so the
+    /// staging plate's item search (`FoodCorrectionStore`, DMNC-1561) reuses
+    /// the exact same Swift-filtered query instead of growing a second one.
+    func searchMealEntriesForPlate(matching query: String, limit: Int) -> Future<[MealEntry], DirectError> {
+        searchMealEntries(matching: query, limit: limit)
+    }
+}
+
 private extension DataStore {
     func createFavoriteFoodTable() {
         if let dbQueue = dbQueue {
@@ -451,16 +462,9 @@ private extension DataStore {
                     // folds ASCII only, so "MÜSLI" and "Müsli" both survive the SQL
                     // dedupe and would otherwise each burn a slot, yielding fewer
                     // than `limit` genuinely distinct foods.
-                    var seen = Set<String>()
-                    var result: [MealEntry] = []
-
-                    for candidate in candidates
-                        where candidate.mealDescription.localizedCaseInsensitiveContains(needle)
-                    {
-                        guard seen.insert(candidate.mealDescription.lowercased()).inserted else { continue }
-                        result.append(candidate)
-                        if result.count == limit { break }
-                    }
+                    let result = FoodNameSearch.distinctNameMatches(
+                        candidates, needle: needle, limit: limit, name: \.mealDescription
+                    )
 
                     promise(.success(result))
                 } catch {

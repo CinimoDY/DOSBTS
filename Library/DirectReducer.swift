@@ -553,6 +553,34 @@ func directReducer(state: inout DirectState, action: DirectAction) {
     case .setMealHistoryResults(results: let results):
         state.mealHistoryResults = results
 
+    // MARK: Staging plate item replace (DMNC-1561)
+    case .setPlateItemSearchResults(results: let results):
+        state.plateItemSearchResults = results
+
+    case .analyzeFoodItem(itemID: let itemID, query: _):
+        state.foodItemAnalysisLoadingItemID = itemID
+        state.foodItemAnalysisResult = nil
+        state.foodItemAnalysisError = nil
+
+    // Only the row that is waiting may receive an answer — same key-echo rule
+    // as the search path: a late answer for a row the user has since closed,
+    // reset or re-asked about is dropped, never merged.
+    case .setFoodItemAnalysisResult(itemID: let itemID, estimate: let estimate):
+        guard itemID == state.foodItemAnalysisLoadingItemID else { break }
+        state.foodItemAnalysisResult = FoodItemAnalysisResult(itemID: itemID, estimate: estimate)
+        state.foodItemAnalysisError = nil
+        state.foodItemAnalysisLoadingItemID = nil
+
+    case .setFoodItemAnalysisError(itemID: let itemID, error: let error):
+        guard itemID == state.foodItemAnalysisLoadingItemID else { break }
+        state.foodItemAnalysisError = FoodItemAnalysisError(itemID: itemID, message: error)
+        state.foodItemAnalysisLoadingItemID = nil
+
+    case .resetFoodItemAnalysis:
+        state.foodItemAnalysisLoadingItemID = nil
+        state.foodItemAnalysisResult = nil
+        state.foodItemAnalysisError = nil
+
     // MARK: Chart Lab window (DMNC-1506)
     case .loadLabWindow(interval: let interval, streams: _):
         state.labWindowRequest = interval

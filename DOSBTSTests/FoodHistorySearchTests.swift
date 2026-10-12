@@ -279,3 +279,183 @@ struct FoodHistorySearchModelTests {
         #expect(model.isSearching == false)   // "No matches", not a spinner
     }
 }
+
+// MARK: - Staging plate item candidates (DMNC-1561)
+
+private func favorite(_ name: String, carbs: Double? = 10) -> FavoriteFood {
+    FavoriteFood(mealDescription: name, carbsGrams: carbs)
+}
+
+private func personal(_ name: String, carbs: Double = 10) -> PersonalFood {
+    PersonalFood(name: name, carbsG: carbs)
+}
+
+@Suite("Food Item Candidate Ranker")
+struct FoodItemCandidateRankerTests {
+
+    @Test("prefix matches rank before substring matches")
+    func prefixBeforeContains() {
+        let result = FoodItemCandidateRanker.rank(
+            query: "pop",
+            favorites: [favorite("Lollipop")],
+            recents: [meal("Popsicle")],
+            personalFoods: [personal("Popcorn", carbs: 20)]
+        )
+        #expect(result.map(\.name) == ["Popcorn", "Popsicle", "Lollipop"])
+        #expect(result.first?.carbsG == 20)
+        #expect(result.first?.source == .personal)
+    }
+
+    @Test("within a tier: favourites, then PersonalFood, then recents")
+    func sourceOrder() {
+        let result = FoodItemCandidateRanker.rank(
+            query: "pop",
+            favorites: [favorite("Popsicle")],
+            recents: [meal("Pop tart")],
+            personalFoods: [personal("Popcorn")]
+        )
+        #expect(result.map(\.source) == [.favorite, .personal, .meal])
+    }
+
+    @Test("dedupes case-insensitively; the earlier source wins")
+    func dedupe() {
+        let result = FoodItemCandidateRanker.rank(
+            query: "popcorn",
+            favorites: [favorite("Popcorn", carbs: 30)],
+            recents: [meal("POPCORN")],
+            personalFoods: [personal("popcorn", carbs: 20)]
+        )
+        #expect(result.count == 1)
+        #expect(result.first?.source == .favorite)
+        #expect(result.first?.carbsG == 30)
+    }
+
+    @Test("non-ASCII case folding matches and dedupes (äpfel / Äpfel)")
+    func nonASCII() {
+        let result = FoodItemCandidateRanker.rank(
+            query: "äpfel",
+            favorites: [],
+            recents: [meal("Äpfel")],
+            personalFoods: [personal("Bratäpfel"), personal("ÄPFEL")]
+        )
+        #expect(result.map(\.name) == ["ÄPFEL", "Bratäpfel"])
+    }
+
+    @Test("caps at the limit (default 20)")
+    func cap() {
+        let many = (0..<30).map { personal("Popcorn \($0)") }
+        #expect(FoodItemCandidateRanker.rank(query: "pop", favorites: [], recents: [], personalFoods: many).count == 20)
+        #expect(FoodItemCandidateRanker.rank(query: "pop", favorites: [], recents: [], personalFoods: many, limit: 5).count == 5)
+    }
+
+    @Test("blank query returns nothing; missing favourite carbs read as 0")
+    func edges() {
+        #expect(FoodItemCandidateRanker.rank(query: "  ", favorites: [favorite("Popcorn")], recents: [], personalFoods: []).isEmpty)
+        let result = FoodItemCandidateRanker.rank(query: "tea", favorites: [favorite("Tea", carbs: nil)], recents: [], personalFoods: [])
+        #expect(result.first?.carbsG == 0)
+    }
+}
+
+@Suite("Staging Plate Item Search State")
+struct PlateItemSearchStateTests {
+
+    @Test("setPlateItemSearchResults stores, nil clears, and it is transient")
+    func storesAndClears() {
+        var state: DirectState = AppState(defaults: makeTestDefaults())
+        let results = PlateItemSearchResults(query: "pop", personalFoods: [personal("Popcorn")], mealEntries: [])
+        reduce(&state, .setPlateItemSearchResults(results: results))
+        #expect(state.plateItemSearchResults?.query == "pop")
+        reduce(&state, .searchPlateItems(query: "popc"))
+        #expect(state.plateItemSearchResults?.query == "pop")
+        reduce(&state, .setPlateItemSearchResults(results: nil))
+        #expect(state.plateItemSearchResults == nil)
+    }
+
+    @Test("item-scoped analysis: loading, result and error are per row and never touch foodAnalysisResult")
+    func itemAnalysis() {
+        var state: DirectState = AppState(defaults: makeTestDefaults())
+        let rowA = UUID()
+        let rowB = UUID()
+        let estimate = NutritionEstimate(
+            description: "Popcorn",
+            items: [NutritionItem(name: "Popcorn", carbsG: 20)],
+            totalCarbsG: 20,
+            confidence: .medium
+        )
+
+        reduce(&state, .analyzeFoodItem(itemID: rowA, query: "popcorn"))
+        #expect(state.foodItemAnalysisLoadingItemID == rowA)
+
+        reduce(&state, .setFoodItemAnalysisResult(itemID: rowA, estimate: estimate))
+        #expect(state.foodItemAnalysisLoadingItemID == nil)
+        #expect(state.foodItemAnalysisResult?.itemID == rowA)
+        #expect(state.foodAnalysisResult == nil)
+
+        reduce(&state, .analyzeFoodItem(itemID: rowB, query: "crisps"))
+        #expect(state.foodItemAnalysisResult == nil)
+        reduce(&state, .setFoodItemAnalysisError(itemID: rowB, error: "nope"))
+        #expect(state.foodItemAnalysisError == FoodItemAnalysisError(itemID: rowB, message: "nope"))
+        #expect(state.foodItemAnalysisLoadingItemID == nil)
+
+        reduce(&state, .resetFoodItemAnalysis)
+        #expect(state.foodItemAnalysisError == nil)
+        #expect(state.foodItemAnalysisResult == nil)
+    }
+}
+
+
+@Suite("Staging Plate Item Analysis — stale answers")
+struct PlateItemAnalysisStaleTests {
+    private let estimate = NutritionEstimate(
+        description: "Popcorn",
+        items: [NutritionItem(name: "Popcorn", carbsG: 20)],
+        totalCarbsG: 20,
+        confidence: .medium
+    )
+
+    @Test("an answer for a row that is not waiting is dropped")
+    func dropsStaleAnswers() {
+        var state: DirectState = AppState(defaults: makeTestDefaults())
+        let rowA = UUID()
+        let rowB = UUID()
+
+        // Nothing waiting at all (e.g. the panel was closed → reset).
+        reduce(&state, .setFoodItemAnalysisResult(itemID: rowA, estimate: estimate))
+        #expect(state.foodItemAnalysisResult == nil)
+
+        // Row B is waiting; a late answer for row A must not land.
+        reduce(&state, .analyzeFoodItem(itemID: rowB, query: "crisps"))
+        reduce(&state, .setFoodItemAnalysisResult(itemID: rowA, estimate: estimate))
+        reduce(&state, .setFoodItemAnalysisError(itemID: rowA, error: "late"))
+        #expect(state.foodItemAnalysisResult == nil)
+        #expect(state.foodItemAnalysisError == nil)
+        #expect(state.foodItemAnalysisLoadingItemID == rowB)
+
+        // After a reset, B's own answer is stale too.
+        reduce(&state, .resetFoodItemAnalysis)
+        reduce(&state, .setFoodItemAnalysisResult(itemID: rowB, estimate: estimate))
+        #expect(state.foodItemAnalysisResult == nil)
+    }
+}
+
+@Suite("Shared food-name helpers")
+struct FoodNameHelperTests {
+
+    @Test("distinctNameMatches: contains, non-ASCII folding, first wins, limit after filter")
+    func distinctNameMatches() {
+        let names = ["Bratäpfel", "Banana", "ÄPFEL", "Äpfel", "äpfel pie", "Apfelmus"]
+        let result = FoodNameSearch.distinctNameMatches(names, needle: "äpfel", limit: 10) { $0 }
+        #expect(result == ["Bratäpfel", "ÄPFEL", "äpfel pie"])
+        #expect(FoodNameSearch.distinctNameMatches(names, needle: "äpfel", limit: 2) { $0 } == ["Bratäpfel", "ÄPFEL"])
+        #expect(FoodNameSearch.distinctNameMatches(names, needle: "", limit: 10) { $0 }.isEmpty)
+    }
+
+    @Test("SpeechContextPhrases: trims, drops blanks, dedupes folded, keeps order, caps")
+    func speechContextPhrases() {
+        let phrases = SpeechContextPhrases.make(["  Müsli ", "", "MÜSLI", "Oat milk", "   "])
+        #expect(phrases == ["Müsli", "Oat milk"])
+        let many = (0..<150).map { "Food \($0)" }
+        #expect(SpeechContextPhrases.make(many).count == 100)
+        #expect(SpeechContextPhrases.make(many, cap: 3) == ["Food 0", "Food 1", "Food 2"])
+    }
+}

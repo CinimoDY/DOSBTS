@@ -57,19 +57,32 @@ struct FoodPhotoAnalysisView: View {
             // Guard by stable UUID so a concurrent deletion can't push a blank screen
             if let itemID = scanTargetID, stagedItems.contains(where: { $0.id == itemID }) {
                 ItemBarcodeScannerView { scannedEstimate in
-                    if let currentIdx = stagedItems.firstIndex(where: { $0.id == itemID }),
-                       let scannedItem = scannedEstimate.items.first {
-                        let amount = parseBaseServingG(scannedItem.servingSize)
-                        let ratio: Double? = amount.flatMap { $0 > 0 ? scannedItem.carbsG / $0 : nil }
+                    if let scannedItem = scannedEstimate.items.first {
                         // Update in-place (preserve ID so ForEach doesn't re-render)
-                        stagedItems[currentIdx].name = scannedItem.name
-                        stagedItems[currentIdx].carbsG = scannedItem.carbsG
-                        stagedItems[currentIdx].baseServingG = amount
-                        stagedItems[currentIdx].currentAmountG = amount
-                        stagedItems[currentIdx].carbsPerG = ratio
+                        applyReplacement(
+                            itemID: itemID,
+                            name: scannedItem.name,
+                            carbsG: scannedItem.carbsG,
+                            servingG: parseBaseServingG(scannedItem.servingSize),
+                            source: .barcode
+                        )
                     }
                 }
             }
+        }
+        // SCAN ITEM: append a scanned product as a new row (DMNC-1561). Never
+        // BarcodeScannerView here — it overwrites foodAnalysisResult (the plate).
+        .navigationDestination(isPresented: $scanAddRequested) {
+            ItemBarcodeScannerView(overlayTitle: "Scan barcode to add item") { scannedEstimate in
+                if let scannedItem = scannedEstimate.items.first {
+                    appendScannedItem(scannedItem)
+                }
+            }
+        }
+        // Item-scoped ASK AI from the REPLACE panel lands here: merge the first
+        // returned item into that ONE row (keep its id), never the whole plate.
+        .onChange(of: store.state.foodItemAnalysisResult?.id) { _, _ in
+            mergeItemAnalysisResult()
         }
         .dosNavigationTitle("AI Meal Analysis")
         // Pushed onto the caller's NavigationStack: suppress the system back
@@ -97,7 +110,7 @@ struct FoodPhotoAnalysisView: View {
         .onDisappear {
             // scanTargetID is set synchronously on tap, before onDisappear fires during a push —
             // unlike isItemScanActive (set in the destination's onAppear, which is too late).
-            guard scanTargetID == nil else { return }
+            guard scanTargetID == nil, !scanAddRequested else { return }
             // Clear stale state when view is truly popped (back swipe or cancel)
             stopProgressTimer()
             store.dispatch(.setFoodAnalysisResult(result: nil))
@@ -110,8 +123,10 @@ struct FoodPhotoAnalysisView: View {
             isFollowingUp = false
             followUpError = nil
             portionMultiplier = 1.0
-            baseStagedItems = []
             customPortionText = ""
+            replacingItemID = nil
+            store.dispatch(.resetFoodItemAnalysis)
+            store.dispatch(.setPlateItemSearchResults(results: nil))
         }
     }
 
@@ -129,10 +144,16 @@ struct FoodPhotoAnalysisView: View {
 
     // Inline item barcode scan — UUID guards onDisappear from clearing during push
     @State private var scanTargetID: UUID?
+    // SCAN ITEM (append) — set synchronously on tap, so it guards onDisappear too
+    @State private var scanAddRequested = false
+    // Row whose inline REPLACE panel is open (at most one)
+    @State private var replacingItemID: UUID?
+    /// Bumped before any push to a barcode scanner: every mic on the plate must
+    /// be down before AVCaptureSession starts (voice design doc R1).
+    @State private var dictationStopToken = 0
 
     // Portion scaling state
     @State private var portionMultiplier: Double = 1.0
-    @State private var baseStagedItems: [EditableFoodItem] = []
     @State private var customPortionText = ""
 
     // Conversational follow-up state
@@ -166,6 +187,17 @@ struct FoodPhotoAnalysisView: View {
         stagedItems.map(\.name)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+    }
+
+    /// Recognition bias for the REPLACE panel's mic: the foods on the plate,
+    /// then favourites, then recents (`SpeechContextPhrases`, shared with the
+    /// Log Meal sheet's mic).
+    private var replaceContextualStrings: [String] {
+        SpeechContextPhrases.make(
+            stagedItems.map(\.name)
+                + store.state.favoriteFoodValues.map(\.mealDescription)
+                + store.state.recentMealEntries.map(\.mealDescription)
+        )
     }
 
     // Whether the portion picker should show (single-item barcode result with known serving)
@@ -468,26 +500,72 @@ struct FoodPhotoAnalysisView: View {
                 content: {
                     ForEach($stagedItems) { $item in
                         let itemID = item.id
-                        StagingPlateRowView(
-                            item: $item,
-                            onBarcodeRescan: { _ in
-                                scanTargetID = itemID
-                            },
-                            isExpanded: item.isExpanded,
-                            onToggleExpand: {
-                                withAnimation(AnimationTokens.easeStandard) { item.isExpanded.toggle() }
+                        VStack(alignment: .leading, spacing: DOSSpacing.xs) {
+                            StagingPlateRowView(
+                                item: $item,
+                                onBarcodeRescan: { _ in
+                                    dictationStopToken += 1
+                                    scanTargetID = itemID
+                                },
+                                onReplace: { _ in
+                                    replacingItemID = replacingItemID == itemID ? nil : itemID
+                                },
+                                isReplacing: replacingItemID == itemID,
+                                isExpanded: item.isExpanded,
+                                onToggleExpand: {
+                                    withAnimation(AnimationTokens.easeStandard) { item.isExpanded.toggle() }
+                                }
+                            )
+                            if item.isExpanded, replacingItemID == itemID {
+                                ItemReplacePanel(
+                                    itemID: itemID,
+                                    contextualStrings: replaceContextualStrings,
+                                    dictationStopToken: dictationStopToken,
+                                    onPick: { candidate in
+                                        applyReplacement(
+                                            itemID: itemID,
+                                            name: candidate.name,
+                                            carbsG: candidate.carbsG,
+                                            servingG: candidate.servingG,
+                                            source: .history
+                                        )
+                                        replacingItemID = nil
+                                    },
+                                    onClose: { replacingItemID = nil }
+                                )
                             }
-                        )
+                        }
                     }
                     .onDelete { offsets in
                         focusedItemID = nil
+                        if let replacing = replacingItemID,
+                           offsets.contains(where: { stagedItems[$0].id == replacing }) {
+                            replacingItemID = nil
+                        }
                         stagedItems.remove(atOffsets: offsets)
                     }
 
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                            .font(DOSTypography.body)
-                            .foregroundStyle(AmberTheme.amber)
+                    // Two triggers in one Form row: .plain keeps each tap to
+                    // its own button (a default-style Form row fires them all).
+                    HStack(spacing: DOSSpacing.lg) {
+                        Button(action: addItem) {
+                            Label("Add Item", systemImage: "plus")
+                                .font(DOSTypography.body)
+                                .foregroundStyle(AmberTheme.amber)
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            dictationStopToken += 1
+                            scanAddRequested = true
+                        } label: {
+                            Label("Scan Item", systemImage: "barcode.viewfinder")
+                                .font(DOSTypography.body)
+                                .foregroundStyle(AmberTheme.amber)
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer()
                     }
                 },
                 header: {
@@ -532,7 +610,10 @@ struct FoodPhotoAnalysisView: View {
                             // Voice clarification (DMNC-1486, option C). Fills the
                             // field only — SEND stays the single dispatch, with the
                             // 3-round / 4000-char caps untouched.
-                            DictationControl(contextualStrings: followUpContextualStrings) { transcript in
+                            DictationControl(
+                                contextualStrings: followUpContextualStrings,
+                                stopToken: dictationStopToken
+                            ) { transcript in
                                 followUpText = transcript
                             }
                         }
@@ -588,33 +669,24 @@ struct FoodPhotoAnalysisView: View {
     private func populateStagedItems(from result: NutritionEstimate) {
         guard stagedItems.isEmpty else { return }
         editDescription = result.description
-        let items = result.items.map { item -> EditableFoodItem in
-            let amount = parseBaseServingG(item.servingSize)
-            let ratio: Double? = amount.flatMap { $0 > 0 ? item.carbsG / $0 : nil }
-            return EditableFoodItem(
+        // Relog rows come from the user's own past meal; everything else here
+        // is an estimate (AI, or a whole-plate barcode scan — the plate can't
+        // tell those apart, and provenance never changes the carb math).
+        let source: ItemSource = relogMeal != nil ? .history : .ai
+        stagedItems = result.items.enumerated().map { index, item in
+            EditableFoodItem.make(
                 name: item.name,
                 carbsG: item.carbsG,
-                baseServingG: amount,
-                currentAmountG: amount,
-                carbsPerG: ratio
+                servingG: parseBaseServingG(item.servingSize),
+                originalIndex: index,
+                source: source
             )
         }
-        stagedItems = items
-        baseStagedItems = items // preserve unscaled originals for corrections
         portionMultiplier = 1.0
     }
 
-    /// Parse numeric grams/ml from serving size string like "per 100g", "1 serving (30g)", "15 g"
     private func parseBaseServingG(_ servingSize: String?) -> Double? {
-        guard let s = servingSize else { return nil }
-        // Look for a number followed by g or ml
-        let pattern = #"(\d+(?:\.\d+)?)\s*(?:g|ml|gram)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-              let match = regex.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)),
-              let range = Range(match.range(at: 1), in: s),
-              let value = Double(s[range]),
-              value > 0, value <= 2000 else { return nil }
-        return value
+        EditableFoodItem.servingGrams(from: servingSize)
     }
 
     private func sendFollowUp(result: NutritionEstimate) {
@@ -656,11 +728,12 @@ struct FoodPhotoAnalysisView: View {
 
     private func replaceWithFollowUpResult(_ result: NutritionEstimate) {
         editDescription = result.description
-        let newItems = result.items.map { item in
-            EditableFoodItem(name: item.name, carbsG: item.carbsG)
+        // The follow-up result becomes foodAnalysisResult, so it is the new
+        // baseline that corrections are attributed against.
+        let newItems = result.items.enumerated().map { index, item in
+            EditableFoodItem.make(name: item.name, carbsG: item.carbsG, servingG: nil, originalIndex: index, source: .ai)
         }
         stagedItems = newItems
-        baseStagedItems = newItems
         portionMultiplier = 1.0 // follow-up result is already the correct portion
         customPortionText = ""
         isFollowingUp = false
@@ -670,9 +743,72 @@ struct FoodPhotoAnalysisView: View {
     private func addItem() {
         let newItem = EditableFoodItem(name: "", carbsG: 0, isExpanded: true)
         stagedItems.append(newItem)
+        // A ×N chosen for the previous single-barcode item must not keep
+        // scaling the whole plate once a second item exists (same rule as
+        // replace / scan-add).
+        resetPortionScaling()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             focusedItemID = newItem.id
         }
+    }
+
+    /// Rewrites one row in place — the id (so ForEach keeps the row), expansion
+    /// and `originalIndex` (so corrections stay attributed) survive; everything
+    /// else comes from `EditableFoodItem.make` (DMNC-1561). The old portion
+    /// fields described the OLD food, so they are replaced, or cleared when the
+    /// new source knows no serving (a stale `carbsPerG` would rescale the new
+    /// carbs on the next amount edit).
+    private func applyReplacement(itemID: UUID, name: String, carbsG: Double, servingG: Double?, source: ItemSource) {
+        guard let index = stagedItems.firstIndex(where: { $0.id == itemID }) else { return }
+        let old = stagedItems[index]
+        var replacement = EditableFoodItem.make(
+            name: name, carbsG: carbsG, servingG: servingG, originalIndex: old.originalIndex, source: source
+        )
+        replacement.id = old.id
+        replacement.isExpanded = old.isExpanded
+        stagedItems[index] = replacement
+        resetPortionScaling()
+    }
+
+    /// SCAN ITEM result: a new row built like the replace path, with no
+    /// original to attribute against.
+    private func appendScannedItem(_ scannedItem: NutritionItem) {
+        stagedItems.append(EditableFoodItem.make(
+            name: scannedItem.name,
+            carbsG: scannedItem.carbsG,
+            servingG: parseBaseServingG(scannedItem.servingSize),
+            originalIndex: nil,
+            source: .barcode
+        ))
+        resetPortionScaling()
+    }
+
+    /// The ×N portion picker scales the WHOLE plate and is only shown for a
+    /// single item with a known serving. After the plate's food changes, an
+    /// ×N chosen for the old food must not silently keep scaling the new one
+    /// (the picker may vanish while the multiplier lingers in the total).
+    private func resetPortionScaling() {
+        portionMultiplier = 1.0
+        customPortionText = ""
+    }
+
+    private func mergeItemAnalysisResult() {
+        guard let result = store.state.foodItemAnalysisResult else { return }
+        // The middleware turns an empty answer into a row error, so nil here
+        // only means "nothing to merge".
+        if let replacement = result.estimate.singleRowReplacement {
+            applyReplacement(
+                itemID: result.itemID,
+                name: replacement.name,
+                carbsG: replacement.carbsG,
+                servingG: replacement.servingG,
+                source: .ai
+            )
+        }
+        if replacingItemID == result.itemID {
+            replacingItemID = nil
+        }
+        store.dispatch(.resetFoodItemAnalysis)
     }
 
     private func confidenceRow(_ confidence: NutritionEstimate.Confidence) -> some View {
@@ -779,76 +915,8 @@ struct FoodPhotoAnalysisView: View {
 
     private func computeCorrections() -> [FoodCorrection] {
         guard let original = store.state.foodAnalysisResult else { return [] }
-
-        var corrections: [FoodCorrection] = []
-        let originalItems = original.items
-
-        func clampName(_ name: String) -> String {
-            String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
-        }
-
-        func clampCarbs(_ value: Double) -> Double {
-            max(0, min(value, 10000))
-        }
-
-        // Match staged items to original items by position (best-effort)
-        for (index, staged) in stagedItems.enumerated() {
-            if index < originalItems.count {
-                let orig = originalItems[index]
-                let stagedName = clampName(staged.name)
-                let stagedCarbs = clampCarbs(staged.carbsG)
-
-                let nameChanged = stagedName.lowercased() != orig.name.lowercased()
-                let carbsChanged = abs(stagedCarbs - orig.carbsG) > 0.5
-
-                if nameChanged && carbsChanged {
-                    corrections.append(FoodCorrection(
-                        correctionType: .nameChange,
-                        originalName: orig.name,
-                        correctedName: stagedName,
-                        originalCarbsG: orig.carbsG,
-                        correctedCarbsG: stagedCarbs
-                    ))
-                } else if nameChanged {
-                    corrections.append(FoodCorrection(
-                        correctionType: .nameChange,
-                        originalName: orig.name,
-                        correctedName: stagedName,
-                        originalCarbsG: orig.carbsG,
-                        correctedCarbsG: nil
-                    ))
-                } else if carbsChanged {
-                    corrections.append(FoodCorrection(
-                        correctionType: .carbChange,
-                        originalName: orig.name,
-                        correctedName: nil,
-                        originalCarbsG: orig.carbsG,
-                        correctedCarbsG: stagedCarbs
-                    ))
-                }
-            } else {
-                // Item added by user (not in original)
-                corrections.append(FoodCorrection(
-                    correctionType: .added,
-                    originalName: nil,
-                    correctedName: clampName(staged.name),
-                    originalCarbsG: nil,
-                    correctedCarbsG: clampCarbs(staged.carbsG)
-                ))
-            }
-        }
-
-        // Items in original beyond staged count were deleted
-        for orig in originalItems.dropFirst(stagedItems.count) {
-            corrections.append(FoodCorrection(
-                correctionType: .deleted,
-                originalName: orig.name,
-                correctedName: nil,
-                originalCarbsG: orig.carbsG,
-                correctedCarbsG: nil
-            ))
-        }
-
-        return corrections
+        // Matched by originalIndex, not position (DMNC-1561) — pinned in
+        // StagingPlateRowTests.
+        return StagingPlateCorrections.compute(original: original.items, staged: stagedItems)
     }
 }
