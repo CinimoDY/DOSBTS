@@ -18,3 +18,7 @@ All content lives in the `<script type="application/json" id="model">` block ins
 ## See also
 
 - Superseded: [`docs/brainstorms/2026-04-23-ooux-catalog-and-entry-patterns-requirements.md`](../brainstorms/2026-04-23-ooux-catalog-and-entry-patterns-requirements.md) (its object map and link-kind rule are the foundation of this map).
+
+## Figma
+
+The same model is laid out as a page **"OOUX — Entity map"** in the DOSBTS Design file (`figma.com/design/RJuK2lEGCmVBWEHn2hMaAm`, section `11:380`): object map with link-kind-styled lines, legend, session deltas, object cards, and the interface-pattern matrix. It was generated with the Figma MCP `use_figma` tool from the JSON model embedded in `entity-map.html`; regenerate the page from that model rather than editing it by hand.
