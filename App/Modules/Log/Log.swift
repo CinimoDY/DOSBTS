@@ -63,7 +63,8 @@ private func logMiddleware(service: SendService) -> Middleware<DirectState, Dire
 
         // Staging plate item replace (DMNC-1561): typed/spoken food queries,
         // PersonalFood/MealEntry rows and item-scoped AI answers.
-        case .searchPlateItems, .setPlateItemSearchResults:
+        case .searchMealHistory, .setMealHistoryResults,
+             .searchPlateItems, .setPlateItemSearchResults:
             break
 
         case .analyzeFoodItem, .setFoodItemAnalysisResult, .setFoodItemAnalysisError:

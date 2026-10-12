@@ -743,6 +743,10 @@ struct FoodPhotoAnalysisView: View {
     private func addItem() {
         let newItem = EditableFoodItem(name: "", carbsG: 0, isExpanded: true)
         stagedItems.append(newItem)
+        // A ×N chosen for the previous single-barcode item must not keep
+        // scaling the whole plate once a second item exists (same rule as
+        // replace / scan-add).
+        resetPortionScaling()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             focusedItemID = newItem.id
         }
