@@ -17,3 +17,8 @@ Promotion is the gate for shipping: a deploy with nothing to promote means there
 ## Design
 
 - OOUX entity map — `docs/ooux/entity-map.html` (objects, relationships, CTAs, attributes, interface-pattern matrix).
+
+## Alarms and treatment
+
+### Prompt currency
+Whether a pending treatment prompt is still about a real or imminent low *now*: the latest reading is fresh enough and still below the low threshold (or, for a predictive prompt, still projected to cross it). The flag that requests the prompt can be hours old by the time a presenter acts on it, so every presenter gates on currency and a non-current flag is cleared rather than shown. The gate only ever suppresses what is already over; a genuine fresh low always presents. See `docs/solutions/logic-errors/persisted-intent-flag-needs-currency-gate-stale-treatment-prompt-20261012.md`.
