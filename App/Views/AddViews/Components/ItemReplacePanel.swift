@@ -30,7 +30,7 @@ struct ItemReplacePanel: View {
             HStack {
                 Text("Replace item").dosHeader()
                 Spacer()
-                Button(action: onClose) {
+                Button(action: close) {
                     Text("CLOSE")
                         .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amberDark)
@@ -64,12 +64,23 @@ struct ItemReplacePanel: View {
         }
         .dosCard(.panel, padding: DOSSpacing.sm)
         .padding(.leading, DOSSpacing.md)
+        // Re-arm after the scene was inactive (e.g. the mic permission alert):
+        // a debounce that fired then was dropped by the middleware's `.active`
+        // guard, and `query` is unchanged so its onChange won't re-fire.
+        // Mirrors UnifiedFoodEntryView; skipped when the result is already in.
+        .onChange(of: store.state.appState) { _, phase in
+            guard phase == .active,
+                  normalizedQuery.count >= FoodHistorySearchModel.minQueryLength,
+                  store.state.plateItemSearchResults?.query != normalizedQuery else { return }
+            debounceSearch(query)
+        }
         .onDisappear {
             searchDebounceTask?.cancel()
             searchDebounceTask = nil
             if store.state.plateItemSearchResults != nil {
                 store.dispatch(.setPlateItemSearchResults(results: nil))
             }
+            clearAIState()
         }
     }
 
@@ -176,6 +187,21 @@ struct ItemReplacePanel: View {
             Text(error.message)
                 .font(DOSTypography.caption)
                 .foregroundStyle(AmberTheme.cgaRed)
+        }
+    }
+
+    private func close() {
+        clearAIState()
+        onClose()
+    }
+
+    /// A row error (or a still-pending ask, which the reducer will then drop)
+    /// must not reappear the next time any panel opens.
+    private func clearAIState() {
+        showConsentHint = false
+        let state = store.state
+        if state.foodItemAnalysisError != nil || state.foodItemAnalysisLoadingItemID == itemID {
+            store.dispatch(.resetFoodItemAnalysis)
         }
     }
 

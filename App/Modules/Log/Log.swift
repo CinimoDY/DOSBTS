@@ -61,6 +61,14 @@ private func logMiddleware(service: SendService) -> Middleware<DirectState, Dire
         case .setFoodAnalysisError:
             break
 
+        // Staging plate item replace (DMNC-1561): typed/spoken food queries,
+        // PersonalFood/MealEntry rows and item-scoped AI answers.
+        case .searchPlateItems, .setPlateItemSearchResults:
+            break
+
+        case .analyzeFoodItem, .setFoodItemAnalysisResult, .setFoodItemAnalysisError:
+            break
+
         case .startup:
             DirectLog.deleteLogs()
 

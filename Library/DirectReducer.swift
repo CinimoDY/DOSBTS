@@ -562,18 +562,19 @@ func directReducer(state: inout DirectState, action: DirectAction) {
         state.foodItemAnalysisResult = nil
         state.foodItemAnalysisError = nil
 
+    // Only the row that is waiting may receive an answer — same key-echo rule
+    // as the search path: a late answer for a row the user has since closed,
+    // reset or re-asked about is dropped, never merged.
     case .setFoodItemAnalysisResult(itemID: let itemID, estimate: let estimate):
+        guard itemID == state.foodItemAnalysisLoadingItemID else { break }
         state.foodItemAnalysisResult = FoodItemAnalysisResult(itemID: itemID, estimate: estimate)
         state.foodItemAnalysisError = nil
-        if state.foodItemAnalysisLoadingItemID == itemID {
-            state.foodItemAnalysisLoadingItemID = nil
-        }
+        state.foodItemAnalysisLoadingItemID = nil
 
     case .setFoodItemAnalysisError(itemID: let itemID, error: let error):
+        guard itemID == state.foodItemAnalysisLoadingItemID else { break }
         state.foodItemAnalysisError = FoodItemAnalysisError(itemID: itemID, message: error)
-        if state.foodItemAnalysisLoadingItemID == itemID {
-            state.foodItemAnalysisLoadingItemID = nil
-        }
+        state.foodItemAnalysisLoadingItemID = nil
 
     case .resetFoodItemAnalysis:
         state.foodItemAnalysisLoadingItemID = nil

@@ -120,3 +120,67 @@ struct StagingPlateCorrectionsTests {
         #expect(item.source == .manual)
     }
 }
+
+// MARK: - Row factory + item-scoped AI merge (DMNC-1561)
+
+@Suite("EditableFoodItem factories")
+struct EditableFoodItemFactoryTests {
+    @Test("a known serving sets amount and the carbs-per-gram link")
+    func withServing() {
+        let item = EditableFoodItem.make(name: "Cheerios", carbsG: 22.5, servingG: 30, originalIndex: nil, source: .barcode)
+        #expect(item.baseServingG == 30)
+        #expect(item.currentAmountG == 30)
+        #expect(item.carbsPerG == 0.75)
+        #expect(item.source == .barcode)
+        #expect(item.originalIndex == nil)
+    }
+
+    @Test("no (or a zero) serving leaves the portion fields off")
+    func withoutServing() {
+        for serving in [nil, 0.0] as [Double?] {
+            let item = EditableFoodItem.make(name: "Popcorn", carbsG: 20, servingG: serving, originalIndex: 2, source: .history)
+            #expect(item.baseServingG == nil)
+            #expect(item.currentAmountG == nil)
+            #expect(item.carbsPerG == nil)
+            #expect(item.originalIndex == 2)
+        }
+    }
+
+    @Test("serving strings parse grams/ml and reject nonsense")
+    func servingGrams() {
+        #expect(EditableFoodItem.servingGrams(from: "1 serving (30g)") == 30)
+        #expect(EditableFoodItem.servingGrams(from: "per 100g") == 100)
+        #expect(EditableFoodItem.servingGrams(from: "250 ml") == 250)
+        #expect(EditableFoodItem.servingGrams(from: "a handful") == nil)
+        #expect(EditableFoodItem.servingGrams(from: "5000g") == nil)
+        #expect(EditableFoodItem.servingGrams(from: nil) == nil)
+    }
+
+    private func estimate(_ description: String, _ items: [NutritionItem]) -> NutritionEstimate {
+        NutritionEstimate(description: description, items: items, totalCarbsG: 0, confidence: .medium)
+    }
+
+    @Test("single-item answer: that item with its serving")
+    func singleItemAnswer() {
+        let r = estimate("Popcorn", [NutritionItem(name: "Popcorn", carbsG: 20, servingSize: "30g")]).singleRowReplacement
+        #expect(r?.name == "Popcorn")
+        #expect(r?.carbsG == 20)
+        #expect(r?.servingG == 30)
+    }
+
+    @Test("multi-item answer: summed carbs under the description, no serving")
+    func multiItemAnswer() {
+        let r = estimate("Popcorn with butter", [
+            NutritionItem(name: "Popcorn", carbsG: 20, servingSize: "30g"),
+            NutritionItem(name: "Butter", carbsG: 0.5, servingSize: "10g"),
+        ]).singleRowReplacement
+        #expect(r?.name == "Popcorn with butter")
+        #expect(r?.carbsG == 20.5)
+        #expect(r?.servingG == nil)
+    }
+
+    @Test("empty answer merges nothing")
+    func emptyAnswer() {
+        #expect(estimate("?", []).singleRowReplacement == nil)
+    }
+}

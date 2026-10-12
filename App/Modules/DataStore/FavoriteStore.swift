@@ -462,16 +462,9 @@ private extension DataStore {
                     // folds ASCII only, so "MÜSLI" and "Müsli" both survive the SQL
                     // dedupe and would otherwise each burn a slot, yielding fewer
                     // than `limit` genuinely distinct foods.
-                    var seen = Set<String>()
-                    var result: [MealEntry] = []
-
-                    for candidate in candidates
-                        where candidate.mealDescription.localizedCaseInsensitiveContains(needle)
-                    {
-                        guard seen.insert(candidate.mealDescription.lowercased()).inserted else { continue }
-                        result.append(candidate)
-                        if result.count == limit { break }
-                    }
+                    let result = FoodNameSearch.distinctNameMatches(
+                        candidates, needle: needle, limit: limit, name: \.mealDescription
+                    )
 
                     promise(.success(result))
                 } catch {

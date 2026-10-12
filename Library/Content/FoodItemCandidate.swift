@@ -20,14 +20,16 @@ struct FoodItemCandidate: Equatable, Identifiable {
     enum Source: String, Equatable {
         case favorite
         case personal
-        case history
+        /// A past MealEntry — a WHOLE meal, so its carbs are the meal's, not
+        /// a per-item figure. Labelled MEAL so the row says so.
+        case meal
 
         /// Tag shown at the end of the candidate row.
         var label: String {
             switch self {
             case .favorite: return "FAV"
             case .personal: return "PERSONAL"
-            case .history: return "HISTORY"
+            case .meal: return "MEAL"
             }
         }
     }
@@ -67,22 +69,22 @@ enum FoodItemCandidateRanker {
         let all: [FoodItemCandidate] =
             favorites.map { FoodItemCandidate(name: $0.mealDescription, carbsG: $0.carbsGrams ?? 0, source: .favorite) }
             + personalFoods.map { FoodItemCandidate(name: $0.name, carbsG: $0.carbsG, source: .personal) }
-            + recents.map { FoodItemCandidate(name: $0.mealDescription, carbsG: $0.carbsGrams ?? 0, source: .history) }
+            + recents.map { FoodItemCandidate(name: $0.mealDescription, carbsG: $0.carbsGrams ?? 0, source: .meal) }
 
-        var seen = Set<String>()
+        let matches = FoodNameSearch.distinctNameMatches(
+            all.map { FoodItemCandidate(name: $0.name.trimmingCharacters(in: .whitespacesAndNewlines), carbsG: $0.carbsG, source: $0.source) },
+            needle: needle,
+            limit: .max,
+            name: \.name
+        )
+
         var prefixTier: [FoodItemCandidate] = []
         var containsTier: [FoodItemCandidate] = []
-
-        for candidate in all {
-            let name = candidate.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !name.isEmpty, name.localizedCaseInsensitiveContains(needle) else { continue }
-            guard seen.insert(name.lowercased()).inserted else { continue }
-
-            let trimmed = FoodItemCandidate(name: name, carbsG: candidate.carbsG, source: candidate.source)
-            if isPrefixMatch(name, needle) {
-                prefixTier.append(trimmed)
+        for candidate in matches {
+            if isPrefixMatch(candidate.name, needle) {
+                prefixTier.append(candidate)
             } else {
-                containsTier.append(trimmed)
+                containsTier.append(candidate)
             }
         }
 

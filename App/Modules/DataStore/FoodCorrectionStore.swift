@@ -354,16 +354,9 @@ private extension DataStore {
                         .order(Column(PersonalFood.Columns.lastUsed.name).desc)
                         .fetchAll(db)
 
-                    var seen = Set<String>()
-                    var result: [PersonalFood] = []
-
-                    for candidate in candidates
-                        where candidate.name.localizedCaseInsensitiveContains(needle)
-                    {
-                        guard seen.insert(candidate.name.lowercased()).inserted else { continue }
-                        result.append(candidate)
-                        if result.count == limit { break }
-                    }
+                    let result = FoodNameSearch.distinctNameMatches(
+                        candidates, needle: needle, limit: limit, name: \.name
+                    )
 
                     promise(.success(result))
                 } catch {

@@ -123,7 +123,6 @@ struct FoodPhotoAnalysisView: View {
             isFollowingUp = false
             followUpError = nil
             portionMultiplier = 1.0
-            baseStagedItems = []
             customPortionText = ""
             replacingItemID = nil
             store.dispatch(.resetFoodItemAnalysis)
@@ -155,7 +154,6 @@ struct FoodPhotoAnalysisView: View {
 
     // Portion scaling state
     @State private var portionMultiplier: Double = 1.0
-    @State private var baseStagedItems: [EditableFoodItem] = []
     @State private var customPortionText = ""
 
     // Conversational follow-up state
@@ -192,23 +190,14 @@ struct FoodPhotoAnalysisView: View {
     }
 
     /// Recognition bias for the REPLACE panel's mic: the foods on the plate,
-    /// then favourites, then recents — the `foodContextualStrings` shape from
-    /// UnifiedFoodEntryView (deduped with `lowercased()`, which folds non-ASCII;
-    /// capped at the ~100 phrases SFSpeechRecognizer takes).
+    /// then favourites, then recents (`SpeechContextPhrases`, shared with the
+    /// Log Meal sheet's mic).
     private var replaceContextualStrings: [String] {
-        let candidates = stagedItems.map(\.name)
-            + store.state.favoriteFoodValues.map(\.mealDescription)
-            + store.state.recentMealEntries.map(\.mealDescription)
-
-        var seen = Set<String>()
-        var phrases: [String] = []
-        for candidate in candidates {
-            let trimmed = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty, seen.insert(trimmed.lowercased()).inserted else { continue }
-            phrases.append(trimmed)
-            if phrases.count == 100 { break }
-        }
-        return phrases
+        SpeechContextPhrases.make(
+            stagedItems.map(\.name)
+                + store.state.favoriteFoodValues.map(\.mealDescription)
+                + store.state.recentMealEntries.map(\.mealDescription)
+        )
     }
 
     // Whether the portion picker should show (single-item barcode result with known serving)
@@ -684,35 +673,20 @@ struct FoodPhotoAnalysisView: View {
         // is an estimate (AI, or a whole-plate barcode scan — the plate can't
         // tell those apart, and provenance never changes the carb math).
         let source: ItemSource = relogMeal != nil ? .history : .ai
-        let items = result.items.enumerated().map { index, item -> EditableFoodItem in
-            let amount = parseBaseServingG(item.servingSize)
-            let ratio: Double? = amount.flatMap { $0 > 0 ? item.carbsG / $0 : nil }
-            return EditableFoodItem(
+        stagedItems = result.items.enumerated().map { index, item in
+            EditableFoodItem.make(
                 name: item.name,
                 carbsG: item.carbsG,
-                baseServingG: amount,
-                currentAmountG: amount,
-                carbsPerG: ratio,
+                servingG: parseBaseServingG(item.servingSize),
                 originalIndex: index,
                 source: source
             )
         }
-        stagedItems = items
-        baseStagedItems = items // preserve unscaled originals for corrections
         portionMultiplier = 1.0
     }
 
-    /// Parse numeric grams/ml from serving size string like "per 100g", "1 serving (30g)", "15 g"
     private func parseBaseServingG(_ servingSize: String?) -> Double? {
-        guard let s = servingSize else { return nil }
-        // Look for a number followed by g or ml
-        let pattern = #"(\d+(?:\.\d+)?)\s*(?:g|ml|gram)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-              let match = regex.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)),
-              let range = Range(match.range(at: 1), in: s),
-              let value = Double(s[range]),
-              value > 0, value <= 2000 else { return nil }
-        return value
+        EditableFoodItem.servingGrams(from: servingSize)
     }
 
     private func sendFollowUp(result: NutritionEstimate) {
@@ -757,10 +731,9 @@ struct FoodPhotoAnalysisView: View {
         // The follow-up result becomes foodAnalysisResult, so it is the new
         // baseline that corrections are attributed against.
         let newItems = result.items.enumerated().map { index, item in
-            EditableFoodItem(name: item.name, carbsG: item.carbsG, originalIndex: index, source: .ai)
+            EditableFoodItem.make(name: item.name, carbsG: item.carbsG, servingG: nil, originalIndex: index, source: .ai)
         }
         stagedItems = newItems
-        baseStagedItems = newItems
         portionMultiplier = 1.0 // follow-up result is already the correct portion
         customPortionText = ""
         isFollowingUp = false
@@ -775,54 +748,59 @@ struct FoodPhotoAnalysisView: View {
         }
     }
 
-    /// Rewrites one row in place — the id is preserved so ForEach keeps the row
-    /// and corrections stay attributed via `originalIndex` (DMNC-1561). The
-    /// portion fields describe the OLD food, so they are replaced when the new
-    /// source knows a serving and cleared otherwise (a stale `carbsPerG` would
-    /// rescale the new carbs on the next amount edit).
+    /// Rewrites one row in place — the id (so ForEach keeps the row), expansion
+    /// and `originalIndex` (so corrections stay attributed) survive; everything
+    /// else comes from `EditableFoodItem.make` (DMNC-1561). The old portion
+    /// fields described the OLD food, so they are replaced, or cleared when the
+    /// new source knows no serving (a stale `carbsPerG` would rescale the new
+    /// carbs on the next amount edit).
     private func applyReplacement(itemID: UUID, name: String, carbsG: Double, servingG: Double?, source: ItemSource) {
         guard let index = stagedItems.firstIndex(where: { $0.id == itemID }) else { return }
-        let serving = servingG.flatMap { $0 > 0 ? $0 : nil }
-        stagedItems[index].name = name
-        stagedItems[index].carbsG = carbsG
-        stagedItems[index].baseServingG = serving
-        stagedItems[index].currentAmountG = serving
-        stagedItems[index].carbsPerG = serving.map { carbsG / $0 }
-        stagedItems[index].source = source
+        let old = stagedItems[index]
+        var replacement = EditableFoodItem.make(
+            name: name, carbsG: carbsG, servingG: servingG, originalIndex: old.originalIndex, source: source
+        )
+        replacement.id = old.id
+        replacement.isExpanded = old.isExpanded
+        stagedItems[index] = replacement
+        resetPortionScaling()
     }
 
-    /// SCAN ITEM result: a new row built exactly like the replace path, with no
+    /// SCAN ITEM result: a new row built like the replace path, with no
     /// original to attribute against.
     private func appendScannedItem(_ scannedItem: NutritionItem) {
-        let amount = parseBaseServingG(scannedItem.servingSize)
-        let ratio: Double? = amount.flatMap { $0 > 0 ? scannedItem.carbsG / $0 : nil }
-        stagedItems.append(EditableFoodItem(
+        stagedItems.append(EditableFoodItem.make(
             name: scannedItem.name,
             carbsG: scannedItem.carbsG,
-            baseServingG: amount,
-            currentAmountG: amount,
-            carbsPerG: ratio,
+            servingG: parseBaseServingG(scannedItem.servingSize),
             originalIndex: nil,
             source: .barcode
         ))
+        resetPortionScaling()
+    }
+
+    /// The ×N portion picker scales the WHOLE plate and is only shown for a
+    /// single item with a known serving. After the plate's food changes, an
+    /// ×N chosen for the old food must not silently keep scaling the new one
+    /// (the picker may vanish while the multiplier lingers in the total).
+    private func resetPortionScaling() {
+        portionMultiplier = 1.0
+        customPortionText = ""
     }
 
     private func mergeItemAnalysisResult() {
         guard let result = store.state.foodItemAnalysisResult else { return }
-        guard let first = result.estimate.items.first else {
-            store.dispatch(.setFoodItemAnalysisError(
+        // The middleware turns an empty answer into a row error, so nil here
+        // only means "nothing to merge".
+        if let replacement = result.estimate.singleRowReplacement {
+            applyReplacement(
                 itemID: result.itemID,
-                error: LocalizedString("Couldn't identify that food. Try a different name.")
-            ))
-            return
+                name: replacement.name,
+                carbsG: replacement.carbsG,
+                servingG: replacement.servingG,
+                source: .ai
+            )
         }
-        applyReplacement(
-            itemID: result.itemID,
-            name: first.name,
-            carbsG: first.carbsG,
-            servingG: parseBaseServingG(first.servingSize),
-            source: .ai
-        )
         if replacingItemID == result.itemID {
             replacingItemID = nil
         }

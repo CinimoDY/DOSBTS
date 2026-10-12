@@ -86,6 +86,15 @@ private func claudeMiddleware(service: LazyService<ClaudeService>) -> Middleware
                             query: query,
                             personalFoods: state.personalFoodValues
                         )
+                        // An empty answer is an error for THIS row, decided here
+                        // so the reducer's waiting-row guard still applies.
+                        guard !analysisResult.estimate.items.isEmpty else {
+                            promise(.success(.setFoodItemAnalysisError(
+                                itemID: itemID,
+                                error: LocalizedString("Couldn't identify that food. Try a different name.")
+                            )))
+                            return
+                        }
                         promise(.success(.setFoodItemAnalysisResult(itemID: itemID, estimate: analysisResult.estimate)))
                     } catch {
                         promise(.success(.setFoodItemAnalysisError(itemID: itemID, error: error.localizedDescription)))
