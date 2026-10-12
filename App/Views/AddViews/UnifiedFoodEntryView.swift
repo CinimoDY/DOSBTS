@@ -160,6 +160,8 @@ struct UnifiedFoodEntryView: View {
     /// what QUICK is for (log several items in a row). Chip logs park their id
     /// here and the follow skips it; every other path (staging plate, recents
     /// hold-to-log, photo analysis) still follows as before.
+    @State private var quickLoggedID: UUID?
+    /// Last hold-logged source + entry (both QUICK and RECENT); drives count mode only.
     @State private var lastQuickLog: (sourceKey: String, entryID: UUID, at: Date)?
     /// Count mode (DMNC-1562): second hold on the same source inside
     /// `QuantityCommit.rearmWindow` opens a stepper instead of a duplicate entry.
@@ -231,7 +233,7 @@ struct UnifiedFoodEntryView: View {
             // where the meal landed.
             .onChange(of: store.state.recentMealEntries) { _, recents in
                 guard let id = addedHighlighter.highlightedID,
-                      id != lastQuickLog?.entryID,
+                      id != quickLoggedID,
                       recents.contains(where: { $0.id == id }) else { return }
                 withAnimation(AnimationTokens.easeStandard) {
                     scrollProxy.scrollTo(id, anchor: .center)
@@ -434,11 +436,7 @@ struct UnifiedFoodEntryView: View {
                         onTap: { openOnStagingPlate(meal) },
                         onCommit: { logRecent(meal) }
                     ) {
-                        if showsCountRow(in: meal) {
-                            countRow
-                        } else {
-                            MealItemRow(meal: meal, variant: .recent)
-                        }
+                        MealItemRow(meal: meal, variant: .recent)
                     }
                     .id(meal.id)
                     .dosAddedHighlight(addedHighlighter.highlightedID == meal.id)
@@ -449,6 +447,13 @@ struct UnifiedFoodEntryView: View {
                             Label("Add to Favorites", systemImage: "star")
                         }
                         .tint(AmberTheme.amber)
+                    }
+
+                    // Count mode (DMNC-1562): a sibling row, never nested inside the
+                    // hold wrapper's Button — nested Buttons would fight for taps.
+                    // Holding the meal row above still increments the count.
+                    if showsCountRow(in: meal) {
+                        countRow
                     }
                 }
 
@@ -716,6 +721,7 @@ struct UnifiedFoodEntryView: View {
         addedHighlighter.flash(mealEntry.id)
         // Stay put: the chip the user just tapped must still be under their
         // thumb for the next one.
+        quickLoggedID = mealEntry.id
         lastQuickLog = (key, mealEntry.id, Date())
     }
 
