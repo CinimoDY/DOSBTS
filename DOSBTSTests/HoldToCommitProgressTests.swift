@@ -119,11 +119,24 @@ struct QuantityCommitTests {
         #expect(s.fiberGrams == nil)
     }
 
-    @Test("re-scaling an already scaled description is idempotent on the name")
-    func idempotentName() {
+    @Test("scaled description is refused as a base")
+    func scaledRefusedAsBase() {
+        #expect(QuantityCommit.isScaledDescription("3× Gummy bear"))
+        #expect(!QuantityCommit.isScaledDescription("Gummy bear"))
+        let last = (sourceKey: "3× gummy bear", entryID: id, at: t0)
+        #expect(!QuantityCommit.shouldEnterCountMode(lastLogged: last, tappedSourceKey: "3× gummy bear", now: t0.addingTimeInterval(1)))
+    }
+
+    @Test("hypo sources never enter count mode")
+    func hypoRefused() {
+        let last = (sourceKey: "juice", entryID: id, at: t0)
+        #expect(!QuantityCommit.shouldEnterCountMode(lastLogged: last, tappedSourceKey: "juice", now: t0.addingTimeInterval(1), hypoSourceKeys: ["juice"]))
+    }
+
+    @Test("scaled does not strip an existing prefix")
+    func scaledDoesNotStrip() {
         let base = MealEntry(id: id, timestamp: t0, mealDescription: "3× Gummy bear", carbsGrams: 2)
-        #expect(QuantityCommit.scaled(base, count: 5).mealDescription == "5× Gummy bear")
-        #expect(QuantityCommit.baseDescription("Gummy bear") == "Gummy bear")
+        #expect(QuantityCommit.scaled(base, count: 5).mealDescription == "5× 3× Gummy bear")
     }
 
     @Test("count clamps to 2...99")

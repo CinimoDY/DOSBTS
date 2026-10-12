@@ -70,7 +70,7 @@ func favoriteFoodStoreMiddleware() -> Middleware<DirectState, DirectAction> {
 
         // Cross-middleware listening: these actions are "owned" by mealEntryStoreMiddleware,
         // but we listen here to reload recents when meals change.
-        case .addMealEntry, .deleteMealEntry:
+        case .addMealEntry, .deleteMealEntry, .updateMealEntry:
             return Just(DirectAction.loadRecentMealEntries)
                 .setFailureType(to: DirectError.self)
                 .eraseToAnyPublisher()

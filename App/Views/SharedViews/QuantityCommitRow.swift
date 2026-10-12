@@ -16,20 +16,23 @@ struct QuantityCommitRow: View {
     let onAdd: () -> Void
     let onCancel: () -> Void
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private static let range = Double(QuantityCommit.countRange.lowerBound)...Double(QuantityCommit.countRange.upperBound)
 
     private var countValue: Binding<Double?> {
         Binding(
             get: { Double(count) },
             set: { newValue in
                 guard let newValue else { return }
-                count = QuantityCommit.clamped(Int(newValue.rounded()))
+                var v: Double? = newValue.rounded()
+                StepperField.increment(&v, step: 0, range: Self.range)
+                StepperField.decrement(&v, step: 0, range: Self.range)
+                count = Int(v ?? Self.range.lowerBound)
             }
         )
     }
 
     private var totalLabel: String {
-        let name = QuantityCommit.baseDescription(baseDescription)
+        let name = baseDescription
         if let baseCarbs {
             return "× \(name) · \(Int((baseCarbs * Double(count)).rounded()))g"
         }
@@ -42,15 +45,21 @@ struct QuantityCommitRow: View {
                 title: "Count",
                 value: countValue,
                 step: 1,
-                range: Double(QuantityCommit.countRange.lowerBound)...Double(QuantityCommit.countRange.upperBound)
+                range: Self.range
             )
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Count")
             .accessibilityValue("\(count)")
             .accessibilityAdjustableAction { direction in
                 switch direction {
-                case .increment: count = QuantityCommit.clamped(count + 1)
-                case .decrement: count = QuantityCommit.clamped(count - 1)
+                case .increment:
+                    var v: Double? = Double(count)
+                    StepperField.increment(&v, step: 1, range: Self.range)
+                    count = Int(v ?? Double(count))
+                case .decrement:
+                    var v: Double? = Double(count)
+                    StepperField.decrement(&v, step: 1, range: Self.range)
+                    count = Int(v ?? Double(count))
                 @unknown default: break
                 }
             }
@@ -78,9 +87,6 @@ struct QuantityCommitRow: View {
                 .accessibilityLabel("Cancel count")
             }
         }
-        .transaction { transaction in
-            if reduceMotion { transaction.animation = nil }
-        }
-        .transition(reduceMotion ? .identity : .opacity.animation(AnimationTokens.easeStandard))
+        .transition(.opacity)
     }
 }

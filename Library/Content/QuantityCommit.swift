@@ -15,8 +15,8 @@ struct QuantityCommitSession {
     let sourceKey: String
     let entryID: UUID
     let baseEntry: MealEntry
+    let fromFavorite: Bool
     var count: Int
-    let startedAt: Date
 }
 
 enum QuantityCommit {
@@ -30,22 +30,24 @@ enum QuantityCommit {
         description.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
+    /// True when the description already carries an `N× ` prefix, i.e. it is
+    /// the output of `scaled` and must never be used as a base.
+    static func isScaledDescription(_ description: String) -> Bool {
+        description.trimmingCharacters(in: .whitespacesAndNewlines)
+            .range(of: #"^\d+× "#, options: .regularExpression) != nil
+    }
+
+    /// Governs ENTERING count mode only; holds while the stepper is open
+    /// always increment. Refuses scaled sources and hypo-treatment sources.
     static func shouldEnterCountMode(
         lastLogged: (sourceKey: String, entryID: UUID, at: Date)?,
         tappedSourceKey: String,
-        now: Date
+        now: Date,
+        hypoSourceKeys: Set<String> = []
     ) -> Bool {
         guard let lastLogged, lastLogged.sourceKey == tappedSourceKey else { return false }
+        guard !isScaledDescription(tappedSourceKey), !hypoSourceKeys.contains(tappedSourceKey) else { return false }
         return now.timeIntervalSince(lastLogged.at) < rearmWindow
-    }
-
-    /// Strips a leading `N× ` prefix (N = digits) so scaling is idempotent.
-    static func baseDescription(_ description: String) -> String {
-        let trimmed = description.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let range = trimmed.range(of: #"^\d+× "#, options: .regularExpression) else {
-            return trimmed
-        }
-        return String(trimmed[range.upperBound...])
     }
 
     static func clamped(_ count: Int) -> Int {
@@ -58,7 +60,7 @@ enum QuantityCommit {
         return MealEntry(
             id: base.id,
             timestamp: base.timestamp,
-            mealDescription: "\(n)× \(baseDescription(base.mealDescription))",
+            mealDescription: "\(n)× \(base.mealDescription)",
             carbsGrams: base.carbsGrams.map { $0 * factor },
             proteinGrams: base.proteinGrams.map { $0 * factor },
             fatGrams: base.fatGrams.map { $0 * factor },

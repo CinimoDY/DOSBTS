@@ -166,7 +166,6 @@ struct UnifiedFoodEntryView: View {
     /// Count mode (DMNC-1562): second hold on the same source inside
     /// `QuantityCommit.rearmWindow` opens a stepper instead of a duplicate entry.
     @State private var countSession: QuantityCommitSession?
-    @State private var countSourceIsFavorite = false
     @State private var countIdleTask: Task<Void, Never>?
 
     private var displayedFavorites: [FavoriteFood] {
@@ -356,7 +355,7 @@ struct UnifiedFoodEntryView: View {
                 .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
             }
 
-            if countSession != nil, countSourceIsFavorite {
+            if countSession?.fromFavorite == true {
                 countRow
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
@@ -713,7 +712,7 @@ struct UnifiedFoodEntryView: View {
         let key = QuantityCommit.sourceKey(for: mealEntry.mealDescription)
         // Hypo treatments stay strictly 1-tap: never enter count mode.
         if !favorite.isHypoTreatment, advanceCountMode(sourceKey: key, fromFavorite: true) { return }
-        countSession = nil
+        exitCountMode()
         store.dispatch(.addMealEntry(mealEntryValues: [mealEntry]))
         store.dispatch(.logFavoriteFood(favoriteFood: favorite))
         DirectNotifications.shared.hapticNotification(.success)
@@ -722,7 +721,8 @@ struct UnifiedFoodEntryView: View {
         // Stay put: the chip the user just tapped must still be under their
         // thumb for the next one.
         quickLoggedID = mealEntry.id
-        lastQuickLog = (key, mealEntry.id, Date())
+        // Hypo treatments never arm count mode.
+        lastQuickLog = favorite.isHypoTreatment ? nil : (key, mealEntry.id, Date())
     }
 
     private func stageFavorite(_ favorite: FavoriteFood) {
@@ -736,7 +736,7 @@ struct UnifiedFoodEntryView: View {
         let newEntry = FavoriteFood.from(mealEntry: meal).toMealEntry()
         let key = QuantityCommit.sourceKey(for: newEntry.mealDescription)
         if advanceCountMode(sourceKey: key, fromFavorite: false) { return }
-        countSession = nil
+        exitCountMode()
         store.dispatch(.addMealEntry(mealEntryValues: [newEntry]))
         DirectNotifications.shared.hapticNotification(.success)
         toast.show(newEntry)
@@ -750,33 +750,50 @@ struct UnifiedFoodEntryView: View {
     /// first entry still exists: open the stepper (count 2) or add one more.
     /// Returns true when the hold was consumed (no new entry is logged).
     private func advanceCountMode(sourceKey: String, fromFavorite: Bool) -> Bool {
-        guard QuantityCommit.shouldEnterCountMode(lastLogged: lastQuickLog, tappedSourceKey: sourceKey, now: Date()),
-              let entryID = lastQuickLog?.entryID else { return false }
-        if var session = countSession, session.entryID == entryID {
+        let entries = store.state.mealEntryValues
+        // Stepper already open for this source: every hold increments, however
+        // long ago the first log was (the window only governs entering).
+        if var session = countSession, session.sourceKey == sourceKey {
+            guard entries.contains(where: { $0.id == session.entryID }) else {
+                // Base entry was UNDOne: leave count mode and log normally.
+                exitCountMode()
+                return false
+            }
             session.count = QuantityCommit.clamped(session.count + 1)
             countSession = session
-        } else {
-            guard let base = store.state.mealEntryValues.first(where: { $0.id == entryID }) else { return false }
-            countSourceIsFavorite = fromFavorite
-            withAnimation(reduceMotion ? nil : AnimationTokens.easeStandard) {
-                countSession = QuantityCommitSession(
-                    sourceKey: sourceKey,
-                    entryID: entryID,
-                    baseEntry: base,
-                    count: QuantityCommit.countRange.lowerBound,
-                    startedAt: Date()
-                )
-            }
+            lastQuickLog?.at = Date()
+            DirectNotifications.shared.hapticNotification(.success)
+            restartCountIdleTimer()
+            return true
         }
+
+        let hypoKeys = Set(store.state.favoriteFoodValues.filter(\.isHypoTreatment).map {
+            QuantityCommit.sourceKey(for: $0.mealDescription)
+        })
+        guard QuantityCommit.shouldEnterCountMode(
+                  lastLogged: lastQuickLog, tappedSourceKey: sourceKey, now: Date(), hypoSourceKeys: hypoKeys),
+              let entryID = lastQuickLog?.entryID,
+              let base = entries.first(where: { $0.id == entryID }),
+              !QuantityCommit.isScaledDescription(base.mealDescription),
+              !hypoKeys.contains(QuantityCommit.sourceKey(for: base.mealDescription)) else { return false }
+        withAnimation(AnimationTokens.adapted(animation: AnimationTokens.easeStandard, reduceMotion: reduceMotion)) {
+            countSession = QuantityCommitSession(
+                sourceKey: sourceKey,
+                entryID: entryID,
+                baseEntry: base,
+                fromFavorite: fromFavorite,
+                count: QuantityCommit.countRange.lowerBound
+            )
+        }
+        lastQuickLog?.at = Date()
         DirectNotifications.shared.hapticNotification(.success)
         restartCountIdleTimer()
         return true
     }
 
     private func showsCountRow(in meal: MealEntry) -> Bool {
-        guard let session = countSession, !countSourceIsFavorite else { return false }
+        guard let session = countSession, !session.fromFavorite else { return false }
         return meal.id == session.entryID
-            || QuantityCommit.sourceKey(for: meal.mealDescription) == session.sourceKey
     }
 
     private var countRow: some View {
@@ -810,7 +827,7 @@ struct UnifiedFoodEntryView: View {
     private func exitCountMode() {
         countIdleTask?.cancel()
         countIdleTask = nil
-        withAnimation(reduceMotion ? nil : AnimationTokens.easeStandard) {
+        withAnimation(AnimationTokens.adapted(animation: AnimationTokens.easeStandard, reduceMotion: reduceMotion)) {
             countSession = nil
         }
     }
