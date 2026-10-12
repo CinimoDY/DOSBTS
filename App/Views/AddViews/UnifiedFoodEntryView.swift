@@ -15,11 +15,19 @@ struct HypoFilteredEntryModel: Equatable {
     let showsEmptyHypoMessage: Bool
     /// "LOG OTHER FOOD" manual-entry escape row.
     let showsEscapeRow: Bool
+    /// "OTHER FAVOURITES" section: every favourite not flagged as a hypo
+    /// treatment, each a 1-tap treatment log (DMNC-1564).
+    let showsOtherFavourites: Bool
 
-    static func make(hypoFavoriteCount: Int, filterToHypoTreatments: Bool) -> HypoFilteredEntryModel {
+    static func make(
+        hypoFavoriteCount: Int,
+        otherFavoriteCount: Int = 0,
+        filterToHypoTreatments: Bool
+    ) -> HypoFilteredEntryModel {
         HypoFilteredEntryModel(
             showsEmptyHypoMessage: filterToHypoTreatments && hypoFavoriteCount == 0,
-            showsEscapeRow: filterToHypoTreatments
+            showsEscapeRow: filterToHypoTreatments,
+            showsOtherFavourites: filterToHypoTreatments && otherFavoriteCount > 0
         )
     }
 }
@@ -175,9 +183,15 @@ struct UnifiedFoodEntryView: View {
         return store.state.favoriteFoodValues
     }
 
+    /// Hypo mode only: favourites NOT flagged as hypo treatments (DMNC-1564).
+    private var otherFavorites: [FavoriteFood] {
+        store.state.favoriteFoodValues.filter { !$0.isHypoTreatment }
+    }
+
     private var entryModel: HypoFilteredEntryModel {
         HypoFilteredEntryModel.make(
             hypoFavoriteCount: displayedFavorites.count,
+            otherFavoriteCount: filterToHypoTreatments ? otherFavorites.count : 0,
             filterToHypoTreatments: filterToHypoTreatments
         )
     }
@@ -205,11 +219,14 @@ struct UnifiedFoodEntryView: View {
                         Section {
                             DOSEmptyState(
                                 title: "NO HYPO TREATMENTS CONFIGURED",
-                                detail: "Add hypo treatments in Favorites to see them here"
+                                detail: "Tap any favourite or recent food below to log it as your treatment"
                             )
                         }
                     } else {
                         favoritesSection
+                    }
+                    if model.showsOtherFavourites {
+                        otherFavoritesSection
                     }
                 } else if !store.state.favoriteFoodValues.isEmpty {
                     favoritesSection
@@ -381,6 +398,38 @@ struct UnifiedFoodEntryView: View {
         }
     }
 
+    /// Hypo mode only (DMNC-1564): non-hypo favourites as 1-tap treatment logs.
+    /// Amber, not green — green stays the "flagged hypo treatment" cue. No hold
+    /// gesture, no staging plate (DMNC-796 R4).
+    @ViewBuilder
+    private var otherFavoritesSection: some View {
+        let others = filteredOtherFavorites
+        if !others.isEmpty || searchText.isEmpty {
+            Section {
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 96, maximum: 160), spacing: DOSSpacing.xs, alignment: .leading)],
+                    alignment: .leading,
+                    spacing: DOSSpacing.xs
+                ) {
+                    ForEach(others) { favorite in
+                        AmberChip(
+                            label: favorite.chipLabel,
+                            subtitle: favorite.carbsGrams.map { "\(Int($0))g" },
+                            variant: .quick
+                        ) {
+                            logHypoTreatment(favorite)
+                        }
+                    }
+                }
+                .padding(.vertical, DOSSpacing.xs)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: DOSSpacing.sm, bottom: 0, trailing: DOSSpacing.sm))
+            } header: {
+                Text("OTHER FAVOURITES").dosHeader()
+            }
+        }
+    }
+
     @ViewBuilder
     private func favoriteChip(_ favorite: FavoriteFood) -> some View {
         if favorite.isHypoTreatment {
@@ -392,7 +441,11 @@ struct UnifiedFoodEntryView: View {
                 variant: .quick,
                 tint: AmberTheme.cgaGreen
             ) {
-                logFavorite(favorite)
+                if filterToHypoTreatments {
+                    logHypoTreatment(favorite)
+                } else {
+                    logFavorite(favorite)
+                }
             }
         } else {
             HoldToCommitProgress(
@@ -427,6 +480,26 @@ struct UnifiedFoodEntryView: View {
                 }
             } else {
                 ForEach(search.rows) { meal in
+                    if filterToHypoTreatments {
+                        // Hypo mode (DMNC-1564): plain 1-tap treatment log. No
+                        // hold gesture, no staging plate, no count mode (R4).
+                        Button {
+                            logHypoTreatment(FavoriteFood.from(mealEntry: meal))
+                        } label: {
+                            MealItemRow(meal: meal, variant: .recent)
+                        }
+                        .buttonStyle(.plain)
+                        .id(meal.id)
+                        .dosAddedHighlight(addedHighlighter.highlightedID == meal.id)
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                addToFavorites(meal)
+                            } label: {
+                                Label("Add to Favorites", systemImage: "star")
+                            }
+                            .tint(AmberTheme.amber)
+                        }
+                    } else {
                     // Tap stages, hold insta-logs. No context menu — it can't
                     // coexist with the hold recognizer (DMNC-796 KTD-3). The
                     // swipe affordance hangs off the hold wrapper, not inside
@@ -453,6 +526,7 @@ struct UnifiedFoodEntryView: View {
                     // Holding the meal row above still increments the count.
                     if showsCountRow(in: meal) {
                         countRow
+                    }
                     }
                 }
 
@@ -655,6 +729,13 @@ struct UnifiedFoodEntryView: View {
 
     /// Favourites stay a purely local filter — the favourites list is small and
     /// fully in memory, so there is nothing further back to reach for.
+    private var filteredOtherFavorites: [FavoriteFood] {
+        guard !searchText.isEmpty else { return otherFavorites }
+        return otherFavorites.filter {
+            $0.mealDescription.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
     private var filteredFavorites: [FavoriteFood] {
         let base = filterToHypoTreatments ? displayedFavorites : store.state.favoriteFoodValues
         guard !searchText.isEmpty else { return base }
@@ -715,6 +796,33 @@ struct UnifiedFoodEntryView: View {
         quickLoggedID = mealEntry.id
         // Hypo treatments never arm count mode.
         lastQuickLog = favorite.isHypoTreatment ? nil : (key, mealEntry.id, Date())
+    }
+
+    /// Hypo mode (DMNC-1564): every selectable food is logged AS the treatment
+    /// via `.logHypoTreatment` — the only action that records a TreatmentEvent
+    /// and starts the countdown. 1-tap only; never count mode or staging.
+    /// The middleware builds its own MealEntry (fresh id), so the toast shows a
+    /// local copy and UNDO deletes the stored entry that matches it.
+    private func logHypoTreatment(_ favorite: FavoriteFood) {
+        let loggedAt = Date()
+        let shown = favorite.toMealEntry()
+        exitCountMode()
+        store.dispatch(.logHypoTreatment(
+            favorite: favorite,
+            alarmFiredAt: store.state.alarmFiredAt ?? loggedAt,
+            overrideTimestamp: nil
+        ))
+        DirectNotifications.shared.hapticNotification(.success)
+        toast.show(shown, undo: {
+            let stored = store.state.mealEntryValues
+                .filter { $0.mealDescription == shown.mealDescription && $0.timestamp >= loggedAt.addingTimeInterval(-1) }
+                .max { $0.timestamp < $1.timestamp }
+            if let stored { store.dispatch(.deleteMealEntry(mealEntry: stored)) }
+        })
+        addedHighlighter.flash(shown.id)
+        // Stay put; never follow the new entry (the chips must stay under thumb).
+        quickLoggedID = shown.id
+        lastQuickLog = nil
     }
 
     private func stageFavorite(_ favorite: FavoriteFood) {

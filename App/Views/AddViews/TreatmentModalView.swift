@@ -202,7 +202,7 @@ struct TreatmentModalView: View {
             }) {
                 HStack {
                     Image(systemName: "list.bullet")
-                    Text("More...")
+                    Text("CHOOSE FOOD…")
                         .font(DOSTypography.body)
                 }
                 .frame(maxWidth: .infinity)
