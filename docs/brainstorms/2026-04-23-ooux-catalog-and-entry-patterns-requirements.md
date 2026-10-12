@@ -1,3 +1,5 @@
+> **Superseded by docs/ooux/ (2026-10-12)** — see [`docs/ooux/entity-map.html`](../ooux/entity-map.html) and [`docs/ooux/README.md`](../ooux/README.md). Kept for history and the entry-pattern specs.
+
 # OOUX Catalog + Entry Patterns
 
 **Issue:** [DMNC-795](https://linear.app/lizomorf/issue/DMNC-795) (High)

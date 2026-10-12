@@ -13,3 +13,7 @@ The derivation is one-directional — release surfaces are generated from the ch
 The release-time step that converts the accumulated unreleased-changes block into a numbered build block (dated with the upload date, not the commit date) and opens a fresh empty unreleased block above it.
 
 Promotion is the gate for shipping: a deploy with nothing to promote means there is nothing user-visible to ship, and the release is aborted rather than published empty. Entries that merged before a promotion but ship only in a later build are moved to the build block that actually ships them.
+
+## Design
+
+- OOUX entity map — `docs/ooux/entity-map.html` (objects, relationships, CTAs, attributes, interface-pattern matrix).

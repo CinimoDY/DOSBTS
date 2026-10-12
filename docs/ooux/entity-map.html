@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DOSBTS Entity Map</title>
+<style>
+:root{--amber:#ffb000;--amberDark:#9a5700;--amberLight:#fdca9f;--bg:#000;--green:#55ff55;--red:#ff5555;--cyan:#55ffff;--dim:#9a5700;--panel:#0b0700}
+@media (prefers-color-scheme: light){:root{--amber:#6b3d00;--amberDark:#8a5200;--amberLight:#4a2c00;--bg:#fffaf0;--green:#0a6b0a;--red:#b00020;--cyan:#006a73;--dim:#7a5a30;--panel:#fff3dc}}
+@media print{:root{--amber:#000;--amberDark:#444;--amberLight:#222;--bg:#fff;--green:#060;--red:#a00;--cyan:#055;--dim:#555;--panel:#fff}}
+*{box-sizing:border-box;border-radius:0}
+html{background:var(--bg)}
+body{margin:0;padding:16px;background:var(--bg);color:var(--amber);font:14px/1.45 ui-monospace,"SF Mono",Menlo,monospace;max-width:1200px;margin-inline:auto;overflow-wrap:anywhere}
+h1{font-size:20px;margin:0 0 4px;letter-spacing:.05em}
+h2{font-size:15px;margin:32px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--amberDark);letter-spacing:.08em;text-transform:uppercase}
+h3{font-size:14px;margin:0 0 4px}
+p,li{margin:4px 0}
+.dim{color:var(--dim)}
+.legend span{display:inline-block;margin-right:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{border:1px solid var(--amberDark);background:var(--panel);padding:10px}
+.card .t{color:var(--amberLight);font-size:12px}
+.card ul{margin:4px 0;padding-left:16px}
+.tag{display:inline-block;border:1px solid currentColor;padding:0 4px;font-size:11px;margin:1px 2px 1px 0}
+.cta{color:var(--green)}
+.kind-typed{color:var(--amber)}.kind-uuid{color:var(--cyan)}.kind-factory{color:var(--green)}.kind-derived{color:var(--amberLight)}
+.scroll{overflow-x:auto;border:1px solid var(--amberDark)}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{border:1px solid var(--amberDark);padding:4px 6px;text-align:left;vertical-align:top;font-size:12px}
+th{color:var(--amberLight);background:var(--panel)}
+td.gap{color:var(--red);border:1px solid var(--red);font-weight:bold}
+.deltas{border:2px solid var(--cyan);padding:10px 12px;background:var(--panel)}
+.deltas h2{border-color:var(--cyan);color:var(--cyan);margin-top:0}
+.delta{margin:8px 0;padding-left:8px;border-left:3px solid var(--cyan)}
+svg{display:block;width:100%;min-width:760px;height:auto}
+svg text{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;fill:var(--amber)}
+svg .node rect{fill:var(--panel);stroke:var(--amber);stroke-width:1}
+svg .node.support rect{stroke:var(--amberDark);stroke-dasharray:3 2}
+svg .node.spine rect{stroke-width:3;stroke:var(--amberLight)}
+svg .node.treat rect{stroke:var(--red)}
+svg .e-typed{stroke:var(--amber)}svg .e-uuid{stroke:var(--cyan);stroke-dasharray:6 3}svg .e-factory{stroke:var(--green);stroke-dasharray:2 3}svg .e-derived{stroke:var(--amberLight);stroke-dasharray:8 3 2 3}
+svg line{stroke-width:1.2;fill:none}
+a{color:var(--cyan)}
+footer{margin-top:32px;color:var(--dim);font-size:12px}
+</style>
+</head>
+<body>
+<h1>DOSBTS Entity Map</h1>
+<p class="dim" id="sub"></p>
+<p><span class="tag" style="color:var(--red)">NOT A MEDICAL DEVICE</span> Design documentation for an experimental, personal-use app. Contains no efficacy or accuracy claims and no real glucose data.</p>
+
+<h2>Legend</h2>
+<div class="legend" id="legend"></div>
+
+<h2>Object map (spine: GlucoseReading)</h2>
+<div class="scroll"><svg id="map" viewBox="0 0 1040 640" role="img" aria-label="Entity relationship map of DOSBTS objects"></svg></div>
+<p class="dim">Dashed node border = supporting (derived/system) object. Red node border = hypo-treatment loop. Edge style = link kind. The relationship table below is the accessible equivalent.</p>
+
+<div class="deltas" id="deltas"></div>
+
+<h2>Core objects (ORCA: attributes and CTAs)</h2>
+<div class="cards" id="core"></div>
+
+<h2>Supporting objects</h2>
+<div class="cards" id="support"></div>
+
+<h2>Relationships</h2>
+<div class="scroll"><table id="rels"></table></div>
+<p class="dim" id="relnote"></p>
+
+<h2>Interface-pattern matrix</h2>
+<p class="dim">One row per core object. Red cells are gaps: a surface this object has no pattern for today. Gaps are observations for the design backlog, not commitments.</p>
+<div class="scroll"><table id="matrix"></table></div>
+
+<h2>Unverified in code</h2>
+<ul id="unverified"></ul>
+
+<footer id="foot"></footer>
+
+<script type="application/json" id="model">
+{
+"meta":{"generated":"2026-10-12","issue":"DMNC-1563","supersedes":"docs/brainstorms/2026-04-23-ooux-catalog-and-entry-patterns-requirements.md","method":"ORCA (Sophia Prater): Objects, Relationships, CTAs, Attributes. Names verified against Library/Content/*.swift and Library/DirectAction.swift on 2026-10-12."},
+"kinds":{
+ "typed":"stored typed reference (struct field / foreign key of a typed model)",
+ "uuid":"UUID convention: a UUID field joined at runtime, no compiler-checked link",
+ "factory":"factory method converts one object into the other (no stored back-reference)",
+ "derived":"computed on read or by middleware from other objects; never user-entered"},
+"objects":[
+ {"id":"glucose","name":"GlucoseReading","tier":"core","type":"SensorGlucose","spine":true,"what":"Sensor-derived value; the central data spine.","attrs":["id","timestamp","rawGlucoseValue","intGlucoseValue","smoothGlucoseValue?","minuteChange?","timegroup","trend (derived)","type normal/low/high (derived)"],"ctas":["addSensorGlucose","setSensorGlucoseValues","deleteSensorGlucose","restoreSensorGlucose","clearSensorGlucoseValues","loadSensorGlucoseStatistics"]},
+ {"id":"sensor","name":"Sensor","tier":"core","type":"Sensor","what":"Physical sensor / transmitter; source of readings.","attrs":["sensor state","age","connection state (see SensorConnection)"],"ctas":["setSensor","setSensorState","resetSensor","pairConnection","connectConnection","disconnectConnection"]},
+ {"id":"bg","name":"BloodGlucose","tier":"core","type":"BloodGlucose","what":"Manual fingerstick value.","attrs":["id","timestamp","glucoseValue","timegroup"],"ctas":["addBloodGlucose","deleteBloodGlucose","restoreBloodGlucose","clearBloodGlucoseValues"]},
+ {"id":"insulin","name":"InsulinDelivery","tier":"core","type":"InsulinDelivery","what":"A logged dose; basal has a duration.","attrs":["id","starts","ends","units","type: mealBolus | snackBolus | correctionBolus | basal","timegroup"],"ctas":["addInsulinDelivery","updateInsulinDelivery","deleteInsulinDelivery","restoreInsulinDelivery"]},
+ {"id":"meal","name":"MealEntry","tier":"core","type":"MealEntry","what":"A logged food intake event.","attrs":["id","timestamp","mealDescription","carbsGrams?","proteinGrams?","fatGrams?","calories?","fiberGrams?","timegroup","analysisSessionId?"],"ctas":["addMealEntry","updateMealEntry","deleteMealEntry","saveMealWithCorrections","searchMealHistory","loadRecentMealEntries"]},
+ {"id":"fav","name":"FavoriteFood","tier":"core","type":"FavoriteFood","what":"Curated meal template; one-tap log, optionally a hypo treatment.","attrs":["id","mealDescription","carbsGrams?","proteinGrams?","fatGrams?","calories?","fiberGrams?","sortOrder","isHypoTreatment","lastUsed?","shortLabel?"],"ctas":["addFavoriteFoodValues","updateFavoriteFood","deleteFavoriteFood","reorderFavoriteFoods","logFavoriteFood","logHypoTreatment"]},
+ {"id":"food","name":"FoodItem","tier":"core","type":"NutritionItem -> EditableFoodItem","what":"Staging-plate object: one line of a meal under review, before commit.","attrs":["NutritionItem: name, carbsG, proteinG?, fatG?, calories?, fiberG?, servingSize?","EditableFoodItem: name, carbsG, isExpanded, baseServingG?, currentAmountG?, carbsPerG?","NutritionEstimate (container): description, items, totalCarbsG, confidence high|medium|low"],"ctas":["analyzeFood","analyzeFoodBarcode","analyzeFoodText","setFoodAnalysisResult"]},
+ {"id":"note","name":"JournalNote","tier":"core","type":"JournalNote","what":"Free-text context note with optional tag.","attrs":["id","timestamp","text","tag? sick | stressed | sluggish | other"],"ctas":["addJournalNote","deleteJournalNote","loadJournalNoteValues"]},
+ {"id":"cycle","name":"TreatmentCycle","tier":"core","type":"state flags + TreatmentEvent","what":"Guided hypo-treatment loop (prompt, log, countdown, recheck).","attrs":["state: treatmentCycleActive, showTreatmentPrompt, alarmFiredAt, treatmentLoggedAt, treatmentCycleCountdownExpiry, recheckDispatched, treatmentCycleSnoozeUntil, hypoTreatmentWaitMinutes","TreatmentEvent (stored): id, mealEntryId, alarmFiredAt, treatmentLoggedAt, treatmentType, glucoseAtTreatment, countdownMinutes, timegroup"],"ctas":["showTreatmentPrompt","logHypoTreatment","startTreatmentCycle","endTreatmentCycle","dismissTreatmentCycle","treatmentCycleRecovered","treatmentCycleStillLow","addTreatmentEvent"]},
+ {"id":"alarm","name":"AlarmProfile","tier":"core","type":"AlarmProfile (day|night) + ResolvedAlarmThresholds","what":"Threshold and volume profiles switched on a night schedule.","attrs":["day/night alarmLow, alarmHigh, volume","nightStartHour/Minute, nightEndHour/Minute","alarmSnoozeUntil","showPredictiveLowAlarm, predictiveLowAlarmFired"],"ctas":["setDayAlarmLow","setDayAlarmHigh","setDayAlarmVolume","setNightAlarmLow","setNightAlarmHigh","setNightAlarmVolume","setNightScheduleStart","setNightScheduleEnd","setAlarmSnoozeUntil","setShowPredictiveLowAlarm"]},
+ {"id":"cal","name":"Calibration","tier":"core","type":"CustomCalibration","what":"Linear calibration point (raw to fingerstick).","attrs":["id","timestamp","x (raw)","y (BG)"],"ctas":["addCalibration","deleteCalibration","clearCalibrations"]},
+
+ {"id":"pfood","name":"PersonalFood","tier":"support","type":"PersonalFood","what":"Learned food with rolling glycemic score.","attrs":["id","name","carbsG","lastUsed","analysisSessionId?","avgDeltaMgDL?","observationCount","lastScoredDate?"],"ctas":["loadPersonalFoods","loadScoredPersonalFoods"]},
+ {"id":"corr","name":"FoodCorrection","tier":"support","type":"FoodCorrection","what":"User edit of an AI estimate, kept as learning signal.","attrs":["id","timestamp","correctionType nameChange|carbChange|deleted|added","originalName?","correctedName?","originalCarbsG?","correctedCarbsG?"],"ctas":["saveMealWithCorrections","loadRecentFoodCorrections"]},
+ {"id":"impact","name":"MealImpact","tier":"support","type":"MealImpact","what":"Post-meal glucose response with confounder flag.","attrs":["id","mealEntryId","baselineGlucose?","peakGlucose","deltaMgDL","timeToPeakMinutes","isClean","timestamp"],"ctas":["loadScoredMealEntryIds"]},
+ {"id":"iob","name":"IOB","tier":"support","type":"IOBResult + InsulinPreset","what":"Insulin on board, computed on read.","attrs":["total","mealSnackIOB","correctionBasalIOB","preset (bolus)","basal DIA minutes"],"ctas":["setBolusInsulinPreset","setBasalDIAMinutes","setShowSplitIOB","loadIOBDeliveries"]},
+ {"id":"ex","name":"ExerciseEntry","tier":"support","type":"ExerciseEntry","what":"HealthKit workout; read-only in-app.","attrs":["id","startTime","endTime","activityType","durationMinutes","activeCalories?","source?","timegroup"],"ctas":["addExerciseEntry (import)","deleteExerciseEntry","setAppleHealthImport"]},
+ {"id":"digest","name":"DailyDigest","tier":"support","type":"DailyDigest + DigestInsight","what":"Per-day aggregate plus structured AI insight.","attrs":["date, tir, tbr, tar, avg, stdev, readings, lowCount, highCount","totalCarbsGrams, totalInsulinUnits, totalExerciseMinutes, mealCount, insulinCount","aiInsight? -> DigestInsight: headline, grade good|mixed|rough, facts, tips, cheer?"],"ctas":["loadDailyDigest","generateDailyDigestInsight","setDailyDigestReminderTime"]},
+ {"id":"ratio","name":"RatioEvidence","tier":"support","type":"RatioEvidence","what":"Evidence set for the Ratio Lab (teaches the method; no dosing output).","attrs":["tddDays","mealObservations","correctionImpacts","exclusion reasons","confirmedICR (persisted setting)"],"ctas":["loadRatioEvidence","setConfirmedICR"]},
+ {"id":"clinic","name":"ClinicReport","tier":"support","type":"ClinicReportData","what":"Clinician-readable export.","attrs":["period 14 | 30 | 90 days","format pdf | csv","24-entry hourly pattern","hypo episodes","event counts"],"ctas":["generateClinicReport"]},
+ {"id":"build","name":"ChangelogBuild","tier":"support","type":"ChangelogBuild","what":"Parsed What's New patch-notes entry.","attrs":["build label/number","items (developer metadata stripped)"],"ctas":["setLastSeenBuild"]},
+ {"id":"marker","name":"EventMarker","tier":"support","type":"EventMarker + ConsolidatedMarkerGroup","what":"Chart-lane projection of meals, insulin, exercise.","attrs":["id","time","type meal|bolus|correction|basal|exercise","label","rawValue","sourceID","group: markers"],"ctas":["setMarkerLanePosition","(tap opens entryGroupReadOverlay)"]},
+ {"id":"preset","name":"ServingPreset","tier":"support","type":"ServingPreset","what":"Reusable portion size for liquids/solids.","attrs":["id","label","amountML"],"ctas":["setServingPresets"]},
+ {"id":"cele","name":"TightControlCelebration","tier":"support","type":"TightControlCelebration","what":"One-time streak toast payload.","attrs":["count","hours?","withFeedback"],"ctas":["presentTightControlCelebration","clearTightControlCelebration","setShowCelebrations"]},
+ {"id":"lab","name":"Chart Lab","tier":"support","type":"LabWindowSnapshot, MealSweep, LabPatternEvidence, NightSummary","what":"Exploration views over windows of readings, meals, patterns.","attrs":["LabWindowSnapshot (interval + streams)","MealSweep (identifiable, per-meal overlay)","LabPatternEvidence","NightSummary"],"ctas":["loadLabWindow","loadLabSweeps","loadLabPatterns","setShowChartLab"]}
+],
+"rels":[
+ ["sensor","glucose","1 : N","typed","produces"],
+ ["glucose","bg","N : N","derived","calibration input (BG pairs with raw)"],
+ ["bg","cal","1 : 0..1","typed","a fingerstick feeds a calibration point (AddCalibration)"],
+ ["cal","glucose","N : N","derived","regression adjusts displayed value"],
+ ["meal","fav","N : 0..1","factory","FavoriteFood.from(mealEntry:) / toMealEntry()"],
+ ["meal","pfood","N : 0..1","uuid","analysisSessionId"],
+ ["meal","food","1 : N","uuid","analysisSessionId groups the analysis; items are staged then flattened into mealDescription + macros"],
+ ["food","corr","1 : 0..N","derived","edits vs. AI estimate become FoodCorrection on save"],
+ ["impact","meal","N : 1","uuid","MealImpact.mealEntryId"],
+ ["impact","glucose","N : N","derived","from MealEntry + GlucoseReading window"],
+ ["insulin","iob","N : 1","derived","oref0 decay over DIA window"],
+ ["iob","glucose","1 : N","derived","chart overlay aligned to readings"],
+ ["ratio","meal","N : N","derived","MealEntry + MealImpact + InsulinDelivery"],
+ ["ratio","insulin","N : N","derived","TDD days, correction impacts"],
+ ["ex","impact","N : N","derived","confounder detection"],
+ ["alarm","glucose","1 : N","derived","evaluates readings against resolved thresholds"],
+ ["alarm","cycle","1 : 0..1","derived","low alarm may start a treatment cycle"],
+ ["cycle","fav","N : 1","factory","logHypoTreatment(favorite:) logs via FavoriteFood.isHypoTreatment"],
+ ["cycle","meal","1 : 1","uuid","TreatmentEvent.mealEntryId"],
+ ["cycle","glucose","1 : N","derived","recheck against latest reading"],
+ ["digest","glucose","1 : N","derived","aggregates day"],
+ ["digest","meal","1 : N","derived","aggregates day"],
+ ["digest","insulin","1 : N","derived","aggregates day"],
+ ["digest","note","1 : N","derived","newest 5 notes feed the insight prompt"],
+ ["digest","ex","1 : N","derived","aggregates day"],
+ ["clinic","glucose","1 : N","derived","hourly pattern, hypo episodes (70-180 band)"],
+ ["clinic","insulin","1 : N","derived","event counts"],
+ ["clinic","meal","1 : N","derived","event counts"],
+ ["marker","meal","1 : 1","derived","projection; sourceID points back"],
+ ["marker","insulin","1 : 1","derived","projection; sourceID points back"],
+ ["marker","ex","1 : 1","derived","projection; sourceID points back"],
+ ["lab","glucose","N : N","derived","windows over readings"],
+ ["lab","meal","N : N","derived","MealSweep"]
+],
+"mapNodes":{
+ "sensor":[70,40],"glucose":[500,300],"bg":[250,150],"cal":[70,150],"meal":[250,470],"fav":[70,570],"food":[250,580],"pfood":[430,570],
+ "insulin":[760,470],"iob":[760,340],"impact":[430,430],"ex":[900,300],"alarm":[500,110],"cycle":[760,110],"digest":[900,40],"ratio":[900,470],"clinic":[900,200],"marker":[600,570],"corr":[70,450],"note":[250,300],"lab":[70,300]
+},
+"nodeW":120,"nodeH":34,
+"matrixCols":["Entry pattern","Editor","List surface","Chart surface","Notification surface","Widget / Live Activity"],
+"matrix":[
+ {"obj":"GlucoseReading","cells":["none (sensor)","none","Lists: SensorGlucoseListView","hero + chart line, projection line","low/high/predictive alarms, stale","home + lock widgets, Live Activity"],"gaps":[]},
+ {"obj":"Sensor","cells":["pair / connect flow","Settings: Sensor & Connection","none","status line","expiry / connection","sensor + transmitter lock widgets"],"gaps":[]},
+ {"obj":"BloodGlucose","cells":["direct form (no staging)","sheet: bloodGlucose","Lists: BloodGlucoseListView","overlay: points on chart (ChartView)","none","none"],"gaps":[0,4,5],"gapNote":"no staging plate"},
+ {"obj":"InsulinDelivery","cells":["direct form","sheet: insulin; combinedEntryEdit","Lists: InsulinDeliveryListView","marker lane: insulin row; IOB area overlay","missed-bolus nudge (inbound only)","IOB in widgets"],"gaps":[0],"gapNote":"no hold-to-commit, no relog/repeat"},
+ {"obj":"MealEntry","cells":["staging plate (UnifiedFoodEntryView) / hold-to-commit","sheet: meal; combinedEntryEdit","Lists: MealEntryListView","marker lane: meal row + impact overlay","none","last meal in widget"],"gaps":[4]},
+ {"obj":"FavoriteFood","cells":["1-tap log (QUICK chips); 1-tap hypo","edit via UnifiedFoodEntryView","none","none","UNNotificationAction (treatment) / EAT NOW","none"],"gaps":[2,3,5],"gapNote":"managed only inside entry sheet"},
+ {"obj":"FoodItem","cells":["staging plate rows (photo / barcode / text)","inline row editor","none","none","none","none"],"gaps":[0],"gapNote":"REPLACE only via free text today"},
+ {"obj":"JournalNote","cells":["direct form (+ prefill)","sheet: journalNote(prefill)","Lists: JournalNoteListView","NONE","none","none"],"gaps":[3],"gapNote":"no chart marker"},
+ {"obj":"TreatmentCycle","cells":["1-tap hypo (filteredFoodEntry)","sheets: treatmentModal, treatmentRecheck","none","banner above chart (4 states)","UNNotificationAction buttons; recheck alert","none"],"gaps":[2,5]},
+ {"obj":"AlarmProfile","cells":["settings steppers","Settings: Alarms & Alerts","none","threshold band colouring","the alarms themselves","thresholds shared via App Group"],"gaps":[2]},
+ {"obj":"Calibration","cells":["direct form","pushed: AddCalibrationView / CalibrationsView","CalibrationsView list","none","none","none"],"gaps":[3]}
+],
+"deltas":[
+ {"n":1,"obj":"TreatmentCycle / Alarm","issue":"DMNC-1560","status":"session change","text":"Gains a prompt currency rule: a treatment prompt only presents when the latest reading is under 15 minutes old and still below the low threshold. Stale or recovered data suppresses it."},
+ {"n":2,"obj":"FoodItem","issue":"DMNC-1561","status":"session change","text":"Gains source and originalIndex attributes, a REPLACE CTA fed by FavoriteFood, PersonalFood and MealEntry history plus speech, and SCAN-TO-ADD. Closes the 'REPLACE only via free text' gap above once shipped."},
+ {"n":3,"obj":"MealEntry","issue":"DMNC-1562","status":"session change","text":"Gains a count-scaled variant rendered as \"N x name\", created through a second hold on the commit control."},
+ {"n":4,"obj":"TreatmentCycle","issue":"DMNC-1564","status":"filed, not started","text":"Any food item can be the treatment, in one tap, instead of requiring a FavoriteFood flagged isHypoTreatment."}
+],
+"unverified":[
+ "Deltas 1-4 describe changes in other branches/worktrees; attributes source and originalIndex do not exist on EditableFoodItem in this checkout.",
+ "Sensor attribute list is summarized from CLAUDE.md, not read field by field from Sensor.swift.",
+ "Matrix cell 'combinedEntryEdit' for InsulinDelivery/MealEntry is inferred from ActiveSheet cases and RootSheetContent, not traced through each view.",
+ "Favourite management UI location (add/reorder/delete) was not traced; matrix says 'inside entry sheet'.",
+ "Notification and widget cells come from CLAUDE.md architecture bullets and file names under Widgets/, not from reading each widget view.",
+ "Relationship cardinalities are design intent, not enforced by schema (apart from typed links)."
+]
+}
+</script>
+
+<script>
+(function(){
+var M=JSON.parse(document.getElementById('model').textContent);
+var $=function(id){return document.getElementById(id)};
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+var byId={};M.objects.forEach(function(o){byId[o.id]=o});
+$('sub').textContent='ORCA map: Objects, Relationships, CTAs, Attributes. '+M.meta.issue+', generated '+M.meta.generated+'. Supersedes '+M.meta.supersedes+'.';
+var lg=$('legend');
+Object.keys(M.kinds).forEach(function(k){var s=el('span','kind-'+k,k);s.title=M.kinds[k];lg.appendChild(s);lg.appendChild(document.createTextNode(M.kinds[k]+' '));lg.appendChild(el('br'))});
+// cards
+function card(o){
+ var c=el('div','card');
+ c.appendChild(el('h3',null,o.name));
+ c.appendChild(el('div','t',o.type));
+ c.appendChild(el('p',null,o.what));
+ c.appendChild(el('div','dim','ATTRIBUTES'));
+ var u=el('ul');o.attrs.forEach(function(a){u.appendChild(el('li',null,a))});c.appendChild(u);
+ c.appendChild(el('div','dim','CTAs'));
+ var p=el('div');o.ctas.forEach(function(a){p.appendChild(el('span','tag cta',a))});c.appendChild(p);
+ return c}
+M.objects.forEach(function(o){$(o.tier==='core'?'core':'support').appendChild(card(o))});
+// rels table
+var T=$('rels');var h=el('tr');['From','To','Cardinality','Link kind','Via'].forEach(function(x){h.appendChild(el('th',null,x))});T.appendChild(h);
+M.rels.forEach(function(r){var tr=el('tr');
+ tr.appendChild(el('td',null,byId[r[0]].name));tr.appendChild(el('td',null,byId[r[1]].name));tr.appendChild(el('td',null,r[2]));
+ tr.appendChild(el('td','kind-'+r[3],r[3]));tr.appendChild(el('td',null,r[4]));T.appendChild(tr)});
+$('relnote').textContent='Narrative: Alarm evaluates GlucoseReading, may trigger TreatmentCycle, which logs a MealEntry via FavoriteFood (hypo), then rechecks against GlucoseReading.';
+// matrix
+var X=$('matrix');var mh=el('tr');mh.appendChild(el('th',null,'Object'));M.matrixCols.forEach(function(c){mh.appendChild(el('th',null,c))});X.appendChild(mh);
+M.matrix.forEach(function(r){var tr=el('tr');tr.appendChild(el('th',null,r.obj));
+ r.cells.forEach(function(c,i){var td=el('td',r.gaps.indexOf(i)>=0?'gap':null,c);tr.appendChild(td)});X.appendChild(tr);
+ if(r.gapNote){var n=tr.firstChild;n.title=r.gapNote;var s=el('div','dim','gap: '+r.gapNote);n.appendChild(s)}});
+// deltas
+var D=$('deltas');D.appendChild(el('h2',null,'Session deltas (2026-10-12)'));
+M.deltas.forEach(function(d){var e=el('div','delta');var hh=el('h3',null,d.n+'. '+d.obj+' ('+d.issue+')');e.appendChild(hh);e.appendChild(el('div','dim',d.status));e.appendChild(el('p',null,d.text));D.appendChild(e)});
+// unverified
+M.unverified.forEach(function(u){$('unverified').appendChild(el('li',null,u))});
+$('foot').textContent=M.meta.method+' Regenerate by editing the JSON in script#model; see docs/ooux/README.md.';
+// svg
+var NS='http:'+'//www.w3.org/2000/svg';
+function s(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e}
+var svg=$('map'),W=M.nodeW,H=M.nodeH,P=M.mapNodes;
+function ctr(id){return[P[id][0]+W/2,P[id][1]+H/2]}
+function edgePt(id,tx,ty){var c=ctr(id),dx=tx-c[0],dy=ty-c[1];var sx=dx?(W/2)/Math.abs(dx):1e9,sy=dy?(H/2)/Math.abs(dy):1e9;var k=Math.min(sx,sy);return[c[0]+dx*k,c[1]+dy*k]}
+M.rels.forEach(function(r){if(!P[r[0]]||!P[r[1]])return;var a=ctr(r[0]),b=ctr(r[1]);var p=edgePt(r[0],b[0],b[1]),q=edgePt(r[1],a[0],a[1]);
+ svg.appendChild(s('line',{x1:p[0],y1:p[1],x2:q[0],y2:q[1],'class':'e-'+r[3]}))});
+Object.keys(P).forEach(function(id){var o=byId[id],g=s('g',{'class':'node '+(o.tier==='support'?'support ':'')+(o.spine?'spine ':'')+(id==='cycle'||id==='alarm'?'treat':''),transform:'translate('+P[id][0]+','+P[id][1]+')'});
+ g.appendChild(s('rect',{width:W,height:H}));var t=s('text',{x:W/2,y:H/2+4,'text-anchor':'middle'});t.textContent=o.name.length>16?o.name.slice(0,15)+'.':o.name;g.appendChild(t);
+ var tt=s('title',{});tt.textContent=o.name+' ('+o.type+')';g.appendChild(tt);svg.appendChild(g)});
+})();
+</script>
+</body>
+</html>
