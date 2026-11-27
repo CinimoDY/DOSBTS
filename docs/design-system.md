@@ -125,7 +125,7 @@ Two same-colour shadows simulate amber CRT phosphor (eiDotter DOS-86 long-readin
 - A SwiftUI shadow reads dimmer than additive light, so opacity is multiplied by `DOSEffects.Glow.shadowGain`.
 - `dosGlowLarge` (app) and `phosphorGlow` (widget) both go through `dosPhosphorLayers`.
 
-The Settings "CRT monitor effect" toggle (`showScanlines`) also enables a cosine-profile scanline raster (`DOSScanlineOverlay`) and an edge vignette (`DOSVignetteOverlay`, skipped under Reduce Transparency / Increase Contrast). No flicker, no aperture grille.
+The Settings "CRT monitor effect" toggle (`showScanlines`) also enables a cosine-profile scanline raster (`DOSScanlineOverlay`) and an edge vignette (`DOSVignetteOverlay`, skipped under Reduce Transparency / Increase Contrast). The scanlines also switch off under Increase Contrast. Widgets keep their pre-DOS-86 glow (`DOSEffects.Glow.widget*`) until verified on a 44pt widget. No flicker, no aperture grille.
 
 **Performance rule**: No glow shadows inside `Chart{}` body or `ForEach` list rows.
 

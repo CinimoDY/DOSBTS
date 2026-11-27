@@ -106,4 +106,16 @@ struct AnimationTokensTests {
         #expect(DOSEffects.Vignette.intensity == 0.22)
         #expect(DOSEffects.Vignette.spread == 0.20)
     }
+
+    @Test("DOSEffects widget glow keeps pre-DOS-86 values; app gain stays within opacity 1")
+    func dosEffectsWidgetAndGainPins() {
+        #expect(DOSEffects.Glow.widgetRadius == 1)
+        #expect(DOSEffects.Glow.widgetIntensity == 0.8)
+        #expect(DOSEffects.Glow.widgetBloomRadius == 4)
+        #expect(DOSEffects.Glow.widgetBloomIntensity == 0.3)
+        #expect(DOSEffects.Glow.shadowGain == 3.0)
+        #expect(DOSEffects.Glow.intensity * DOSEffects.Glow.shadowGain <= 1)
+        #expect(DOSEffects.Glow.bloomIntensity * DOSEffects.Glow.shadowGain <= 1)
+        #expect(DOSEffects.Vignette.startRadiusFraction == 0.35)
+    }
 }

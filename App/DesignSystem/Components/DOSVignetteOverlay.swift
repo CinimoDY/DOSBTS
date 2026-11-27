@@ -19,7 +19,7 @@ struct DOSVignetteOverlay: View {
             EllipticalGradient(
                 colors: [.clear, AmberTheme.dosBlack.opacity(DOSEffects.Vignette.intensity)],
                 center: .center,
-                startRadiusFraction: 0.5 - DOSEffects.Vignette.spread,
+                startRadiusFraction: DOSEffects.Vignette.startRadiusFraction,
                 endRadiusFraction: 0.75  // corners sit at ~0.707, so they reach full intensity
             )
             .ignoresSafeArea()
