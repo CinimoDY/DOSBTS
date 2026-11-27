@@ -7,6 +7,16 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 
 ## [Unreleased]
 
+## [Build 140] — 2026-11-27
+
+### Changed
+- A reading 5–14 minutes old now shows its "X MIN AGO" warning in yellow instead of amber, on the Overview, the glucose strip and the home-screen widget, so it no longer looks like ordinary text (15+ minutes stays red) — DMNC-1662, PR #131
+- The CRT monitor effect (Settings → Glucose & Display, now called "CRT monitor effect") has smoother scanlines, a faint edge vignette, and a tighter, calmer glow on the big glucose number. It switches itself off when Increase Contrast is on — DMNC-1664, PR #130
+- Dim text throughout the app — section headers, labels, units, captions and Live Activity times — is a little brighter so it is easier to read, using the readable dim amber from the eiDotter DOS-86 theme — DMNC-1662, PR #129
+
+### Fixed
+- The chart's drag tooltip is now solid instead of see-through, so its time and value text is easy to read on every chip — the raw-reading and blood-glucose chips were too faint — DMNC-1662, PR #131
+
 ## [Build 139] — 2026-10-12
 
 ### Added
