@@ -8,7 +8,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Changed
-- Dim text throughout the app — section headers, labels, units, captions and widget timestamps — is a little brighter so it is easier to read, using the readable dim amber from the eiDotter DOS-86 theme — DMNC-1662, PR #NN
+- Dim text throughout the app — section headers, labels, units, captions and widget timestamps — is a little brighter so it is easier to read, using the readable dim amber from the eiDotter DOS-86 theme — DMNC-1662, PR #129
 
 ## [Build 139] — 2026-10-12
 
