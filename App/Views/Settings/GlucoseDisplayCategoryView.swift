@@ -68,7 +68,13 @@ private struct DisplaySettingsSection: View {
                     Toggle("Show smoothed glucose", isOn: showSmoothedGlucose).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
                 }
 
-                Toggle("CRT scanline overlay", isOn: showScanlines).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+                VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
+                    Toggle("CRT monitor effect", isOn: showScanlines).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))
+                    Text("Scanlines and a soft edge vignette, tuned for long reading.")
+                        .font(DOSTypography.caption)
+                        .foregroundStyle(AmberTheme.amber)
+                }
+                .padding(.vertical, 4)
 
                 VStack(alignment: .leading, spacing: DOSSpacing.xxs) {
                     Toggle("Keep screen awake", isOn: preventScreenLock).toggleStyle(SwitchToggleStyle(tint: AmberTheme.amber))

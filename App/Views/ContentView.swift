@@ -63,8 +63,11 @@ struct ContentView: View {
             // black with sharp edges and never minimizes (R7b).
             .overlay {
                 if store.state.showScanlines {
-                    DOSScanlineOverlay()
-                        .allowsHitTesting(false)
+                    ZStack {
+                        DOSScanlineOverlay()
+                        DOSVignetteOverlay()
+                    }
+                    .allowsHitTesting(false)
                 }
             }
             .overlay {

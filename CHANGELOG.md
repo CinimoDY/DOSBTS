@@ -8,6 +8,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Changed
+- The CRT monitor effect (Settings → Glucose & Display, now called "CRT monitor effect") has smoother scanlines, a faint edge vignette, and a tighter, calmer glow on the big glucose number. It switches itself off when Increase Contrast is on — DMNC-1664, PR #130
 - Dim text throughout the app — section headers, labels, units, captions and Live Activity times — is a little brighter so it is easier to read, using the readable dim amber from the eiDotter DOS-86 theme — DMNC-1662, PR #129
 
 ## [Build 139] — 2026-10-12
