@@ -167,7 +167,7 @@ Connections emit `DirectAction`s through a `PassthroughSubject`. Available conne
 
 Source: eiDotter design system. Shared tokens in `Library/DesignSystem/` (`AmberTheme.swift`, `DOSTypography.swift`, `DOSSpacing.swift`). Shared surface chrome in `Library/DesignSystem/Modifiers/DOSSurfaces.swift`. App-only components in `App/DesignSystem/` (`Components/DOSButtonStyle.swift`, `Modifiers/DOSModifiers.swift`).
 
-**Surface chrome (`.dosCard` / `.dosHeader`, DMNC-1216)** — `DOSSurfaces.swift` (both targets) is the ONE place for card panels and section headers; never hand-roll `overlay(Rectangle().stroke(...)) + background`. `.dosCard(_ variant:stroke:padding:)` has four `DOSCardVariant`s — `.panel` (cardBackground/dosBorder), `.info` (clear/cgaCyan, AI framing), `.stat` (surfaceTint/borderSubtle, StatCard), `.toast` (scrimHeavy/amber, toasts + treatment banner). `stroke:` overrides the variant stroke for stateful borders; `padding: nil` defers padding to the caller. `.dosHeader(_ color:)` is the canonical section header (12pt semibold mono, 1.2 tracking, uppercase, no glow; amberSoft default / amber emphasis / cgaCyan AI). Variant fill/stroke are pinned in `DesignTokenPinTests`. System `Section` headers (`header: {` trailing closures wrapping `Label`/`Text` — 48 sites across 21 files under `App/Views/`, incl. Settings, Statistics, and entry sheets) all render through `.dosHeader()` too, enforced by `StyleGuardTests.rule9_sectionHeadersUseDosHeader`.
+**Surface chrome (`.dosCard` / `.dosHeader`, DMNC-1216)** — `DOSSurfaces.swift` (both targets) is the ONE place for card panels and section headers; never hand-roll `overlay(Rectangle().stroke(...)) + background`. `.dosCard(_ variant:stroke:padding:)` has four `DOSCardVariant`s — `.panel` (cardBackground #1A1000 / amberDark — no greys, DMNC-1663), `.info` (clear/cgaCyan, AI framing), `.stat` (surfaceTint/borderSubtle, StatCard), `.toast` (scrimHeavy/amber, toasts + treatment banner). `stroke:` overrides the variant stroke for stateful borders; `padding: nil` defers padding to the caller. `.dosHeader(_ color:)` is the canonical section header (12pt semibold mono, 1.2 tracking, uppercase, no glow; amberSoft default / amber emphasis / cgaCyan AI). Variant fill/stroke are pinned in `DesignTokenPinTests`. System `Section` headers (`header: {` trailing closures wrapping `Label`/`Text` — 48 sites across 21 files under `App/Views/`, incl. Settings, Statistics, and entry sheets) all render through `.dosHeader()` too, enforced by `StyleGuardTests.rule9_sectionHeadersUseDosHeader`.
 
 Key colors:
 - **Primary amber:** `#ffb000` (P3 phosphor 602nm)
@@ -175,6 +175,7 @@ Key colors:
 - **Dim amber:** `#9a5700` (decoration: borders, strokes — not text) → `AmberTheme.amberDark`
 - **Bright amber:** `#fdca9f` (highlights) → `AmberTheme.amberLight` (NOT amberBright)
 - **Background:** `#000000` (pure black)
+- **No greys:** one phosphor + CGA signals; disabled = `amberDark`, raised surface = `cardBackground` #1A1000. `DesignTokenPinTests.noNeutralGreys` guards it.
 - **Success/Low:** `#55ff55` (CGA green) → `AmberTheme.cgaGreen`
 - **Error/High:** `#ff5555` (CGA red) → `AmberTheme.cgaRed`
 - **Warning:** `#ffff55` (CGA yellow) → `AmberTheme.cgaYellow` (stale-data tier; DOS-86 `warning`)

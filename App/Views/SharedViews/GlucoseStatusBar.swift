@@ -94,7 +94,7 @@ struct GlucoseStatusBar: View {
     var body: some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(AmberTheme.dosBorder)
+                .fill(AmberTheme.amberDark)
                 .frame(height: 1)
 
             HStack(spacing: DOSSpacing.sm) {

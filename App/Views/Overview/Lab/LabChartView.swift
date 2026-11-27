@@ -163,7 +163,7 @@ struct LabChartView: View {
             }
             Text(store.state.glucoseUnit.localizedDescription)
                 .font(DOSTypography.mono(size: 9, weight: .medium))
-                .foregroundStyle(AmberTheme.amberMuted)
+                .foregroundStyle(AmberTheme.amberSoft)
         }
         .padding(.horizontal, DOSSpacing.xs)
         .padding(.bottom, DOSSpacing.xxs)
@@ -422,7 +422,7 @@ struct LabChartView: View {
             AxisMarks(values: .stride(by: .hour, count: labelEvery)) { _ in
                 AxisGridLine(stroke: Config.axisStyle)
                 AxisTick(length: 4, stroke: Config.tickStyle)
-                    .foregroundStyle(AmberTheme.amberMuted)
+                    .foregroundStyle(AmberTheme.amberDark)
                 // A windowed chart's labels are hours apart and cannot collide
                 // with each other — the only thing they "collide" with is the
                 // plot frame, and Charts resolves that by dropping the two that
@@ -445,7 +445,7 @@ struct LabChartView: View {
 
                 if let glucoseValue = value.as(Double.self), glucoseValue > 0 {
                     AxisTick(length: 4, stroke: Config.tickStyle)
-                        .foregroundStyle(AmberTheme.amberMuted)
+                        .foregroundStyle(AmberTheme.amberDark)
                     AxisValueLabel()
                         .font(DOSTypography.mono(size: 10))
                 }
