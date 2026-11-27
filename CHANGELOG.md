@@ -8,7 +8,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Changed
-- No more greys: panels are now a dark amber-black instead of warm grey, their borders and the bottom bar's divider are dim amber, disabled buttons and chart axis ticks are dim amber, and small chart unit labels are easier to read — DMNC-1663
+- No more greys: panels are now a dark amber-black instead of warm grey, their borders and the bottom bar's divider are dim amber, disabled buttons and chart axis ticks are dim amber, and small chart unit labels are easier to read — DMNC-1663, PR #132
 
 ## [Build 140] — 2026-11-27
 
