@@ -203,7 +203,7 @@ struct GlucoseView: View {
                 default:
                     Text("---")
                         .font(WidgetFonts.body)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
             } else {
                 noDataView
@@ -226,7 +226,7 @@ struct GlucoseView: View {
         VStack(spacing: 4) {
             Text("---")
                 .font(WidgetFonts.glucoseHero)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
             Text("NO DATA")
                 .font(WidgetFonts.caption)
                 .foregroundStyle(AmberTheme.amber)
@@ -279,7 +279,7 @@ struct GlucoseView: View {
                 Text(glucose.timestamp.toLocalTime())
             }
             .font(WidgetFonts.tabBar)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
         }
         .widgetBackground(backgroundView: AmberTheme.dosBlack)
     }

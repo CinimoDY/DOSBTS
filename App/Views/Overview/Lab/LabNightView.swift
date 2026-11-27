@@ -175,7 +175,7 @@ struct LabNightView: View {
                 VStack(spacing: DOSSpacing.xxs) {
                     Text(mode.label)
                         .font(DOSTypography.mono(size: 15, weight: mode == .night ? .bold : .regular))
-                        .foregroundStyle(mode == .night ? AmberTheme.amber : AmberTheme.amberDark)
+                        .foregroundStyle(mode == .night ? AmberTheme.amber : AmberTheme.amberSoft)
                     Rectangle()
                         .fill(AmberTheme.amber)
                         .frame(height: 2)

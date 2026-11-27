@@ -67,7 +67,7 @@ struct InsulinSettingsView: View {
                 if let icr = store.state.confirmedICR {
                     Text("REF \(RatioEstimator.icrLabel(icr))")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
             },
             header: {

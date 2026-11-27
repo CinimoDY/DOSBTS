@@ -46,7 +46,7 @@ struct AIConsentView: View {
             Button("Not Now") {
                 dismiss()
             }
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
         }
         .padding()
     }

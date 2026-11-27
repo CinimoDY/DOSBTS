@@ -33,7 +33,7 @@ struct ItemReplacePanel: View {
                 Button(action: close) {
                     Text("CLOSE")
                         .font(DOSTypography.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                         .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
@@ -126,7 +126,7 @@ struct ItemReplacePanel: View {
         } else if rows.isEmpty {
             Text("No matches in your history")
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
         } else {
             ForEach(rows) { candidate in
                 Button {
@@ -140,7 +140,7 @@ struct ItemReplacePanel: View {
                         Spacer(minLength: DOSSpacing.xs)
                         Text("\(Int(candidate.carbsG.rounded()))g · \(candidate.source.label)")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amberSoft)
                     }
                     .frame(minHeight: 44)
                     .contentShape(Rectangle())

@@ -80,7 +80,7 @@ struct ClinicReportView: View {
     private var disclaimer: some View {
         Text("EDUCATIONAL SUMMARY ONLY — NOT A MEDICAL DEVICE. DISCUSS ALL VALUES WITH YOUR CARE TEAM.")
             .font(DOSTypography.caption)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, DOSSpacing.xs)
     }

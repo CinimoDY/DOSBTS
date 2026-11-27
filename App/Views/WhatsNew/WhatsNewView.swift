@@ -156,7 +156,7 @@ private struct BuildCard: View {
             if !build.date.isEmpty {
                 Text(verbatim: build.date)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
         }
     }

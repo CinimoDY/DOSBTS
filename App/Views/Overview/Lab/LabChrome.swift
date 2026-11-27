@@ -34,7 +34,7 @@ struct LabLegendItem: Identifiable {
             return LabLegendItem(
                 glyph: "○",
                 label: unseen > 0 ? "FOLLOW OFF · \(unseen) NEW" : "FOLLOW OFF",
-                color: AmberTheme.amberDark
+                color: AmberTheme.amberSoft
             )
         }
     }
@@ -52,7 +52,7 @@ struct LabLegendRow: View {
                     Text(item.glyph)
                         .foregroundStyle(item.color)
                     Text(item.label)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
             }
         }
@@ -69,7 +69,7 @@ struct LabFooter: View {
     var body: some View {
         Text("LAB · EXPERIMENTAL · NOT DOSE ADVICE")
             .font(DOSTypography.micro)
-            .foregroundStyle(AmberTheme.textFaint)
+            .foregroundStyle(AmberTheme.amberSoft)
             .frame(maxWidth: .infinity)
     }
 }

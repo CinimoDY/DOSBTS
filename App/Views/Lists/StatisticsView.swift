@@ -75,7 +75,7 @@ struct StatisticsView: View {
             StatCard(
                 label: "TIGHT CONTROL",
                 value: "\(store.state.tightControlStreakCount)",
-                valueColor: store.state.tightControlStreakCount > 0 ? AmberTheme.cgaGreen : AmberTheme.amberDark,
+                valueColor: store.state.tightControlStreakCount > 0 ? AmberTheme.cgaGreen : AmberTheme.amberSoft,
                 help: "2h streaks at \(TightControlConfig.default.bandDescription(glucoseUnit: store.state.glucoseUnit))"
             )
         } header: {
@@ -153,7 +153,7 @@ struct StatisticsView: View {
                     VStack(spacing: 4) {
                         Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
                             .font(DOSTypography.mono(size: 10))
-                            .foregroundStyle(AmberTheme.textFaint)
+                            .foregroundStyle(AmberTheme.amberSoft)
                         Text("\(glucoseStatistics.readings) readings · \(glucoseStatistics.days) of \(glucoseStatistics.maxDays) days")
                             .font(DOSTypography.caption)
                             .foregroundStyle(AmberTheme.amber)
@@ -173,7 +173,7 @@ struct StatisticsView: View {
             } footer: {
                 Text("Double-tap to toggle annotations.")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.borderStrong)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
 
             UsageSection(stats: glucoseStatistics)
@@ -189,7 +189,7 @@ struct StatisticsView: View {
             Text("PERIOD")
                 .font(DOSTypography.microLabel)
                 .tracking(0.6)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
 
             Spacer()
 

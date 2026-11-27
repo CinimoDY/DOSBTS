@@ -20,7 +20,7 @@ private struct ChartTabButton: View {
         Button(action: action) {
             Text(label)
                 .font(isSelected ? DOSTypography.bodySmall.weight(.bold) : DOSTypography.bodySmall)
-                .foregroundStyle(isSelected ? AmberTheme.amber : AmberTheme.amberDark)
+                .foregroundStyle(isSelected ? AmberTheme.amber : AmberTheme.amberSoft)
                 .padding(.vertical, DOSSpacing.sm)
                 .padding(.horizontal, DOSSpacing.xs)
                 .overlay(alignment: .bottom) {

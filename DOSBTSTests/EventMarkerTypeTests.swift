@@ -61,9 +61,9 @@ struct InsulinTypeMarkerColorTests {
         #expect(InsulinType.correctionBolus.markerType.color == AmberTheme.amberLight)
     }
 
-    @Test("basal resolves to the basal marker color (amberDark)")
+    @Test("basal resolves to the basal marker color (amberSoft — it colours the `10Ub` chip label)")
     func basalColor() {
-        #expect(InsulinType.basal.markerType.color == AmberTheme.amberDark)
+        #expect(InsulinType.basal.markerType.color == AmberTheme.amberSoft)
     }
 }
 

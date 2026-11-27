@@ -71,16 +71,26 @@ extension View {
 
     /// Canonical section header: 12pt semibold mono, 1.2 tracking, uppercase.
     ///
-    /// The color carries section semantics — `amberDark` default, `amber`
+    /// The color carries section semantics — `amberSoft` default (AA dim text), `amber`
     /// emphasis, `cgaCyan` for AI/info. Intentionally has NO phosphor glow: a
     /// glow shadow here would violate the "no glow in list rows" performance
     /// rule (`docs/design-system.md` → Visual Effects), so the header stays flat.
-    public func dosHeader(_ color: Color = AmberTheme.amberDark) -> some View {
+    public func dosHeader(_ color: Color = DOSHeaderStyle.defaultColor) -> some View {
         font(DOSTypography.mono(size: 12, weight: .semibold))
             .tracking(1.2)
             .textCase(.uppercase)
             .foregroundStyle(color)
     }
+}
+
+// MARK: - Header style
+
+/// Tokens for `.dosHeader()`. The default colour is pinned in
+/// `DesignTokenPinTests` so the ~48 section headers can't silently drop
+/// back below AA (DMNC-1662).
+public enum DOSHeaderStyle {
+    /// Default section-header colour: `amberSoft`, the AA dim-text step.
+    public static let defaultColor: Color = AmberTheme.amberSoft
 }
 
 // MARK: - Card modifier

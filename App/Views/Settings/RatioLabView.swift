@@ -94,7 +94,7 @@ struct RatioLabView: View {
 
         Text("REFERENCE ESTIMATES — NOT DOSE ADVICE")
             .font(DOSTypography.caption)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
             .frame(maxWidth: .infinity)
 
         // Empty / low-data guidance moment: surface progress toward the meal gate.
@@ -121,7 +121,7 @@ struct RatioLabView: View {
 
         Text("ESTIMATES ARE EDUCATIONAL REFERENCE ONLY. DISCUSS RATIO CHANGES WITH YOUR CARE TEAM.")
             .font(DOSTypography.caption)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, DOSSpacing.xs)
     }
@@ -203,7 +203,7 @@ struct RatioLabView: View {
                 Text("REFERENCE").dosHeader()
                 Text("Save your working estimate here for quick reference. Display only.")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
                 Button("SET \(RatioEstimator.icrLabel(settable)) AS REFERENCE") {
                     store.dispatch(.setConfirmedICR(icr: settable))
                 }
@@ -342,7 +342,7 @@ struct RatioLabView: View {
 // MARK: - RatioEvidenceRow
 
 /// One compact evidence line. Qualifying meals read `4 JUL 12:40 · PASTA …
-/// 60g/5.0U → 1:12` in amber; excluded meals are dimmed to amberDark with the
+/// 60g/5.0U → 1:12` in amber; excluded meals are dimmed to amberSoft with the
 /// exclusion reason as a teaching tag *replacing* the ratio — the exclusion is
 /// the lesson. Deliberately not `MealItemRow` (wrong display model + swipe
 /// affordances). Glucose figures in tags honour `glucoseUnit`.
@@ -355,10 +355,10 @@ private struct RatioEvidenceRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(timestampLabel)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
                 Text(mealName)
                     .font(DOSTypography.bodySmall)
-                    .foregroundStyle(isQualifying ? AmberTheme.amber : AmberTheme.amberDark)
+                    .foregroundStyle(isQualifying ? AmberTheme.amber : AmberTheme.amberSoft)
                     .lineLimit(1)
             }
 
@@ -367,7 +367,7 @@ private struct RatioEvidenceRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(macroLine)
                     .font(DOSTypography.microLabel)
-                    .foregroundStyle(AmberTheme.textFaint)
+                    .foregroundStyle(AmberTheme.amberSoft)
                     .lineLimit(1)
                 Text(resultText)
                     .font(isQualifying ? DOSTypography.numeral : DOSTypography.label)
@@ -423,7 +423,7 @@ private struct RatioEvidenceRow: View {
         if isQualifying { return AmberTheme.amber }
         // A hypo is the safety-critical lesson — call it out in red.
         if case .hypoInWindow = scored.exclusion { return AmberTheme.cgaRed }
-        return AmberTheme.amberDark
+        return AmberTheme.amberSoft
     }
 
     /// The teaching tag for each exclusion reason. `baselineOutOfRange` splits
@@ -453,7 +453,7 @@ private struct RatioEvidenceRow: View {
 
 /// One compact correction-evidence line. Qualifying corrections read
 /// `4 JUL 14:20 · 2.0U CORRECTION … 30/U` in amber; excluded corrections are dimmed
-/// to amberDark with the exclusion reason as a teaching tag *replacing* the ISF — the
+/// to amberSoft with the exclusion reason as a teaching tag *replacing* the ISF — the
 /// exclusion is the lesson. The ISF figure honours `glucoseUnit`.
 private struct CorrectionEvidenceRow: View {
     let scored: ScoredCorrectionObservation
@@ -464,10 +464,10 @@ private struct CorrectionEvidenceRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(timestampLabel)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
                 Text(doseLine)
                     .font(DOSTypography.bodySmall)
-                    .foregroundStyle(isQualifying ? AmberTheme.amber : AmberTheme.amberDark)
+                    .foregroundStyle(isQualifying ? AmberTheme.amber : AmberTheme.amberSoft)
                     .lineLimit(1)
             }
 
@@ -502,11 +502,11 @@ private struct CorrectionEvidenceRow: View {
         return scored.exclusion.map(Self.tag(for:)) ?? "—"
     }
 
-    /// Excluded corrections stay amberDark. Unlike meals there is no hypo tag here — a
+    /// Excluded corrections stay amberSoft. Unlike meals there is no hypo tag here — a
     /// correction that overshoots to a low is caught upstream (it would not qualify as a
     /// clean correction), and a rise (`ROSE`) is not a hypo-class lesson, so nothing is red.
     private var resultColor: Color {
-        isQualifying ? AmberTheme.amber : AmberTheme.amberDark
+        isQualifying ? AmberTheme.amber : AmberTheme.amberSoft
     }
 
     private static func tag(for reason: CorrectionExclusionReason) -> String {

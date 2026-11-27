@@ -41,13 +41,13 @@ public struct HeroStatView: View {
                 if let unit, !unit.isEmpty {
                     Text(unit)
                         .font(DOSTypography.mono(size: 14, weight: .medium))
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
             }
             Text(label)
                 .font(DOSTypography.label)
                 .tracking(0.6)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
         }
     }
 }
@@ -77,7 +77,7 @@ public struct StatCard: View {
             Text(label)
                 .font(DOSTypography.microLabel)
                 .tracking(0.6)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
             Text(value)
                 .font(DOSTypography.numeral)
                 .foregroundStyle(valueColor)
@@ -85,7 +85,7 @@ public struct StatCard: View {
                 .minimumScaleFactor(0.7)
             Text(help ?? "")
                 .font(DOSTypography.micro)
-                .foregroundStyle(AmberTheme.textFaint)
+                .foregroundStyle(AmberTheme.amberSoft)
                 .lineLimit(1)
                 .opacity(help != nil ? 1 : 0)
                 .accessibilityHidden(help == nil)
@@ -184,7 +184,7 @@ public struct TIRBreakdownRow: View {
             Text(label)
                 .font(DOSTypography.mono(size: 9, weight: .medium))
                 .tracking(0.5)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
         }
     }
 }

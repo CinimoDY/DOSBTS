@@ -67,7 +67,7 @@ struct TreatmentModalView: View {
                         dismiss()
                     }
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
                 }
             }
         }
@@ -160,7 +160,7 @@ struct TreatmentModalView: View {
                     showTimePicker = true
                 }
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
             }
         }
         .padding(DOSSpacing.sm)

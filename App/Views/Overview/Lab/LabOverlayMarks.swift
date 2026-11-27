@@ -82,7 +82,7 @@ enum LabOverlayMarks {
                         Text(bracket)
                             .font(DOSTypography.micro)
                             .foregroundStyle(
-                                response.hasPairing ? AmberTheme.amberDark : EventMarkerType.meal.color
+                                response.hasPairing ? AmberTheme.amberSoft : EventMarkerType.meal.color
                             )
                             .monospacedDigit()
                             .lineLimit(1)
@@ -318,7 +318,7 @@ enum LabOverlayMarks {
                 ) {
                     Text(verbatim: "00:00")
                         .font(DOSTypography.micro)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                         .monospacedDigit()
                         .labelHalo()
                 }
@@ -368,7 +368,7 @@ enum LabOverlayMarks {
     }
 
     private static func ribbonInk(_ response: MealResponseDatapoint) -> Color {
-        guard !response.isExcluded, let delta = response.summary.delta else { return AmberTheme.amberDark }
+        guard !response.isExcluded, let delta = response.summary.delta else { return AmberTheme.amberSoft }
         return mealImpactDeltaColor(delta: delta)
     }
     // MARK: - Label halo
@@ -462,7 +462,7 @@ enum LabOverlayMarks {
                 ) {
                     Text(PatternCopy.patternHourLabel(days: hour.days))
                         .font(DOSTypography.micro)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                         .monospacedDigit()
                 }
         }

@@ -32,7 +32,7 @@ struct TimeInRangeReportView: View {
                 VStack(spacing: 4) {
                     Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
                         .font(DOSTypography.mono(size: 10))
-                        .foregroundStyle(AmberTheme.textFaint)
+                        .foregroundStyle(AmberTheme.amberSoft)
                     Text("\(stats.days) of \(stats.maxDays) days")
                         .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)
@@ -141,7 +141,8 @@ struct ChartSelectionTooltip: View {
                     .font(DOSTypography.caption)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(AmberTheme.amberDark)
+                    // amberSoft fill: black 12pt text on it is ~5.9:1 (AA); on amberDark it was ~3.7:1.
+                    .background(AmberTheme.amberSoft)
                     .foregroundStyle(AmberTheme.dosBlack)
                 }
             }

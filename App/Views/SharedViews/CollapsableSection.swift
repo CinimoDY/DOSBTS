@@ -84,7 +84,7 @@ struct CollapsableSection<Label, Accessory, Content>: View where Label: View, Ac
                 .layoutPriority(1)
             Text(verbatim: "· \(count)")
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
                 .fixedSize()
             if withChevron {
                 Image(systemName: collapsed ? "chevron.down" : "chevron.up")

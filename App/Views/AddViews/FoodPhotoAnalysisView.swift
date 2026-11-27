@@ -259,7 +259,7 @@ struct FoodPhotoAnalysisView: View {
         let bar = String(repeating: "=", count: filled * 3) + String(repeating: " ", count: (total - filled) * 3)
         return Text("[\(bar)]")
             .font(DOSTypography.caption)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
     }
 
     private func startProgressTimer() {

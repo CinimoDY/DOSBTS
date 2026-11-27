@@ -159,7 +159,7 @@ struct LabChartView: View {
             if let unitRowLabel {
                 Text(unitRowLabel)
                     .font(DOSTypography.mono(size: 9, weight: .medium))
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
             Text(store.state.glucoseUnit.localizedDescription)
                 .font(DOSTypography.mono(size: 9, weight: .medium))
@@ -217,7 +217,7 @@ struct LabChartView: View {
                     .foregroundStyle(AmberTheme.cgaCyan)
                 Text(emptyCaption)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .dosCard(.info)
@@ -295,13 +295,14 @@ struct LabChartView: View {
                 .opacity(0.25)
                 .annotation(position: .overlay, alignment: .bottom) {
                     Text(value.value.asInsulin())
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                         .padding(.horizontal, 2.5)
                         .background(AmberTheme.dosBlack.opacity(0.5))
                         .bold()
                         .font(DOSTypography.caption)
                 }
-                .foregroundStyle(AmberTheme.amberDark)
+                // amberSoft, matching the basal/insulin chip colour (EventMarkerType.basal).
+                .foregroundStyle(AmberTheme.amberSoft)
             }
 
             // MARK: IOB decay curve
@@ -867,7 +868,7 @@ private struct LabReadoutStrip: View {
                 } else {
                     Text("TOUCH & HOLD TO MEASURE · DRAG TO SCROLL")
                         .font(DOSTypography.label)
-                        .foregroundStyle(AmberTheme.textFaint)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -878,7 +879,7 @@ private struct LabReadoutStrip: View {
                 Button(action: onClear) {
                     Text(verbatim: "×")
                         .font(DOSTypography.mono(size: 17, weight: .bold))
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -991,7 +992,7 @@ private struct LabReadoutStrip: View {
         switch emphasis {
         case .value: return AmberTheme.amber
         case .delta: return AmberTheme.amberLight
-        case .sampleSize: return AmberTheme.amberDark
+        case .sampleSize: return AmberTheme.amberSoft
         }
     }
 

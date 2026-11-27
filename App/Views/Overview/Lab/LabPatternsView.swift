@@ -171,7 +171,7 @@ struct LabPatternsView: View {
                         Button(action: { dismissedDrill = cursorDate }) {
                             Text(verbatim: "×")
                                 .font(DOSTypography.mono(size: 17, weight: .bold))
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amberSoft)
                                 .frame(width: 44, height: 32)
                                 .contentShape(Rectangle())
                         }
@@ -242,7 +242,7 @@ struct LabPatternsView: View {
                 AxisValueLabel {
                     Text(offsetLabel(value.as(Double.self) ?? 0))
                         .font(DOSTypography.mono(size: 9))
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
             }
         }
