@@ -20,7 +20,7 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 #### Supporting Colors
 - **Background**: `dosBlack` #000000 (pure black)
 - **Card Background**: `cardBackground` #1B1917 (warm near-black)
-- **Dim text**: `amberSoft` #b87c1a (dim text — section headers, labels, units, captions; 5.82:1, AA)
+- **Dim text**: `amberSoft` #b87c1a (dim text — section headers, labels, units, captions; ≈5.9:1, AA)
 - **Dim amber**: `amberDark` #9a5700 (decoration — borders, strokes, disabled glyph art, chart encodings; not text)
 - **Bright amber**: `amberLight` #fdca9f (highlights, focus states)
 - **Pressed**: `amberPressed` #cc8c00 (button pressed state)
@@ -34,8 +34,8 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 | Token | Hex | Usage |
 |-------|-----|-------|
 | `amber` | #ffb000 | Primary text, data, buttons |
-| `amberSoft` | #B87C1A | Dim text (AA, 5.82:1) — eiDotter DOS-86 `textDim` |
-| `amberDark` | #9a5700 | Decoration: borders, strokes, disabled glyph art, chart encodings (3.67:1 — graphics only, not text) |
+| `amberSoft` | #B87C1A | Dim text (AA, ≈5.9:1 on #000000) — eiDotter DOS-86 `textDim` |
+| `amberDark` | #9a5700 | Decoration: borders, strokes, disabled glyph art, chart encodings (≈3.7:1 — graphics only, not text) |
 | `amberLight` | #fdca9f | Highlights, focus states |
 | `amberPressed` | #cc8c00 | Button pressed state |
 | `amberMuted` | #555555 | Disabled states, neutral gray |
@@ -75,7 +75,7 @@ DOSBTS takes its amber steps from eiDotter DOS-86 but deliberately keeps three d
 
 #### Text Hierarchy
 - **Primary Text**: AmberTheme.amber (#ffb000) — informational text, AA-compliant on black
-- **Secondary/Dim text**: AmberTheme.amberSoft (#b87c1a) — section headers, labels, units, captions, unselected tabs; 5.82:1, AA on black
+- **Secondary/Dim text**: AmberTheme.amberSoft (#b87c1a) — section headers, labels, units, captions, unselected tabs; ≈5.9:1, AA on black
 - **Decoration**: AmberTheme.amberDark (#9a5700) — borders, strokes, disabled glyph art, chart encodings; never text
 - **Muted/Disabled**: AmberTheme.amberMuted (#555555) — disabled states, neutral gray
 
@@ -138,9 +138,9 @@ Multi-layer shadows to simulate amber CRT phosphor:
 **Performance rule**: No glow shadows inside `Chart{}` body or `ForEach` list rows.
 
 ### Contrast & Accessibility
-- AmberTheme.amber (#FFB000) on black: ~8.6:1 contrast ratio (WCAG AAA)
-- AmberTheme.amberSoft (#B87C1A) on black: 5.82:1 (AA) — the dimmest amber allowed for text
-- AmberTheme.amberDark (#9A5700) on black: 3.67:1 — passes 3:1 for graphics only; never use it for text
+- AmberTheme.amber (#FFB000) on black: ≈11.5:1 contrast ratio (WCAG AAA)
+- AmberTheme.amberSoft (#B87C1A) on black: ≈5.9:1 (AA) — the dimmest amber allowed for text (DOS-86 quotes 5.82:1 on its #050300 screen)
+- AmberTheme.amberDark (#9A5700) on black: ≈3.7:1 — passes 3:1 for graphics only; never use it for text
 - Support for Dynamic Type
 - Sharp corners (cornerRadius: 0) for DOS aesthetic
 
@@ -186,7 +186,7 @@ pinned by `DesignTokenPinTests`:
   (`overlay(Rectangle().stroke(...))`). There is no `.dosTextField()` modifier.
 
 ### Navigation
-- Tab bar: black background, amber tint, amberSoft unselected (icon + title)
+- Tab bar: black background, amber tint, amberSoft unselected (icon + title) (proxy currently inert under iOS 26 TabView — see DOSTabBarAppearance)
 
 ### Meal Item (MealItemRow.swift)
 
@@ -328,6 +328,7 @@ Every frame must be implementable within these iOS/DOSBTS constraints. Flag viol
 | 6 | The indeterminate spinner `ProgressView()` | App/Views | Use `FiguresLoadingView` (or `.inline`). Determinate `ProgressView(value:total:)` gauges (e.g. sensor-life / battery bars) are intentionally allowed — no DOS equivalent. |
 | 7 | Inline curves — `.easeIn/.easeOut/.easeInOut/.linear(duration:)` and `.spring(response:)` | App, Library, Widgets | Reference an `AnimationTokens` value. **Exempt:** `Library/DesignSystem/` (where the tokens are defined). |
 | 8 | Raw component color literals — `Color(red:…)`, `Color(.sRGB, red:…)`, `Color(white:…)`, `Color(hue:…)`, `UIColor(red:…)` | App, Library, Widgets | Add a token to `AmberTheme`. **Exempt:** `Library/DesignSystem/AmberTheme.swift` only — this locks the zero-raw-hex win permanently. |
+| 10 | Dim text in a decoration token — `.foregroundStyle(AmberTheme.amberDark/textFaint/border…)` whose expression head (same line, or up to 4 modifier-chain lines above) is a `Text(` (DMNC-1662) | App, Library, Widgets | Use `AmberTheme.amberSoft`. **Exempt** a genuinely decorative text glyph by putting `// style-guard: decorative-text` on the `.foregroundStyle` line (e.g. the IOB `·` separator in `GlucoseView`). Ternaries and `.opacity` fades aren't matched. Rule 9 (Section headers use `.dosHeader()`) is a bespoke cross-line check, as is this one. |
 
 There is deliberately **no `deploy.sh` preflight duplicate** of this list — a bash copy would drift from the test. `Cmd+U` / conductr PR checks are the real gates.
 

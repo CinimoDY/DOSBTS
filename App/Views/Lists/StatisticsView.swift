@@ -173,7 +173,7 @@ struct StatisticsView: View {
             } footer: {
                 Text("Double-tap to toggle annotations.")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.borderStrong)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
 
             UsageSection(stats: glucoseStatistics)

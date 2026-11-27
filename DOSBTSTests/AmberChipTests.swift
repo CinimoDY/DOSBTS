@@ -79,7 +79,7 @@ struct CaptionLegibilityTests {
 
     @Test("amberSoft on black meets AA for normal text (>=4.5:1)")
     func amberSoftMeetsAA() {
-        // #b87c1a — the published AmberTheme.amberSoft token value (~5.8:1)
+        // #b87c1a — the published AmberTheme.amberSoft token value (≈5.9:1 on #000000)
         let ratio = contrastOnBlack(r: 184.0 / 255.0, g: 124.0 / 255.0, b: 26.0 / 255.0)
         #expect(ratio >= 4.5)
 

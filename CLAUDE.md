@@ -171,7 +171,7 @@ Source: eiDotter design system. Shared tokens in `Library/DesignSystem/` (`Amber
 
 Key colors:
 - **Primary amber:** `#ffb000` (P3 phosphor 602nm)
-- **Dim text:** `#b87c1a` → `AmberTheme.amberSoft` (DOS-86 textDim; AA)
+- **Dim text:** `#b87c1a` → `AmberTheme.amberSoft` (DOS-86 textDim; ≈5.9:1, AA)
 - **Dim amber:** `#9a5700` (decoration: borders, strokes — not text) → `AmberTheme.amberDark`
 - **Bright amber:** `#fdca9f` (highlights) → `AmberTheme.amberLight` (NOT amberBright)
 - **Background:** `#000000` (pure black)

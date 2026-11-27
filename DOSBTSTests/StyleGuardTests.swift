@@ -242,6 +242,48 @@ struct StyleGuardTests {
         }
         #expect(hits.isEmpty, "Section headers must render through .dosHeader():\n\(Self.report(hits))")
     }
+
+    // Bespoke cross-line walk (DMNC-1662). Dim TEXT uses `amberSoft` (≈5.9:1, AA);
+    // `amberDark` (≈3.7:1), `textFaint` and the `border*` tiers are decoration only.
+    // Heuristic: for each `.foregroundStyle(AmberTheme.amberDark|textFaint|border…)`
+    // (bare token, closing paren right after — ternaries and `.opacity` fades are not
+    // matched), find the expression the modifier is attached to: the same line if it
+    // carries the view (`Text(…).foregroundStyle(…)`), else walk UP while lines are
+    // pure modifier-chain lines (start with `.`), at most `lookback` lines. If that head
+    // line contains `Text(`, it is a hit. Heads that are `Image(`, shapes, chart marks,
+    // `AxisGridLine()` or a closing `}` (a container — ambiguous) are not flagged.
+    // Exempt a genuinely decorative text glyph (e.g. a `·` separator) by putting
+    // `// style-guard: decorative-text` on the `.foregroundStyle` line.
+    @Test("Rule 10 — dim text uses amberSoft, not amberDark/textFaint/border tiers")
+    func rule10_dimTextUsesAmberSoft() throws {
+        let lookback = 4
+        let modifier = try NSRegularExpression(
+            pattern: #"\.foregroundStyle\(AmberTheme\.(amberDark|textFaint|border\w+)\)"#
+        )
+        var hits: [Hit] = []
+        for dir in Self.standardScope {
+            for url in Self.swiftFiles(in: dir) {
+                let relative = Self.relativePath(of: url)
+                let lines = try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+                for (index, line) in lines.enumerated() where !Self.isCommentLine(line) {
+                    let range = NSRange(line.startIndex..<line.endIndex, in: line)
+                    guard modifier.firstMatch(in: line, range: range) != nil,
+                          !line.contains("style-guard: decorative-text") else { continue }
+                    var headIndex = index
+                    var steps = 0
+                    while lines[headIndex].trimmingCharacters(in: .whitespaces).hasPrefix("."),
+                          headIndex > 0, steps < lookback {
+                        headIndex -= 1
+                        steps += 1
+                    }
+                    if lines[headIndex].contains("Text(") {
+                        hits.append(Hit(file: relative, line: index + 1, text: line.trimmingCharacters(in: .whitespaces)))
+                    }
+                }
+            }
+        }
+        #expect(hits.isEmpty, "Dim text must use AmberTheme.amberSoft (amberDark/textFaint/border tiers fail AA for text):\n\(Self.report(hits))")
+    }
 }
 
 // MARK: - Digest timeline colour-routing guard (DMNC-1481)

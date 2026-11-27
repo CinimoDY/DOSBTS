@@ -141,7 +141,8 @@ struct ChartSelectionTooltip: View {
                     .font(DOSTypography.caption)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(AmberTheme.amberDark)
+                    // amberSoft fill: black 12pt text on it is ~5.9:1 (AA); on amberDark it was ~3.7:1.
+                    .background(AmberTheme.amberSoft)
                     .foregroundStyle(AmberTheme.dosBlack)
                 }
             }

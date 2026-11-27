@@ -219,7 +219,7 @@ struct GlucoseView: View {
                 }
                 Text("·")
                     .font(DOSTypography.mono(size: 11))
-                    .foregroundStyle(AmberTheme.borderStrong)
+                    .foregroundStyle(AmberTheme.borderStrong) // style-guard: decorative-text — IOB split separator, not information
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(formatIOB(iobResult.correctionBasalIOB))
                         .font(DOSTypography.mono(size: 14, weight: .semibold))

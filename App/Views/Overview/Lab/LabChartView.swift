@@ -301,7 +301,8 @@ struct LabChartView: View {
                         .bold()
                         .font(DOSTypography.caption)
                 }
-                .foregroundStyle(AmberTheme.amberDark)
+                // amberSoft, matching the basal/insulin chip colour (EventMarkerType.basal).
+                .foregroundStyle(AmberTheme.amberSoft)
             }
 
             // MARK: IOB decay curve
