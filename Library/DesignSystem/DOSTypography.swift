@@ -74,10 +74,8 @@ extension View {
 
     /// Large phosphor glow for hero glucose, headers
     public func dosGlowLarge(color: Color = AmberTheme.amber) -> some View {
-        self
-            .shadow(color: color.opacity(0.8), radius: 1, x: 0, y: 0)
-            .shadow(color: color.opacity(0.4), radius: 6, x: 0, y: 0)
-            .shadow(color: color.opacity(0.15), radius: 16, x: 0, y: 0)
+        // Two layers from DOSEffects.Glow (DOS-86 long-reading preset, DMNC-1664).
+        dosPhosphorLayers(color: color)
     }
 }
 

@@ -30,11 +30,11 @@ enum WidgetFonts {
 // MARK: - Phosphor Glow Modifier
 
 extension View {
-    /// Phosphor CRT glow effect — tight inner glow + diffuse outer
+    /// Phosphor CRT glow effect — two layers, widget-scale values from DOSEffects.Glow
     func phosphorGlow(color: Color = AmberTheme.amber) -> some View {
         self
-            .shadow(color: color.opacity(0.8), radius: 1, x: 0, y: 0)
-            .shadow(color: color.opacity(0.3), radius: 4, x: 0, y: 0)
+            .shadow(color: color.opacity(DOSEffects.Glow.widgetIntensity), radius: DOSEffects.Glow.widgetRadius, x: 0, y: 0)
+            .shadow(color: color.opacity(DOSEffects.Glow.widgetBloomIntensity), radius: DOSEffects.Glow.widgetBloomRadius, x: 0, y: 0)
     }
 }
 
