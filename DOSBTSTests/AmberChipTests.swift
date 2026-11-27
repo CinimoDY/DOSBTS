@@ -44,7 +44,9 @@ struct AmberChipTests {
 /// informational small text now renders `amber`, which must satisfy WCAG AA
 /// on the pure-black background; `amberDark` deliberately stays the dim
 /// token (R5: "amberDark itself is not mutated") so dimming/disabled roles
-/// keep their subordinated look.
+/// keep their subordinated look. `amberSoft` (#b87c1a, eiDotter DOS-86
+/// `textDim`) is the AA dim-TEXT step: dim text uses it, `amberDark` is
+/// decoration only (DMNC-1662).
 @Suite("Caption legibility tokens")
 struct CaptionLegibilityTests {
     /// WCAG relative luminance for sRGB components in 0...1.
@@ -72,6 +74,22 @@ struct CaptionLegibilityTests {
         #expect(abs(r - 1.0) < 0.001)
         #expect(abs(g - 176.0 / 255.0) < 0.001)
         #expect(abs(b - 0.0) < 0.001)
+        #expect(contrastOnBlack(r: r, g: g, b: b) >= 4.5)
+    }
+
+    @Test("amberSoft on black meets AA for normal text (>=4.5:1)")
+    func amberSoftMeetsAA() {
+        // #b87c1a — the published AmberTheme.amberSoft token value (~5.8:1)
+        let ratio = contrastOnBlack(r: 184.0 / 255.0, g: 124.0 / 255.0, b: 26.0 / 255.0)
+        #expect(ratio >= 4.5)
+
+        // Pin the token itself so a silent token change re-runs this math
+        let resolved = UIColor(AmberTheme.amberSoft)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        resolved.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 184.0 / 255.0) < 0.001)
+        #expect(abs(g - 124.0 / 255.0) < 0.001)
+        #expect(abs(b - 26.0 / 255.0) < 0.001)
         #expect(contrastOnBlack(r: r, g: g, b: b) >= 4.5)
     }
 

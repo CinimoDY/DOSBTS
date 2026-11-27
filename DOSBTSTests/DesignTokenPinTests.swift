@@ -39,6 +39,16 @@ struct DesignTokenPinTests {
         #expect(abs(b - 159.0 / 255.0) < tolerance)
     }
 
+    @Test("amberSoft token pins to #b87c1a (DOS-86 textDim)")
+    func amberSoftColorPin() {
+        let color = UIColor(AmberTheme.amberSoft)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 184.0 / 255.0) < tolerance)
+        #expect(abs(g - 124.0 / 255.0) < tolerance)
+        #expect(abs(b - 26.0 / 255.0) < tolerance)
+    }
+
     @Test("amberPressed token pins to #CC8C00")
     func amberPressedColorPin() {
         let color = UIColor(AmberTheme.amberPressed)

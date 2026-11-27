@@ -16,11 +16,17 @@ public enum AmberTheme {
     /// --color-cga-amber: #ffb000 - P3 phosphor amber (602nm)
     public static let amber = Color(red: 1.0, green: 176.0 / 255.0, blue: 0)
 
-    /// --color-cga-amber-dim: #9a5700 - Secondary text, dimmed states (18pt+ only)
+    /// --color-cga-amber-dim: #9a5700 - Decoration: borders, strokes, disabled glyph art, chart
+    /// encodings (3.67:1 on black — passes the 3:1 graphics bar). Not for text — use `amberSoft`.
     public static let amberDark = Color(red: 154.0 / 255.0, green: 87.0 / 255.0, blue: 0)
 
     /// --color-cga-amber-bright: #fdca9f - Highlights, focus states
     public static let amberLight = Color(red: 253.0 / 255.0, green: 202.0 / 255.0, blue: 159.0 / 255.0)
+
+    /// eiDotter DOS-86 `amberSoft` / theme `text.secondary`: #B87C1A — dim TEXT (5.82:1 on black, passes AA).
+    /// The dimmest amber that is legal for running text. `amberDark` stays the decoration step (borders,
+    /// strokes, disabled glyph art, chart encodings) — 3.67:1, fine for graphics (3:1), too dark for text.
+    public static let amberSoft = Color(red: 184.0 / 255.0, green: 124.0 / 255.0, blue: 26.0 / 255.0)
 
     /// Pressed button state: #CC8C00
     public static let amberPressed = Color(red: 204.0 / 255.0, green: 140.0 / 255.0, blue: 0)
@@ -64,7 +70,8 @@ public enum AmberTheme {
     public static let borderSubtle = amberDark.opacity(0.4)
     /// Emphasized dim stroke (was amberDark @ 0.6)
     public static let borderStrong = amberDark.opacity(0.6)
-    /// Helper text a step below amberDark (was amberDark @ 0.7)
+    /// Decoration only: the faintest chart fade tier (e.g. oldest Lab sweeps), a step below
+    /// amberDark (amberDark @ 0.7). Not for text — it fails AA; dim text uses `amberSoft`.
     public static let textFaint = amberDark.opacity(0.7)
     /// Faint amber wash behind stat cells (was amber @ 0.04)
     public static let surfaceTint = amber.opacity(0.04)

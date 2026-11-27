@@ -34,11 +34,11 @@ struct DOSTabBarAppearanceTests {
         item.titleTextAttributes[.foregroundColor] as? UIColor
     }
 
-    @Test("unselected (normal) icon + title pin to amberDark for the stacked layout")
-    func normalStateUsesAmberDark() {
+    @Test("unselected (normal) icon + title pin to amberSoft for the stacked layout")
+    func normalStateUsesAmberSoft() {
         let stacked = DOSTabBarAppearance.make().stackedLayoutAppearance
-        expectMatches(stacked.normal.iconColor, AmberTheme.amberDark, "normal icon")
-        expectMatches(titleColor(stacked.normal), AmberTheme.amberDark, "normal title")
+        expectMatches(stacked.normal.iconColor, AmberTheme.amberSoft, "normal icon")
+        expectMatches(titleColor(stacked.normal), AmberTheme.amberSoft, "normal title")
     }
 
     @Test("selected icon + title pin to amber for the stacked layout")
@@ -54,8 +54,8 @@ struct DOSTabBarAppearanceTests {
         for layout in [appearance.stackedLayoutAppearance,
                        appearance.inlineLayoutAppearance,
                        appearance.compactInlineLayoutAppearance] {
-            expectMatches(layout.normal.iconColor, AmberTheme.amberDark, "normal icon")
-            expectMatches(titleColor(layout.normal), AmberTheme.amberDark, "normal title")
+            expectMatches(layout.normal.iconColor, AmberTheme.amberSoft, "normal icon")
+            expectMatches(titleColor(layout.normal), AmberTheme.amberSoft, "normal title")
             expectMatches(layout.selected.iconColor, AmberTheme.amber, "selected icon")
             expectMatches(titleColor(layout.selected), AmberTheme.amber, "selected title")
         }
