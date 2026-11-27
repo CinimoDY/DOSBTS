@@ -49,6 +49,10 @@ public enum AmberTheme {
     /// --color-cga-bright-magenta: #ff55ff
     public static let cgaMagenta = Color(red: 1.0, green: 85.0 / 255.0, blue: 1.0)
 
+    /// --color-cga-yellow: #ffff55 — WARNING (eiDotter DOS-86 role `warning`).
+    /// Lemon, not gold, so a warning stands apart from amber body text (≈19:1 on black).
+    public static let cgaYellow = Color(red: 1.0, green: 1.0, blue: 85.0 / 255.0)
+
     /// --color-cga-white: #aaaaaa
     public static let cgaWhite = Color(red: 170.0 / 255.0, green: 170.0 / 255.0, blue: 170.0 / 255.0)
 
@@ -132,10 +136,12 @@ public enum AmberTheme {
 
     /// Stale-data warning tier color — shared by the Overview hero and the
     /// persistent status bar so the two surfaces never disagree on stale
-    /// salience (KTD-4). 5–14 min: amber warning; 15+ min: red.
+    /// salience (KTD-4). 5–14 min: yellow warning (DOS-86 honest warning colour —
+    /// amber was indistinguishable from body text); 15+ min: red.
     public static func stalenessColor(_ staleness: GlucoseStaleness) -> Color {
         switch staleness {
-        case .fresh, .stale: return amber
+        case .fresh: return amber
+        case .stale: return cgaYellow
         case .veryStale: return cgaRed
         }
     }
