@@ -8,7 +8,7 @@ Versions below correspond to `CURRENT_PROJECT_VERSION` (TestFlight build numbers
 ## [Unreleased]
 
 ### Changed
-- The CRT monitor effect (Settings → Glucose & Display, now called "CRT monitor effect") has softer, more even scanlines and a faint edge vignette, and the phosphor glow on the big glucose number is tighter and calmer — tuned for long reading after the eiDotter DOS-86 theme — DMNC-1664, PR #NN
+- The CRT monitor effect (Settings → Glucose & Display, now called "CRT monitor effect") has softer, more even scanlines and a faint edge vignette, and the phosphor glow on the big glucose number is tighter and calmer — tuned for long reading after the eiDotter DOS-86 theme — DMNC-1664, PR #130
 
 ## [Build 139] — 2026-10-12
 
