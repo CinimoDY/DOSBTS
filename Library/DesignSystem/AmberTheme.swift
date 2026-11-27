@@ -32,9 +32,6 @@ public enum AmberTheme {
     /// Pressed button state: #CC8C00
     public static let amberPressed = Color(red: 204.0 / 255.0, green: 140.0 / 255.0, blue: 0)
 
-    /// --color-cga-dark-gray: #555555 - Disabled states, muted
-    public static let amberMuted = Color(red: 85.0 / 255.0, green: 85.0 / 255.0, blue: 85.0 / 255.0)
-
     // MARK: - CGA 16-Color Palette (eiDotter tokens)
 
     /// --color-cga-bright-green: #55ff55
@@ -53,19 +50,14 @@ public enum AmberTheme {
     /// Lemon, not gold, so a warning stands apart from amber body text (≈19:1 on black).
     public static let cgaYellow = Color(red: 1.0, green: 1.0, blue: 85.0 / 255.0)
 
-    /// --color-cga-white: #aaaaaa
-    public static let cgaWhite = Color(red: 170.0 / 255.0, green: 170.0 / 255.0, blue: 170.0 / 255.0)
-
     // MARK: - DOS Terminal Background Colors
 
     /// --color-cga-black: #000000
     public static let dosBlack = Color(red: 0, green: 0, blue: 0)
 
-    /// Warm dark gray for borders and separators: #594F47
-    public static let dosBorder = Color(red: 89.0 / 255.0, green: 79.0 / 255.0, blue: 71.0 / 255.0)
-
-    /// Warm near-black for card backgrounds: #1B1917
-    public static let cardBackground = Color(red: 27.0 / 255.0, green: 25.0 / 255.0, blue: 23.0 / 255.0)
+    /// Raised surface, amber-black: #1A1000 (eiDotter DOS-86 `tint`, role `raised`).
+    /// One phosphor — no greys: panel strokes use `amberDark`, disabled states use `amberDark`.
+    public static let cardBackground = Color(red: 26.0 / 255.0, green: 16.0 / 255.0, blue: 0)
 
     // MARK: - Semantic tiers (pre-blended; never write .opacity() on palette tokens in views)
 

@@ -32,7 +32,7 @@ struct LoadingOverlay: View {
                 }
                 .frame(maxWidth: 200)
                 .background(AmberTheme.dosBlack)
-                .overlay(Rectangle().stroke(AmberTheme.amberMuted.opacity(0.3), lineWidth: 1))
+                .overlay(Rectangle().stroke(AmberTheme.borderFaint, lineWidth: 1))
                 .opacity(0.9)
             }
             .onAppear {

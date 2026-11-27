@@ -16,7 +16,7 @@ import SwiftUI
 /// The canonical DOS card surfaces. `fill`/`stroke` are exposed so the design
 /// token drift-guard can assert the mapping (see `DesignTokenPinTests`).
 public enum DOSCardVariant {
-    /// General warm panel: `cardBackground` fill, `dosBorder` stroke.
+    /// General warm panel: `cardBackground` (amber-black) fill, `amberDark` stroke — no greys (DOS-86).
     case panel
     /// AI / info framing (e.g. the Digest AI-insight card): clear fill,
     /// `cgaCyan` stroke.
@@ -42,7 +42,7 @@ public enum DOSCardVariant {
 
     public var stroke: Color {
         switch self {
-        case .panel: return AmberTheme.dosBorder
+        case .panel: return AmberTheme.amberDark
         case .info: return AmberTheme.cgaCyan
         case .stat: return AmberTheme.borderSubtle
         case .toast: return AmberTheme.amber

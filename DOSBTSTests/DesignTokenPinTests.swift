@@ -69,16 +69,6 @@ struct DesignTokenPinTests {
         #expect(abs(b - 0.0) < tolerance)
     }
 
-    @Test("amberMuted token pins to #555555")
-    func amberMutedColorPin() {
-        let color = UIColor(AmberTheme.amberMuted)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        color.getRed(&r, green: &g, blue: &b, alpha: &a)
-        #expect(abs(r - 85.0 / 255.0) < tolerance)
-        #expect(abs(g - 85.0 / 255.0) < tolerance)
-        #expect(abs(b - 85.0 / 255.0) < tolerance)
-    }
-
     @Test("cgaGreen token pins to #55ff55")
     func cgaGreenColorPin() {
         let color = UIColor(AmberTheme.cgaGreen)
@@ -147,16 +137,6 @@ struct DesignTokenPinTests {
         #expect(!same(AmberTheme.stalenessColor(.stale(minutes: 7)), AmberTheme.amber))
     }
 
-    @Test("cgaWhite token pins to #aaaaaa")
-    func cgaWhiteColorPin() {
-        let color = UIColor(AmberTheme.cgaWhite)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        color.getRed(&r, green: &g, blue: &b, alpha: &a)
-        #expect(abs(r - 170.0 / 255.0) < tolerance)
-        #expect(abs(g - 170.0 / 255.0) < tolerance)
-        #expect(abs(b - 170.0 / 255.0) < tolerance)
-    }
-
     @Test("dosBlack token pins to #000000")
     func dosBlackColorPin() {
         let color = UIColor(AmberTheme.dosBlack)
@@ -167,24 +147,36 @@ struct DesignTokenPinTests {
         #expect(abs(b - 0.0) < tolerance)
     }
 
-    @Test("dosBorder token pins to #594F47")
-    func dosBorderColorPin() {
-        let color = UIColor(AmberTheme.dosBorder)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        color.getRed(&r, green: &g, blue: &b, alpha: &a)
-        #expect(abs(r - 89.0 / 255.0) < tolerance)
-        #expect(abs(g - 79.0 / 255.0) < tolerance)
-        #expect(abs(b - 71.0 / 255.0) < tolerance)
+    /// One phosphor (eiDotter DOS-86, DMNC-1663): the palette has no neutral greys.
+    /// Scans AmberTheme.swift for any `Color(red: x, green: x, blue: x)` whose three
+    /// channels are equal and not pure black/white — #555555, #AAAAAA etc. must not return.
+    @Test("AmberTheme declares no neutral grey tokens")
+    func noNeutralGreys() throws {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Library/DesignSystem/AmberTheme.swift")
+        let source = try String(contentsOf: url, encoding: .utf8)
+        let regex = try NSRegularExpression(
+            pattern: #"Color\(red: ([^,]+), green: ([^,]+), blue: ([^)]+)\)"#
+        )
+        var greys: [String] = []
+        for match in regex.matches(in: source, range: NSRange(source.startIndex..., in: source)) {
+            let parts = (1...3).compactMap { Range(match.range(at: $0), in: source).map { source[$0].trimmingCharacters(in: .whitespaces) } }
+            guard parts.count == 3, parts[0] == parts[1], parts[1] == parts[2] else { continue }
+            if parts[0] == "0" || parts[0] == "1.0" { continue }
+            greys.append(parts.joined(separator: ", "))
+        }
+        #expect(greys.isEmpty, "Neutral grey tokens found: \(greys)")
     }
 
-    @Test("cardBackground token pins to #1B1917")
+    @Test("cardBackground token pins to #1A1000 (DOS-86 tint, amber-black)")
     func cardBackgroundColorPin() {
         let color = UIColor(AmberTheme.cardBackground)
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         color.getRed(&r, green: &g, blue: &b, alpha: &a)
-        #expect(abs(r - 27.0 / 255.0) < tolerance)
-        #expect(abs(g - 25.0 / 255.0) < tolerance)
-        #expect(abs(b - 23.0 / 255.0) < tolerance)
+        #expect(abs(r - 26.0 / 255.0) < tolerance)
+        #expect(abs(g - 16.0 / 255.0) < tolerance)
+        #expect(abs(b - 0.0) < tolerance)
     }
 
     @Test("iobBolus token pins to #8CBF40")
@@ -412,17 +404,17 @@ struct DesignTokenPinTests {
         return (r, g, b, a)
     }
 
-    @Test("DOSCardVariant.panel maps to cardBackground fill + dosBorder stroke")
+    @Test("DOSCardVariant.panel maps to cardBackground fill + amberDark stroke")
     func panelVariantPin() {
         let fill = rgba(DOSCardVariant.panel.fill)
-        #expect(abs(fill.r - 27.0 / 255.0) < tolerance)
-        #expect(abs(fill.g - 25.0 / 255.0) < tolerance)
-        #expect(abs(fill.b - 23.0 / 255.0) < tolerance)
+        #expect(abs(fill.r - 26.0 / 255.0) < tolerance)
+        #expect(abs(fill.g - 16.0 / 255.0) < tolerance)
+        #expect(abs(fill.b - 0.0) < tolerance)
         #expect(abs(fill.a - 1.0) < tolerance)
         let stroke = rgba(DOSCardVariant.panel.stroke)
-        #expect(abs(stroke.r - 89.0 / 255.0) < tolerance)
-        #expect(abs(stroke.g - 79.0 / 255.0) < tolerance)
-        #expect(abs(stroke.b - 71.0 / 255.0) < tolerance)
+        #expect(abs(stroke.r - 154.0 / 255.0) < tolerance)
+        #expect(abs(stroke.g - 87.0 / 255.0) < tolerance)
+        #expect(abs(stroke.b - 0.0) < tolerance)
         #expect(abs(stroke.a - 1.0) < tolerance)
     }
 

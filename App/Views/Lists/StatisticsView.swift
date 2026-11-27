@@ -241,7 +241,7 @@ struct StatisticsView: View {
                 .foregroundStyle(AmberTheme.amber)
             Text(text)
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberMuted)
+                .foregroundStyle(AmberTheme.amberSoft)
         }
     }
 

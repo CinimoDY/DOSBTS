@@ -19,7 +19,7 @@ struct DOSButtonStyle: ButtonStyle {
     var variant: Variant = .primary
 
     func makeBody(configuration: Configuration) -> some View {
-        let borderColor = isEnabled ? AmberTheme.amber : AmberTheme.amberMuted
+        let borderColor = isEnabled ? AmberTheme.amber : AmberTheme.amberDark
 
         configuration.label
             .font(DOSTypography.button)
@@ -34,7 +34,7 @@ struct DOSButtonStyle: ButtonStyle {
     }
 
     private func foregroundColor(_ configuration: Configuration) -> Color {
-        if !isEnabled { return AmberTheme.amberMuted }
+        if !isEnabled { return AmberTheme.amberDark }
         if variant == .primary {
             return AmberTheme.dosBlack
         }
@@ -43,7 +43,7 @@ struct DOSButtonStyle: ButtonStyle {
 
     private func backgroundColor(_ configuration: Configuration) -> Color {
         if !isEnabled {
-            return variant == .primary ? AmberTheme.amberMuted.opacity(0.3) : Color.clear
+            return variant == .primary ? AmberTheme.borderFaint : Color.clear
         }
         if variant == .primary {
             return configuration.isPressed ? AmberTheme.amberPressed : AmberTheme.amber

@@ -19,15 +19,15 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 
 #### Supporting Colors
 - **Background**: `dosBlack` #000000 (pure black)
-- **Card Background**: `cardBackground` #1B1917 (warm near-black)
+- **Card Background**: `cardBackground` #1A1000 (amber-black; DOS-86 `tint`, role `raised`)
 - **Dim text**: `amberSoft` #b87c1a (dim text — section headers, labels, units, captions; ≈5.9:1, AA)
 - **Dim amber**: `amberDark` #9a5700 (decoration — borders, strokes, disabled glyph art, chart encodings; not text)
 - **Bright amber**: `amberLight` #fdca9f (highlights, focus states)
 - **Pressed**: `amberPressed` #cc8c00 (button pressed state)
-- **Muted**: `amberMuted` #555555 (disabled states, neutral gray)
 - **Success/In-range**: `cgaGreen` #55ff55
 - **Error/High**: `cgaRed` #ff5555
 - **Info/Cyan**: `cgaCyan` #55ffff
+- **No greys**: the palette is one phosphor plus CGA signals (DOS-86). `amberMuted`, `cgaWhite` and `dosBorder` were removed in DMNC-1663; `DesignTokenPinTests.noNeutralGreys` keeps them out.
 
 ### Color Token Reference (AmberTheme.swift)
 
@@ -38,16 +38,13 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 | `amberDark` | #9a5700 | Decoration: borders, strokes, disabled glyph art, chart encodings (≈3.7:1 — graphics only, not text) |
 | `amberLight` | #fdca9f | Highlights, focus states |
 | `amberPressed` | #cc8c00 | Button pressed state |
-| `amberMuted` | #555555 | Disabled states, neutral gray |
 | `dosBlack` | #000000 | Primary background |
-| `cardBackground` | #1B1917 | Card/section background |
-| `dosBorder` | #594F47 | Borders and separators |
+| `cardBackground` | #1A1000 | Card/section background (amber-black, DOS-86 `tint`) |
 | `cgaGreen` | #55ff55 | In-range / success |
 | `cgaCyan` | #55ffff | Sensor lines, info, AI insight card |
 | `cgaRed` | #ff5555 | Out-of-range / error |
 | `cgaMagenta` | #ff55ff | CGA magenta accent |
 | `cgaYellow` | #ffff55 | Warning — stale-data tier (5–14 min); DOS-86 `warning` |
-| `cgaWhite` | #aaaaaa | Neutral/disabled text |
 | `iobBolus` | #8CBF40 | IOB meal/snack bolus chart layer |
 | `iobBasal` | #5DD0F3 | IOB basal + correction chart layer |
 
@@ -78,12 +75,12 @@ DOSBTS takes its amber steps from eiDotter DOS-86 but deliberately keeps three d
 - **Primary Text**: AmberTheme.amber (#ffb000) — informational text, AA-compliant on black
 - **Secondary/Dim text**: AmberTheme.amberSoft (#b87c1a) — section headers, labels, units, captions, unselected tabs; ≈5.9:1, AA on black
 - **Decoration**: AmberTheme.amberDark (#9a5700) — borders, strokes, disabled glyph art, chart encodings; never text
-- **Muted/Disabled**: AmberTheme.amberMuted (#555555) — disabled states, neutral gray
+- **Disabled**: AmberTheme.amberDark (#9a5700) — one phosphor, no greys (DOS-86 `disabled = amberDim`; WCAG exempts disabled controls from contrast)
 
 #### Interactive Elements
 - **Default State**: Amber text on dark background
 - **Pressed**: AmberTheme.amberPressed with 0.97 scale
-- **Disabled**: AmberTheme.amberMuted with reduced opacity
+- **Disabled**: AmberTheme.amberDark stroke + label; primary fill `borderFaint`
 
 ## Typography (DOSTypography.swift)
 
@@ -171,7 +168,7 @@ pinned by `DesignTokenPinTests`:
 
 | Variant | Fill | Stroke | Use |
 |---------|------|--------|-----|
-| `.panel` | `cardBackground` | `dosBorder` | General warm panels (What's New build cards) |
+| `.panel` | `cardBackground` | `amberDark` | General warm panels (What's New build cards) |
 | `.info` | clear | `cgaCyan` | AI / info framing (Digest AI-insight card) |
 | `.stat` | `surfaceTint` | `borderSubtle` | Quiet data cells (`StatCard`) |
 | `.toast` | `scrimHeavy` | `amber` | Floating overlays / toasts (logged-meal, tight-control, treatment banner) |
