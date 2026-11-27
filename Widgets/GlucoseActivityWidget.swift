@@ -170,7 +170,7 @@ struct DynamicIslandCenterView: View, GlucoseStatusContext {
                                 .foregroundStyle(AmberTheme.cgaCyan)
                         }
                         Text(latestGlucose.timestamp, style: .time)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amberSoft)
                     }
                     .font(WidgetFonts.caption)
                 }
@@ -181,7 +181,7 @@ struct DynamicIslandCenterView: View, GlucoseStatusContext {
 
                 Text(Date(), style: .time)
                     .font(WidgetFonts.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
         }
         .padding(.bottom)
@@ -261,7 +261,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
                     Text(latestGlucose.timestamp, style: .time)
                         .font(WidgetFonts.caption)
                         .monospacedDigit()
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
 
                     if let stopDate = context.stopDate {
                         Text(stopDate, style: .relative)
@@ -280,7 +280,7 @@ struct GlucoseActivityView: View, GlucoseStatusContext {
 
                     Text(Date(), style: .time)
                         .font(WidgetFonts.caption)
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                 }
                 .frame(maxWidth: .infinity)
             }

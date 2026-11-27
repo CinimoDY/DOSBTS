@@ -547,7 +547,7 @@ struct UnifiedFoodEntryView: View {
             FiguresLoadingView.inline
             Text("Searching history...")
                 .font(DOSTypography.bodySmall)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
         }
     }
 

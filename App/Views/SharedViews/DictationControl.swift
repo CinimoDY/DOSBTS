@@ -273,7 +273,7 @@ struct DictationControl: View {
         if let message = model.statusMessage {
             Text(message)
                 .font(DOSTypography.caption)
-                .foregroundStyle(model.isErrorMessage ? AmberTheme.cgaRed : AmberTheme.amberDark)
+                .foregroundStyle(model.isErrorMessage ? AmberTheme.cgaRed : AmberTheme.amberSoft)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -283,7 +283,7 @@ struct DictationControl: View {
     private var keyboardHint: some View {
         Text("TIP: THE KEYBOARD'S OWN MIC KEY STILL DICTATES INTO ANY FIELD.")
             .font(DOSTypography.caption)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
             .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -296,7 +296,7 @@ struct DictationControl: View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
             Text(transcript)
                 .font(DOSTypography.bodySmall)
-                .foregroundStyle(style == .committed ? AmberTheme.amber : AmberTheme.amberDark)
+                .foregroundStyle(style == .committed ? AmberTheme.amber : AmberTheme.amberSoft)
                 .fixedSize(horizontal: false, vertical: true)
 
             if showsCursor, style == .provisional {

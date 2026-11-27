@@ -24,7 +24,7 @@ import Foundation
 
 // MARK: - Transcript
 
-/// One recognition update. `isFinal` is what promotes provisional amberDark
+/// One recognition update. `isFinal` is what promotes provisional amberSoft
 /// text to committed amber in the UI.
 struct SpeechTranscript: Equatable {
     let text: String

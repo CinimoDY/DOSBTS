@@ -40,7 +40,7 @@ struct JournalNoteListView: View {
                                 if let tag = note.tag {
                                     Text(verbatim: tag.localizedDescription)
                                         .font(DOSTypography.caption)
-                                        .foregroundStyle(AmberTheme.amberDark)
+                                        .foregroundStyle(AmberTheme.amberSoft)
                                 }
                             }
 

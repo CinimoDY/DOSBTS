@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// Full-width empty state — use when a data set is genuinely empty.
-/// title renders bodyLarge amber; optional detail renders caption amberDark;
+/// title renders bodyLarge amber; optional detail renders caption amberSoft;
 /// optional action renders as a ghost DOS button.
 struct DOSEmptyState: View {
     let title: String
@@ -25,7 +25,7 @@ struct DOSEmptyState: View {
             if let detail {
                 Text(detail)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
                     .multilineTextAlignment(.center)
             }
 

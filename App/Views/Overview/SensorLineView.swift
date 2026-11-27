@@ -146,7 +146,7 @@ struct SensorLineView: View {
         case .noSensor:
             Text("SET UP")
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
                 .fixedSize()
                 .padding(.horizontal, DOSSpacing.sm)
                 .padding(.vertical, 3)
@@ -208,9 +208,9 @@ struct SensorLineView: View {
         switch currentState {
         case .connected: return AmberTheme.cgaGreen
         case .transient: return AmberTheme.amberLight
-        case .disconnected, .noSensor: return AmberTheme.amberDark
+        case .disconnected, .noSensor: return AmberTheme.amberSoft
         case .error, .bluetoothOff: return AmberTheme.cgaRed
-        case .unknown: return AmberTheme.amberDark
+        case .unknown: return AmberTheme.amberSoft
         }
     }
 

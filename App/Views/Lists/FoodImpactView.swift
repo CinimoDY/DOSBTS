@@ -45,7 +45,7 @@ struct FoodImpactView: View {
     private var footerView: some View {
         Text("Personal averages from clean-meal observations — reference only.")
             .font(DOSTypography.caption)
-            .foregroundStyle(AmberTheme.amberDark)
+            .foregroundStyle(AmberTheme.amberSoft)
             .padding(.top, DOSSpacing.xs)
     }
 }
@@ -79,9 +79,9 @@ private struct FoodImpactRow: View {
     }
 
     private var isLowConfidence: Bool { food.observationCount < 3 }
-    private var rowColor: Color { isLowConfidence ? AmberTheme.amberDark : AmberTheme.amber }
+    private var rowColor: Color { isLowConfidence ? AmberTheme.amberSoft : AmberTheme.amber }
     private var deltaColor: Color {
-        guard let avg = food.avgDeltaMgDL else { return AmberTheme.amberDark }
-        return isLowConfidence ? AmberTheme.amberDark : mealImpactDeltaColor(delta: Int(avg.rounded()))
+        guard let avg = food.avgDeltaMgDL else { return AmberTheme.amberSoft }
+        return isLowConfidence ? AmberTheme.amberSoft : mealImpactDeltaColor(delta: Int(avg.rounded()))
     }
 }

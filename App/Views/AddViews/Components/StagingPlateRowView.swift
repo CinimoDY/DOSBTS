@@ -55,7 +55,7 @@ struct StagingPlateRowView: View {
         HStack {
             Text(item.name.isEmpty ? "New item" : item.name)
                 .font(DOSTypography.body)
-                .foregroundStyle(item.name.isEmpty ? AmberTheme.amberDark : AmberTheme.amber)
+                .foregroundStyle(item.name.isEmpty ? AmberTheme.amberSoft : AmberTheme.amber)
             Spacer()
             Text(StagingPlateRowLogic.summary(for: item))
                 .font(DOSTypography.caption)

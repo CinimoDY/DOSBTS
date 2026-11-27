@@ -57,7 +57,7 @@ struct LabCoverageStrip: View {
             Text(cell.text).foregroundStyle(AmberTheme.amber)
 
         case .empty:
-            Text(cell.text).foregroundStyle(AmberTheme.amberDark)
+            Text(cell.text).foregroundStyle(AmberTheme.amberSoft)
 
         case .failed:
             Text(cell.text).foregroundStyle(AmberTheme.cgaRed)

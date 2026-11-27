@@ -21,7 +21,7 @@ struct LabPlaceholderView: View {
 
                 Text(caption)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .dosCard(.info)

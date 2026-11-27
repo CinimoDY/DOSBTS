@@ -32,7 +32,7 @@ enum EventMarkerType: Hashable {
         case .meal: return AmberTheme.cgaGreen
         case .bolus: return AmberTheme.amber
         case .correction: return AmberTheme.amberLight
-        case .basal: return AmberTheme.amberDark
+        case .basal: return AmberTheme.amberSoft
         case .exercise: return AmberTheme.cgaCyan
         }
     }

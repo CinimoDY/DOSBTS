@@ -9,7 +9,7 @@ import UIKit
 /// Factory for the app's tab bar item appearance (DMNC-1029).
 ///
 /// Builds a fully-themed `UITabBarAppearance`: opaque black background,
-/// unselected items in dim `amberDark`, selected items in bright `amber`,
+/// unselected items in dim `amberSoft` (AA dim text), selected items in bright `amber`,
 /// applied to all three layout appearances (stacked / inline / compact).
 ///
 /// ⚠️ EMPIRICAL FINDING (iOS 26.5, verified DMNC-1167): the iOS 26 SwiftUI
@@ -37,8 +37,8 @@ enum DOSTabBarAppearance {
         appearance.backgroundColor = UIColor(AmberTheme.dosBlack)
 
         let item = UITabBarItemAppearance()
-        item.normal.iconColor = UIColor(AmberTheme.amberDark)
-        item.normal.titleTextAttributes = [.foregroundColor: UIColor(AmberTheme.amberDark)]
+        item.normal.iconColor = UIColor(AmberTheme.amberSoft)
+        item.normal.titleTextAttributes = [.foregroundColor: UIColor(AmberTheme.amberSoft)]
         item.selected.iconColor = UIColor(AmberTheme.amber)
         item.selected.titleTextAttributes = [.foregroundColor: UIColor(AmberTheme.amber)]
 

@@ -32,7 +32,7 @@ struct TimeInRangeReportView: View {
                 VStack(spacing: 4) {
                     Text("TARGET \(store.state.alarmLow)–\(store.state.alarmHigh) \(store.state.glucoseUnit.localizedDescription.uppercased())")
                         .font(DOSTypography.mono(size: 10))
-                        .foregroundStyle(AmberTheme.textFaint)
+                        .foregroundStyle(AmberTheme.amberSoft)
                     Text("\(stats.days) of \(stats.maxDays) days")
                         .font(DOSTypography.caption)
                         .foregroundStyle(AmberTheme.amber)

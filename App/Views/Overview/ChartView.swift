@@ -270,7 +270,7 @@ struct ChartView: View {
                 .opacity(0.25)
                 .annotation(position: .overlay, alignment: .bottom) {
                     Text(value.value.asInsulin())
-                        .foregroundStyle(AmberTheme.amberDark)
+                        .foregroundStyle(AmberTheme.amberSoft)
                         .padding(.horizontal, 2.5)
                         .background(AmberTheme.dosBlack.opacity(0.5))
                         .bold()

@@ -62,7 +62,7 @@ struct DictationDisplayModel: Equatable {
     /// point of showing partials: the user sees a misheard food name while they
     /// can still restate it.
     enum TranscriptStyle: Equatable {
-        /// `AmberTheme.amberDark` + blinking block cursor.
+        /// `AmberTheme.amberSoft` + blinking block cursor.
         case provisional
         /// `AmberTheme.amber`, editable.
         case committed

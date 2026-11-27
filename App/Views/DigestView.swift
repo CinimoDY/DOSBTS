@@ -61,7 +61,7 @@ struct DigestView: View {
             Button(action: { navigateDate(by: -1) }) {
                 Text("<")
                     .font(DOSTypography.bodyLarge)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
 
             Spacer()
@@ -75,7 +75,7 @@ struct DigestView: View {
             Button(action: { navigateDate(by: 1) }) {
                 Text(">")
                     .font(DOSTypography.bodyLarge)
-                    .foregroundStyle(isToday ? AmberTheme.borderFaint : AmberTheme.amberDark)
+                    .foregroundStyle(isToday ? AmberTheme.borderFaint : AmberTheme.amberSoft)
             }
             .disabled(isToday)
 
@@ -153,7 +153,7 @@ struct DigestView: View {
                     }) {
                         Text("REFRESH")
                             .font(DOSTypography.caption)
-                            .foregroundStyle(AmberTheme.amberDark)
+                            .foregroundStyle(AmberTheme.amberSoft)
                     }
                 }
             }

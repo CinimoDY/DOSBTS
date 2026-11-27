@@ -43,7 +43,7 @@ extension View {
 extension DataStaleness {
     var timestampColor: Color {
         switch self {
-        case .fresh: return AmberTheme.amberDark
+        case .fresh: return AmberTheme.amberSoft
         case .stale: return AmberTheme.amber
         case .veryStale: return AmberTheme.cgaRed
         }

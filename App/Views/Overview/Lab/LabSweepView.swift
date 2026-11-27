@@ -165,7 +165,7 @@ struct LabSweepView: View {
                     .foregroundStyle(AmberTheme.cgaCyan)
                 Text("every logged meal becomes one sweep, aligned at t=0 · n=\(model.unfilteredCount)")
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .dosCard(.info)
@@ -356,7 +356,7 @@ struct LabSweepView: View {
                         if !model.twins.isEmpty {
                             Text(twinsExpanded ? "HIDE ‹" : "WHY THESE ›")
                                 .font(DOSTypography.label)
-                                .foregroundStyle(AmberTheme.amberDark)
+                                .foregroundStyle(AmberTheme.amberSoft)
                         }
                     }
                     .frame(minHeight: LabSweepConfig.minTapTarget)
@@ -381,7 +381,7 @@ struct LabSweepView: View {
                             ForEach(model.twins) { twin in
                                 Text(SweepLapsFormatter.twinRow(twin, glucoseUnit: glucoseUnit))
                                     .font(DOSTypography.micro)
-                                    .foregroundStyle(AmberTheme.textFaint)
+                                    .foregroundStyle(AmberTheme.amberSoft)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -461,7 +461,7 @@ private struct LabChipButton: View {
         Button(action: action) {
             Text(label)
                 .font(isSelected ? DOSTypography.bodySmall.weight(.bold) : DOSTypography.bodySmall)
-                .foregroundStyle(isSelected ? AmberTheme.amber : AmberTheme.amberDark)
+                .foregroundStyle(isSelected ? AmberTheme.amber : AmberTheme.amberSoft)
                 .lineLimit(1)
                 // Six chips on a 393 pt phone leave no slack; scale rather than
                 // truncate, so a narrower device loses size, not meaning.

@@ -68,7 +68,7 @@ struct StepperField: View {
                             if !unit.isEmpty {
                                 Text(unit)
                                     .font(DOSTypography.mono(size: 14))
-                                    .foregroundStyle(AmberTheme.amberDark)
+                                    .foregroundStyle(AmberTheme.amberSoft)
                             }
                         }
                     }
@@ -100,7 +100,7 @@ struct StepperField: View {
             if let helpText {
                 Text(helpText)
                     .font(DOSTypography.mono(size: 10))
-                    .foregroundStyle(AmberTheme.textFaint)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
         }
     }

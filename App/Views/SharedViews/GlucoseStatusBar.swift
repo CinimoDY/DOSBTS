@@ -206,7 +206,7 @@ struct GlucoseTopBar: View {
             case .awaitingReading:
                 Text("---")
                     .font(DOSTypography.mono(size: 14, weight: .bold))
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
 
             case .reading(let valueText, let trendText, let staleness, let showsCountdown):
                 // The value never truncates (R7 content priority).

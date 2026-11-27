@@ -42,7 +42,7 @@ struct LabFactSheetLine: View {
                 items: sheet.items(),
                 glucoseUnit: glucoseUnit,
                 font: DOSTypography.micro,
-                color: AmberTheme.amberDark
+                color: AmberTheme.amberSoft
             )
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, DOSSpacing.sm)

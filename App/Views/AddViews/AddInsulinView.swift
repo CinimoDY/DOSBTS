@@ -223,16 +223,16 @@ struct AddInsulinView: View {
     }
 
     // Passive reference-ratio line: the confirmed Ratio Lab ICR, styled as
-    // information (dim amberDark + surfaceTint fill), NOT a warning like iobWarning.
+    // information (dim amberSoft + surfaceTint fill), NOT a warning like iobWarning.
     // No tap action, no math against the entered units — deliberately non-imperative.
     private func referenceRatioLine(_ icr: Double) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "function")
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
                 .frame(height: 14)
             Text("REF RATIO \(RatioEstimator.icrLabel(icr)) — SET IN RATIO LAB")
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
             Spacer()
         }
         .padding(.horizontal, 12)
@@ -274,7 +274,7 @@ struct AddInsulinView: View {
             Spacer()
             Text(entry.starts.toLocalTime())
                 .font(DOSTypography.caption)
-                .foregroundStyle(AmberTheme.amberDark)
+                .foregroundStyle(AmberTheme.amberSoft)
             Button {
                 staged.removeAll { $0.id == entry.id }
             } label: {

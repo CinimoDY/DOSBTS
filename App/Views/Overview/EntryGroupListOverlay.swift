@@ -196,7 +196,7 @@ struct EntryGroupListOverlay: View {
                     .foregroundStyle(marker.type.color)
                 Text(time)
                     .font(DOSTypography.caption)
-                    .foregroundStyle(AmberTheme.amberDark)
+                    .foregroundStyle(AmberTheme.amberSoft)
             }
             // Chevron only on editable (meal/insulin) rows — exercise is read-only.
             if editable {
