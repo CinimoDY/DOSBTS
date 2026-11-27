@@ -1,0 +1,5 @@
+- Glow gain: DOSEffects.Glow.shadowGain = 3.0 (added; plan asked for a recorded multiplier). Effective shadows: r1.6@0.60, r4.5@0.36 vs old r1@0.8/r6@0.4/r16@0.15 (hero) -> calmer, tighter. NOT visually tuned: the simulator has no glucose source, so the 60pt hero could not be screenshotted (only "No Data"). Dom to judge on device.
+- Vignette: start fraction 0.5-spread (0.30) per plan; end fraction 0.75 rather than 1.0 so corners (~0.707) reach full intensity. Not tuned against hero/bottom bar contrast (edge-only by construction).
+- Added helper View.dosPhosphorLayers in DOSEffects.swift so dosGlowLarge and widget phosphorGlow share one source.
+- Overlay mount wraps scanline+vignette in a ZStack inside the existing overlay.
+- Screenshots: only "after" (OFF/ON, Overview, "No Data" state; notification permission dialog present). Settings and widget previews not captured.

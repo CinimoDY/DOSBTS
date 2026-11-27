@@ -92,4 +92,18 @@ struct AnimationTokensTests {
     func gestureProgressSmoke() {
         _ = AnimationTokens.gestureProgress(duration: 0.8)
     }
+
+    // MARK: - DOSEffects (DMNC-1664)
+
+    @Test("DOSEffects pins the DOS-86 long-reading monitor values")
+    func dosEffectsValuePins() {
+        #expect(DOSEffects.Scanline.intensity == 0.10)
+        #expect(DOSEffects.Scanline.pitch == 3)
+        #expect(DOSEffects.Glow.radius == 1.6)
+        #expect(DOSEffects.Glow.intensity == 0.20)
+        #expect(DOSEffects.Glow.bloomRadius == 4.5)
+        #expect(DOSEffects.Glow.bloomIntensity == 0.12)
+        #expect(DOSEffects.Vignette.intensity == 0.22)
+        #expect(DOSEffects.Vignette.spread == 0.20)
+    }
 }

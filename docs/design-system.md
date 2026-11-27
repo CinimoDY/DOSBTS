@@ -101,7 +101,7 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 Shared (both targets) — `Library/DesignSystem/`:
 - `.dosCard(_ variant:stroke:padding:)` — DOS panel chrome (fill + 1px stroke + sharp corners). See **Cards** below. `Modifiers/DOSSurfaces.swift`
 - `.dosHeader(_ color:)` — canonical section header: 12pt semibold mono, 1.2 tracking, uppercase. **No glow** (a phosphor shadow here would break the "no glow in list rows" performance rule). Color carries semantics: `amberDark` default, `amber` emphasis, `cgaCyan` AI/info. `Modifiers/DOSSurfaces.swift`
-- `.dosGlowLarge(color:)` — strong multi-layer phosphor glow shadow (hero glucose, banner titles). `DOSTypography.swift`
+- `.dosGlowLarge(color:)` — two-layer phosphor glow shadow (see `DOSEffects`) (hero glucose, banner titles). `DOSTypography.swift`
 - `.dosPowerOn(isActive:)` / `.dosPowerOff(isActive:)` — CRT warm-up / power-off transitions. `DOSTypography.swift`
 
 App-only — `App/DesignSystem/Modifiers/DOSModifiers.swift`:
@@ -119,10 +119,13 @@ There is intentionally **no** `.dosText()`, `.dosData()`, `.dosGlowSmall()`, or 
 ## Visual Effects
 
 ### CRT Phosphor Glow
-Multi-layer shadows to simulate amber CRT phosphor:
-- Inner glow: radius 2, opacity 0.6
-- Mid glow: radius 6, opacity 0.3
-- Outer glow: radius 12, opacity 0.15
+Two same-colour shadows simulate amber CRT phosphor (eiDotter DOS-86 long-reading preset, DMNC-1664). All values live in `DOSEffects` (`Library/DesignSystem/DOSEffects.swift`) — never repeat the numbers elsewhere:
+- Glow: radius 1.6, intensity 0.20
+- Bloom: radius 4.5, intensity 0.12
+- A SwiftUI shadow reads dimmer than additive light, so opacity is multiplied by `DOSEffects.Glow.shadowGain`.
+- `dosGlowLarge` (app) and `phosphorGlow` (widget) both go through `dosPhosphorLayers`.
+
+The Settings "CRT monitor effect" toggle (`showScanlines`) also enables a cosine-profile scanline raster (`DOSScanlineOverlay`) and an edge vignette (`DOSVignetteOverlay`, skipped under Reduce Transparency / Increase Contrast). No flicker, no aperture grille.
 
 **Performance rule**: No glow shadows inside `Chart{}` body or `ForEach` list rows.
 
