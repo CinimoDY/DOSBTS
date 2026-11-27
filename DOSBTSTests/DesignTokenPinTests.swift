@@ -119,6 +119,34 @@ struct DesignTokenPinTests {
         #expect(abs(b - 1.0) < tolerance)
     }
 
+    @Test("cgaYellow token pins to #ffff55")
+    func cgaYellowColorPin() {
+        let color = UIColor(AmberTheme.cgaYellow)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        color.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #expect(abs(r - 1.0) < tolerance)
+        #expect(abs(g - 1.0) < tolerance)
+        #expect(abs(b - 85.0 / 255.0) < tolerance)
+    }
+
+    @Test("stalenessColor tiers: fresh amber, 5–14 min yellow, 15+ min red")
+    func stalenessColorTiers() {
+        func rgb(_ c: Color) -> (CGFloat, CGFloat, CGFloat) {
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            UIColor(c).getRed(&r, green: &g, blue: &b, alpha: &a)
+            return (r, g, b)
+        }
+        func same(_ a: Color, _ b: Color) -> Bool {
+            let x = rgb(a), y = rgb(b)
+            return abs(x.0 - y.0) < tolerance && abs(x.1 - y.1) < tolerance && abs(x.2 - y.2) < tolerance
+        }
+        #expect(same(AmberTheme.stalenessColor(.fresh), AmberTheme.amber))
+        #expect(same(AmberTheme.stalenessColor(.stale(minutes: 7)), AmberTheme.cgaYellow))
+        #expect(same(AmberTheme.stalenessColor(.veryStale(minutes: 20)), AmberTheme.cgaRed))
+        // The stale tier must not collapse back into body-text amber.
+        #expect(!same(AmberTheme.stalenessColor(.stale(minutes: 7)), AmberTheme.amber))
+    }
+
     @Test("cgaWhite token pins to #aaaaaa")
     func cgaWhiteColorPin() {
         let color = UIColor(AmberTheme.cgaWhite)

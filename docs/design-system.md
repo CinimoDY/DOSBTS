@@ -46,6 +46,7 @@ DOSBTS embraces a nostalgic amber CGA monitor aesthetic reminiscent of DOS-era c
 | `cgaCyan` | #55ffff | Sensor lines, info, AI insight card |
 | `cgaRed` | #ff5555 | Out-of-range / error |
 | `cgaMagenta` | #ff55ff | CGA magenta accent |
+| `cgaYellow` | #ffff55 | Warning — stale-data tier (5–14 min); DOS-86 `warning` |
 | `cgaWhite` | #aaaaaa | Neutral/disabled text |
 | `iobBolus` | #8CBF40 | IOB meal/snack bolus chart layer |
 | `iobBasal` | #5DD0F3 | IOB basal + correction chart layer |

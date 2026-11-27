@@ -12,7 +12,7 @@ import Foundation
 public enum GlucoseStaleness: Equatable {
     /// Reading is recent enough to act on without a warning.
     case fresh
-    /// 5–14 minutes old — amber warning treatment.
+    /// 5–14 minutes old — yellow warning treatment (`AmberTheme.cgaYellow`).
     case stale(minutes: Int)
     /// 15+ minutes old — red treatment. Dosing on this is dangerous.
     case veryStale(minutes: Int)

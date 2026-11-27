@@ -104,4 +104,32 @@ struct CaptionLegibilityTests {
         #expect(abs(g - 87.0 / 255.0) < 0.001)
         #expect(contrastOnBlack(r: r, g: g, b: b) < 4.5)
     }
+
+    /// The chart drag tooltip (`ChartSelectionTooltip`) draws black 12pt text on
+    /// solid chip fills. Each fill must carry black text at AA; the tooltip must
+    /// stay fully opaque (a container `.opacity(0.75)` once pushed the amberSoft
+    /// and cgaRed chips to ~3.7 / ~4.0).
+    @Test("chart tooltip chip fills carry black text at AA (>=4.5:1)",
+          arguments: [("amberLight", AmberTheme.amberLight),
+                      ("amberSoft", AmberTheme.amberSoft),
+                      ("cgaRed", AmberTheme.cgaRed),
+                      ("cgaMagenta", AmberTheme.cgaMagenta)])
+    func tooltipFillsMeetAA(name: String, fill: Color) {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(fill).getRed(&r, green: &g, blue: &b, alpha: &a)
+        // Black text on the fill: same (L + 0.05) / 0.05 ratio as fill-on-black.
+        #expect(contrastOnBlack(r: r, g: g, b: b) >= 4.5, "\(name) fill fails AA for black text")
+    }
+
+    @Test("chart tooltip has no container opacity")
+    func tooltipIsOpaque() throws {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("App/Views/Overview/ChartReportViews.swift")
+        let source = try String(contentsOf: url, encoding: .utf8)
+        let start = try #require(source.range(of: "struct ChartSelectionTooltip"))
+        let body = source[start.lowerBound...]
+        let end = body.range(of: "\n}\n")?.lowerBound ?? body.endIndex
+        #expect(!body[..<end].contains(".opacity("), "ChartSelectionTooltip must stay fully opaque")
+    }
 }

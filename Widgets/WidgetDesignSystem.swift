@@ -43,12 +43,11 @@ extension View {
 extension DataStaleness {
     var timestampColor: Color {
         switch self {
-        // Deliberately kept dim (amberDark), an exception to the dim-text → amberSoft rule:
-        // in widgets this colour is one of only two stale cues, and amberSoft would shrink
-        // the fresh → stale (amber) step from ~3.07 to ~1.93 contrast. Revisit together
-        // with the stale-tier colour decision (Dom, DMNC-1662).
-        case .fresh: return AmberTheme.amberDark
-        case .stale: return AmberTheme.amber
+        // Fresh is dim text (amberSoft, AA). Stale is the honest warning yellow, a hue
+        // change rather than a brightness step, so fresh → stale stays salient
+        // (Dom, 2026-11-27; matches `AmberTheme.stalenessColor`).
+        case .fresh: return AmberTheme.amberSoft
+        case .stale: return AmberTheme.cgaYellow
         case .veryStale: return AmberTheme.cgaRed
         }
     }

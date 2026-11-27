@@ -175,6 +175,9 @@ struct ChartSelectionTooltip: View {
                 .background(AmberTheme.cgaMagenta)
                 .foregroundStyle(AmberTheme.dosBlack)
             }
-        }.opacity(0.75)
+        }
+        // No container `.opacity`: it dimmed every chip fill to 75% and let the chart
+        // show through, which put black 12pt text below AA (amberSoft chip ~3.7:1,
+        // cgaRed blood chip ~4.0:1). Fully opaque fills keep each chip ≥ 4.5:1.
     }
 }
